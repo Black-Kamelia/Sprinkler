@@ -2,9 +2,11 @@ import java.util.*
 
 plugins {
     val kotlinVersion: String by System.getProperties()
+    val restriktVersion: String by System.getProperties()
     java
     `maven-publish`
     kotlin("jvm") version kotlinVersion
+    id("com.zwendo.restrikt") version restriktVersion
 }
 
 val projectGroup: String by project
@@ -28,6 +30,7 @@ allprojects {
     apply(plugin = "java")
     apply(plugin = "kotlin")
     apply(plugin = "maven-publish")
+    apply(plugin = "com.zwendo.restrikt")
 
     val projectName = project.name.toLowerCase()
 
