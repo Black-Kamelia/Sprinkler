@@ -1,4 +1,4 @@
-rootProject.name = "miskl"
+rootProject.name = "Sprinkler"
 
 pluginManagement {
     repositories {

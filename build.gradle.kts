@@ -84,8 +84,8 @@ allprojects {
 
                 pom {
                     name.set(artifactName)
-                    description.set("Miskl@${projectName} | Black Kamelia")
-                    url.set("https://github.com/Black-Kamelia/Miskl")
+                    description.set("Sprinkler@${projectName} | Black Kamelia")
+                    url.set("https://github.com/Black-Kamelia/Sprinkler")
 
                     developers {
                         projectMembers.split(",").forEach {
@@ -96,9 +96,9 @@ allprojects {
                     }
 
                     scm {
-                        connection.set("scm:git:git://github.com/Black-Kamelia/Miskl.git")
-                        developerConnection.set("scm:git:ssh://github.com/Black-Kamelia/Miskl.git")
-                        url.set("https://github.com/Black-Kamelia/Miskl.git")
+                        connection.set("scm:git:git://github.com/Black-Kamelia/Sprinkler.git")
+                        developerConnection.set("scm:git:ssh://github.com/Black-Kamelia/Sprinkler.git")
+                        url.set("https://github.com/Black-Kamelia/Sprinkler.git")
                     }
                 }
             }
@@ -107,7 +107,7 @@ allprojects {
         repositories {
             maven {
                 name = "GitHubPackages"
-                setUrl("https://maven.pkg.github.com/Black-Kamelia/Miskl")
+                setUrl("https://maven.pkg.github.com/Black-Kamelia/Sprinkler")
                 credentials {
                     username = localProps["githubUsername"] as String? ?: "Unknown user"
                     password = localProps["githubPassword"] as String? ?: "Unknown password"
