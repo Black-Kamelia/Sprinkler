@@ -1,4 +1,4 @@
-package com.kamelia.miskl.collection.readonly
+package com.kamelia.sprinkler.collection.readonly
 
 /**
  * Represents a read-only [Iterator]. A read-only iterator is a read-only iterator, which means that it does not

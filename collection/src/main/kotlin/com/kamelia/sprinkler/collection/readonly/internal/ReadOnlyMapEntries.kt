@@ -1,8 +1,8 @@
-package com.kamelia.miskl.collection.readonly.internal
+package com.kamelia.sprinkler.collection.readonly.internal
 
-import com.kamelia.miskl.collection.readonly.ReadOnlyIterator
-import com.kamelia.miskl.collection.readonly.ReadOnlyMap
-import com.kamelia.miskl.collection.readonly.ReadOnlySet
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyIterator
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyMap
+import com.kamelia.sprinkler.collection.readonly.ReadOnlySet
 
 
 internal class ReadOnlyMapEntries<K, V>(

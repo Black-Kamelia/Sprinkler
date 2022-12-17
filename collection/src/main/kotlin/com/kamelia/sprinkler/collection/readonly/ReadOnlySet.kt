@@ -1,4 +1,4 @@
-package com.kamelia.miskl.collection.readonly
+package com.kamelia.sprinkler.collection.readonly
 
 /**
  * Represents a read-only unordered [Collection] of elements that does not allow duplicate elements.

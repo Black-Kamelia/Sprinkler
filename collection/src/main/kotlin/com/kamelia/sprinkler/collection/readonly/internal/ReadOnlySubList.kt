@@ -1,9 +1,9 @@
-package com.kamelia.miskl.collection.readonly.internal
+package com.kamelia.sprinkler.collection.readonly.internal
 
-import com.kamelia.miskl.collection.readonly.ReadOnlyIterator
-import com.kamelia.miskl.collection.readonly.ReadOnlyList
-import com.kamelia.miskl.collection.readonly.ReadOnlyListIterator
-import com.kamelia.miskl.collection.readonly.readOnlyListIterator
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyIterator
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyList
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyListIterator
+import com.kamelia.sprinkler.collection.readonly.readOnlyListIterator
 import java.util.*
 import kotlin.collections.AbstractList
 

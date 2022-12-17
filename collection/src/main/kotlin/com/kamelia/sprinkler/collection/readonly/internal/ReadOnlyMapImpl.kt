@@ -1,10 +1,10 @@
-package com.kamelia.miskl.collection.readonly.internal
+package com.kamelia.sprinkler.collection.readonly.internal
 
-import com.kamelia.miskl.collection.readonly.ReadOnlyCollection
-import com.kamelia.miskl.collection.readonly.ReadOnlyMap
-import com.kamelia.miskl.collection.readonly.ReadOnlySet
-import com.kamelia.miskl.collection.readonly.asReadOnlyCollection
-import com.kamelia.miskl.collection.readonly.asReadOnlySet
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyCollection
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyMap
+import com.kamelia.sprinkler.collection.readonly.ReadOnlySet
+import com.kamelia.sprinkler.collection.readonly.asReadOnlyCollection
+import com.kamelia.sprinkler.collection.readonly.asReadOnlySet
 
 
 internal class ReadOnlyMapImpl<K, V>(private val inner: Map<K, V>) : ReadOnlyMap<K, V>, Map<K, V> by inner {

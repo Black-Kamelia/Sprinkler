@@ -1,4 +1,4 @@
-package com.kamelia.miskl.collection.readonly
+package com.kamelia.sprinkler.collection.readonly
 
 /**
  * Represents a read-only [ListIterator]. Like its super-interface [ReadOnlyIterator], this interface does not support

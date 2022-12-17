@@ -1,6 +1,6 @@
-package com.kamelia.miskl.collection.readonly
+package com.kamelia.sprinkler.collection.readonly
 
-import com.kamelia.miskl.collection.readonly.internal.ReadOnlySubList
+import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlySubList
 
 /**
  * Represents a read-only ordered [Collection] of elements. This interface and all its sub-interfaces only allow
