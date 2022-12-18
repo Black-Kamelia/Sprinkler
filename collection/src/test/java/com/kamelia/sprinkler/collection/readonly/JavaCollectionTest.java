@@ -16,6 +16,11 @@ public final class JavaCollectionTest {
         var readOnlyCollection = ReadOnlyUtils.toReadOnlyCollection(collection);
 
         assertThrows(UnsupportedOperationException.class, () -> readOnlyCollection.add(4));
+        assertThrows(UnsupportedOperationException.class, () -> readOnlyCollection.remove(0));
+        assertThrows(UnsupportedOperationException.class, () -> readOnlyCollection.addAll(List.of(4, 5, 6)));
+        assertThrows(UnsupportedOperationException.class, () -> readOnlyCollection.removeAll(List.of(1, 2, 3)));
+        assertThrows(UnsupportedOperationException.class, () -> readOnlyCollection.retainAll(List.of(1, 2, 3)));
+        assertThrows(UnsupportedOperationException.class, readOnlyCollection::clear);
     }
 
     @Test

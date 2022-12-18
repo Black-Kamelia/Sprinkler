@@ -23,6 +23,19 @@ class SetTest {
     }
 
     @Test
+    fun `methods inherited from Set are delegated to the inner set`() {
+        val set = setOf(1, 2, 3)
+        val readOnlySet = set.asReadOnlySet()
+
+        assert(readOnlySet.contains(1) == set.contains(1))
+        assert(!readOnlySet.contains(5) == !set.contains(5))
+        assert(readOnlySet.containsAll(listOf(1, 2)) == set.containsAll(listOf(1, 2)))
+        assert(!readOnlySet.containsAll(listOf(1, 5)) == !set.containsAll(listOf(1, 5)))
+        assert(!readOnlySet.isEmpty() == !set.isEmpty())
+        assert(readOnlySet.size == set.size)
+    }
+
+    @Test
     fun `methods inherited from Any are delegated to the inner set`() {
         val set = setOf(1, 2, 3)
         val readOnlySet = set.asReadOnlySet()

@@ -23,6 +23,19 @@ class CollectionTest {
     }
 
     @Test
+    fun `methods inherited from Collection are delegated to the inner collection`() {
+        val collection = listOf(1, 2, 3) as Collection<Int>
+        val readOnlyCollection = collection.asReadOnlyCollection()
+
+        assert(1 in readOnlyCollection == 1 in collection)
+        assert(5 !in readOnlyCollection == 5 !in collection)
+        assert(readOnlyCollection.containsAll(listOf(1, 2)) == collection.containsAll(listOf(1, 2)))
+        assert(!readOnlyCollection.containsAll(listOf(1, 5)) == !collection.containsAll(listOf(1, 5)))
+        assert(!readOnlyCollection.isEmpty() == !collection.isEmpty())
+        assert(readOnlyCollection.size == collection.size)
+    }
+
+    @Test
     fun `methods inherited from Any are delegated to the inner collection`() {
         val collection = listOf(1, 2, 3) as Collection<Int>
         val readOnlyCollection = collection.asReadOnlyCollection()
