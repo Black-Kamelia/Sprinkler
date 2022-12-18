@@ -11,9 +11,9 @@ package com.kamelia.miskl.collection.readonly
 interface ReadOnlyIterable<out T> : Iterable<T> {
 
     /**
-     * Returns an [ReadOnlyIterator] over the elements of this object.
+     * Returns a [ReadOnlyIterator] over the elements of this object.
      *
-     * @return an [ReadOnlyIterator] over the elements of this object
+     * @return a [ReadOnlyIterator] over the elements of this object
      * @see Iterable.iterator
      */
     override fun iterator(): ReadOnlyIterator<T>
