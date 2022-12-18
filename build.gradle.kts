@@ -5,6 +5,7 @@ plugins {
     val restriktVersion: String by System.getProperties()
     java
     `maven-publish`
+    jacoco
     kotlin("jvm") version kotlinVersion
     id("com.zwendo.restrikt") version restriktVersion
 }
@@ -31,6 +32,7 @@ allprojects {
     apply(plugin = "kotlin")
     apply(plugin = "maven-publish")
     apply(plugin = "com.zwendo.restrikt")
+    apply(plugin = "jacoco")
 
     val projectName = project.name.toLowerCase()
 
@@ -51,6 +53,7 @@ allprojects {
     tasks {
         test {
             useJUnitPlatform()
+            finalizedBy(jacocoTestReport)
         }
 
         compileJava {
@@ -71,6 +74,14 @@ allprojects {
 
         jar {
             archiveBaseName.set("$rootProjectName-$projectName-${projectVersion}")
+        }
+
+        jacocoTestReport {
+            reports {
+                xml.required.set(true)
+                csv.required.set(false)
+                html.required.set(true)
+            }
         }
     }
 

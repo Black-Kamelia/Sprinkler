@@ -1,4 +1,4 @@
-package com.kamelia.miskl.collection.readonly
+package com.kamelia.sprinkler.collection.readonly
 
 /**
  * Represents a read-only collection of pairs (key/value object). This interface and all its sub-interfaces only allow

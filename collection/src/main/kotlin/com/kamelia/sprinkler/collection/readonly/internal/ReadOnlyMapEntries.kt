@@ -1,8 +1,8 @@
-package com.kamelia.miskl.collection.readonly.internal
+package com.kamelia.sprinkler.collection.readonly.internal
 
-import com.kamelia.miskl.collection.readonly.ReadOnlyIterator
-import com.kamelia.miskl.collection.readonly.ReadOnlyMap
-import com.kamelia.miskl.collection.readonly.ReadOnlySet
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyIterator
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyMap
+import com.kamelia.sprinkler.collection.readonly.ReadOnlySet
 
 
 internal class ReadOnlyMapEntries<K, V>(
@@ -27,5 +27,11 @@ internal class ReadOnlyMapEntries<K, V>(
     override fun containsAll(elements: Collection<ReadOnlyMap.Entry<K, V>>): Boolean = inner.containsAll(elements)
 
     override fun contains(element: ReadOnlyMap.Entry<K, V>): Boolean = inner.contains(element)
+
+    override fun equals(other: Any?): Boolean = inner == other
+
+    override fun hashCode(): Int = inner.hashCode()
+
+    override fun toString(): String = inner.toString()
 
 }

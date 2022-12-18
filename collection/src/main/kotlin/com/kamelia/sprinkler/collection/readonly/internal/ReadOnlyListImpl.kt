@@ -1,10 +1,10 @@
-package com.kamelia.miskl.collection.readonly.internal
+package com.kamelia.sprinkler.collection.readonly.internal
 
-import com.kamelia.miskl.collection.readonly.ReadOnlyIterator
-import com.kamelia.miskl.collection.readonly.ReadOnlyList
-import com.kamelia.miskl.collection.readonly.ReadOnlyListIterator
-import com.kamelia.miskl.collection.readonly.readOnlyIterator
-import com.kamelia.miskl.collection.readonly.readOnlyListIterator
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyIterator
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyList
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyListIterator
+import com.kamelia.sprinkler.collection.readonly.readOnlyIterator
+import com.kamelia.sprinkler.collection.readonly.readOnlyListIterator
 
 internal class ReadOnlyListImpl<E>(private val inner: List<E>) : ReadOnlyList<E>, List<E> by inner {
 

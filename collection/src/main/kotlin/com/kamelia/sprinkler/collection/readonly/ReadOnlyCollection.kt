@@ -1,4 +1,4 @@
-package com.kamelia.miskl.collection.readonly
+package com.kamelia.sprinkler.collection.readonly
 
 /**
  * Represents a read-only [Collection] of elements. This interface and all its sub-interfaces only allow read-only

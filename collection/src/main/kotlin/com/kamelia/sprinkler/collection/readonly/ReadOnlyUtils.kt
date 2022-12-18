@@ -1,14 +1,14 @@
 @file:JvmName("ReadOnlyUtils")
 
-package com.kamelia.miskl.collection.readonly
+package com.kamelia.sprinkler.collection.readonly
 
-import com.kamelia.miskl.collection.readonly.internal.ReadOnlyCollectionImpl
-import com.kamelia.miskl.collection.readonly.internal.ReadOnlyIterableImpl
-import com.kamelia.miskl.collection.readonly.internal.ReadOnlyIteratorImpl
-import com.kamelia.miskl.collection.readonly.internal.ReadOnlyListImpl
-import com.kamelia.miskl.collection.readonly.internal.ReadOnlyListIteratorImpl
-import com.kamelia.miskl.collection.readonly.internal.ReadOnlyMapImpl
-import com.kamelia.miskl.collection.readonly.internal.ReadOnlySetImpl
+import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlyCollectionImpl
+import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlyIterableImpl
+import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlyIteratorImpl
+import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlyListImpl
+import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlyListIteratorImpl
+import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlyMapImpl
+import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlySetImpl
 
 //region ReadOnlyIterables
 

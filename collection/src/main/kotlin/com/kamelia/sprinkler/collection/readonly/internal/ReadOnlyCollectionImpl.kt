@@ -1,8 +1,8 @@
-package com.kamelia.miskl.collection.readonly.internal
+package com.kamelia.sprinkler.collection.readonly.internal
 
-import com.kamelia.miskl.collection.readonly.ReadOnlyCollection
-import com.kamelia.miskl.collection.readonly.ReadOnlyIterator
-import com.kamelia.miskl.collection.readonly.readOnlyIterator
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyCollection
+import com.kamelia.sprinkler.collection.readonly.ReadOnlyIterator
+import com.kamelia.sprinkler.collection.readonly.readOnlyIterator
 
 
 internal open class ReadOnlyCollectionImpl<E>(
