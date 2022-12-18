@@ -4,7 +4,7 @@ package com.kamelia.sprinkler.collection.readonly
  * Represents a read-only collection of pairs (key/value object). This interface and all its sub-interfaces only allow
  * read-only operations.
  *
- * Implementations of this interface are responsible to be read-only. However, read-only does is not equivalent to
+ * Implementations of this interface have the responsibility to be read-only. However, read-only is not equivalent to
  * immutable. If the implementation is a wrapper around a mutable map, it is still read-only but not immutable.
  *
  * @param K the type of map keys. The map is invariant on its key type
@@ -42,8 +42,8 @@ interface ReadOnlyMap<K, out V> : Map<K, V> {
      * Represents a read-only entry (key/value pair) in a [ReadOnlyMap]. This interface and all its sub-interfaces only
      * allow read-only operations.
      *
-     * Implementations of this interface are responsible to be read-only. However, read-only does is not equivalent to
-     * immutable. If the implementation is a wrapper around a mutable entry, it is still read-only but not immutable.
+     * Implementations of this interface have the responsibility to be read-only. However, read-only is not equivalent
+     * to immutable. If the implementation is a wrapper around a mutable entry, it is still read-only but not immutable.
      *
      * @param K the type of the key. The entry is covariant on its key type
      * @param V the type of the value. The entry is covariant on its value type
