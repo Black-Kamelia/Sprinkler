@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.collection.readonly
 
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -27,14 +28,14 @@ class MapTest {
         val map = mapOf(1 to "one", 2 to "two", 3 to "three")
         val readOnlyMap = map.asReadOnlyMap()
 
-        assert(readOnlyMap.contains(1) == map.contains(1))
-        assert(!readOnlyMap.contains(5) == !map.contains(5))
-        assert(!readOnlyMap.isEmpty() == !map.isEmpty())
-        assert(readOnlyMap.size == map.size)
-        assert(readOnlyMap[1] == map[1])
-        assert(readOnlyMap.entries == map.entries)
-        assert(readOnlyMap.keys == map.keys)
-        assert(readOnlyMap.values == map.values)
+        assertTrue(readOnlyMap.contains(1) == map.contains(1))
+        assertTrue(!readOnlyMap.contains(5) == !map.contains(5))
+        assertTrue(!readOnlyMap.isEmpty() == !map.isEmpty())
+        assertTrue(readOnlyMap.size == map.size)
+        assertTrue(readOnlyMap[1] == map[1])
+        assertTrue(readOnlyMap.entries == map.entries)
+        assertTrue(readOnlyMap.keys == map.keys)
+        assertTrue(readOnlyMap.values == map.values)
     }
 
     @Test
@@ -42,9 +43,9 @@ class MapTest {
         val map = mapOf(1 to "one", 2 to "two", 3 to "three")
         val readOnlyMap = map.asReadOnlyMap()
 
-        assert(readOnlyMap.toString() == map.toString())
-        assert(readOnlyMap.hashCode() == map.hashCode())
-        assert(readOnlyMap == map)
+        assertTrue(readOnlyMap.toString() == map.toString())
+        assertTrue(readOnlyMap.hashCode() == map.hashCode())
+        assertTrue(readOnlyMap == map)
     }
 
     @Test
@@ -53,8 +54,8 @@ class MapTest {
         val readOnlyMap = map.toReadOnlyMap()
         map[5] = "five"
 
-        assert(map.size == 4)
-        assert(readOnlyMap.size == 3)
+        assertTrue(map.size == 4)
+        assertTrue(readOnlyMap.size == 3)
     }
 
     @Test
@@ -63,9 +64,9 @@ class MapTest {
         val readOnlyMap = list.toReadOnlyMap()
         list += 5 to "five"
 
-        assert(list.size == 4)
-        assert(readOnlyMap.size == 3)
-        assert(readOnlyMap[5] == null)
+        assertTrue(list.size == 4)
+        assertTrue(readOnlyMap.size == 3)
+        assertTrue(readOnlyMap[5] == null)
     }
 
     @Test
@@ -77,11 +78,11 @@ class MapTest {
         val entries = readOnlyMap.entries
         map[5] = "five"
 
-        assert(map.size == 4)
-        assert(readOnlyMap.size == 4)
-        assert(keys.size == 4)
-        assert(values.size == 4)
-        assert(entries.size == 4)
+        assertTrue(map.size == 4)
+        assertTrue(readOnlyMap.size == 4)
+        assertTrue(keys.size == 4)
+        assertTrue(values.size == 4)
+        assertTrue(entries.size == 4)
     }
 
     @Test
@@ -89,7 +90,7 @@ class MapTest {
         val readOnlyMap = readOnlyMapOf(1 to "one", 2 to "two", 3 to "three")
         val readOnlyMap2 = readOnlyMap.asReadOnlyMap()
 
-        assert(readOnlyMap === readOnlyMap2)
+        assertTrue(readOnlyMap === readOnlyMap2)
     }
 
     @Test
@@ -98,9 +99,9 @@ class MapTest {
         val readOnlyMap = array.toReadOnlyMap()
         array[0] = 5 to "five"
 
-        assert(array.size == 3)
-        assert(readOnlyMap.size == 3)
-        assert(readOnlyMap[5] == null)
+        assertTrue(array.size == 3)
+        assertTrue(readOnlyMap.size == 3)
+        assertTrue(readOnlyMap[5] == null)
     }
 
     @Test
@@ -147,8 +148,8 @@ class MapTest {
         val readOnlyEntry = readOnlyMap.entries.first()
         val entry = map.entries.first()
 
-        assert(readOnlyEntry.key == entry.key)
-        assert(readOnlyEntry.value == entry.value)
+        assertTrue(readOnlyEntry.key == entry.key)
+        assertTrue(readOnlyEntry.value == entry.value)
     }
 
     @Test
@@ -158,9 +159,9 @@ class MapTest {
         val readOnlyEntry = readOnlyMap.entries.first()
         val entry = map.entries.first()
 
-        assert(readOnlyEntry.toString() == entry.toString())
-        assert(readOnlyEntry.hashCode() == entry.hashCode())
-        assert(readOnlyEntry == entry)
+        assertTrue(readOnlyEntry.toString() == entry.toString())
+        assertTrue(readOnlyEntry.hashCode() == entry.hashCode())
+        assertTrue(readOnlyEntry == entry)
     }
 
 }

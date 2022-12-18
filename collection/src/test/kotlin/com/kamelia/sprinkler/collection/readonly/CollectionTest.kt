@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.collection.readonly
 
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -27,12 +28,12 @@ class CollectionTest {
         val collection = listOf(1, 2, 3) as Collection<Int>
         val readOnlyCollection = collection.asReadOnlyCollection()
 
-        assert(1 in readOnlyCollection == 1 in collection)
-        assert(5 !in readOnlyCollection == 5 !in collection)
-        assert(readOnlyCollection.containsAll(listOf(1, 2)) == collection.containsAll(listOf(1, 2)))
-        assert(!readOnlyCollection.containsAll(listOf(1, 5)) == !collection.containsAll(listOf(1, 5)))
-        assert(!readOnlyCollection.isEmpty() == !collection.isEmpty())
-        assert(readOnlyCollection.size == collection.size)
+        assertTrue(1 in readOnlyCollection == 1 in collection)
+        assertTrue(5 !in readOnlyCollection == 5 !in collection)
+        assertTrue(readOnlyCollection.containsAll(listOf(1, 2)) == collection.containsAll(listOf(1, 2)))
+        assertTrue(!readOnlyCollection.containsAll(listOf(1, 5)) == !collection.containsAll(listOf(1, 5)))
+        assertTrue(!readOnlyCollection.isEmpty() == !collection.isEmpty())
+        assertTrue(readOnlyCollection.size == collection.size)
     }
 
     @Test
@@ -40,9 +41,9 @@ class CollectionTest {
         val collection = listOf(1, 2, 3) as Collection<Int>
         val readOnlyCollection = collection.asReadOnlyCollection()
 
-        assert(readOnlyCollection.toString() == collection.toString())
-        assert(readOnlyCollection.hashCode() == collection.hashCode())
-        assert(readOnlyCollection == collection)
+        assertTrue(readOnlyCollection.toString() == collection.toString())
+        assertTrue(readOnlyCollection.hashCode() == collection.hashCode())
+        assertTrue(readOnlyCollection == collection)
     }
 
     @Test
@@ -52,8 +53,8 @@ class CollectionTest {
         val readOnlyCollection = collection.toReadOnlyCollection()
         collection += 5
 
-        assert(collection.size == 4)
-        assert(readOnlyCollection.size == 3)
+        assertTrue(collection.size == 4)
+        assertTrue(readOnlyCollection.size == 3)
     }
 
     @Test
@@ -63,9 +64,9 @@ class CollectionTest {
         val readOnlyCollection = collection.asReadOnlyCollection()
         collection += 5
 
-        assert(collection !== readOnlyCollection)
-        assert(collection.size == 4)
-        assert(readOnlyCollection.size == 4)
+        assertTrue(collection !== readOnlyCollection)
+        assertTrue(collection.size == 4)
+        assertTrue(readOnlyCollection.size == 4)
     }
 
     @Test
@@ -73,7 +74,7 @@ class CollectionTest {
         val collection = listOf(1, 2, 3).asReadOnlyCollection()
         val readOnlyCollection = collection.asReadOnlyCollection()
 
-        assert(collection === readOnlyCollection)
+        assertTrue(collection === readOnlyCollection)
     }
 
 }

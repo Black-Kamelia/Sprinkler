@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.collection.readonly
 
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -27,12 +28,12 @@ class SetTest {
         val set = setOf(1, 2, 3)
         val readOnlySet = set.asReadOnlySet()
 
-        assert(readOnlySet.contains(1) == set.contains(1))
-        assert(!readOnlySet.contains(5) == !set.contains(5))
-        assert(readOnlySet.containsAll(listOf(1, 2)) == set.containsAll(listOf(1, 2)))
-        assert(!readOnlySet.containsAll(listOf(1, 5)) == !set.containsAll(listOf(1, 5)))
-        assert(!readOnlySet.isEmpty() == !set.isEmpty())
-        assert(readOnlySet.size == set.size)
+        assertTrue(readOnlySet.contains(1) == set.contains(1))
+        assertTrue(!readOnlySet.contains(5) == !set.contains(5))
+        assertTrue(readOnlySet.containsAll(listOf(1, 2)) == set.containsAll(listOf(1, 2)))
+        assertTrue(!readOnlySet.containsAll(listOf(1, 5)) == !set.containsAll(listOf(1, 5)))
+        assertTrue(!readOnlySet.isEmpty() == !set.isEmpty())
+        assertTrue(readOnlySet.size == set.size)
     }
 
     @Test
@@ -40,9 +41,9 @@ class SetTest {
         val set = setOf(1, 2, 3)
         val readOnlySet = set.asReadOnlySet()
 
-        assert(readOnlySet.toString() == set.toString())
-        assert(readOnlySet.hashCode() == set.hashCode())
-        assert(readOnlySet == set)
+        assertTrue(readOnlySet.toString() == set.toString())
+        assertTrue(readOnlySet.hashCode() == set.hashCode())
+        assertTrue(readOnlySet == set)
     }
 
     @Test
@@ -51,8 +52,8 @@ class SetTest {
         val readOnlySet = set.toReadOnlySet()
         set += 5
 
-        assert(set.size == 4)
-        assert(readOnlySet.size == 3)
+        assertTrue(set.size == 4)
+        assertTrue(readOnlySet.size == 3)
     }
 
     @Test
@@ -61,9 +62,9 @@ class SetTest {
         val readOnlySet = set.asReadOnlySet()
         set += 5
 
-        assert(set !== readOnlySet)
-        assert(set.size == 4)
-        assert(readOnlySet.size == 4)
+        assertTrue(set !== readOnlySet)
+        assertTrue(set.size == 4)
+        assertTrue(readOnlySet.size == 4)
     }
 
     @Test
@@ -71,7 +72,7 @@ class SetTest {
         val set = setOf(1, 2, 3).asReadOnlySet()
         val readOnlySet = set.asReadOnlySet()
 
-        assert(set === readOnlySet)
+        assertTrue(set === readOnlySet)
     }
 
     @Test
@@ -80,9 +81,9 @@ class SetTest {
         val readOnlySet = array.toReadOnlySet()
         array[0] = 5
 
-        assert(array[0] == 5)
-        assert(readOnlySet.size == 3)
-        assert(5 !in readOnlySet)
+        assertTrue(array[0] == 5)
+        assertTrue(readOnlySet.size == 3)
+        assertTrue(5 !in readOnlySet)
     }
 
 }

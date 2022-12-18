@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.collection.readonly
 
 import java.util.NoSuchElementException
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -28,16 +29,16 @@ class ListTest {
         val list = listOf(1, 2, 3)
         val readOnlyList = list.asReadOnlyList()
 
-        assert(readOnlyList.contains(1) == list.contains(1))
-        assert(!readOnlyList.contains(5) == !list.contains(5))
-        assert(readOnlyList.containsAll(listOf(1, 2)) == list.containsAll(listOf(1, 2)))
-        assert(!readOnlyList.containsAll(listOf(1, 5)) == !list.containsAll(listOf(1, 5)))
-        assert(!readOnlyList.isEmpty() == !list.isEmpty())
-        assert(readOnlyList.size == list.size)
-        assert(readOnlyList[0] == list[0])
-        assert(readOnlyList.indexOf(1) == list.indexOf(1))
-        assert(readOnlyList.lastIndexOf(1) == list.lastIndexOf(1))
-        assert(readOnlyList.subList(0, 2) == list.subList(0, 2))
+        assertTrue(readOnlyList.contains(1) == list.contains(1))
+        assertTrue(!readOnlyList.contains(5) == !list.contains(5))
+        assertTrue(readOnlyList.containsAll(listOf(1, 2)) == list.containsAll(listOf(1, 2)))
+        assertTrue(!readOnlyList.containsAll(listOf(1, 5)) == !list.containsAll(listOf(1, 5)))
+        assertTrue(!readOnlyList.isEmpty() == !list.isEmpty())
+        assertTrue(readOnlyList.size == list.size)
+        assertTrue(readOnlyList[0] == list[0])
+        assertTrue(readOnlyList.indexOf(1) == list.indexOf(1))
+        assertTrue(readOnlyList.lastIndexOf(1) == list.lastIndexOf(1))
+        assertTrue(readOnlyList.subList(0, 2) == list.subList(0, 2))
     }
 
     @Test
@@ -45,9 +46,9 @@ class ListTest {
         val list = listOf(1, 2, 3)
         val readOnlyList = list.asReadOnlyList()
 
-        assert(readOnlyList.toString() == list.toString())
-        assert(readOnlyList.hashCode() == list.hashCode())
-        assert(readOnlyList == list)
+        assertTrue(readOnlyList.toString() == list.toString())
+        assertTrue(readOnlyList.hashCode() == list.hashCode())
+        assertTrue(readOnlyList == list)
     }
 
     @Test
@@ -56,8 +57,8 @@ class ListTest {
         val readOnlyList = list.toReadOnlyList()
         list += 5
 
-        assert(list.size == 4)
-        assert(readOnlyList.size == 3)
+        assertTrue(list.size == 4)
+        assertTrue(readOnlyList.size == 3)
     }
 
     @Test
@@ -66,9 +67,9 @@ class ListTest {
         val readOnlyList = list.asReadOnlyList()
         list += 5
 
-        assert(list !== readOnlyList)
-        assert(list.size == 4)
-        assert(readOnlyList.size == 4)
+        assertTrue(list !== readOnlyList)
+        assertTrue(list.size == 4)
+        assertTrue(readOnlyList.size == 4)
     }
 
     @Test
@@ -76,7 +77,7 @@ class ListTest {
         val list = readOnlyListOf(1, 2, 3)
         val readOnlyList = list.asReadOnlyList()
 
-        assert(readOnlyList === list)
+        assertTrue(readOnlyList === list)
     }
 
     @Test
@@ -85,9 +86,9 @@ class ListTest {
         val readOnlyList = array.toReadOnlyList()
         array[0] = 5
 
-        assert(array[0] == 5)
-        assert(readOnlyList.size == 3)
-        assert(5 !in readOnlyList)
+        assertTrue(array[0] == 5)
+        assertTrue(readOnlyList.size == 3)
+        assertTrue(5 !in readOnlyList)
     }
 
     @Test
@@ -96,9 +97,9 @@ class ListTest {
         val readOnlyList = array.asReadOnlyList()
         array[0] = 5
 
-        assert(array[0] == readOnlyList[0])
-        assert(readOnlyList.size == 3)
-        assert(5 in readOnlyList)
+        assertTrue(array[0] == readOnlyList[0])
+        assertTrue(readOnlyList.size == 3)
+        assertTrue(5 in readOnlyList)
     }
 
     @Test
@@ -117,12 +118,12 @@ class ListTest {
         val readOnlyListIterator = readOnlyList.listIterator()
         val listIterator = list.listIterator()
 
-        assert(readOnlyListIterator.hasNext() == listIterator.hasNext())
-        assert(readOnlyListIterator.hasPrevious() == listIterator.hasPrevious())
-        assert(readOnlyListIterator.next() == listIterator.next())
-        assert(readOnlyListIterator.nextIndex() == listIterator.nextIndex())
-        assert(readOnlyListIterator.previous() == listIterator.previous())
-        assert(readOnlyListIterator.previousIndex() == listIterator.previousIndex())
+        assertTrue(readOnlyListIterator.hasNext() == listIterator.hasNext())
+        assertTrue(readOnlyListIterator.hasPrevious() == listIterator.hasPrevious())
+        assertTrue(readOnlyListIterator.next() == listIterator.next())
+        assertTrue(readOnlyListIterator.nextIndex() == listIterator.nextIndex())
+        assertTrue(readOnlyListIterator.previous() == listIterator.previous())
+        assertTrue(readOnlyListIterator.previousIndex() == listIterator.previousIndex())
     }
 
     @Test
@@ -139,16 +140,16 @@ class ListTest {
         val readOnlyList = listOf(1, 2, 3).asReadOnlyList()
         val subList = readOnlyList.subList(0, 2)
 
-        assert(1 in subList)
-        assert(3 !in subList)
-        assert(subList.containsAll(listOf(1, 2)))
-        assert(!subList.containsAll(listOf(1, 5)))
-        assert(!subList.isEmpty())
-        assert(subList.size == 2)
-        assert(subList[0] == 1)
-        assert(subList.indexOf(1) == 0)
-        assert(subList.lastIndexOf(1) == 0)
-        assert(subList.subList(0, 1) == listOf(1))
+        assertTrue(1 in subList)
+        assertTrue(3 !in subList)
+        assertTrue(subList.containsAll(listOf(1, 2)))
+        assertTrue(!subList.containsAll(listOf(1, 5)))
+        assertTrue(!subList.isEmpty())
+        assertTrue(subList.size == 2)
+        assertTrue(subList[0] == 1)
+        assertTrue(subList.indexOf(1) == 0)
+        assertTrue(subList.lastIndexOf(1) == 0)
+        assertTrue(subList.subList(0, 1) == listOf(1))
     }
 
     @Test
@@ -181,9 +182,9 @@ class ListTest {
 
         assertThrows<NoSuchElementException> { readOnlyListIterator.previous() }
 
-        assert(readOnlyListIterator.hasNext() == listIterator.hasNext())
-        assert(readOnlyListIterator.hasPrevious() == listIterator.hasPrevious())
-        assert(readOnlyListIterator.next() == listIterator.next())
+        assertTrue(readOnlyListIterator.hasNext() == listIterator.hasNext())
+        assertTrue(readOnlyListIterator.hasPrevious() == listIterator.hasPrevious())
+        assertTrue(readOnlyListIterator.next() == listIterator.next())
 
         assertThrows<NoSuchElementException> {
             readOnlyListIterator.next()
@@ -191,9 +192,9 @@ class ListTest {
         }
         readOnlyListIterator.previous()
 
-        assert(readOnlyListIterator.nextIndex() == listIterator.nextIndex())
-        assert(readOnlyListIterator.previous() == listIterator.previous())
-        assert(readOnlyListIterator.previousIndex() == listIterator.previousIndex())
+        assertTrue(readOnlyListIterator.nextIndex() == listIterator.nextIndex())
+        assertTrue(readOnlyListIterator.previous() == listIterator.previous())
+        assertTrue(readOnlyListIterator.previousIndex() == listIterator.previousIndex())
     }
 
 }

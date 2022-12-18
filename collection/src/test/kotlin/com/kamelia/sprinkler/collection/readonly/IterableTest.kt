@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.collection.readonly
 
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -18,7 +19,7 @@ class IterableTest {
         val iterable = listOf(1, 2, 3)
         val readOnlyIterable = iterable.asReadOnlyIterable()
 
-        assert(readOnlyIterable == iterable)
+        assertTrue(readOnlyIterable == iterable)
     }
 
     @Test
@@ -26,7 +27,7 @@ class IterableTest {
         val iterable = listOf(1, 2, 3).asReadOnlyIterable()
         val readOnlyIterable = iterable.asReadOnlyIterable()
 
-        assert(readOnlyIterable === iterable)
+        assertTrue(readOnlyIterable === iterable)
     }
 
     @Test
@@ -37,7 +38,7 @@ class IterableTest {
         val listIterator = list.iterator()
         val iterableIterator = iterable.readOnlyIterator()
 
-        assert(listIterator.javaClass == iterableIterator.javaClass)
+        assertTrue(listIterator.javaClass == iterableIterator.javaClass)
     }
 
 }
