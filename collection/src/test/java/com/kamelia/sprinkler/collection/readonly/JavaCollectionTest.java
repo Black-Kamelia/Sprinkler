@@ -15,12 +15,12 @@ public final class JavaCollectionTest {
         var collection = (Collection<Integer>) new ArrayList<>(List.of(1, 2, 3));
         var readOnlyCollection = ReadOnlyUtils.toReadOnlyCollection(collection);
 
-        assertThrows(UnsupportedOperationException.class, () -> readOnlyCollection.add(4));
-        assertThrows(UnsupportedOperationException.class, () -> readOnlyCollection.remove(0));
-        assertThrows(UnsupportedOperationException.class, () -> readOnlyCollection.addAll(List.of(4, 5, 6)));
-        assertThrows(UnsupportedOperationException.class, () -> readOnlyCollection.removeAll(List.of(1, 2, 3)));
-        assertThrows(UnsupportedOperationException.class, () -> readOnlyCollection.retainAll(List.of(1, 2, 3)));
-        assertThrows(UnsupportedOperationException.class, readOnlyCollection::clear);
+        assertThrows(NullPointerException.class, () -> readOnlyCollection.add(4));
+        assertThrows(NullPointerException.class, () -> readOnlyCollection.remove(0));
+        assertThrows(NullPointerException.class, () -> readOnlyCollection.addAll(List.of(4, 5, 6)));
+        assertThrows(NullPointerException.class, () -> readOnlyCollection.removeAll(List.of(1, 2, 3)));
+        assertThrows(NullPointerException.class, () -> readOnlyCollection.retainAll(List.of(1, 2, 3)));
+        assertThrows(NullPointerException.class, readOnlyCollection::clear);
     }
 
     @Test
@@ -29,7 +29,7 @@ public final class JavaCollectionTest {
         var readOnlyCollection = ReadOnlyUtils.toReadOnlyCollection(collection);
         var iterator = readOnlyCollection.iterator();
 
-        assertThrows(UnsupportedOperationException.class, iterator::remove);
+        assertThrows(NullPointerException.class, iterator::remove);
     }
 
 }
