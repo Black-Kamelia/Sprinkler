@@ -7,7 +7,7 @@ class SetTest {
 
     @Test
     fun `read only set cannot be casted to mutable set`() {
-        val readOnlySet = setOf(1, 2, 3).asReadOnlySet()
+        val readOnlySet = readOnlySetOf(1, 2, 3)
 
         @Suppress("UNCHECKED_CAST")
         assertThrows<ClassCastException> { readOnlySet as MutableSet<Int> }
@@ -15,7 +15,7 @@ class SetTest {
 
     @Test
     fun `read only set iterator cannot be casted to mutable iterator`() {
-        val readOnlySet = setOf(1, 2, 3).asReadOnlySet()
+        val readOnlySet = readOnlySetOf(1, 2, 3)
         val iterator = readOnlySet.iterator()
 
         @Suppress("UNCHECKED_CAST")

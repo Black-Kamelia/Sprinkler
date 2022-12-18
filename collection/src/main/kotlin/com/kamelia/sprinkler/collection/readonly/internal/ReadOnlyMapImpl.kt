@@ -18,6 +18,12 @@ internal class ReadOnlyMapImpl<K, V>(private val inner: Map<K, V>) : ReadOnlyMap
     override val entries: ReadOnlySet<ReadOnlyMap.Entry<K, V>>
         get() = ReadOnlyMapEntries(inner.entries)
 
+    override fun equals(other: Any?): Boolean = inner == other
+
+    override fun hashCode(): Int = inner.hashCode()
+
+    override fun toString(): String = inner.toString()
+
     class Entry<K, V>(private val inner: Map.Entry<K, V>) : ReadOnlyMap.Entry<K, V>, Map.Entry<K, V> by inner {
 
         override val key: K
@@ -28,7 +34,7 @@ internal class ReadOnlyMapImpl<K, V>(private val inner: Map<K, V>) : ReadOnlyMap
 
         override fun equals(other: Any?): Boolean = inner == other
 
-        override fun hashCode(): Int = super.hashCode()
+        override fun hashCode(): Int = inner.hashCode()
 
         override fun toString(): String = inner.toString()
 

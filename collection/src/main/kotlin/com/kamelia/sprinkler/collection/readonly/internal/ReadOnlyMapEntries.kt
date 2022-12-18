@@ -28,4 +28,10 @@ internal class ReadOnlyMapEntries<K, V>(
 
     override fun contains(element: ReadOnlyMap.Entry<K, V>): Boolean = inner.contains(element)
 
+    override fun equals(other: Any?): Boolean = inner == other
+
+    override fun hashCode(): Int = inner.hashCode()
+
+    override fun toString(): String = inner.toString()
+
 }

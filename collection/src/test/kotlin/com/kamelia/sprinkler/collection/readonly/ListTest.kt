@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.collection.readonly
 
+import java.util.NoSuchElementException
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -7,7 +8,7 @@ class ListTest {
 
     @Test
     fun `read only list cannot be casted to mutable list`() {
-        val readOnlyList = listOf(1, 2, 3).asReadOnlyList()
+        val readOnlyList = readOnlyListOf(1, 2, 3)
 
         @Suppress("UNCHECKED_CAST")
         assertThrows<ClassCastException> { readOnlyList as MutableList<Int> }
@@ -15,7 +16,7 @@ class ListTest {
 
     @Test
     fun `read only list iterator cannot be casted to mutable iterator`() {
-        val readOnlyList = listOf(1, 2, 3).asReadOnlyList()
+        val readOnlyList = readOnlyListOf(1, 2, 3)
         val iterator = readOnlyList.iterator()
 
         @Suppress("UNCHECKED_CAST")
@@ -72,7 +73,7 @@ class ListTest {
 
     @Test
     fun `asReadOnlyList does not wrap the original list if it is already read only`() {
-        val list = listOf(1, 2, 3).asReadOnlyList()
+        val list = readOnlyListOf(1, 2, 3)
         val readOnlyList = list.asReadOnlyList()
 
         assert(readOnlyList === list)
@@ -102,11 +103,26 @@ class ListTest {
 
     @Test
     fun `read only listIterator cannot be casted to mutable listIterator`() {
-        val readOnlyList = listOf(1, 2, 3).asReadOnlyList()
+        val readOnlyList = readOnlyListOf(1, 2, 3)
         val listIterator = readOnlyList.listIterator()
 
         @Suppress("UNCHECKED_CAST")
         assertThrows<ClassCastException> { listIterator as MutableListIterator<Int> }
+    }
+
+    @Test
+    fun `listIterator methods inherited from ListIterator are delegated to the inner listIterator`() {
+        val list = listOf(1, 2, 3)
+        val readOnlyList = list.asReadOnlyList()
+        val readOnlyListIterator = readOnlyList.listIterator()
+        val listIterator = list.listIterator()
+
+        assert(readOnlyListIterator.hasNext() == listIterator.hasNext())
+        assert(readOnlyListIterator.hasPrevious() == listIterator.hasPrevious())
+        assert(readOnlyListIterator.next() == listIterator.next())
+        assert(readOnlyListIterator.nextIndex() == listIterator.nextIndex())
+        assert(readOnlyListIterator.previous() == listIterator.previous())
+        assert(readOnlyListIterator.previousIndex() == listIterator.previousIndex())
     }
 
     @Test
@@ -153,6 +169,31 @@ class ListTest {
 
         @Suppress("UNCHECKED_CAST")
         assertThrows<ClassCastException> { listIterator as MutableListIterator<Int> }
+    }
+
+    @Test
+    fun `read only subList listIterator methods inherited from ListIterator are delegated to the inner listIterator`() {
+        val list = listOf(1, 2)
+        val readOnlyList = list.asReadOnlyList()
+        val subList = readOnlyList.subList(0, 2)
+        val readOnlyListIterator = subList.listIterator()
+        val listIterator = list.listIterator()
+
+        assertThrows<NoSuchElementException> { readOnlyListIterator.previous() }
+
+        assert(readOnlyListIterator.hasNext() == listIterator.hasNext())
+        assert(readOnlyListIterator.hasPrevious() == listIterator.hasPrevious())
+        assert(readOnlyListIterator.next() == listIterator.next())
+
+        assertThrows<NoSuchElementException> {
+            readOnlyListIterator.next()
+            readOnlyListIterator.next()
+        }
+        readOnlyListIterator.previous()
+
+        assert(readOnlyListIterator.nextIndex() == listIterator.nextIndex())
+        assert(readOnlyListIterator.previous() == listIterator.previous())
+        assert(readOnlyListIterator.previousIndex() == listIterator.previousIndex())
     }
 
 }
