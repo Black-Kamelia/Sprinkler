@@ -9,6 +9,7 @@ pipeline {
     stages {
         stage('Build') {
             steps {
+                sh 'touch gradle.local.properties'
                 sh 'gradle build -x test'
             }
         }
