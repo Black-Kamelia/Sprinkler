@@ -23,7 +23,7 @@ pipeline {
                     junit checksName: 'Tests', allowEmptyResults: true, testResults: '**/build/test-results/test/*.xml'
                     publishCoverage adapters: [jacocoAdapter('**/build/reports/jacoco/test/*.html')]
 
-                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '**/build/reports/jacoco/test/', reportFiles: '*.html', reportName: 'Coverage Report', reportTitles: '', useWrapperFileDirectly: true])
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'collection/build/reports/jacoco/test/', reportFiles: '**/*.html', reportName: 'Coverage Report', reportTitles: '', useWrapperFileDirectly: true])
                 }
             }
         }
