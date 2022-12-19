@@ -12,7 +12,7 @@ The purpose of this module is to provide read-only collections to the user.
 
 Then why not use [kotlinx.collections.immutable](https://github.com/Kotlin/kotlinx.collections.immutable) instead?
 
-Because while this library offers a good API, it is not entirely cast-safe.
+Because while that library offers a good API, it is not entirely cast-safe.
 For example, casting an iterator obtained from an `ImmutableList` allows you to modify the list.
 This module fixes this issue.
 
