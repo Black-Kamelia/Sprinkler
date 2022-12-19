@@ -23,11 +23,16 @@ same vein as projects such as ***kotlinx***.
 
 ## ✨ Modules and Documentation
 
-- ***Collections***: cast-safe immutable collections for Kotlin (see [documentation](docs/collections.md))
+- ***Collections***: cast-safe read-only collections for Kotlin (see [documentation](docs/collections.md))
 
 ## 🛠 Integration
 
 *Do replace `{latest-version}` with the latest version available on maven-central*
+*and {module} with the module you want*
+
+The available modules are:
+
+- `collections`
 
 ### Maven
 
@@ -35,7 +40,7 @@ same vein as projects such as ***kotlinx***.
 <dependencies>
   <dependency>
     <groupId>com.black-kamelia</groupId>
-    <artifactId>sprinkler</artifactId>
+    <artifactId>sprinkler-{module}</artifactId>
     <version>{latest-version}</version>
   </dependency>
 </dependencies>
@@ -53,7 +58,7 @@ repositories {
 }
 
 dependencies {
-  implementation("com.black-kamelia:sprinkler:{latest-version}")
+  implementation("com.black-kamelia:sprinkler-{module}:{latest-version}")
 }
 ```
 </p>
@@ -69,7 +74,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'com.black-kamelia:sprinkler:{latest-version}'
+  implementation 'com.black-kamelia:sprinkler-{module}:{latest-version}'
 }
 ```
 </p>
