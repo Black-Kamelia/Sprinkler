@@ -1,23 +1,60 @@
 # Sprinkler: Collections
 
+## Summary
+
+- [Intentions](#intentions)
+- [General Documentation](#general-documentation)
+- [API Documentation](#api-documentation)
+
 ## Intentions
 
 The purpose of this module is to provide read-only collections to the user.
 
 Then why not use [kotlinx.collections.immutable](https://github.com/Kotlin/kotlinx.collections.immutable) instead?
 
-Because while this library offers a good API, it is not cast-safe in certain places. Meaning that even though one
-created a supposed immutable collection, one can still mutate it by casting it to a mutable collection beforehand
-(this is particularly notable with iterators).
+Because while this library offers a good API, it is not entirely cast-safe.
+For example, casting an iterator obtained from an `ImmutableList` allows you to modify the list.
+This module fixes this issue.
 
-Moreover, for semantic reasons, the collections here are not called `Immutable*` but `ReadOnly*` instead.
+Moreover, for semantic reasons, the collections here are not called `Immutable...` but `ReadOnly...` instead.
+
+## General Documentation
+
+This library provides interfaces for read-only collections.
+
+| Interface              | Bases                              |
+|------------------------|------------------------------------|
+| `ReadOnlyCollection`   | `Collection`                       |
+| `ReadOnlyIterable`     | `Iterable`                         |
+| `ReadOnlyIterator`     | `Iterator`                         |
+| `ReadOnlyList`         | `ReadOnlyCollection`, `List`       |
+| `ReadOnlyListIterator` | `ReadOnlyIterator`, `ListIterator` |
+| `ReadOnlySet`          | `ReadOnlyCollection`, `Set`        |
+| `ReadOnlyMap`          | `Map`                              |
+
+One can obtain them in the same ways as standard collections, for example:
+
+```kt
+val readOnlyList = readOnlyListOf(1, 2, 3)
+```
+
+Or by copy or wrapping:
+
+```kt
+val list = listOf(1, 2, 3)
+val readOnlyListCopy = list.toReadOnlyList()
+val readOnlyListWrapped = list.asReadOnlyList()
+```
+
+This applies to the other interfaces as well.
+
+It is to be noted that `toReadOnlyX` methods creates a copy of the collection, 
+while `asReadOnlyX` methods wrap the collection when necessary 
+(as in, it does nothing if it already was read-only).
 
 ## API Documentation
 
-The API is a general mirror of the standard library's collections API, 
-but prepended with `ReadOnly` or `readOnly` on its symbols.
-
-### Summary
+### Interfaces
 
 - [ReadOnlyCollection](#readonlycollection)
 - [ReadOnlyIterable](#readonlyiterable)
