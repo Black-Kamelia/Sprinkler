@@ -6,6 +6,7 @@
 <h3><i>A non-intrusive set of extensions sprinkled over the Kotlin standard library.</i></h3>
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia/sprinkler.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.black-kamelia%22%20AND%20a:%22sprinkler%22)
+[![Build status](https://ci.black-kamelia.com/buildStatus/icon?subject=Build&job=Sprinkler%2Fmaster)](https://ci.black-kamelia.com/job/Sprinkler/)
 </div>
 
 ## 📋 Summary
