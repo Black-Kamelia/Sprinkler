@@ -6,4 +6,4 @@ pluginManagement {
     }
 }
 
-include("collection")
+include("readonly-collections")

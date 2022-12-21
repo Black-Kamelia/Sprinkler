@@ -26,7 +26,7 @@ same vein as projects such as ***kotlinx***, that is mainly used in **[Black Kam
 
 *Click the name of a module to go to its documentation.*
 
-- ***[Collections](collection/README.md)***: cast-safe read-only collections for Kotlin
+- ***[Collections](readonly-collections/README.md)***: cast-safe read-only collections for Kotlin
 
 ## Integration
 
