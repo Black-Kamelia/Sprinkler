@@ -92,6 +92,7 @@ allprojects {
                 groupId = projectGroup
                 artifactId = artifactName
                 version = projectVersion
+                from(components["java"])
 
                 pom {
                     name.set(artifactName)
