@@ -16,7 +16,6 @@ pipeline {
             steps {
                 sh 'gradle test'
             }
-
             post {
                 always {
                     junit checksName: 'Tests', allowEmptyResults: true, testResults: '**/build/test-results/test/*.xml'
