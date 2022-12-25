@@ -25,7 +25,6 @@ val rootProjectName = rootProject.name.toLowerCase()
 
 group = projectGroup
 
-val localProps = Properties().apply { load(file("gradle.local.properties").reader()) }
 val props = Properties().apply { load(file("gradle.properties").reader()) }
 
 fun String.base64Decode() = String(Base64.getDecoder().decode(this))
@@ -56,8 +55,8 @@ allprojects {
     }
 
     signing {
-        val signingKey = findProperty("signingKey") as String? ?: ""
-        val signingPassword = findProperty("signingPassword") as String? ?: ""
+        val signingKey = findProperty("signingKey") as? String ?: ""
+        val signingPassword = findProperty("signingPassword") as? String ?: ""
         useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
         sign(publishing.publications)
     }
