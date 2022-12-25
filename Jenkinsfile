@@ -25,22 +25,24 @@ pipeline {
                 }
             }
         }
-        //stage('Deploy') {
-        //    when {
-        //        beforeInput true
-        //        branch 'master'
-        //    }
-        //    options {
-        //        timeout(time: 15, unit: 'MINUTES')
-        //    }
-        //    input {
-        //        message "Confirm publishing to repository"
-        //    }
-        //    steps {
-        //        withCredentials([usernamePassword(credentialsId: 'nexus', passwordVariable: 'pass', usernameVariable: 'user')]) {
-        //            sh 'gradle publish -PnexusBlackKameliaUsername=$user -PnexusBlackKameliaPassword=$pass'
-        //        }
-        //    }
-        //}
+        stage('Deploy') {
+            //when {
+            //    beforeInput true
+            //    branch 'master'
+            //}
+            //options {
+            //    timeout(time: 15, unit: 'MINUTES')
+            //}
+            //input {
+            //    message "Confirm publishing to Maven Central"
+            //}
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingkey', passwordVariable: 'signingPassword')]) {
+                    withCredentials([usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass')]) {
+                        sh 'gradle publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingkey -PsigningPassword=$signingPassword'
+                    }
+                }
+            }
+        }
     }
 }
