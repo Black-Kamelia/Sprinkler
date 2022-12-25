@@ -18,7 +18,7 @@ pipeline {
             }
             post {
                 always {
-                    junit checksName: 'Tests', allowEmptyResults: true, testResults: '**/build/test-results/test/*.xml'
+                    junit checksName: 'Tests', allowEmptyResults: true, testResults: '**/build/test-results/test/TEST-*.xml'
                     publishCoverage adapters: [jacocoAdapter('**/build/reports/jacoco/test/*.xml')]
                 }
             }
