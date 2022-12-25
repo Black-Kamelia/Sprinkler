@@ -14,7 +14,6 @@ val projectGroup: String by project
 val projectGroupFqName: String by project
 val projectMembers: String by project
 val projectWebsite: String by project
-val projectVersion: String by project
 
 val kotlinVersion: String by System.getProperties()
 val jvmVersion: String by project
@@ -23,9 +22,9 @@ val junitVersion: String by project
 val rootProjectName = rootProject.name.toLowerCase()
 
 group = projectGroup
-version = projectVersion
 
 val localProps = Properties().apply { load(file("gradle.local.properties").reader()) }
+val props = Properties().apply { load(file("gradle.properties").reader()) }
 
 allprojects {
     apply(plugin = "java")
@@ -35,6 +34,7 @@ allprojects {
     apply(plugin = "jacoco")
 
     val projectName = project.name.toLowerCase()
+    val projectVersion = props["$projectName.version"] as? String ?: "0.1.0"
 
     repositories {
         mavenCentral()
@@ -74,14 +74,14 @@ allprojects {
         }
 
         jar {
-            archiveBaseName.set("$rootProjectName-$projectName-${projectVersion}")
+            archiveBaseName.set("$rootProjectName-$projectName-$projectVersion")
         }
 
         jacocoTestReport {
             reports {
                 xml.required.set(true)
                 csv.required.set(false)
-                html.required.set(false)
+                html.required.set(true)
             }
         }
     }
@@ -93,6 +93,7 @@ allprojects {
                 groupId = projectGroup
                 artifactId = artifactName
                 version = projectVersion
+                from(components["java"])
 
                 pom {
                     name.set(artifactName)
