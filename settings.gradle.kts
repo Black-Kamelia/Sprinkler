@@ -6,4 +6,7 @@ pluginManagement {
     }
 }
 
-include("readonly-collections")
+include(
+    "readonly-collections",
+    "binary-serializers",
+)
