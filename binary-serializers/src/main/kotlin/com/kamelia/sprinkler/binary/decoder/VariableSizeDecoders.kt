@@ -40,7 +40,7 @@ private class BatchPrefixedSizeVariableSizeDecoder<E>(
 
         val array = ByteArray(size)
         val readBytes = stream.read(array)
-        checkDecoding(readBytes < size) { "Not enough bytes to read, expected: $size, read: $readBytes" }
+        checkDecoding(readBytes <= size) { "Not enough bytes to read, expected: $size, read: $readBytes" }
 
         val buffer = ByteBuffer.wrap(array).order(endianness)
         return extractor(buffer)
