@@ -34,14 +34,14 @@ same vein as projects such as ***kotlinx***, that is mainly used in **[Black Kam
 
 The available modules are:
 
-- `readonly-collections` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia/sprinkler-readonly-collections.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.black-kamelia%22%20AND%20a:%22sprinkler-readonly-collections%22)
+- `readonly-collections` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/sprinkler-readonly-collections.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.black-kamelia.sprinkler%22%20AND%20a:%22sprinkler-readonly-collections%22)
 
 ### Maven
 
 ```XML
 <dependencies>
   <dependency>
-    <groupId>com.black-kamelia</groupId>
+    <groupId>com.black-kamelia.sprinkler</groupId>
     <artifactId>sprinkler-{module}</artifactId>
     <version>{latest-version}</version>
   </dependency>
@@ -60,7 +60,7 @@ repositories {
 }
 
 dependencies {
-  implementation("com.black-kamelia:sprinkler-{module}:{latest-version}")
+  implementation("com.black-kamelia.sprinkler:sprinkler-{module}:{latest-version}")
 }
 ```
 </p>
@@ -76,7 +76,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'com.black-kamelia:sprinkler-{module}:{latest-version}'
+  implementation 'com.black-kamelia.sprinkler:sprinkler-{module}:{latest-version}'
 }
 ```
 </p>
