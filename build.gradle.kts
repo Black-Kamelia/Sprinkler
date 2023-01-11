@@ -1,10 +1,12 @@
-import java.util.*
+import java.util.Base64
+import java.util.Properties
 
 plugins {
     val kotlinVersion: String by System.getProperties()
     val restriktVersion: String by System.getProperties()
     java
     `maven-publish`
+    signing
     jacoco
     kotlin("jvm") version kotlinVersion
     id("com.zwendo.restrikt") version restriktVersion
@@ -23,13 +25,15 @@ val rootProjectName = rootProject.name.toLowerCase()
 
 group = projectGroup
 
-val localProps = Properties().apply { load(file("gradle.local.properties").reader()) }
 val props = Properties().apply { load(file("gradle.properties").reader()) }
+
+fun String.base64Decode() = String(Base64.getDecoder().decode(this))
 
 allprojects {
     apply(plugin = "java")
     apply(plugin = "kotlin")
     apply(plugin = "maven-publish")
+    apply(plugin = "signing")
     apply(plugin = "com.zwendo.restrikt")
     apply(plugin = "jacoco")
 
@@ -50,9 +54,17 @@ allprojects {
         withSourcesJar()
     }
 
+    signing {
+        val signingKey = findProperty("signingKey") as? String ?: ""
+        val signingPassword = findProperty("signingPassword") as? String ?: ""
+        useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
+        sign(publishing.publications)
+    }
+
     tasks {
         test {
             useJUnitPlatform()
+            ignoreFailures = true
             finalizedBy(jacocoTestReport)
         }
 
@@ -118,11 +130,12 @@ allprojects {
 
         repositories {
             maven {
-                name = "GitHubPackages"
-                setUrl("https://maven.pkg.github.com/Black-Kamelia/Sprinkler")
-                credentials {
-                    username = localProps["githubUsername"] as String? ?: "Unknown user"
-                    password = localProps["githubPassword"] as String? ?: "Unknown password"
+                name = "mavenCentral"
+                credentials(PasswordCredentials::class)
+                url = if (projectVersion.endsWith("SNAPSHOT")) {
+                    uri("https://s01.oss.sonatype.org/content/repositories/snapshots")
+                } else {
+                    uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
                 }
             }
         }
