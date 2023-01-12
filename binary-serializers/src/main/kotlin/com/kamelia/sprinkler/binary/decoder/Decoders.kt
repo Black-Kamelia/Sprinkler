@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.binary.decoder
 
 import java.io.ByteArrayInputStream
+import java.io.InputStream
 import kotlin.properties.Delegates
 
 
@@ -81,7 +82,11 @@ fun <E, R> Decoder<E>.finally(resultMapper: (E) -> R): Decoder<R> = Decoder { st
     resultMapper(decode(stream))
 }
 
-fun NoOpDecoder(): Decoder<Unit> = Decoder { }
+object NoOpDecoder : Decoder<Unit> {
+
+    override fun decode(input: InputStream) = Unit
+
+}
 
 
 fun main() {

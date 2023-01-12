@@ -5,9 +5,9 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 
-interface StreamDeserializer<out T> {
+interface StreamDecoder<out T> {
 
-    fun deserialize(bytes: ByteBuffer): State<T>
+    fun decode(input: ByteBuffer): State<T>
 
     fun reset()
 

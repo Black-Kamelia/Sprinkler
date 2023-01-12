@@ -1,91 +1,63 @@
 package com.kamelia.sprinkler.binary.decoder
 
+import com.kamelia.sprinkler.binary.decoder.stream.StreamDecoder
 import java.io.InputStream
 
-internal class DecoderComposer<T>(private val decoder: Decoder<T>) {
+interface DecoderComposer<T, D : AbstractDecoder<*, *>> {
 
-    fun <R> then(
-        nextDecoder: Decoder<R>,
-        sideEffect: (R) -> Unit = {},
-    ): DecoderComposer<Unit> = Decoder {
-        decoder.decode(it)
-        sideEffect(nextDecoder.decode(it))
-    }.let(::DecoderComposer)
+    fun <R> then(nextDecoder: Decoder<R>, sideEffect: (R) -> Unit = {}): IntermediateDecoderComposer<D>
 
-    fun <R> then(
-        nextDecoder: () -> Decoder<R>,
-        sideEffect: (R) -> Unit = {},
-    ): DecoderComposer<Unit> = Decoder {
-        decoder.decode(it)
-        sideEffect(nextDecoder().decode(it))
-    }.let(::DecoderComposer)
+    fun <R> then(nextDecoder: () -> Decoder<R>, sideEffect: (R) -> Unit = {}): IntermediateDecoderComposer<D>
 
-    fun map(block: (InputStream) -> Unit): DecoderComposer<Unit> = Decoder {
-        decoder.decode(it)
-        block(it)
-    }.let(::DecoderComposer)
+    fun map(block: (InputStream) -> Unit): IntermediateDecoderComposer<D>
 
-    fun <R> finally(resultMapper: (T) -> R): DecoderComposer<R> = Decoder {
-        resultMapper(decoder.decode(it))
-    }.let(::DecoderComposer)
+    fun <R> finally(resultMapper: (T) -> R): DecoderComposer<R, D>
 
     fun <C, R> repeat(
         sizeReader: Decoder<Number> = IntDecoder(),
         collector: DecoderCollector<C, T, R>,
-    ): DecoderComposer<R> = Decoder { stream ->
-        val collection = collector.supplier()
-        val size = sizeReader.decode(stream).toInt()
+    ): DecoderComposer<R, D>
 
-        repeat(size) {
-            val element = decoder.decode(stream)
-            collector.accumulator(collection, element)
-        }
+    fun repeat(sizeReader: Decoder<Number> = IntDecoder()): DecoderComposer<List<T>, D>
 
-        collector.finisher(collection)
-    }.let(::DecoderComposer)
+    fun <C, R> repeat(amount: Number, collector: DecoderCollector<C, T, R>): DecoderComposer<R, D>
 
-    fun repeat(sizeReader: Decoder<Number> = IntDecoder()): DecoderComposer<List<T>> =
-        repeat(sizeReader, DecoderCollector.list())
+    fun skip(size: Int): IntermediateDecoderComposer<D>
 
-    fun <C, R> repeat(
-        amount: Number,
-        collector: DecoderCollector<C, T, R>,
-    ): DecoderComposer<R> = Decoder { stream ->
-        check(amount !is Float && amount !is Double) { "Amount must be of an integer type" }
-        val collection = collector.supplier()
+    fun repeat(amount: Number): DecoderComposer<List<T>, D> = repeat(amount, DecoderCollector.list())
 
-        for (i in 0 until amount.toLong()) {
-            val element = decoder.decode(stream)
-            collector.accumulator(collection, element)
-        }
-        collector.finisher(collection)
-    }.let(::DecoderComposer)
+    fun <C, R> repeatUntil(collector: DecoderCollector<C, T, R>, predicate: (T) -> Boolean): DecoderComposer<R, D>
 
-    fun skip(size: Int): DecoderComposer<Unit> = Decoder {
-        decoder.decode(it)
-        it.readNBytes(size)
-        Unit
-    }.let(::DecoderComposer)
+    fun repeatUntil(predicate: (T) -> Boolean): DecoderComposer<List<T>, D>
 
-    fun repeat(amount: Number): DecoderComposer<List<T>> = repeat(amount, DecoderCollector.list())
+    fun assemble(): Decoder<T>
 
-    fun <C, R> repeatUntil(
-        collector: DecoderCollector<C, T, R>,
-        predicate: (T) -> Boolean,
-    ): DecoderComposer<R> = Decoder {
-        val collection = collector.supplier()
-        while (true) {
-            val element = decoder.decode(it)
+    companion object {
 
-            if (!predicate(element)) break
+        fun <T> new(decoder: Decoder<T>): DecoderComposer<T, Decoder<T>> = TODO()//DecoderComposerImpl(decoder)
 
-            collector.accumulator(collection, element)
-        }
-        collector.finisher(collection)
-    }.let(::DecoderComposer)
+        fun <T> new(decoder: StreamDecoder<T>): DecoderComposer<T, Decoder<T>> = TODO()//DecoderComposerImpl(decoder)
 
-    fun repeatUntil(predicate: (T) -> Boolean): DecoderComposer<List<T>> =
-        repeatUntil(DecoderCollector.list(), predicate)
+    }
 
-    fun assemble(): Decoder<T> = decoder
+}
+
+interface IntermediateDecoderComposer<D : AbstractDecoder<*, *>> : DecoderComposer<Unit, D>
+
+
+
+fun main() {
+    var age = 0
+    lateinit var name: String
+
+    val c = IntDecoder()
+        .compose { age = it }
+        .then(UTF8StringDecoder()) { name = it }
+        .finally { "$name is $age years old" }
+        .assemble()
+
+    val n = "Khimmy".toByteArray()
+    val a = 25.toByte()
+    val input = byteArrayOf(0, 0, 0, a, *n)
+    c.decode(input.inputStream())
 }

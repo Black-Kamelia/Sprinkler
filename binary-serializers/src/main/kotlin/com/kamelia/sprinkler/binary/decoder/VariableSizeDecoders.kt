@@ -34,12 +34,12 @@ private class BatchPrefixedSizeVariableSizeDecoder<E>(
     private val extractor: ByteBuffer.() -> E,
 ) : Decoder<E> {
 
-    override fun decode(stream: InputStream): E {
-        val size = sizeDecoder.decode(stream)
+    override fun decode(input: InputStream): E {
+        val size = sizeDecoder.decode(input)
         checkDecoding(size > 0) { "Size must be positive, size: $size" }
 
         val array = ByteArray(size)
-        val readBytes = stream.read(array)
+        val readBytes = input.read(array)
         checkDecoding(readBytes <= size) { "Not enough bytes to read, expected: $size, read: $readBytes" }
 
         val buffer = ByteBuffer.wrap(array).order(endianness)
@@ -57,12 +57,12 @@ private class BatchEndMarkerVariableSizeDecoder<E>(
 
     private val endMarker = endMarker.toInt()
 
-    override fun decode(stream: InputStream): E {
+    override fun decode(input: InputStream): E {
         val list = mutableListOf<Byte>()
-        var byte = stream.read()
+        var byte = input.read()
         while (byte != endMarker && byte != -1) {
             list += byte.toByte()
-            byte = stream.read()
+            byte = input.read()
         }
         checkDecoding(byte != -1) { "End marker not found" }
 

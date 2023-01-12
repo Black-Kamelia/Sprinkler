@@ -3,7 +3,7 @@ package com.kamelia.sprinkler.binary.decoder.stream
 import java.nio.ByteBuffer
 
 
-sealed class NumberStreamDeserializer<E : Number>(private val byteSize: Byte) : AbstractStreamDeserializer<E>() {
+sealed class NumberStreamDecoder<E : Number>(private val byteSize: Byte) : AbstractStreamDecoder<E>() {
 
     init {
         require(byteSize > 0) { "Number of bytes must be greater than 0 got $byteSize" }
@@ -12,16 +12,16 @@ sealed class NumberStreamDeserializer<E : Number>(private val byteSize: Byte) : 
 
     private val buffer: ByteBuffer
 
-    override fun process(bytes: ByteBuffer): StreamDeserializer.State<E> {
+    override fun process(bytes: ByteBuffer): StreamDecoder.State<E> {
         bytes.flip()
         //buffer.transferTo(bytes)
         bytes.flip()
 
         state = if (buffer.remaining() == 0) {
             buffer.flip()
-            StreamDeserializer.State.Done { createObject() }
+            StreamDecoder.State.Done { createObject() }
         } else {
-            StreamDeserializer.State.Processing
+            StreamDecoder.State.Processing
         }
         return state
     }

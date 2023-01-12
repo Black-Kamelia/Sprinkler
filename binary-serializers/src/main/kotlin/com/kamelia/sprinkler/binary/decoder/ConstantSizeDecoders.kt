@@ -92,9 +92,9 @@ private class ConstantSizeDecoder<E>(
 
     private val buffer = ByteBuffer.allocate(byteSize)
 
-    override fun decode(stream: InputStream): E {
+    override fun decode(input: InputStream): E {
         buffer.clear()
-        stream.read(buffer.array())
+        input.read(buffer.array())
         checkDecoding(buffer.remaining() > 0) {
             "Not enough bytes to read, expected: $byteSize but got ${buffer.position()}"
         }
