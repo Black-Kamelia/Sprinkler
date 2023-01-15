@@ -4,7 +4,7 @@ import com.kamelia.sprinkler.binary.CommunicationException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
-class DecodingException(message: String) : CommunicationException(message)
+open class DecodingException(message: String) : CommunicationException(message)
 
 @OptIn(ExperimentalContracts::class)
 inline fun checkDecoding(value: Boolean, lazyMessage: () -> Any) {
@@ -16,3 +16,5 @@ inline fun checkDecoding(value: Boolean, lazyMessage: () -> Any) {
         throw DecodingException(message.toString())
     }
 }
+
+class MissingBytesException(message: String = "Not enough bytes to read.") : CommunicationException(message)

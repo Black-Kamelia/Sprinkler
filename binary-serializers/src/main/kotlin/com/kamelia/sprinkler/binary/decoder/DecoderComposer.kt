@@ -1,63 +1,45 @@
 package com.kamelia.sprinkler.binary.decoder
 
-import com.kamelia.sprinkler.binary.decoder.stream.StreamDecoder
 import java.io.InputStream
 
-interface DecoderComposer<T, D : AbstractDecoder<*, *>> {
+interface DecoderComposer<T> {
 
-    fun <R> then(nextDecoder: Decoder<R>, sideEffect: (R) -> Unit = {}): IntermediateDecoderComposer<D>
+    fun <R> then(nextDecoder: Decoder<R>, sideEffect: (R) -> Unit = {}): Intermediate
 
-    fun <R> then(nextDecoder: () -> Decoder<R>, sideEffect: (R) -> Unit = {}): IntermediateDecoderComposer<D>
+    fun <R> then(nextDecoder: () -> Decoder<R>, sideEffect: (R) -> Unit = {}): Intermediate
 
-    fun map(block: (InputStream) -> Unit): IntermediateDecoderComposer<D>
+    fun <R> map(block: (T) -> Decoder<R>): DecoderComposer<R>
 
-    fun <R> finally(resultMapper: (T) -> R): DecoderComposer<R, D>
+    @JvmName("andFinally")
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    fun <R> finally(resultMapper: (T) -> R): DecoderComposer<R>
 
     fun <C, R> repeat(
         sizeReader: Decoder<Number> = IntDecoder(),
         collector: DecoderCollector<C, T, R>,
-    ): DecoderComposer<R, D>
+    ): DecoderComposer<R>
 
-    fun repeat(sizeReader: Decoder<Number> = IntDecoder()): DecoderComposer<List<T>, D>
+    fun repeat(sizeReader: Decoder<Number> = IntDecoder()): DecoderComposer<List<T>>
 
-    fun <C, R> repeat(amount: Number, collector: DecoderCollector<C, T, R>): DecoderComposer<R, D>
+    fun <C, R> repeat(amount: Number, collector: DecoderCollector<C, T, R>): DecoderComposer<R>
 
-    fun skip(size: Int): IntermediateDecoderComposer<D>
+    fun skip(size: Int): Intermediate
 
-    fun repeat(amount: Number): DecoderComposer<List<T>, D> = repeat(amount, DecoderCollector.list())
+    fun repeat(amount: Int): DecoderComposer<List<T>> = repeat(amount, DecoderCollector.toList())
 
-    fun <C, R> repeatUntil(collector: DecoderCollector<C, T, R>, predicate: (T) -> Boolean): DecoderComposer<R, D>
+    fun <C, R> repeatUntil(collector: DecoderCollector<C, T, R>, predicate: (T) -> Boolean): DecoderComposer<R>
 
-    fun repeatUntil(predicate: (T) -> Boolean): DecoderComposer<List<T>, D>
+    fun repeatUntil(predicate: (T) -> Boolean): DecoderComposer<List<T>>
 
     fun assemble(): Decoder<T>
 
+    interface Intermediate : DecoderComposer<Unit>
+
     companion object {
 
-        fun <T> new(decoder: Decoder<T>): DecoderComposer<T, Decoder<T>> = TODO()//DecoderComposerImpl(decoder)
-
-        fun <T> new(decoder: StreamDecoder<T>): DecoderComposer<T, Decoder<T>> = TODO()//DecoderComposerImpl(decoder)
+        fun <T> new(decoder: Decoder<T>): DecoderComposer<T> = TODO()//DecoderComposerImpl(decoder)
 
     }
 
 }
 
-interface IntermediateDecoderComposer<D : AbstractDecoder<*, *>> : DecoderComposer<Unit, D>
-
-
-
-fun main() {
-    var age = 0
-    lateinit var name: String
-
-    val c = IntDecoder()
-        .compose { age = it }
-        .then(UTF8StringDecoder()) { name = it }
-        .finally { "$name is $age years old" }
-        .assemble()
-
-    val n = "Khimmy".toByteArray()
-    val a = 25.toByte()
-    val input = byteArrayOf(0, 0, 0, a, *n)
-    c.decode(input.inputStream())
-}
