@@ -1,7 +1,7 @@
 package com.kamelia.sprinkler.binary.decoder
 
 class VariableSizePrefixedSizeDecoder<E> @JvmOverloads constructor(
-    private val sizeDecoder: Decoder<Int> = IntDecoder(),
+    private val sizeDecoder: Decoder<Number> = IntDecoder(),
     private val endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN,
     private val extractor: ByteArray.(ByteEndianness, Int) -> E,
 ) : Decoder<E> {
@@ -24,13 +24,13 @@ class VariableSizePrefixedSizeDecoder<E> @JvmOverloads constructor(
     private fun decodeSize(input: DecoderDataInput): Decoder.State<E>? {
         when (val sizeState = sizeDecoder.decode(input)) {
             is Decoder.State.Done -> {
-                val size = sizeState.value
+                val size = sizeState.value.toInt()
                 if (size < 0) {
                     return Decoder.State.Error(IllegalStateException("Size must be positive, but was $size"))
                 }
                 bytesToRead = size
             }
-            else -> @Suppress("UNCHECKED_CAST") return sizeState as Decoder.State<E>
+            else -> return sizeState.mapEmptyState()
         }
 
         if (bytesToRead == 0) { // short circuit for empty array
@@ -47,17 +47,19 @@ class VariableSizePrefixedSizeDecoder<E> @JvmOverloads constructor(
 
     private fun decodeContent(input: DecoderDataInput): Decoder.State<E> {
         val array = array!!
-        if (index < array.size) {
+        if (index < bytesToRead) {
             index += input.read(array, index, bytesToRead - index)
         }
 
-        return if (index == array.size) {
+        return if (index == bytesToRead) {
             val finalSize = bytesToRead
             index = 0
             bytesToRead = -1
             Decoder.State.Done(array.extractor(endianness, finalSize))
         } else {
-            Decoder.State.Processing
+            Decoder.State.Processing(
+                "(${VariableSizePrefixedSizeDecoder::class.simpleName}) $index / $bytesToRead bytes read."
+            )
         }
     }
 

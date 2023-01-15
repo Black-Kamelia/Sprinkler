@@ -16,9 +16,11 @@ class ConstantSizeDecoder<E> @JvmOverloads constructor(
     override fun decode(input: DecoderDataInput): Decoder.State<E> {
         index += input.read(array, index)
         return if (index == byteSize) {
-            Decoder.State.Done(array.extractor(endianness)).also { reset() }
+            Decoder.State.Done(array.extractor(endianness)).also { index = 0 }
         } else {
-            Decoder.State.Processing
+            Decoder.State.Processing(
+                "(${ConstantSizeDecoder::class.simpleName}) $index / $byteSize bytes read."
+            )
         }
     }
 

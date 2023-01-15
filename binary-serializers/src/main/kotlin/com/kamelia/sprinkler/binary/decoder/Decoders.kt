@@ -68,7 +68,7 @@ fun ASCIIStringDecoder(kind: VariableSizeDecoderKind = VariableSizeDecoderKind.P
 @JvmOverloads
 fun StringDecoder(
     charset: Charset = Charsets.UTF_8,
-    sizeDecoder: Decoder<Int> = IntDecoder(),
+    sizeDecoder: Decoder<Number> = IntDecoder(),
 ): Decoder<String> = VariableSizePrefixedSizeDecoder(sizeDecoder) { _, length -> readString(charset, length) }
 
 @JvmOverloads

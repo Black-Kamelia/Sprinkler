@@ -13,7 +13,9 @@ class VariableSizeEndMarkerDecoder<E> @JvmOverloads constructor(
     override fun decode(input: DecoderDataInput): Decoder.State<E> {
         while (true) {
             when (val byte = input.read()) {
-                -1 -> return Decoder.State.Processing
+                -1 -> return Decoder.State.Processing(
+                    "(${VariableSizeEndMarkerDecoder::class.simpleName}) missing end marker ($index bytes read)."
+                )
                 endMarker -> break
                 else -> addToArray(byte)
             }

@@ -2,8 +2,6 @@ package com.kamelia.sprinkler.binary.decoder
 
 import java.io.InputStream
 import java.nio.ByteBuffer
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
 
 
 interface Decoder<out T> {
@@ -13,6 +11,8 @@ interface Decoder<out T> {
     fun decode(input: InputStream): State<T> = decode(DecoderDataInput.from(input))
 
     fun decode(input: ByteBuffer): State<T> = decode(DecoderDataInput.from(input))
+
+    fun decode(input: ByteArray): State<T> = decode(DecoderDataInput.from(input))
 
     fun forceDecode(input: DecoderDataInput): T = when (val state = decode(input)) {
         is State.Done -> state.value
@@ -24,49 +24,57 @@ interface Decoder<out T> {
 
     fun forceDecode(input: ByteBuffer): T = forceDecode(DecoderDataInput.from(input))
 
+    fun forceDecode(input: ByteArray): T = forceDecode(DecoderDataInput.from(input))
+
     fun reset()
 
-    fun compose(sideEffect: (T) -> Unit): DecoderComposer.Intermediate = DecoderComposer
-        .new(NoOpDecoder)
-        .then(this, sideEffect)
+    fun compose(): DecoderComposer<T> = DecoderComposer(this)
 
     sealed class State<out T> {
 
-        class Error(val error: Throwable) : State<Nothing>()
+        class Error(val error: Throwable) : State<Nothing>() {
 
-        object Processing : State<Nothing>()
+            override fun toString(): String = "Error($error)"
 
-        class Done<T>(val value: T) : State<T>()
+        }
+
+        class Processing(val reason: String = "Missing bytes") : State<Nothing>() {
+
+            override fun toString(): String = "Processing: $reason"
+
+        }
+
+        data class Done<T>(val value: T) : State<T>()
 
         inline fun <R> map(block: (T) -> R): State<R> = when (this) {
             is Done -> Done(block(value))
-            else -> @Suppress("UNCHECKED_CAST") (this as State<R>)
+            else -> mapEmptyState()
         }
 
-        inline fun <R> mapValueOrNull(action: (T) -> R): R? =
-            if (this is Done) {
-                action(value)
-            } else {
-                null
-            }
-
-        @OptIn(ExperimentalContracts::class)
-        fun isDone(): Boolean {
-            contract {
-                returns(true) implies (this@State is Done<T>)
-            }
-            return this is Done<T>
+        fun <R> mapEmptyState(): State<R> = if (this is Done) {
+            throw IllegalStateException("Cannot map change type of Done state ($this).")
+        } else {
+            @Suppress("UNCHECKED_CAST")
+            this as State<R>
         }
 
-        @OptIn(ExperimentalContracts::class)
-        fun isError(): Boolean {
-            contract {
-                returns(true) implies (this@State is Error)
-            }
-            return this is Error
-        }
+        fun isDone(): Boolean = this is Done<T>
 
         fun isNotDone(): Boolean = !isDone()
+
+        fun get(): T {
+            if (this !is Done) {
+                throw IllegalStateException("Cannot get value from $this.")
+            }
+            return value
+        }
+
+        inline fun ifDone(block: (T) -> Unit): State<T> {
+            if (this is Done) {
+                block(value)
+            }
+            return this
+        }
     }
 
 }
