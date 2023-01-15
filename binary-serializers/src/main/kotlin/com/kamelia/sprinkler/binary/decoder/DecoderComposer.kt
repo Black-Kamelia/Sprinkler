@@ -1,6 +1,8 @@
 package com.kamelia.sprinkler.binary.decoder
 
-class DecoderComposer<out T>(private val inner: Decoder<T>) {
+class DecoderComposer<out T>(
+    private val inner: Decoder<T>,
+) {
 
     fun <R> map(block: (T) -> Decoder<R>): DecoderComposer<R> = object : Decoder<R> {
         private var nextReader: Decoder<R>? = null

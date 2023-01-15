@@ -14,18 +14,6 @@ interface Decoder<out T> {
 
     fun decode(input: ByteArray): State<T> = decode(DecoderDataInput.from(input))
 
-    fun forceDecode(input: DecoderDataInput): T = when (val state = decode(input)) {
-        is State.Done -> state.value
-        is State.Error -> throw state.error
-        is State.Processing -> throw MissingBytesException()
-    }
-
-    fun forceDecode(input: InputStream): T = forceDecode(DecoderDataInput.from(input))
-
-    fun forceDecode(input: ByteBuffer): T = forceDecode(DecoderDataInput.from(input))
-
-    fun forceDecode(input: ByteArray): T = forceDecode(DecoderDataInput.from(input))
-
     fun reset()
 
     fun compose(): DecoderComposer<T> = DecoderComposer(this)
@@ -62,11 +50,10 @@ interface Decoder<out T> {
 
         fun isNotDone(): Boolean = !isDone()
 
-        fun get(): T {
-            if (this !is Done) {
-                throw IllegalStateException("Cannot get value from $this.")
-            }
-            return value
+        fun get(): T = when (this) {
+            is Done -> value
+            is Processing -> throw MissingBytesException(reason)
+            is Error -> throw error
         }
 
         inline fun ifDone(block: (T) -> Unit): State<T> {
