@@ -1,5 +1,7 @@
 package com.kamelia.sprinkler.binary.decoder
 
+import com.kamelia.sprinkler.binary.common.ByteEndianness
+
 class ConstantSizeDecoder<E> @JvmOverloads constructor(
     private val byteSize: Int,
     private val endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN,

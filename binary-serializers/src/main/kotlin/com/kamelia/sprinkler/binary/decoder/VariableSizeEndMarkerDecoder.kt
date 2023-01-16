@@ -1,23 +1,36 @@
 package com.kamelia.sprinkler.binary.decoder
 
+import com.kamelia.sprinkler.binary.common.ByteEndianness
+
 class VariableSizeEndMarkerDecoder<E> @JvmOverloads constructor(
-    endMarker: Byte,
+    private val endMarker: ByteArray,
+    private val elementsSize: Int,
     private val endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN,
     private val extractor: ByteArray.(ByteEndianness, Int) -> E,
 ) : Decoder<E> {
 
-    private val endMarker = endMarker.toInt()
+    init {
+        require(elementsSize > 0) { "elementsSize must be greater than 0 ($elementsSize)" }
+        require(endMarker.size == elementsSize) {
+            "endMarker must be the same size as elementsSize, expected ${elementsSize}, got ${endMarker.size}"
+        }
+    }
+
     private var array: ByteArray? = null
     private var index = 0
+    private val inner = ConstantSizeDecoder(elementsSize, endianness) { this.copyOf() }
 
     override fun decode(input: DecoderDataInput): Decoder.State<E> {
         while (true) {
-            when (val byte = input.read()) {
-                -1 -> return Decoder.State.Processing(
-                    "(${VariableSizeEndMarkerDecoder::class.simpleName}) missing end marker ($index bytes read)."
-                )
-                endMarker -> break
-                else -> addToArray(byte)
+            when (val state = inner.decode(input)) {
+                is Decoder.State.Done -> {
+                    val element = state.value
+                    if (endMarker.contentEquals(element)) {
+                        break
+                    }
+                    addToArray(element)
+                }
+                else -> return state.mapEmptyState()
             }
         }
 
@@ -31,14 +44,14 @@ class VariableSizeEndMarkerDecoder<E> @JvmOverloads constructor(
         array = null
     }
 
-    private fun addToArray(byte: Int) {
+    private fun addToArray(bytes: ByteArray) {
         val current = array!!
         val array = when {
-            this.array == null -> replaceArray { ByteArray(16) }
+            this.array == null -> replaceArray { ByteArray(elementsSize) }
             index == current.size -> replaceArray { current.copyOf(current.size * 2) }
             else -> current
         }
-        array[index] = byte.toByte()
+        bytes.copyInto(array, index * elementsSize)
         index++
     }
 

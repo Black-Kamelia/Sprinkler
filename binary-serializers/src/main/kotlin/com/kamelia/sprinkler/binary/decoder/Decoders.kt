@@ -2,7 +2,9 @@
 
 package com.kamelia.sprinkler.binary.decoder
 
+import com.kamelia.sprinkler.binary.common.ByteEndianness
 import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 
 //region Primitive Decoders
 
@@ -74,8 +76,11 @@ fun StringDecoder(
 @JvmOverloads
 fun StringDecoderEM(
     charset: Charset = Charsets.UTF_8,
-    endMarker: Byte = 0b0,
-): Decoder<String> = VariableSizeEndMarkerDecoder(endMarker) { _, length -> readString(charset, length) }
+    endMarker: ByteArray = byteArrayOf(0),
+    bytesSize: Int = 1,
+): Decoder<String> = VariableSizeEndMarkerDecoder(endMarker, bytesSize) { _, length ->
+    readString(charset, length)
+}
 
 //endregion
 

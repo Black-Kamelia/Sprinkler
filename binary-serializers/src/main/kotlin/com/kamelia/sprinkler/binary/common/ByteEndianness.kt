@@ -1,4 +1,4 @@
-package com.kamelia.sprinkler.binary.decoder
+package com.kamelia.sprinkler.binary.common
 
 enum class ByteEndianness {
     BIG_ENDIAN,

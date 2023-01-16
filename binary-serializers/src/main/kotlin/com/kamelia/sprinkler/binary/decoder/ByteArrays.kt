@@ -2,6 +2,7 @@
 
 package com.kamelia.sprinkler.binary.decoder
 
+import com.kamelia.sprinkler.binary.common.ByteEndianness
 import java.nio.charset.Charset
 
 fun ByteArray.readByte(): Byte {
