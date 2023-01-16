@@ -1,7 +1,7 @@
 <div align="center">
 
-![Sprinkler logo](img/Sprinkler_light.svg#gh-light-mode-only)
-![Sprinkler logo](img/Sprinkler_dark.svg#gh-dark-mode-only)
+![Sprinkler logo](assets/img/Sprinkler_light.svg#gh-light-mode-only)
+![Sprinkler logo](assets/img/Sprinkler_dark.svg#gh-dark-mode-only)
 
 <h3><i>A non-intrusive set of extensions sprinkled over the Kotlin standard library.</i></h3>
 
