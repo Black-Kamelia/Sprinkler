@@ -1,5 +1,7 @@
 package com.kamelia.sprinkler.binary.decoder
 
+import com.kamelia.sprinkler.binary.decoder.composer.DecoderComposer
+import com.kamelia.sprinkler.binary.decoder.composer.DecoderComposer1
 import java.io.InputStream
 import java.nio.ByteBuffer
 
@@ -16,7 +18,7 @@ interface Decoder<out T> {
 
     fun reset()
 
-    fun compose(): DecoderComposer<T> = DecoderComposer(this)
+    fun compose(): DecoderComposer1<@UnsafeVariance T> = DecoderComposer1(this)
 
     sealed class State<out T> {
 
