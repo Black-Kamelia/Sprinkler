@@ -1,135 +1,278 @@
+@file:HideFromJava
+
 package com.kamelia.sprinkler.binary.decoder.composer
 
-import com.kamelia.sprinkler.binary.decoder.ByteDecoder
 import com.kamelia.sprinkler.binary.decoder.Decoder
-import com.kamelia.sprinkler.binary.decoder.StringDecoder
+import com.zwendo.restrikt.annotation.HideFromJava
 
 
-class DecoderComposer1<T>(inner: Decoder<T>) : DecoderComposer<T, DecoderComposer1<*>>(inner) {
+sealed interface Context0
 
-    override fun <R> then(nextDecoder: Decoder<R>): DecoderComposer2<T, R> =
-        DecoderComposer2(thenDecoder(nextDecoder), this)
-
-    override fun <R> then(nextDecoder: () -> Decoder<R>): DecoderComposer2<T, R> =
-        DecoderComposer2(thenDecoder(nextDecoder), this)
-
-    override fun <R> factory(decoder: Decoder<R>): DecoderComposer1<R> = DecoderComposer1(decoder)
-
-    fun <R> finally(resultMapper: (T) -> R): DecoderComposer1<R> = finallyDecoder(resultMapper)
-        .let(::DecoderComposer1)
-
+fun <T, R> DecoderComposer<T, Context0>.then(nextDecoder: Decoder<R>): DecoderComposer<R, Context1<T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
 }
 
-class DecoderComposer2<P1, T>(
-    inner: Decoder<T>,
-    previous: DecoderComposer<*, *>,
-) : DecoderComposer<T, DecoderComposer2<*, *>>(inner, previous) {
-
-    override fun <R> then(nextDecoder: Decoder<R>): DecoderComposer3<P1, T, R> =
-        DecoderComposer3(thenDecoder(nextDecoder), this)
-
-    override fun <R> then(nextDecoder: () -> Decoder<R>): DecoderComposer3<P1, T, R> =
-        DecoderComposer3(thenDecoder(nextDecoder), this)
-
-    override fun <R> factory(decoder: Decoder<R>): DecoderComposer2<P1, R> = DecoderComposer2(decoder, this)
-
-    fun <R> finally(resultMapper: (P1, T) -> R): DecoderComposer1<R> = finallyDecoder {
-        @Suppress("UNCHECKED_CAST")
-        resultMapper(next() as P1, it)
-    }.let(::DecoderComposer1)
-
+fun <T, R> DecoderComposer<T, Context0>.then(nextDecoder: () -> Decoder<R>): DecoderComposer<R, Context1<T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
 }
 
-class DecoderComposer3<P1, P2, T>(
-    inner: Decoder<T>,
-    previous: DecoderComposer<*, *>,
-) : DecoderComposer<T, DecoderComposer3<*, *, *>>(inner, previous) {
-
-    override fun <R> then(nextDecoder: Decoder<R>): DecoderComposer4<P1, P2, T, R> =
-        DecoderComposer4(thenDecoder(nextDecoder), this)
-
-    override fun <R> then(nextDecoder: () -> Decoder<R>): DecoderComposer4<P1, P2, T, R> =
-        DecoderComposer4(thenDecoder(nextDecoder), this)
-
-    override fun <R> factory(decoder: Decoder<R>): DecoderComposer3<P1, P2, R> = DecoderComposer3(decoder, this)
-
-    fun <R> finally(resultMapper: (P1, P2, T) -> R): DecoderComposer1<R> = finallyDecoder {
-        @Suppress("UNCHECKED_CAST")
-        resultMapper(next() as P1, next() as P2, it)
-    }.let(::DecoderComposer1)
-
+fun <T, R> DecoderComposer<T, Context0>.finally(block: (T) -> R): DecoderComposer<R, Context0> {
+    val next = DecoderComposerUtils.finallyDecoder(this, block)
+    return DecoderComposer.createFrom(this, next)
 }
 
-class DecoderComposer4<P1, P2, P3, T>(
-    inner: Decoder<T>,
-    previous: DecoderComposer<*, *>,
-) : DecoderComposer<T, DecoderComposer4<*, *, *, *>>(inner, previous) {
+sealed interface Context1<T1>
 
-    override fun <R> then(nextDecoder: Decoder<R>): DecoderComposer5<P1, P2, P3, T, R> =
-        DecoderComposer5(thenDecoder(nextDecoder), this)
-
-    override fun <R> then(nextDecoder: () -> Decoder<R>): DecoderComposer5<P1, P2, P3, T, R> =
-        DecoderComposer5(thenDecoder(nextDecoder), this)
-
-    override fun <R> factory(decoder: Decoder<R>): DecoderComposer4<P1, P2, P3, R> = DecoderComposer4(decoder, this)
-
-    fun <R> finally(resultMapper: (P1, P2, P3, T) -> R): DecoderComposer1<R> = finallyDecoder {
-        @Suppress("UNCHECKED_CAST")
-        resultMapper(next() as P1, next() as P2, next() as P3, it)
-    }.let(::DecoderComposer1)
-
+@JvmName("then1")
+fun <T, T1, R> DecoderComposer<T, Context1<T1>>.then(nextDecoder: Decoder<R>): DecoderComposer<R, Context2<T1, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
 }
 
-class DecoderComposer5<P1, P2, P3, P4, T>(
-    inner: Decoder<T>,
-    previous: DecoderComposer<*, *>,
-) : DecoderComposer<T, DecoderComposer5<*, *, *, *, *>>(inner, previous) {
-
-    override fun <R> then(nextDecoder: Decoder<R>) = TODO()
-
-    override fun <R> then(nextDecoder: () -> Decoder<R>) = TODO()
-
-    override fun <R> factory(decoder: Decoder<R>): DecoderComposer5<P1, P2, P3, P4, R> = DecoderComposer5(decoder, this)
-
-    fun <R> finally(resultMapper: (P1, P2, P3, P4, T) -> R): DecoderComposer1<R> = finallyDecoder {
-        @Suppress("UNCHECKED_CAST")
-        resultMapper(next() as P1, next() as P2, next() as P3, next() as P4, it)
-    }.let(::DecoderComposer1)
-
+@JvmName("then1")
+fun <T, T1, R> DecoderComposer<T, Context1<T1>>.then(
+    nextDecoder: () -> Decoder<R>,
+): DecoderComposer<R, Context2<T1, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
 }
 
-data class Person(val firstname: String, val lastname: String, val age: Byte, val height: Byte)
-
-fun data(firstname: String, lastname: String, age: Byte, height: Byte): ByteArray {
-    val fn = firstname.toByteArray()
-    val ln = lastname.toByteArray()
-    return byteArrayOf(
-        fn.size.toByte(),
-        *fn,
-        ln.size.toByte(),
-        *ln,
-        age,
-        height
-    )
+@JvmName("finally1")
+fun <T, T1, R> DecoderComposer<T, Context1<T>>.finally(block: (T1, T) -> R): DecoderComposer<R, Context0> {
+    val next = DecoderComposerUtils.finallyDecoder(this) {
+        DecoderComposerUtils.ContextIterator(this).run {
+            block(next(), it)
+        }
+    }
+    return DecoderComposer.createFrom(this, next)
 }
 
-fun main() {
-    val byteDecoder = ByteDecoder()
-    val utf8Decoder = StringDecoder(sizeDecoder = byteDecoder)
-    val d = utf8Decoder.compose()
-        .then(utf8Decoder)
-        .then(byteDecoder)
-        .then(byteDecoder)
-        .finally(::Person)
-        .repeat()
-        .assemble()
 
-    val data = byteArrayOf(
-        0, 0, 0, 2,
-        *data("John", "Doe", 30, 120),
-        *data("Jane", "Doe", 25, 110)
-    )
+sealed interface Context2<T1, T2>
 
-    val person = d.decode(data).get()
-    println(person)
+@JvmName("then2")
+fun <T, T1, T2, R> DecoderComposer<T, Context2<T1, T2>>.then(
+    nextDecoder: Decoder<R>,
+): DecoderComposer<R, Context3<T1, T2, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
 }
+
+@JvmName("then2")
+fun <T, T1, T2, R> DecoderComposer<T, Context2<T1, T2>>.then(
+    nextDecoder: () -> Decoder<R>,
+): DecoderComposer<R, Context3<T1, T2, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("finally2")
+fun <T, T1, T2, R> DecoderComposer<T, Context2<T1, T2>>.finally(block: (T1, T2, T) -> R): DecoderComposer<R, Context0> {
+    val next = DecoderComposerUtils.finallyDecoder(this) {
+        DecoderComposerUtils.ContextIterator(this).run {
+            block(next(), next(), it)
+        }
+    }
+    return DecoderComposer.createFrom(this, next)
+}
+
+
+sealed interface Context3<T1, T2, T3>
+
+@JvmName("then3")
+fun <T, T1, T2, T3, R> DecoderComposer<T, Context3<T1, T2, T3>>.then(
+    nextDecoder: Decoder<R>,
+): DecoderComposer<R, Context4<T1, T2, T3, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("then3")
+fun <T, T1, T2, T3, R> DecoderComposer<T, Context3<T1, T2, T3>>.then(
+    nextDecoder: () -> Decoder<R>,
+): DecoderComposer<R, Context4<T1, T2, T3, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("finally3")
+fun <T, T1, T2, T3, R> DecoderComposer<T, Context3<T1, T2, T3>>.finally(
+    block: (T1, T2, T3, T) -> R,
+): DecoderComposer<R, Context0> {
+    val next = DecoderComposerUtils.finallyDecoder(this) {
+        DecoderComposerUtils.ContextIterator(this).run {
+            block(next(), next(), next(), it)
+        }
+    }
+    return DecoderComposer.createFrom(this, next)
+}
+
+
+sealed interface Context4<T1, T2, T3, T4>
+
+@JvmName("then4")
+fun <T, T1, T2, T3, T4, R> DecoderComposer<T, Context4<T1, T2, T3, T4>>.then(
+    nextDecoder: Decoder<R>,
+): DecoderComposer<R, Context5<T1, T2, T3, T4, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("then4")
+fun <T, T1, T2, T3, T4, R> DecoderComposer<T, Context4<T1, T2, T3, T4>>.then(
+    nextDecoder: () -> Decoder<R>,
+): DecoderComposer<R, Context5<T1, T2, T3, T4, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("finally4")
+fun <T, T1, T2, T3, T4, R> DecoderComposer<T, Context4<T1, T2, T3, T4>>.finally(
+    block: (T1, T2, T3, T4, T) -> R,
+): DecoderComposer<R, Context0> {
+    val next = DecoderComposerUtils.finallyDecoder(this) {
+        DecoderComposerUtils.ContextIterator(this).run {
+            block(next(), next(), next(), next(), it)
+        }
+    }
+    return DecoderComposer.createFrom(this, next)
+}
+
+
+sealed interface Context5<T1, T2, T3, T4, T5>
+
+@JvmName("then5")
+fun <T, T1, T2, T3, T4, T5, R> DecoderComposer<T, Context5<T1, T2, T3, T4, T5>>.then(
+    nextDecoder: Decoder<R>,
+): DecoderComposer<R, Context6<T1, T2, T3, T4, T5, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("then5")
+fun <T, T1, T2, T3, T4, T5, R> DecoderComposer<T, Context5<T1, T2, T3, T4, T5>>.then(
+    nextDecoder: () -> Decoder<R>,
+): DecoderComposer<R, Context6<T1, T2, T3, T4, T5, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("finally5")
+fun <T, T1, T2, T3, T4, T5, R> DecoderComposer<T, Context5<T1, T2, T3, T4, T5>>.finally(
+    block: (T1, T2, T3, T4, T5, T) -> R,
+): DecoderComposer<R, Context0> {
+    val next = DecoderComposerUtils.finallyDecoder(this) {
+        DecoderComposerUtils.ContextIterator(this).run {
+            block(next(), next(), next(), next(), next(), it)
+        }
+    }
+    return DecoderComposer.createFrom(this, next)
+}
+
+
+sealed interface Context6<T1, T2, T3, T4, T5, T6>
+
+@JvmName("then6")
+fun <T, T1, T2, T3, T4, T5, T6, R> DecoderComposer<T, Context6<T1, T2, T3, T4, T5, T6>>.then(
+    nextDecoder: Decoder<R>,
+): DecoderComposer<R, Context7<T1, T2, T3, T4, T5, T6, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("then6")
+fun <T, T1, T2, T3, T4, T5, T6, R> DecoderComposer<T, Context6<T1, T2, T3, T4, T5, T6>>.then(
+    nextDecoder: () -> Decoder<R>,
+): DecoderComposer<R, Context7<T1, T2, T3, T4, T5, T6, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("finally6")
+fun <T, T1, T2, T3, T4, T5, T6, R> DecoderComposer<T, Context6<T1, T2, T3, T4, T5, T6>>.finally(
+    block: (T1, T2, T3, T4, T5, T6, T) -> R,
+): DecoderComposer<R, Context0> {
+    val next = DecoderComposerUtils.finallyDecoder(this) {
+        DecoderComposerUtils.ContextIterator(this).run {
+            block(next(), next(), next(), next(), next(), next(), it)
+        }
+    }
+    return DecoderComposer.createFrom(this, next)
+}
+
+
+sealed interface Context7<T1, T2, T3, T4, T5, T6, T7>
+
+@JvmName("then7")
+fun <T, T1, T2, T3, T4, T5, T6, T7, R> DecoderComposer<T, Context7<T1, T2, T3, T4, T5, T6, T7>>.then(
+    nextDecoder: Decoder<R>,
+): DecoderComposer<R, Context8<T1, T2, T3, T4, T5, T6, T7, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("then7")
+fun <T, T1, T2, T3, T4, T5, T6, T7, R> DecoderComposer<T, Context7<T1, T2, T3, T4, T5, T6, T7>>.then(
+    nextDecoder: () -> Decoder<R>,
+): DecoderComposer<R, Context8<T1, T2, T3, T4, T5, T6, T7, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("finally7")
+fun <T, T1, T2, T3, T4, T5, T6, T7, R> DecoderComposer<T, Context7<T1, T2, T3, T4, T5, T6, T7>>.finally(
+    block: (T1, T2, T3, T4, T5, T6, T7, T) -> R,
+): DecoderComposer<R, Context0> {
+    val next = DecoderComposerUtils.finallyDecoder(this) {
+        DecoderComposerUtils.ContextIterator(this).run {
+            block(next(), next(), next(), next(), next(), next(), next(), it)
+        }
+    }
+    return DecoderComposer.createFrom(this, next)
+}
+
+sealed interface Context8<T1, T2, T3, T4, T5, T6, T7, T8>
+
+@JvmName("then8")
+fun <T, T1, T2, T3, T4, T5, T6, T7, T8, R> DecoderComposer<T, Context8<T1, T2, T3, T4, T5, T6, T7, T8>>.then(
+    nextDecoder: Decoder<R>,
+): DecoderComposer<R, Context9<T1, T2, T3, T4, T5, T6, T7, T8, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("then8")
+fun <T, T1, T2, T3, T4, T5, T6, T7, T8, R> DecoderComposer<T, Context8<T1, T2, T3, T4, T5, T6, T7, T8>>.then(
+    nextDecoder: () -> Decoder<R>,
+): DecoderComposer<R, Context9<T1, T2, T3, T4, T5, T6, T7, T8, T>> {
+    val next = DecoderComposerUtils.thenDecoder(this, nextDecoder)
+    return DecoderComposer.createFrom(this, next)
+}
+
+@JvmName("finally8")
+fun <T, T1, T2, T3, T4, T5, T6, T7, T8, R> DecoderComposer<T, Context8<T1, T2, T3, T4, T5, T6, T7, T8>>.finally(
+    block: (T1, T2, T3, T4, T5, T6, T7, T8, T) -> R,
+): DecoderComposer<R, Context0> {
+    val next = DecoderComposerUtils.finallyDecoder(this) {
+        DecoderComposerUtils.ContextIterator(this).run {
+            block(next(), next(), next(), next(), next(), next(), next(), next(), it)
+        }
+    }
+    return DecoderComposer.createFrom(this, next)
+}
+
+sealed interface Context9<T1, T2, T3, T4, T5, T6, T7, T8, T9>
+
+sealed interface Context10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>
+
+sealed interface Context11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>
+
+sealed interface Context12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>
+
+sealed interface Context13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>
+
+sealed interface Context14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>
+
+sealed interface Context15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>

@@ -2,241 +2,63 @@ package com.kamelia.sprinkler.binary.decoder.composer
 
 import com.kamelia.sprinkler.binary.decoder.Decoder
 import com.kamelia.sprinkler.binary.decoder.DecoderCollector
-import com.kamelia.sprinkler.binary.decoder.DecoderDataInput
 import com.kamelia.sprinkler.binary.decoder.IntDecoder
-import com.zwendo.restrikt.annotation.PackagePrivate
-import java.util.*
-import kotlin.collections.ArrayDeque
+import com.zwendo.restrikt.annotation.HideFromJava
 
-abstract class DecoderComposer<out T, D : DecoderComposer<*, D>> private constructor(
-    private val inner: Decoder<T>,
-    private val context: ArrayDeque<Any>,
-) {
+sealed interface DecoderComposer<out T, D> {
 
-    constructor(inner: Decoder<T>, previous: DecoderComposer<*, *>) : this(inner, previous.context)
+    fun <R> map(block: (T) -> Decoder<R>): DecoderComposer<R, D>
 
-    @PackagePrivate
-    internal constructor(inner: Decoder<T>) : this(inner, ArrayDeque())
+    fun <R> andFinally(block: (T) -> R): DecoderComposer<R, D>
 
-    fun <R> map(block: (T) -> Decoder<R>): DecoderComposer<R, D> = mapDecoder(block).let(::factory)
+    fun <C, R> repeat(collector: DecoderCollector<C, T, R>, sizeDecoder: Decoder<Number>): DecoderComposer<R, D>
 
-    abstract fun <R> then(nextDecoder: Decoder<R>): DecoderComposer<R, *>
+    fun <C, R> repeat(collector: DecoderCollector<C, T, R>): DecoderComposer<R, D> = repeat(collector, IntDecoder())
 
-    abstract fun <R> then(nextDecoder: () -> Decoder<R>): DecoderComposer<R, *>
-
-    @JvmOverloads
-    fun <C, R> repeat(
-        collector: DecoderCollector<C, T, R>,
-        sizeDecoder: Decoder<Number> = IntDecoder(),
-    ): DecoderComposer<R, D> = object : RepeatDecoder<C, T, R>(inner, collector), Decoder<R> {
-
-        override fun decode(input: DecoderDataInput): Decoder.State<R> {
-            if (size == -1) {
-                when (val state = sizeDecoder.decode(input)) {
-                    is Decoder.State.Done -> init(state.value.toInt())
-                    else -> return state.mapEmptyState()
-                }
-            }
-
-            return accumulate(input)
-        }
-
-        override fun reset() {
-            inner.reset()
-            sizeDecoder.reset()
-            clear()
-        }
-
-    }.let(::factory)
-
-    @JvmOverloads
-    fun repeat(sizeDecoder: Decoder<Number> = IntDecoder()): DecoderComposer<List<T>, D> =
+    fun repeat(sizeDecoder: Decoder<Number>): DecoderComposer<List<T>, D> =
         repeat(DecoderCollector.toList(), sizeDecoder)
+
+    fun repeat(): DecoderComposer<List<T>, D> = repeat(IntDecoder())
 
     fun <C, R> repeat(
         times: Int,
         collector: DecoderCollector<C, T, R>,
-    ): DecoderComposer<R, D> {
-        require(times >= 0) { "Times must be >= 0, but was $times" }
-        return object : RepeatDecoder<C, T, R>(inner, collector), Decoder<R> {
+    ): DecoderComposer<R, D>
 
-            override fun decode(input: DecoderDataInput): Decoder.State<R> {
-                if (size == -1) {
-                    init(times)
-                }
+    fun repeat(times: Int): DecoderComposer<List<T>, D> = repeat(times, DecoderCollector.toList())
 
-                return accumulate(input).mapEmptyState()
-            }
+    fun skip(amount: Long): DecoderComposer<T, D>
 
-            override fun reset() {
-                inner.reset()
-                clear()
-            }
-
-        }.let(::factory)
-    }
-
-    fun repeat(times: Int): DecoderComposer<List<T>, D> {
-        require(times >= 0) { "Times must be >= 0, but was $times" }
-        return repeat(times, DecoderCollector.toList())
-    }
-
-    fun skip(amount: Long): DecoderComposer<T, D> {
-        require(amount >= 0) { "Amount must be >= 0, but was $amount" }
-        return SkipDecoder(inner, amount).let(::factory)
-    }
-
-    @JvmOverloads
     fun <C, R> repeat(
-        collector: DecoderCollector<C, T, R>,
         predicate: (T) -> Boolean,
-        addLast: Boolean = false,
-    ): DecoderComposer<R, D> = object : Decoder<R> {
-        private var container: C? = null
-        private var index = 0
+        collector: DecoderCollector<C, T, R>,
+        addLast: Boolean,
+    ): DecoderComposer<R, D>
 
-        override fun decode(input: DecoderDataInput): Decoder.State<R> {
-            if (container == null) {
-                container = collector.supplier(-1)
-            }
+    fun repeat(predicate: (T) -> Boolean, addLast: Boolean): DecoderComposer<List<T>, D> =
+        repeat(predicate, DecoderCollector.toList(), addLast)
 
-            val container = container!!
-            while (index != -1) {
-                when (val state = inner.decode(input)) {
-                    is Decoder.State.Done -> {
-                        val value = state.value
-                        if (predicate(value)) {
-                            collector.accumulator(container, value, index)
-                            index++
-                            continue
-                        }
+    fun <C, R> repeat(predicate: (T) -> Boolean, collector: DecoderCollector<C, T, R>): DecoderComposer<R, D> =
+        repeat(predicate, collector, false)
 
-                        if (addLast) {
-                            collector.accumulator(container, value, index)
-                        }
-                        index = -1
-                    }
-                    else -> return state.mapEmptyState()
-                }
-            }
+    fun repeat(predicate: (T) -> Boolean): DecoderComposer<List<T>, D> = repeat(predicate, false)
 
-            return Decoder.State.Done(collector.finisher(container)).also { this.container = null }
-        }
+    fun assemble(): Decoder<T>
 
-        override fun reset() {
-            inner.reset()
-            container = null
-            index = 0
-        }
+    companion object {
 
-    }.let(::factory)
+        @JvmName("createWithContext")
+        fun <T> create(decoder: Decoder<T>): DecoderComposer<T, Context0> =
+            DecoderComposerImpl.createWithContext(decoder)
 
-    @JvmOverloads
-    fun repeat(predicate: (T) -> Boolean, addLast: Boolean = true): DecoderComposer<List<T>, D> =
-        repeat(DecoderCollector.toList(), predicate, addLast)
+        @JvmName("create")
+        fun <T> createWithoutContext(decoder: Decoder<T>): DecoderComposer<T, Nothing> =
+            DecoderComposerImpl.create(decoder)
 
-    fun assemble(): Decoder<T> = inner
+        @HideFromJava
+        fun <T, D> createFrom(composer: DecoderComposer<*, *>, next: Decoder<T>): DecoderComposer<T, D> =
+            DecoderComposerImpl.create(composer as DecoderComposerImpl, next)
 
-    private inline fun <T> applyOnImpl(block: (D) -> T): T {
-        @Suppress("UNCHECKED_CAST")
-        return block(this as D)
-    }
-
-    protected abstract fun <R> factory(decoder: Decoder<R>): DecoderComposer<R, D>
-
-    private fun <R> mapDecoder(block: (T) -> Decoder<R>): Decoder<R> = object : Decoder<R> {
-        private var nextReader: Decoder<R>? = null
-
-        override fun decode(input: DecoderDataInput): Decoder.State<R> {
-            if (nextReader == null) {
-                val state = inner.decode(input)
-                @Suppress("UNCHECKED_CAST")
-                if (state.isNotDone()) {
-                    return state as Decoder.State<R>
-                }
-                val currentResult = (state as Decoder.State.Done<T>).value
-                nextReader = block(currentResult)
-            }
-
-            return nextReader!!.decode(input).ifDone { nextReader = null }
-        }
-
-        override fun reset() {
-            inner.reset()
-            nextReader?.let {
-                it.reset()
-                nextReader = null
-            }
-        }
-
-    }
-
-    protected fun <R> thenDecoder(nextDecoder: Decoder<R>): Decoder<R> = mapDecoder {
-        context += it as Any
-        nextDecoder
-    }
-
-    protected fun <R> thenDecoder(nextDecoder: () -> Decoder<R>): Decoder<R> = mapDecoder {
-        context += it as Any
-        nextDecoder()
-    }
-
-    protected fun <R> finallyDecoder(block: (T) -> R): Decoder<R> = object : Decoder<R> {
-
-        override fun decode(input: DecoderDataInput): Decoder.State<R> = inner.decode(input).map(block)
-
-        override fun reset() = inner.reset()
-
-    }
-
-    protected fun next(): Any = context.removeFirst()
-
-}
-
-private abstract class RepeatDecoder<C, T, R>(
-    private val decoder: Decoder<T>,
-    private val collector: DecoderCollector<C, T, R>,
-) {
-
-    protected var size = -1
-        private set
-    private var index = 0
-    private var container: C? = null
-
-    protected fun accumulate(input: DecoderDataInput): Decoder.State<R> {
-        while (index < size) {
-            when (val state = decoder.decode(input)) {
-                is Decoder.State.Done -> collector.accumulator(container!!, state.value, index++)
-                else -> return state.mapEmptyState()
-            }
-        }
-
-        return Decoder.State.Done(collector.finisher(container!!))
-    }
-
-    protected fun init(size: Int) {
-        this.size = size
-        this.index = 0
-        this.container = collector.supplier(size)
-    }
-
-    protected fun clear() {
-        container = null
-        index = 0
-        size = -1
-    }
-
-}
-
-private class SkipDecoder<T>(private val inner: Decoder<T>, private val size: Long) : Decoder<T> {
-
-    override fun decode(input: DecoderDataInput): Decoder.State<T> =
-        inner.decode(input).ifDone { input.skip(size) }
-
-    override fun reset() {
-        if (inner !is SkipDecoder) {
-            inner.reset()
-        }
     }
 
 }

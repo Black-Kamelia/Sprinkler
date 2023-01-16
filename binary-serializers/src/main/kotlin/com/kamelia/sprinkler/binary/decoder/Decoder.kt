@@ -1,7 +1,8 @@
 package com.kamelia.sprinkler.binary.decoder
 
+import com.kamelia.sprinkler.binary.decoder.composer.Context0
 import com.kamelia.sprinkler.binary.decoder.composer.DecoderComposer
-import com.kamelia.sprinkler.binary.decoder.composer.DecoderComposer1
+import com.zwendo.restrikt.annotation.HideFromJava
 import java.io.InputStream
 import java.nio.ByteBuffer
 
@@ -18,7 +19,14 @@ interface Decoder<out T> {
 
     fun reset()
 
-    fun compose(): DecoderComposer1<@UnsafeVariance T> = DecoderComposer1(this)
+    @HideFromJava
+    @JvmName("composeWithContext")
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    fun compose(): DecoderComposer<T, Context0> = DecoderComposer.create(this)
+
+    @JvmName("compose")
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    fun composeWithoutContext(): DecoderComposer<T, Nothing> = DecoderComposer.createWithoutContext(this)
 
     sealed class State<out T> {
 
