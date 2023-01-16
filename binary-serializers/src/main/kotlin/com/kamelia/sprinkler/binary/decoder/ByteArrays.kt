@@ -1,3 +1,5 @@
+@file:JvmName("ByteArrays")
+
 package com.kamelia.sprinkler.binary.decoder
 
 import java.nio.charset.Charset

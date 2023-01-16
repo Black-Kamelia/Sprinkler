@@ -6,7 +6,7 @@ import com.zwendo.restrikt.annotation.HideFromJava
 @HideFromJava
 object DecoderComposerUtils {
 
-    fun <T, R> mapDecoder(decoder: DecoderComposer<T, *>, block: (T) -> Decoder<R>): Decoder<R> =
+    private fun <T, R> mapDecoder(decoder: DecoderComposer<T, *>, block: (T) -> Decoder<R>): Decoder<R> =
         (decoder as DecoderComposerImpl<T, *>).run {
             mapDecoder {
                 context?.add(it as Any)

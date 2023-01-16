@@ -4,7 +4,6 @@ import com.kamelia.sprinkler.binary.decoder.Decoder
 import com.kamelia.sprinkler.binary.decoder.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.DecoderDataInput
 import com.zwendo.restrikt.annotation.PackagePrivate
-import java.util.*
 import kotlin.collections.ArrayList
 
 @PackagePrivate
@@ -14,7 +13,7 @@ internal class DecoderComposerImpl<T, D> private constructor(
 ) : DecoderComposer<T, D> {
 
     override fun <R> map(block: (T) -> Decoder<R>): DecoderComposerImpl<R, D> =
-        mapDecoder(block).let { DecoderComposerImpl(it, context) }
+        DecoderComposerImpl(mapDecoder(block), context)
 
     override fun <C, R> repeat(
         collector: DecoderCollector<C, T, R>,
@@ -63,7 +62,7 @@ internal class DecoderComposerImpl<T, D> private constructor(
         }.let { DecoderComposerImpl(it, context) }
     }
 
-    override fun <R> andFinally(block: (T) -> R): DecoderComposer<R, D> {
+    override fun <R> finally(block: (T) -> R): DecoderComposer<R, D> {
         TODO("Not yet implemented")
     }
 
@@ -71,7 +70,6 @@ internal class DecoderComposerImpl<T, D> private constructor(
         require(amount >= 0) { "Amount must be >= 0, but was $amount" }
         return SkipDecoder(inner, amount).let { DecoderComposerImpl(it, context) }
     }
-
 
     override fun <C, R> repeat(
         predicate: (T) -> Boolean,
@@ -125,9 +123,8 @@ internal class DecoderComposerImpl<T, D> private constructor(
         override fun decode(input: DecoderDataInput): Decoder.State<R> {
             if (nextReader == null) {
                 val state = inner.decode(input)
-                @Suppress("UNCHECKED_CAST")
                 if (state.isNotDone()) {
-                    return state as Decoder.State<R>
+                    return state.mapEmptyState()
                 }
                 val currentResult = (state as Decoder.State.Done<T>).value
                 nextReader = block(currentResult)

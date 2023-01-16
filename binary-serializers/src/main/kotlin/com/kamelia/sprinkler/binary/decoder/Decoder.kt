@@ -42,7 +42,11 @@ interface Decoder<out T> {
 
         }
 
-        data class Done<T>(val value: T) : State<T>()
+        class Done<T>(val value: T) : State<T>() {
+
+            override fun toString(): String = "Done($value)"
+
+        }
 
         inline fun <R> map(block: (T) -> R): State<R> = when (this) {
             is Done -> Done(block(value))
