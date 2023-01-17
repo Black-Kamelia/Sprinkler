@@ -14,6 +14,23 @@ data class DecoderCollector<C, in E, out R>(
             { this }
         )
 
+        fun <E> toSet(): DecoderCollector<MutableSet<E>, E, Set<E>> = DecoderCollector(
+            { mutableSetOf() },
+            { e, _ -> add(e) },
+            { this }
+        )
+
+        fun <K, V> toMap(): DecoderCollector<MutableList<Pair<K, V>>, Pair<K, V>, Map<K, V>> = DecoderCollector(
+            { mutableListOf() },
+            { e, _ -> add(e) },
+            { toMap() }
+        )
+
+        fun <E> toCollection(collection: MutableCollection<E>): DecoderCollector<MutableCollection<E>, E, MutableCollection<E>> = DecoderCollector(
+            { collection },
+            { e, _ -> add(e) },
+            { this }
+        )
     }
 
 }
