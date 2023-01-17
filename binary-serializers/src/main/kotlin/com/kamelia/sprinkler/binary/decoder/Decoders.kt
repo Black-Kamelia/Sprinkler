@@ -3,6 +3,8 @@
 package com.kamelia.sprinkler.binary.decoder
 
 import com.kamelia.sprinkler.binary.common.ByteEndianness
+import com.kamelia.sprinkler.binary.decoder.composer.finally
+import com.kamelia.sprinkler.binary.decoder.composer.then
 import java.nio.charset.Charset
 
 //region Primitive Decoders
@@ -74,28 +76,12 @@ object NoOpDecoder : Decoder<Nothing> {
 
 }
 
-fun <T, U> PairDecoder(firstDecoder: Decoder<T>, secondDecoder: Decoder<U>): Decoder<Pair<T, U>> = object : Decoder<Pair<T, U>> {
-    private var first: T? = null
+fun <T, U> PairDecoder(firstDecoder: Decoder<T>, secondDecoder: Decoder<U>): Decoder<Pair<T, U>> = firstDecoder
+    .compose()
+    .then(secondDecoder)
+    .finally(::Pair)
+    .assemble()
 
-    override fun decode(input: DecoderDataInput): Decoder.State<Pair<T, U>> {
-        if (first == null) {
-            when(val state = firstDecoder.decode(input)) {
-                is Decoder.State.Done -> first = state.value
-                else -> return state.mapEmptyState()
-            }
-        }
-
-        return when (val state = secondDecoder.decode(input)) {
-            is Decoder.State.Done -> Decoder.State.Done(first!! to state.value).also { first = null }
-            else -> state.mapEmptyState()
-        }
-    }
-
-    override fun reset() {
-        firstDecoder.reset()
-        secondDecoder.reset()
-    }
-
-}
+infix fun <T, U> Decoder<T>.and(other: Decoder<U>): Decoder<Pair<T, U>> = PairDecoder(this, other)
 
 //endregion

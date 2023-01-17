@@ -9,9 +9,7 @@ sealed interface DecoderComposer<out T, D> {
 
     fun <R> map(block: (T) -> Decoder<R>): DecoderComposer<R, D>
 
-    @JvmName("andFinally")
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    fun <R> finally(block: (T) -> R): DecoderComposer<R, D>
+    fun <R> andFinally(block: (T) -> R): DecoderComposer<R, D>
 
     fun <C, R> repeat(collector: DecoderCollector<C, T, R>, sizeDecoder: Decoder<Number>): DecoderComposer<R, D>
 

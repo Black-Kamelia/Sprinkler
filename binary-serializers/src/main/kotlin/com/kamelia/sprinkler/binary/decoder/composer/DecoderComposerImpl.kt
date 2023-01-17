@@ -4,7 +4,6 @@ import com.kamelia.sprinkler.binary.decoder.Decoder
 import com.kamelia.sprinkler.binary.decoder.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.DecoderDataInput
 import com.zwendo.restrikt.annotation.PackagePrivate
-import kotlin.collections.ArrayList
 
 @PackagePrivate
 internal class DecoderComposerImpl<T, D> private constructor(
@@ -62,7 +61,7 @@ internal class DecoderComposerImpl<T, D> private constructor(
         }.let { DecoderComposerImpl(it, context) }
     }
 
-    override fun <R> finally(block: (T) -> R): DecoderComposer<R, D> {
+    override fun <R> andFinally(block: (T) -> R): DecoderComposer<R, D> {
         TODO("Not yet implemented")
     }
 
