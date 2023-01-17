@@ -1,11 +1,8 @@
 package com.kamelia.sprinkler.binary.decoder
 
-import com.kamelia.sprinkler.binary.common.ByteEndianness
-
-class ConstantSizeDecoder<E> @JvmOverloads constructor(
+class ConstantSizeDecoder<E>(
     private val byteSize: Int,
-    private val endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN,
-    private val extractor: ByteArray.(ByteEndianness) -> E,
+    private val extractor: ByteArray.() -> E,
 ) : Decoder<E> {
 
     init {
@@ -18,7 +15,7 @@ class ConstantSizeDecoder<E> @JvmOverloads constructor(
     override fun decode(input: DecoderDataInput): Decoder.State<E> {
         index += input.read(array, index)
         return if (index == byteSize) {
-            Decoder.State.Done(array.extractor(endianness)).also { index = 0 }
+            Decoder.State.Done(array.extractor()).also { index = 0 }
         } else {
             Decoder.State.Processing(
                 "(${ConstantSizeDecoder::class.simpleName}) $index / $byteSize bytes read."

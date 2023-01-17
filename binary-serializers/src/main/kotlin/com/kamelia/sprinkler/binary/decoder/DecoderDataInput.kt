@@ -2,7 +2,6 @@ package com.kamelia.sprinkler.binary.decoder
 
 import java.io.InputStream
 import java.nio.ByteBuffer
-import kotlin.math.max
 import kotlin.math.min
 
 
@@ -27,6 +26,20 @@ fun interface DecoderDataInput {
     fun read(bytes: ByteArray, start: Int): Int = read(bytes, start, bytes.size - start)
 
     fun read(bytes: ByteArray): Int = read(bytes, 0, bytes.size)
+
+    fun read(collection: MutableCollection<Byte>, length: Int): Int {
+        var count = 0
+        while (count < length) {
+            val read = read()
+            if (read == -1) break
+            collection.add(read.toByte())
+            if (collection.size == Int.MAX_VALUE) break
+            count++
+        }
+        return count
+    }
+
+    fun read(collection: MutableCollection<Byte>): Int = read(collection, Int.MAX_VALUE)
 
     fun skip(n: Long): Long {
         var skipped = 0L

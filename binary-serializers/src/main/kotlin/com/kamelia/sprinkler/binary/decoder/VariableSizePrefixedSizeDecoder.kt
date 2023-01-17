@@ -1,11 +1,8 @@
 package com.kamelia.sprinkler.binary.decoder
 
-import com.kamelia.sprinkler.binary.common.ByteEndianness
-
 class VariableSizePrefixedSizeDecoder<E> @JvmOverloads constructor(
     private val sizeDecoder: Decoder<Number> = IntDecoder(),
-    private val endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN,
-    private val extractor: ByteArray.(ByteEndianness, Int) -> E,
+    private val extractor: ByteArray.(Int) -> E,
 ) : Decoder<E> {
 
     private var array: ByteArray? = null
@@ -37,7 +34,7 @@ class VariableSizePrefixedSizeDecoder<E> @JvmOverloads constructor(
 
         if (bytesToRead == 0) { // short circuit for empty array
             bytesToRead = -1
-            return Decoder.State.Done(ByteArray(0).extractor(endianness, 0))
+            return Decoder.State.Done(ByteArray(0).extractor(0))
         }
 
         if (bytesToRead > (array?.size ?: 0)) { // allocate new array if needed
@@ -57,7 +54,7 @@ class VariableSizePrefixedSizeDecoder<E> @JvmOverloads constructor(
             val finalSize = bytesToRead
             index = 0
             bytesToRead = -1
-            Decoder.State.Done(array.extractor(endianness, finalSize))
+            Decoder.State.Done(array.extractor(finalSize))
         } else {
             Decoder.State.Processing(
                 "(${VariableSizePrefixedSizeDecoder::class.simpleName}) $index / $bytesToRead bytes read."

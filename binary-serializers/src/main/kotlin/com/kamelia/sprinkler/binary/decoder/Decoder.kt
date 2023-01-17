@@ -32,7 +32,7 @@ interface Decoder<out T> {
 
         class Error(val error: Throwable) : State<Nothing>() {
 
-            override fun toString(): String = "Error($error)"
+            override fun toString(): String = "Error: $error"
 
         }
 
@@ -42,9 +42,24 @@ interface Decoder<out T> {
 
         }
 
-        class Done<T>(val value: T) : State<T>() {
+        class Done<T> : State<T> {
 
-            override fun toString(): String = "Done($value)"
+            private var valueField: T? = null
+
+            private var factory: (() -> T)? = null
+
+            val value: T
+                get() = valueField ?: factory!!().also { valueField = it }
+
+            constructor(value: T) : super() {
+                valueField = value
+            }
+
+            constructor(factory: () -> T) : super() {
+                this.factory = factory
+            }
+
+            override fun toString(): String = "Done: $value"
 
         }
 
@@ -70,12 +85,22 @@ interface Decoder<out T> {
             is Error -> throw error
         }
 
-        inline fun ifDone(block: (T) -> Unit): State<T> {
+        fun getOrNull(): T? = when (this) {
+            is Done -> value
+            else -> null
+        }
+
+        fun getOrElse(default: @UnsafeVariance T): T = when (this) {
+            is Done -> value
+            else -> default
+        }
+
+        inline fun ifDone(block: (T) -> Unit): State<T> = apply {
             if (this is Done) {
                 block(value)
             }
-            return this
         }
+
     }
 
 }

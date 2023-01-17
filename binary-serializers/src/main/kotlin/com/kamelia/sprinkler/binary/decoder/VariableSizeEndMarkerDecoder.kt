@@ -1,60 +1,70 @@
 package com.kamelia.sprinkler.binary.decoder
 
-import com.kamelia.sprinkler.binary.common.ByteEndianness
-
-class VariableSizeEndMarkerDecoder<E> @JvmOverloads constructor(
+class VariableSizeEndMarkerDecoder<E>(
     private val endMarker: ByteArray,
-    private val elementsSize: Int,
-    private val endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN,
-    private val extractor: ByteArray.(ByteEndianness, Int) -> E,
+    private val extractor: ByteArray.(Int) -> E,
 ) : Decoder<E> {
 
     init {
-        require(elementsSize > 0) { "elementsSize must be greater than 0 ($elementsSize)" }
-        require(endMarker.size == elementsSize) {
-            "endMarker must be the same size as elementsSize, expected ${elementsSize}, got ${endMarker.size}"
-        }
+        require(endMarker.isNotEmpty()) { "endMarker must be greater than 0 (${endMarker.size})" }
     }
 
-    private var array: ByteArray? = null
+    private var accumulator: ByteArray? = null
     private var index = 0
-    private val inner = ConstantSizeDecoder(elementsSize, endianness) { this.copyOf() }
+    private var buffer: ArrayDeque<Byte>? = null
 
     override fun decode(input: DecoderDataInput): Decoder.State<E> {
-        while (true) {
-            when (val state = inner.decode(input)) {
-                is Decoder.State.Done -> {
-                    val element = state.value
-                    if (endMarker.contentEquals(element)) {
-                        break
-                    }
-                    addToArray(element)
-                }
-                else -> return state.mapEmptyState()
-            }
+        val buffer = buffer ?: ArrayDeque<Byte>(endMarker.size).also { buffer = it }
+
+        input.read(buffer, endMarker.size - buffer.size) // fill buffer
+        if (buffer.size < endMarker.size) { // not enough data to fill buffer
+            return Decoder.State.Processing(MISSING_BYTES_MESSAGE)
         }
 
-        val result = array!!.extractor(endianness, index)
+        while (!bufferIsEndMarker()) {
+            val byte = input.read()
+            if (byte == -1) {
+                return Decoder.State.Processing(MISSING_BYTES_MESSAGE)
+            }
+            addToArray(buffer.removeFirst())
+            buffer.addLast(byte.toByte())
+        }
+
+        val result = accumulator!!.extractor(index)
         index = 0
         return Decoder.State.Done(result)
     }
 
     override fun reset() {
         index = 0
-        array = null
+        accumulator = null
     }
 
-    private fun addToArray(bytes: ByteArray) {
-        val current = array!!
+    private fun bufferIsEndMarker(): Boolean {
+        val buffer = buffer!!
+        repeat(endMarker.size) {
+            if (buffer[it] != endMarker[it]) return false
+        }
+        return true
+    }
+
+    private fun addToArray(bytes: Byte) {
+        val current = accumulator
         val array = when {
-            this.array == null -> replaceArray { ByteArray(elementsSize) }
+            current == null -> replaceArray { ByteArray(endMarker.size) }
             index == current.size -> replaceArray { current.copyOf(current.size * 2) }
             else -> current
         }
-        bytes.copyInto(array, index * elementsSize)
+        array[index] = bytes
         index++
     }
 
-    private inline fun replaceArray(factory: () -> ByteArray): ByteArray = factory().also { array = it }
+    private inline fun replaceArray(factory: () -> ByteArray): ByteArray = factory().also { accumulator = it }
+
+    private companion object {
+
+        const val MISSING_BYTES_MESSAGE = "End marker still not found"
+
+    }
 
 }
