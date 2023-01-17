@@ -1,8 +1,9 @@
-@file:JvmName("ConstantSizedDecoders")
+@file:JvmName("Decoders")
 
 package com.kamelia.sprinkler.binary.decoder
 
 import com.kamelia.sprinkler.binary.common.ByteEndianness
+import com.kamelia.sprinkler.binary.common.VariableSizeDelimitationKind
 import com.kamelia.sprinkler.binary.decoder.composer.finally
 import com.kamelia.sprinkler.binary.decoder.composer.then
 import java.nio.charset.Charset
@@ -39,17 +40,17 @@ fun BooleanDecoder(): Decoder<Boolean> = ConstantSizeDecoder(1) { readBoolean() 
 //region String Decoders
 
 @JvmOverloads
-fun UTF8StringDecoder(kind: VariableSizeDecoderKind = VariableSizeDecoderKind.PREFIXED_SIZE): Decoder<String> =
+fun UTF8StringDecoder(kind: VariableSizeDelimitationKind = VariableSizeDelimitationKind.PREFIXED_SIZE): Decoder<String> =
     when (kind) {
-        VariableSizeDecoderKind.PREFIXED_SIZE -> StringDecoder()
-        VariableSizeDecoderKind.END_MARKER -> StringDecoderEM()
+        VariableSizeDelimitationKind.PREFIXED_SIZE -> StringDecoder()
+        VariableSizeDelimitationKind.END_MARKER -> StringDecoderEM()
     }
 
 @JvmOverloads
-fun ASCIIStringDecoder(kind: VariableSizeDecoderKind = VariableSizeDecoderKind.PREFIXED_SIZE): Decoder<String> =
+fun ASCIIStringDecoder(kind: VariableSizeDelimitationKind = VariableSizeDelimitationKind.PREFIXED_SIZE): Decoder<String> =
     when (kind) {
-        VariableSizeDecoderKind.PREFIXED_SIZE -> StringDecoder(charset = Charsets.US_ASCII)
-        VariableSizeDecoderKind.END_MARKER -> StringDecoderEM(charset = Charsets.US_ASCII)
+        VariableSizeDelimitationKind.PREFIXED_SIZE -> StringDecoder(charset = Charsets.US_ASCII)
+        VariableSizeDelimitationKind.END_MARKER -> StringDecoderEM(charset = Charsets.US_ASCII)
     }
 
 @JvmOverloads

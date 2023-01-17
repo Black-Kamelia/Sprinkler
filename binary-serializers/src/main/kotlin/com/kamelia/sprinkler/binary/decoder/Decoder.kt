@@ -22,11 +22,11 @@ interface Decoder<out T> {
     @HideFromJava
     @JvmName("composeWithContext")
     @Suppress("INAPPLICABLE_JVM_NAME")
-    fun compose(): DecoderComposer<T, Context0> = DecoderComposer.create(this)
+    fun compose(): DecoderComposer<@UnsafeVariance T, Context0> = DecoderComposer.create(this)
 
     @JvmName("compose")
     @Suppress("INAPPLICABLE_JVM_NAME")
-    fun composeWithoutContext(): DecoderComposer<T, Nothing> = DecoderComposer.createWithoutContext(this)
+    fun composeWithoutContext(): DecoderComposer<@UnsafeVariance T, Unit> = DecoderComposer.createWithoutContext(this)
 
     sealed class State<out T> {
 

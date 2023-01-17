@@ -4,10 +4,23 @@ import com.kamelia.sprinkler.binary.decoder.Decoder
 import com.kamelia.sprinkler.binary.decoder.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.IntDecoder
 import com.zwendo.restrikt.annotation.HideFromJava
+import com.zwendo.restrikt.annotation.HideFromKotlin
 
-sealed interface DecoderComposer<out T, D> {
+sealed interface DecoderComposer<T, D> {
 
     fun <R> map(block: (T) -> Decoder<R>): DecoderComposer<R, D>
+
+    @HideFromKotlin
+    fun <R> andThen(nextDecoder: Decoder<R>, block: (T) -> Unit): DecoderComposer<R, D> = map {
+        block(it)
+        nextDecoder
+    }
+
+    @HideFromKotlin
+    fun <R> andThen(nextDecoder: () -> Decoder<R>, block: (T) -> Unit): DecoderComposer<R, D> = map {
+        block(it)
+        nextDecoder()
+    }
 
     fun <R> andFinally(block: (T) -> R): DecoderComposer<R, D>
 
@@ -52,7 +65,7 @@ sealed interface DecoderComposer<out T, D> {
             DecoderComposerImpl.createWithContext(decoder)
 
         @JvmName("create")
-        fun <T> createWithoutContext(decoder: Decoder<T>): DecoderComposer<T, Nothing> =
+        fun <T> createWithoutContext(decoder: Decoder<T>): DecoderComposer<T, Unit> =
             DecoderComposerImpl.create(decoder)
 
         @HideFromJava

@@ -61,9 +61,8 @@ internal class DecoderComposerImpl<T, D> private constructor(
         }.let { DecoderComposerImpl(it, context) }
     }
 
-    override fun <R> andFinally(block: (T) -> R): DecoderComposer<R, D> {
-        TODO("Not yet implemented")
-    }
+    override fun <R> andFinally(block: (T) -> R): DecoderComposer<R, D> =
+        DecoderComposerImpl(finallyDecoder(block), context)
 
     override fun skip(amount: Long): DecoderComposerImpl<T, D> {
         require(amount >= 0) { "Amount must be >= 0, but was $amount" }
@@ -142,7 +141,7 @@ internal class DecoderComposerImpl<T, D> private constructor(
 
     }
 
-    fun <R> finallyDecoder(block: (T) -> R): Decoder<R> = object : Decoder<R> {
+    inline fun <R> finallyDecoder(crossinline block: (T) -> R): Decoder<R> = object : Decoder<R> {
 
         override fun decode(input: DecoderDataInput): Decoder.State<R> = inner.decode(input).map(block)
 
@@ -152,7 +151,7 @@ internal class DecoderComposerImpl<T, D> private constructor(
 
     companion object {
 
-        fun <T> create(decoder: Decoder<T>): DecoderComposerImpl<T, Nothing> = DecoderComposerImpl(decoder, null)
+        fun <T> create(decoder: Decoder<T>): DecoderComposerImpl<T, Unit> = DecoderComposerImpl(decoder, null)
 
         fun <T> createWithContext(decoder: Decoder<T>): DecoderComposerImpl<T, Context0> =
             DecoderComposerImpl(decoder, ArrayList())
