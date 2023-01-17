@@ -74,4 +74,28 @@ object NoOpDecoder : Decoder<Nothing> {
 
 }
 
+fun <T, U> PairDecoder(firstDecoder: Decoder<T>, secondDecoder: Decoder<U>): Decoder<Pair<T, U>> = object : Decoder<Pair<T, U>> {
+    private var first: T? = null
+
+    override fun decode(input: DecoderDataInput): Decoder.State<Pair<T, U>> {
+        if (first == null) {
+            when(val state = firstDecoder.decode(input)) {
+                is Decoder.State.Done -> first = state.value
+                else -> return state.mapEmptyState()
+            }
+        }
+
+        return when (val state = secondDecoder.decode(input)) {
+            is Decoder.State.Done -> Decoder.State.Done(first!! to state.value).also { first = null }
+            else -> state.mapEmptyState()
+        }
+    }
+
+    override fun reset() {
+        firstDecoder.reset()
+        secondDecoder.reset()
+    }
+
+}
+
 //endregion
