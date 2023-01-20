@@ -4,6 +4,7 @@ import com.kamelia.sprinkler.binary.decoder.Decoder
 import com.kamelia.sprinkler.binary.decoder.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.DecoderDataInput
 import com.zwendo.restrikt.annotation.PackagePrivate
+import kotlin.jvm.internal.Ref.ObjectRef
 
 @PackagePrivate
 internal class DecoderComposerImpl<T, D> private constructor(
@@ -50,7 +51,7 @@ internal class DecoderComposerImpl<T, D> private constructor(
                     init(times)
                 }
 
-                return accumulate(input).mapEmptyState()
+                return accumulate(input)
             }
 
             override fun reset() {
@@ -66,7 +67,39 @@ internal class DecoderComposerImpl<T, D> private constructor(
 
     override fun skip(amount: Long): DecoderComposerImpl<T, D> {
         require(amount >= 0) { "Amount must be >= 0, but was $amount" }
-        return SkipDecoder(inner, amount).let { DecoderComposerImpl(it, context) }
+        return object : Decoder<T> {
+            private var leftToSkip = amount
+            private var result: ObjectRef<T>? = null
+
+            override fun decode(input: DecoderDataInput): Decoder.State<T> {
+                if (result == null) {
+                    when (val state = inner.decode(input)) {
+                        is Decoder.State.Done -> {
+                            result = ObjectRef<T>()
+                            result!!.element = state.value
+                            leftToSkip = amount
+                        }
+                        else -> return state.mapEmptyState()
+                    }
+                }
+
+                if (leftToSkip > 0) {
+                    leftToSkip -= input.skip(leftToSkip)
+                }
+                return if (leftToSkip == 0L) {
+                    Decoder.State.Done(result!!.element).also { result = null }
+                } else {
+                    Decoder.State.Processing()
+                }
+            }
+
+            override fun reset() {
+                inner.reset()
+                leftToSkip = amount
+                result = null
+            }
+
+        }.let { DecoderComposerImpl(it, context) }
     }
 
     override fun <C, R> repeat(
@@ -120,12 +153,10 @@ internal class DecoderComposerImpl<T, D> private constructor(
 
         override fun decode(input: DecoderDataInput): Decoder.State<R> {
             if (nextReader == null) {
-                val state = inner.decode(input)
-                if (state.isNotDone()) {
-                    return state.mapEmptyState()
+                when (val state = inner.decode(input)) {
+                    is Decoder.State.Done -> nextReader = block(state.value)
+                    else -> return state.mapEmptyState()
                 }
-                val currentResult = (state as Decoder.State.Done<T>).value
-                nextReader = block(currentResult)
             }
 
             return nextReader!!.decode(input).ifDone { nextReader = null }
@@ -143,7 +174,10 @@ internal class DecoderComposerImpl<T, D> private constructor(
 
     inline fun <R> finallyDecoder(crossinline block: (T) -> R): Decoder<R> = object : Decoder<R> {
 
-        override fun decode(input: DecoderDataInput): Decoder.State<R> = inner.decode(input).map(block)
+        override fun decode(input: DecoderDataInput): Decoder.State<R> = inner
+            .decode(input)
+            .map(block)
+            .ifDone { context?.clear() }
 
         override fun reset() = inner.reset()
 
@@ -163,50 +197,3 @@ internal class DecoderComposerImpl<T, D> private constructor(
 
 }
 
-private abstract class RepeatDecoder<C, T, R>(
-    private val decoder: Decoder<T>,
-    private val collector: DecoderCollector<C, T, R>,
-) {
-
-    protected var size = -1
-        private set
-    private var index = 0
-    private var container: C? = null
-
-    protected fun accumulate(input: DecoderDataInput): Decoder.State<R> {
-        while (index < size) {
-            when (val state = decoder.decode(input)) {
-                is Decoder.State.Done -> collector.accumulator(container!!, state.value, index++)
-                else -> return state.mapEmptyState()
-            }
-        }
-
-        return Decoder.State.Done(collector.finisher(container!!))
-    }
-
-    protected fun init(size: Int) {
-        this.size = size
-        this.index = 0
-        this.container = collector.supplier(size)
-    }
-
-    protected fun clear() {
-        container = null
-        index = 0
-        size = -1
-    }
-
-}
-
-private class SkipDecoder<T>(private val inner: Decoder<T>, private val size: Long) : Decoder<T> {
-
-    override fun decode(input: DecoderDataInput): Decoder.State<T> =
-        inner.decode(input).ifDone { input.skip(size) }
-
-    override fun reset() {
-        if (inner !is SkipDecoder) {
-            inner.reset()
-        }
-    }
-
-}

@@ -77,12 +77,26 @@ object NoOpDecoder : Decoder<Nothing> {
 
 }
 
+fun <T> NullDecoder(): Decoder<T?> = @Suppress("UNCHECKED_CAST") (NullDecoder as Decoder<T?>)
+
 fun <T, U> PairDecoder(firstDecoder: Decoder<T>, secondDecoder: Decoder<U>): Decoder<Pair<T, U>> = firstDecoder
     .compose()
     .then(secondDecoder)
     .finally(::Pair)
     .assemble()
 
-infix fun <T, U> Decoder<T>.and(other: Decoder<U>): Decoder<Pair<T, U>> = PairDecoder(this, other)
+//endregion
+
+//region Internal
+
+private object NullDecoder : Decoder<Any?> {
+
+    override fun decode(input: DecoderDataInput): Decoder.State<Any?> = Decoder.State.Done(null)
+
+    override fun reset() {
+        // no-op
+    }
+
+}
 
 //endregion

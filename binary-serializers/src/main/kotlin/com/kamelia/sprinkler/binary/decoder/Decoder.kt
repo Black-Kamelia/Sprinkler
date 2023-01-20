@@ -32,34 +32,23 @@ interface Decoder<out T> {
 
         class Error(val error: Throwable) : State<Nothing>() {
 
-            override fun toString(): String = "Error: $error"
+            override fun toString(): String = "Error($error)"
 
         }
 
         class Processing(val reason: String = "Missing bytes") : State<Nothing>() {
 
-            override fun toString(): String = "Processing: $reason"
+            override fun toString(): String = "Processing($reason)"
 
         }
 
-        class Done<T> : State<T> {
+        class Done<T>(factory: () -> T) : State<T>() {
 
-            private var valueField: T? = null
+            val value: T by lazy(factory)
 
-            private var factory: (() -> T)? = null
+            constructor(value: T) : this({ value })
 
-            val value: T
-                get() = valueField ?: factory!!().also { valueField = it }
-
-            constructor(value: T) : super() {
-                valueField = value
-            }
-
-            constructor(factory: () -> T) : super() {
-                this.factory = factory
-            }
-
-            override fun toString(): String = "Done: $value"
+            override fun toString(): String = "Done($value)"
 
         }
 
@@ -77,7 +66,7 @@ interface Decoder<out T> {
 
         fun isDone(): Boolean = this is Done<T>
 
-        fun isNotDone(): Boolean = !isDone()
+        fun isNotDone(): Boolean = this !is Done<T>
 
         fun get(): T = when (this) {
             is Done -> value
@@ -104,5 +93,4 @@ interface Decoder<out T> {
     }
 
 }
-
 

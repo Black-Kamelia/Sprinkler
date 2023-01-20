@@ -14,10 +14,14 @@ class ComplexEncoderBuilder<T> {
         }
     }
 
-    fun encodeRecursivelyBy(extractor: T.() -> T?): ComplexEncoderBuilder<T> =
+    fun encodeRecursivelyWith(extractor: T.() -> T?): ComplexEncoderBuilder<T> =
         encodeWith(encoder(encoders).toOptional(), extractor)
 
-    fun build(): Encoder<T> = encoder(encoders).also { encoders = encoders.toMutableList() }
+    fun build(): Encoder<T> = encoder(encoders.toList()).also {
+        // change the list reference to prevent recursive encoding to
+        // encode encoders added after this point
+        encoders = encoders.toMutableList()
+    }
 
     @JvmName("encodeByte")
     fun encode(extractor: T.() -> Byte): ComplexEncoderBuilder<T> = encodeWith(ByteEncoder, extractor)
@@ -61,12 +65,15 @@ class ComplexEncoderBuilder<T> {
     fun encode(extractor: T.() -> Boolean): ComplexEncoderBuilder<T> = encodeWith(BooleanEncoder, extractor)
 
     @JvmName("encodeString")
-    fun encode(charset: Charset, extractor: T.() -> String): ComplexEncoderBuilder<T> =
-        encodeWith(StringEncoder(charset), extractor)
+    fun encode(charset: Charset, sizeEncoder: Encoder<Int>, extractor: T.() -> String): ComplexEncoderBuilder<T> =
+        encodeWith(StringEncoder(charset, sizeEncoder), extractor)
 
     @JvmName("encodeString")
-    fun encode(extractor: T.() -> String): ComplexEncoderBuilder<T> =
-        encodeWith(StringEncoder(Charsets.UTF_8), extractor)
+    fun encode(charset: Charset, extractor: T.() -> String): ComplexEncoderBuilder<T> =
+        encode(charset, IntEncoder, extractor)
+
+    @JvmName("encodeString")
+    fun encode(extractor: T.() -> String): ComplexEncoderBuilder<T> = encodeWith(UTF8StringEncoder, extractor)
 
     private fun encoder(list: List<Encoder<T>>): Encoder<T> = object : Encoder<T> {
 

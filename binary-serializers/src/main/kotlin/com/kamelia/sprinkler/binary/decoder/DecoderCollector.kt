@@ -26,11 +26,24 @@ data class DecoderCollector<C, in E, out R>(
             { toMap() }
         )
 
-        fun <E> toCollection(collection: MutableCollection<E>): DecoderCollector<MutableCollection<E>, E, MutableCollection<E>> = DecoderCollector(
-            { collection },
+        inline fun <E> toCollection(
+            crossinline factory: () -> MutableCollection<E>
+        ): DecoderCollector<MutableCollection<E>, E, MutableCollection<E>> = DecoderCollector(
+            { factory() },
             { e, _ -> add(e) },
             { this }
         )
+
+        fun <E> toArray(): DecoderCollector<MutableList<E>, E, Array<E>> = DecoderCollector(
+            { ArrayList() },
+            { e, _ -> add(e) },
+            {
+                val array = arrayOfNulls<Any?>(size)
+                forEachIndexed { index, e -> array[index] = e }
+                @Suppress("UNCHECKED_CAST") (array as Array<E>)
+            }
+        )
+
     }
 
 }

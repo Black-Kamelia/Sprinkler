@@ -92,8 +92,9 @@ fun interface DecoderDataInput {
             }
 
             override fun skip(n: Long): Long {
-                index += n.toInt()
-                return min(n.toInt(), inner.size - index).toLong()
+                val oldIndex = index
+                index = min(index + n.toInt(), inner.size)
+                return index - oldIndex.toLong()
             }
         }
 

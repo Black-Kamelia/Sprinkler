@@ -1,24 +1,37 @@
+@file:JvmName("DecoderUtils")
+
 package com.kamelia.sprinkler.binary.decoder
 
-fun <T> Decoder<T>.toOptional(): Decoder<T?> = object : Decoder<T?> {
-    private var isPresent: Boolean? = null
 
-    override fun decode(input: DecoderDataInput): Decoder.State<T?> {
-        if (isPresent == null) {
-            val byte = input.read()
-            if (byte == -1) {
-                return Decoder.State.Processing("Waiting nullability byte")
-            }
-            isPresent = byte == 1
-        }
-
-        return if (isPresent == true) {
-            this@toOptional.decode(input)
+fun <T> Decoder<T>.toOptional(
+    nullabilityDecoder: Decoder<Boolean> = BooleanDecoder(),
+): Decoder<T?> = nullabilityDecoder
+    .compose()
+    .map {
+        if (it) {
+            this@toOptional
         } else {
-            Decoder.State.Done(null)
+            NullDecoder()
         }
     }
+    .assemble()
 
-    override fun reset() = this@toOptional.reset()
-}
+@JvmOverloads
+fun <C, T, R> Decoder<T>.toCollection(
+    collector: DecoderCollector<C, T, R>,
+    sizeDecoder: Decoder<Number> = IntDecoder(),
+): Decoder<R> = compose().repeat(collector, sizeDecoder).assemble()
 
+@JvmOverloads
+fun <T> Decoder<T>.toList(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<List<T>> =
+    toCollection(DecoderCollector.toList(), sizeDecoder)
+
+@JvmOverloads
+fun <T> Decoder<T>.toSet(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Set<T>> =
+    toCollection(DecoderCollector.toSet(), sizeDecoder)
+
+@JvmOverloads
+fun <K, V> Decoder<Pair<K, V>>.toMap(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Map<K, V>> =
+    toCollection(DecoderCollector.toMap(), sizeDecoder)
+
+infix fun <T, U> Decoder<T>.and(other: Decoder<U>): Decoder<Pair<T, U>> = PairDecoder(this, other)

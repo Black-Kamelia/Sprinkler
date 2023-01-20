@@ -59,16 +59,19 @@ val BooleanEncoder: Encoder<Boolean> = object : Encoder<Boolean> {
 //endregion
 
 //region String Encoders
+@JvmField
+val UTF8StringEncoder: Encoder<String> = StringEncoder(Charsets.UTF_8)
+
 
 @JvmOverloads
-fun StringEncoder(charset: Charset = Charsets.UTF_8, sizeEncoder: Encoder<Int>): Encoder<String> = Encoder {
+fun StringEncoder(
+    charset: Charset,
+    sizeEncoder: Encoder<Int> = IntEncoder
+): Encoder<String> = Encoder {
     val bytes = it.toByteArray(charset)
     val sizeBytes = sizeEncoder.encode(bytes.size)
     sizeBytes + bytes
 }
-
-@JvmOverloads
-fun StringEncoder(charset: Charset = Charsets.UTF_8): Encoder<String> = StringEncoder(charset, IntEncoder)
 
 @JvmOverloads
 fun StringEncoderEM(
