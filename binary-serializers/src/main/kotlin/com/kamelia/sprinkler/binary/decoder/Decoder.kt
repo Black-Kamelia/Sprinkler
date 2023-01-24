@@ -19,6 +19,8 @@ interface Decoder<out T> {
 
     fun reset()
 
+    fun createNew(): Decoder<T>
+
     @HideFromJava
     @JvmName("composeWithContext")
     @Suppress("INAPPLICABLE_JVM_NAME")

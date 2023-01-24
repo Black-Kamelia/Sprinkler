@@ -7,6 +7,7 @@ import com.kamelia.sprinkler.binary.common.VariableSizeDelimitationKind
 import com.kamelia.sprinkler.binary.decoder.composer.finally
 import com.kamelia.sprinkler.binary.decoder.composer.then
 import java.nio.charset.Charset
+import java.util.*
 
 //region Primitive Decoders
 
@@ -19,7 +20,6 @@ fun ShortDecoder(endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN): Decode
 @JvmOverloads
 fun IntDecoder(endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN): Decoder<Int> =
     ConstantSizeDecoder(Int.SIZE_BYTES) { readInt(endianness) }
-
 
 @JvmOverloads
 fun LongDecoder(endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN): Decoder<Long> =
@@ -63,6 +63,33 @@ fun StringDecoderEM(endMarker: ByteArray = byteArrayOf(0), charset: Charset = Ch
 
 //endregion
 
+//region Common Decoders
+
+@JvmOverloads
+fun <T : Enum<T>> EnumDecoder(enumClass: Class<T>, ordinalDecoder: Decoder<Int> = IntDecoder()): Decoder<T> =
+    ordinalDecoder.mapResult { enumClass.enumConstants[it] }
+
+@JvmOverloads
+fun <T : Enum<T>> EnumDecoder(
+    enumClass: Class<T>,
+    stringDecoder: Decoder<String> = UTF8StringDecoder(),
+): Decoder<T> = stringDecoder.mapResult { s -> enumClass.enumConstants.first { s == it.name } }
+
+@JvmOverloads
+fun UUIDDecoder(longDecoder: Decoder<Long> = LongDecoder()): Decoder<UUID> = longDecoder
+    .compose()
+    .then(longDecoder)
+    .finally(::UUID)
+    .assemble()
+
+@JvmOverloads
+fun UUIDDecoder(stringDecoder: Decoder<String> = UTF8StringDecoder()): Decoder<UUID> =
+    stringDecoder.mapResult { UUID.fromString(it) }
+
+// TODO date/time decoders
+
+//endregion
+
 //region Special Decoders
 
 object NoOpDecoder : Decoder<Nothing> {
@@ -74,6 +101,8 @@ object NoOpDecoder : Decoder<Nothing> {
     override fun reset() {
         // no-op
     }
+
+    override fun createNew(): Decoder<Nothing> = this
 
 }
 
@@ -96,6 +125,8 @@ private object NullDecoder : Decoder<Any?> {
     override fun reset() {
         // no-op
     }
+
+    override fun createNew(): Decoder<Any?> = this
 
 }
 

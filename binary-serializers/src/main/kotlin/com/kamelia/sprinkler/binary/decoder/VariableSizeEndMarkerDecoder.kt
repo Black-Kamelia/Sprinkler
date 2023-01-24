@@ -40,6 +40,8 @@ class VariableSizeEndMarkerDecoder<E>(
         accumulator = null
     }
 
+    override fun createNew(): Decoder<E> = VariableSizeEndMarkerDecoder(endMarker, extractor)
+
     private fun bufferIsEndMarker(): Boolean {
         val buffer = buffer!!
         repeat(endMarker.size) {
