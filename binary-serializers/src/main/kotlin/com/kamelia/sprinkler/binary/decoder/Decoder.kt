@@ -1,8 +1,5 @@
 package com.kamelia.sprinkler.binary.decoder
 
-import com.kamelia.sprinkler.binary.decoder.composer.Context0
-import com.kamelia.sprinkler.binary.decoder.composer.DecoderComposer
-import com.zwendo.restrikt.annotation.HideFromJava
 import java.io.InputStream
 import java.nio.ByteBuffer
 
@@ -18,17 +15,6 @@ interface Decoder<out T> {
     fun decode(input: ByteArray): State<T> = decode(DecoderDataInput.from(input))
 
     fun reset()
-
-    fun createNew(): Decoder<T>
-
-    @HideFromJava
-    @JvmName("composeWithContext")
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    fun compose(): DecoderComposer<@UnsafeVariance T, Context0> = DecoderComposer.create(this)
-
-    @JvmName("compose")
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    fun composeWithoutContext(): DecoderComposer<@UnsafeVariance T, Unit> = DecoderComposer.createWithoutContext(this)
 
     sealed class State<out T> {
 
@@ -54,8 +40,13 @@ interface Decoder<out T> {
 
         }
 
-        inline fun <R> map(block: (T) -> R): State<R> = when (this) {
+        inline fun <R> mapResult(block: (T) -> R): State<R> = when (this) {
             is Done -> Done(block(value))
+            else -> mapEmptyState()
+        }
+
+        inline fun <R> mapState(block: (T) -> State<R>): State<R> = when (this) {
+            is Done -> block(value)
             else -> mapEmptyState()
         }
 
@@ -84,6 +75,11 @@ interface Decoder<out T> {
         fun getOrElse(default: @UnsafeVariance T): T = when (this) {
             is Done -> value
             else -> default
+        }
+
+        inline fun getOrThrow(throwable: () -> Throwable): T = when (this) {
+            is Done -> value
+            else -> throw throwable()
         }
 
         inline fun ifDone(block: (T) -> Unit): State<T> = apply {

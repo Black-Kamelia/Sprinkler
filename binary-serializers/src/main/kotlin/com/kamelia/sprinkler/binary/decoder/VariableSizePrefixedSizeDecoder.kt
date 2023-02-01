@@ -68,7 +68,5 @@ class VariableSizePrefixedSizeDecoder<E> @JvmOverloads constructor(
         bytesToRead = -1
     }
 
-    override fun createNew(): Decoder<E> = VariableSizePrefixedSizeDecoder(sizeDecoder.createNew(), extractor)
-
 }
 

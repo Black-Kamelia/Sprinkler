@@ -5,13 +5,13 @@ class VariableSizeEndMarkerDecoder<E>(
     private val extractor: ByteArray.(Int) -> E,
 ) : Decoder<E> {
 
-    init {
-        require(endMarker.isNotEmpty()) { "endMarker must be greater than 0 (${endMarker.size})" }
-    }
-
     private var accumulator: ByteArray? = null
     private var index = 0
     private var buffer: ArrayDeque<Byte>? = null
+
+    init {
+        require(endMarker.isNotEmpty()) { "endMarker must be greater than 0 (${endMarker.size})" }
+    }
 
     override fun decode(input: DecoderDataInput): Decoder.State<E> {
         val buffer = buffer ?: ArrayDeque<Byte>(endMarker.size).also { buffer = it }
@@ -21,7 +21,7 @@ class VariableSizeEndMarkerDecoder<E>(
             return Decoder.State.Processing(MISSING_BYTES_MESSAGE)
         }
 
-        while (!bufferIsEndMarker()) {
+        while (!bufferContentIsEndMarker()) {
             val byte = input.read()
             if (byte == -1) {
                 return Decoder.State.Processing(MISSING_BYTES_MESSAGE)
@@ -40,9 +40,7 @@ class VariableSizeEndMarkerDecoder<E>(
         accumulator = null
     }
 
-    override fun createNew(): Decoder<E> = VariableSizeEndMarkerDecoder(endMarker, extractor)
-
-    private fun bufferIsEndMarker(): Boolean {
+    private fun bufferContentIsEndMarker(): Boolean {
         val buffer = buffer!!
         repeat(endMarker.size) {
             if (buffer[it] != endMarker[it]) return false

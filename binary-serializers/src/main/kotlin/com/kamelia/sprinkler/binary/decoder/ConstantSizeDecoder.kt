@@ -27,6 +27,4 @@ class ConstantSizeDecoder<E>(
         index = 0
     }
 
-    override fun createNew(): Decoder<E> = ConstantSizeDecoder(byteSize, extractor)
-
 }

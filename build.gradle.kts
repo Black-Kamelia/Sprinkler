@@ -1,5 +1,4 @@
-import java.util.Base64
-import java.util.Properties
+import java.util.*
 
 plugins {
     val kotlinVersion: String by System.getProperties()
@@ -59,6 +58,10 @@ allprojects {
         val signingPassword = findProperty("signingPassword") as? String ?: ""
         useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
         sign(publishing.publications)
+    }
+
+    restrikt {
+        enabled = false
     }
 
     tasks {

@@ -2,74 +2,100 @@ package com.kamelia.sprinkler.binary.decoder.composer
 
 import com.kamelia.sprinkler.binary.decoder.Decoder
 import com.kamelia.sprinkler.binary.decoder.DecoderCollector
-import com.kamelia.sprinkler.binary.decoder.IntDecoder
-import com.zwendo.restrikt.annotation.HideFromJava
+import com.kamelia.sprinkler.binary.decoder.NoOpDecoder
+import com.kamelia.sprinkler.binary.decoder.composer.step.CompositionStep
+import com.kamelia.sprinkler.binary.decoder.composer.step.CompositionSteps
 
-sealed interface DecoderComposer<T, D> {
+abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
 
-    fun <R> map(block: (T) -> Decoder<R>): DecoderComposer<R, D>
+    @PublishedApi
+    internal val steps: ArrayDeque<CompositionStep>
 
-    fun <R> andThen(nextDecoder: Decoder<R>, block: (T) -> Unit): DecoderComposer<R, D> = map {
-        block(it)
-        nextDecoder
+    internal constructor(decoder: Decoder<T>) {
+        steps = ArrayDeque()
+        thenStep(decoder)
     }
 
-    fun <R> andThen(nextDecoder: () -> Decoder<R>, block: (T) -> Unit): DecoderComposer<R, D> = map {
-        block(it)
-        nextDecoder()
+    protected constructor(previous: DecoderComposer<B, *, *>, decoder: Decoder<T>?) {
+        steps = ArrayDeque(previous.steps)
+        decoder?.let {
+            if (it !== MarkerDecoder) {
+                thenStep(decoder)
+            }
+        }
     }
 
-    fun <R> andFinally(block: (T) -> R): DecoderComposer<R, D>
+    fun skip(amount: Long): D {
+        steps += CompositionSteps.skip(amount)
+        @Suppress("UNCHECKED_CAST")
+        return this as D
+    }
 
-    fun <C, R> repeat(collector: DecoderCollector<C, T, R>, sizeDecoder: Decoder<Number>): DecoderComposer<R, D>
+    @PublishedApi
+    internal companion object {
 
-    fun <C, R> repeat(collector: DecoderCollector<C, T, R>): DecoderComposer<R, D> = repeat(collector, IntDecoder())
+    }
 
-    fun repeat(sizeDecoder: Decoder<Number>): DecoderComposer<List<T>, D> =
-        repeat(DecoderCollector.toList(), sizeDecoder)
+    //region Subclasses API
 
-    fun repeat(): DecoderComposer<List<T>, D> = repeat(IntDecoder())
+    protected fun <R> mapStep(block: (T) -> Decoder<R>) {
+        steps += CompositionSteps.map(block)
+    }
 
-    fun <C, R> repeat(
-        times: Int,
-        collector: DecoderCollector<C, T, R>,
-    ): DecoderComposer<R, D>
+    protected fun <R> reduceStep(mapper: ComposedDecoderElementsAccumulator.() -> R) {
+        steps += CompositionSteps.reduce(mapper)
+    }
 
-    fun repeat(times: Int): DecoderComposer<List<T>, D> = repeat(times, DecoderCollector.toList())
+    protected fun finallyStep(block: ComposedDecoderElementsAccumulator.() -> B): Decoder<B> {
+        steps += CompositionSteps.reduce(block)
+        return ComposedDecoderImpl(steps)
+    }
 
-    fun skip(amount: Long): DecoderComposer<T, D>
+    protected fun <R> optionalRecursionStep(nullabilityDecoder: Decoder<Boolean>): Decoder<R> {
+        steps += CompositionSteps.optionalRecursion(nullabilityDecoder)
+        return MarkerDecoder
+    }
 
-    fun <C, R> repeat(
-        predicate: (T) -> Boolean,
+    protected inline fun <R> thisCasted(block: () -> Unit): R {
+        block()
+        @Suppress("UNCHECKED_CAST")
+        return this as R
+    }
+
+    //endregion
+
+    //region Internal
+
+    internal fun <C, R> repeatStep(collector: DecoderCollector<C, T, R>, sizeDecoder: Decoder<Int>) {
+        val (sizeStep, repeatStep) = CompositionSteps.repeat(collector, sizeDecoder)
+        steps.addFirst(sizeStep)
+        steps += repeatStep
+    }
+
+    internal fun <C, R> repeatStep(times: Int, collector: DecoderCollector<C, T, R>) {
+        steps += CompositionSteps.repeat(collector, times)
+    }
+
+    internal fun <C, R> untilStep(
         collector: DecoderCollector<C, T, R>,
         addLast: Boolean,
-    ): DecoderComposer<R, D>
-
-    fun repeat(predicate: (T) -> Boolean, addLast: Boolean): DecoderComposer<List<T>, D> =
-        repeat(predicate, DecoderCollector.toList(), addLast)
-
-    fun <C, R> repeat(predicate: (T) -> Boolean, collector: DecoderCollector<C, T, R>): DecoderComposer<R, D> =
-        repeat(predicate, collector, false)
-
-    fun repeat(predicate: (T) -> Boolean): DecoderComposer<List<T>, D> = repeat(predicate, false)
-
-    fun assemble(): Decoder<T>
-
-    companion object {
-
-        @HideFromJava
-        @JvmName("createWithContext")
-        fun <T> create(decoder: Decoder<T>): DecoderComposer<T, Context0> =
-            DecoderComposerImpl.createWithContext(decoder)
-
-        @JvmName("create")
-        fun <T> createWithoutContext(decoder: Decoder<T>): DecoderComposer<T, Unit> =
-            DecoderComposerImpl.create(decoder)
-
-        @HideFromJava
-        fun <T, D> createFrom(composer: DecoderComposer<*, *>, next: Decoder<T>): DecoderComposer<T, D> =
-            DecoderComposerImpl.create(composer as DecoderComposerImpl, next)
-
+        predicate: (T) -> Boolean,
+    ) {
+        steps += CompositionSteps.until(collector, addLast, predicate)
     }
+
+    internal fun optionalStep(nullabilityDecoder: Decoder<Boolean>) {
+        val (nullabilityStep, dummyStep) = CompositionSteps.optional(nullabilityDecoder)
+        steps.addFirst(nullabilityStep)
+        steps += dummyStep
+    }
+
+    private fun <R> thenStep(decoder: Decoder<R>) {
+        steps += CompositionSteps.then(decoder)
+    }
+
+    private object MarkerDecoder : Decoder<Nothing> by NoOpDecoder
+
+    //endregion
 
 }

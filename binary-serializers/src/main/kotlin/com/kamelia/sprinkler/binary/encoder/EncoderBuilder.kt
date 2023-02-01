@@ -2,11 +2,11 @@ package com.kamelia.sprinkler.binary.encoder
 
 import java.nio.charset.Charset
 
-class ComplexEncoderBuilder<T> {
+class EncoderBuilder<T> {
 
     private var encoders: MutableList<Encoder<T>> = ArrayList()
 
-    fun <E> encodeWith(encoder: Encoder<E>, extractor: T.() -> E): ComplexEncoderBuilder<T> = apply {
+    fun <E> encodeWith(encoder: Encoder<E>, extractor: T.() -> E): EncoderBuilder<T> = apply {
         encoders += object : Encoder<T> {
             override fun encode(obj: T): ByteArray = encoder.encode(obj.extractor())
 
@@ -14,7 +14,7 @@ class ComplexEncoderBuilder<T> {
         }
     }
 
-    fun encodeRecursivelyWith(extractor: T.() -> T?): ComplexEncoderBuilder<T> =
+    fun encodeRecursivelyWith(extractor: T.() -> T?): EncoderBuilder<T> =
         encodeWith(encoder(encoders).toOptional(), extractor)
 
     fun build(): Encoder<T> = encoder(encoders.toList()).also {
@@ -24,56 +24,56 @@ class ComplexEncoderBuilder<T> {
     }
 
     @JvmName("encodeByte")
-    fun encode(extractor: T.() -> Byte): ComplexEncoderBuilder<T> = encodeWith(ByteEncoder, extractor)
+    fun encode(extractor: T.() -> Byte): EncoderBuilder<T> = encodeWith(ByteEncoder, extractor)
 
     @JvmName("encodeShort")
-    fun encode(extractor: T.() -> Short): ComplexEncoderBuilder<T> = encodeWith(ShortEncoder, extractor)
+    fun encode(extractor: T.() -> Short): EncoderBuilder<T> = encodeWith(ShortEncoder, extractor)
 
     @JvmName("encodeShortLittleEndian")
-    fun encodeLittleEndian(extractor: T.() -> Short): ComplexEncoderBuilder<T> =
+    fun encodeLittleEndian(extractor: T.() -> Short): EncoderBuilder<T> =
         encodeWith(ShortLittleEndianEncoder, extractor)
 
     @JvmName("encodeInt")
-    fun encode(extractor: T.() -> Int): ComplexEncoderBuilder<T> = encodeWith(IntEncoder, extractor)
+    fun encode(extractor: T.() -> Int): EncoderBuilder<T> = encodeWith(IntEncoder, extractor)
 
     @JvmName("encodeIntLittleEndian")
-    fun encodeLittleEndian(extractor: T.() -> Int): ComplexEncoderBuilder<T> =
+    fun encodeLittleEndian(extractor: T.() -> Int): EncoderBuilder<T> =
         encodeWith(IntLittleEndianEncoder, extractor)
 
     @JvmName("encodeLong")
-    fun encode(extractor: T.() -> Long): ComplexEncoderBuilder<T> = encodeWith(LongEncoder, extractor)
+    fun encode(extractor: T.() -> Long): EncoderBuilder<T> = encodeWith(LongEncoder, extractor)
 
     @JvmName("encodeLongLittleEndian")
-    fun encodeLittleEndian(extractor: T.() -> Long): ComplexEncoderBuilder<T> =
+    fun encodeLittleEndian(extractor: T.() -> Long): EncoderBuilder<T> =
         encodeWith(LongLittleEndianEncoder, extractor)
 
     @JvmName("encodeFloat")
-    fun encode(extractor: T.() -> Float): ComplexEncoderBuilder<T> = encodeWith(FloatEncoder, extractor)
+    fun encode(extractor: T.() -> Float): EncoderBuilder<T> = encodeWith(FloatEncoder, extractor)
 
     @JvmName("encodeFloatLittleEndian")
-    fun encodeLittleEndian(extractor: T.() -> Float): ComplexEncoderBuilder<T> =
+    fun encodeLittleEndian(extractor: T.() -> Float): EncoderBuilder<T> =
         encodeWith(FloatLittleEndianEncoder, extractor)
 
     @JvmName("encodeDouble")
-    fun encode(extractor: T.() -> Double): ComplexEncoderBuilder<T> = encodeWith(DoubleEncoder, extractor)
+    fun encode(extractor: T.() -> Double): EncoderBuilder<T> = encodeWith(DoubleEncoder, extractor)
 
     @JvmName("encodeDoubleLittleEndian")
-    fun encodeLittleEndian(extractor: T.() -> Double): ComplexEncoderBuilder<T> =
+    fun encodeLittleEndian(extractor: T.() -> Double): EncoderBuilder<T> =
         encodeWith(DoubleLittleEndianEncoder, extractor)
 
     @JvmName("encodeBoolean")
-    fun encode(extractor: T.() -> Boolean): ComplexEncoderBuilder<T> = encodeWith(BooleanEncoder, extractor)
+    fun encode(extractor: T.() -> Boolean): EncoderBuilder<T> = encodeWith(BooleanEncoder, extractor)
 
     @JvmName("encodeString")
-    fun encode(charset: Charset, sizeEncoder: Encoder<Int>, extractor: T.() -> String): ComplexEncoderBuilder<T> =
+    fun encode(charset: Charset, sizeEncoder: Encoder<Int>, extractor: T.() -> String): EncoderBuilder<T> =
         encodeWith(StringEncoder(charset, sizeEncoder), extractor)
 
     @JvmName("encodeString")
-    fun encode(charset: Charset, extractor: T.() -> String): ComplexEncoderBuilder<T> =
+    fun encode(charset: Charset, extractor: T.() -> String): EncoderBuilder<T> =
         encode(charset, IntEncoder, extractor)
 
     @JvmName("encodeString")
-    fun encode(extractor: T.() -> String): ComplexEncoderBuilder<T> = encodeWith(UTF8StringEncoder, extractor)
+    fun encode(extractor: T.() -> String): EncoderBuilder<T> = encodeWith(UTF8StringEncoder, extractor)
 
     private fun encoder(list: List<Encoder<T>>): Encoder<T> = object : Encoder<T> {
 

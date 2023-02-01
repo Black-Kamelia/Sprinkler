@@ -4,43 +4,39 @@ package com.kamelia.sprinkler.binary.decoder
 
 import com.zwendo.restrikt.annotation.HideFromJava
 
-fun <T, R> Decoder<T>.map(block: (T) -> Decoder<R>): Decoder<R> = object : Decoder<R> {
+fun <T, R> Decoder<T>.mapTo(block: (T) -> Decoder<R>): Decoder<R> = object : Decoder<R> {
     private var nextReader: Decoder<R>? = null
 
-    override fun decode(input: DecoderDataInput): Decoder.State<R> {
-        if (nextReader == null) {
-            when (val state = this@map.decode(input)) {
-                is Decoder.State.Done -> nextReader = block(state.value)
-                else -> return state.mapEmptyState()
-            }
+    override fun decode(input: DecoderDataInput): Decoder.State<R> = if (nextReader == null) {
+        this@mapTo.decode(input).mapState {
+            nextReader = block(it)
+            decodeNext(input)
         }
-
-        return nextReader!!.decode(input).ifDone { nextReader = null }
+    } else {
+        decodeNext(input)
     }
+
+    private fun decodeNext(input: DecoderDataInput) = nextReader!!.decode(input).ifDone { nextReader = null }
 
     override fun reset() {
-        this@map.reset()
+        this@mapTo.reset()
         nextReader = null
     }
-
-    override fun createNew(): Decoder<R> = this@map.createNew().map(block)
 
 }
 
 fun <T, E> Decoder<T>.mapResult(block: (T) -> E): Decoder<E> = object : Decoder<E> {
 
-    override fun decode(input: DecoderDataInput): Decoder.State<E> = this@mapResult.decode(input).map(block)
+    override fun decode(input: DecoderDataInput): Decoder.State<E> = this@mapResult.decode(input).mapResult(block)
 
     override fun reset() = this@mapResult.reset()
-
-    override fun createNew(): Decoder<E> = this@mapResult.createNew().mapResult(block)
 
 }
 
 @JvmOverloads
-fun <T> Decoder<T>.toOptional(
+fun <T : Any> Decoder<T>.toOptional(
     nullabilityDecoder: Decoder<Boolean> = BooleanDecoder(),
-): Decoder<T?> = nullabilityDecoder.map {
+): Decoder<T?> = nullabilityDecoder.mapTo {
     if (it) {
         this@toOptional
     } else {
@@ -52,7 +48,7 @@ fun <T> Decoder<T>.toOptional(
 fun <C, T, R> Decoder<T>.toCollection(
     collector: DecoderCollector<C, T, R>,
     sizeDecoder: Decoder<Number> = IntDecoder(),
-): Decoder<R> = compose().repeat(collector, sizeDecoder).assemble()
+): Decoder<R> = TODO()//compose().repeat(collector, sizeDecoder).assemble()
 
 @JvmOverloads
 fun <T> Decoder<T>.toList(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<List<T>> =
