@@ -71,12 +71,12 @@ allprojects {
             finalizedBy(jacocoTestReport)
         }
 
-        compileJava {
+        setupJavaCompilation {
             sourceCompatibility = jvmVersion
             targetCompatibility = jvmVersion
         }
 
-        compileKotlin {
+        setupKotlinCompilation {
             kotlinOptions {
                 jvmTarget = jvmVersion
                 freeCompilerArgs = listOf(
@@ -143,4 +143,14 @@ allprojects {
             }
         }
     }
+}
+
+fun TaskContainerScope.setupJavaCompilation(block: JavaCompile.() -> Unit) {
+    compileJava(block)
+    compileTestJava(block)
+}
+
+fun TaskContainerScope.setupKotlinCompilation(block: org.jetbrains.kotlin.gradle.tasks.KotlinCompile.() -> Unit) {
+    compileKotlin(block)
+    compileTestKotlin(block)
 }
