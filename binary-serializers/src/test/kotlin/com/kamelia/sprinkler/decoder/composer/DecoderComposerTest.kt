@@ -2,7 +2,11 @@ package com.kamelia.sprinkler.decoder.composer
 
 import com.kamelia.sprinkler.binary.decoder.ByteDecoder
 import com.kamelia.sprinkler.binary.decoder.Decoder
+import com.kamelia.sprinkler.binary.decoder.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.IntDecoder
+import com.kamelia.sprinkler.binary.decoder.LongDecoder
+import com.kamelia.sprinkler.binary.decoder.NothingDecoder
+import com.kamelia.sprinkler.binary.decoder.ShortDecoder
 import com.kamelia.sprinkler.binary.decoder.UTF8StringDecoder
 import com.kamelia.sprinkler.binary.decoder.composer.composedDecoder
 import com.kamelia.sprinkler.decoder.util.assertDoneAndGet
@@ -85,6 +89,99 @@ class DecoderComposerTest {
         }
 
         assertEquals(byteDecoder, decoder)
+    }
+
+    @Test
+    fun `compose with constant repetition greater than 1`() {
+        val decoder = composedDecoder<List<Byte>> {
+            beginWith(ByteDecoder())
+                .repeat(3, DecoderCollector.toList())
+        }
+
+        val data = byteArrayOf(1, 2, 3)
+        val result = decoder.decode(data).assertDoneAndGet()
+        assertEquals(listOf<Byte>(1, 2, 3), result)
+    }
+
+    @Test
+    fun `compose with constant repetition equal to 1`() {
+        val decoder = composedDecoder<List<Byte>> {
+            beginWith(ByteDecoder())
+                .repeat(1, DecoderCollector.toList())
+        }
+
+        val data = byteArrayOf(1)
+        val result = decoder.decode(data).assertDoneAndGet()
+        assertEquals(listOf<Byte>(1), result)
+    }
+
+    @Test
+    fun `compose with constant repetition equal to 0`() {
+        val decoder = composedDecoder<List<Byte>> {
+            beginWith(ByteDecoder())
+                .repeat(0, DecoderCollector.toList())
+        }
+
+        val data = byteArrayOf()
+        val result = decoder.decode(data).assertDoneAndGet()
+        assertEquals(emptyList<Byte>(), result)
+    }
+
+    @Test
+    fun `compose with prefixed size repetition greater than 1`() {
+        val decoder = composedDecoder<List<Byte>> {
+            beginWith(ByteDecoder())
+                .repeat(DecoderCollector.toList(), IntDecoder())
+        }
+
+        val data = byteArrayOf(0, 0, 0, 2, 1, 6)
+        val result = decoder.decode(data).assertDoneAndGet()
+        assertEquals(listOf<Byte>(1, 6), result)
+    }
+
+    @Test
+    fun `compose with prefixed size repetition equal to 1`() {
+        val decoder = composedDecoder<List<Byte>> {
+            beginWith(ByteDecoder())
+                .repeat(DecoderCollector.toList(), IntDecoder())
+        }
+
+        val data = byteArrayOf(0, 0, 0, 1, 1)
+        val result = decoder.decode(data).assertDoneAndGet()
+        assertEquals(listOf<Byte>(1), result)
+    }
+
+    @Test
+    fun `compose with prefixed size repetition equal to 0`() {
+        val decoder = composedDecoder<List<Byte>> {
+            beginWith(ByteDecoder())
+                .repeat(DecoderCollector.toList(), IntDecoder())
+        }
+
+        val data = byteArrayOf(0, 0, 0, 0)
+        val result = decoder.decode(data).assertDoneAndGet()
+        assertEquals(emptyList<Byte>(), result)
+    }
+
+    @Test
+    fun `compose with simple map`() {
+        val decoder = composedDecoder<List<Number>> {
+            beginWith(ByteDecoder())
+                .map {
+                    when (it.toInt()) {
+                        1 -> ByteDecoder()
+                        2 -> ShortDecoder()
+                        4 -> IntDecoder()
+                        8 -> LongDecoder()
+                        else -> NothingDecoder("Unexpected value: $it")
+                    }
+                }
+                .repeat(3, DecoderCollector.toList())
+        }
+
+        val data = byteArrayOf(1, 2, 2, 0, 5, 4, 0, 0, 0, 17)
+        val result = decoder.decode(data).assertDoneAndGet()
+        assertEquals(listOf<Number>(2.toByte(), 5.toShort(), 17), result)
     }
 
 }
