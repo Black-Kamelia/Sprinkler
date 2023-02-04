@@ -92,15 +92,23 @@ fun UUIDDecoderString(stringDecoder: Decoder<String> = UTF8StringDecoder()): Dec
 
 //region Special Decoders
 
-object NoOpDecoder : Decoder<Nothing> {
+object NoOpDecoder : Decoder<Unit> {
 
-    override fun decode(input: DecoderDataInput): Decoder.State<Nothing> = Decoder.State.Done {
-        throw IllegalStateException("NoOpDecoder value is not available.")
-    }
+    override fun decode(input: DecoderDataInput): Decoder.State<Unit> = Decoder.State.Done(Unit)
 
-    override fun reset() {
-        // no-op
-    }
+    override fun reset() = Unit
+
+}
+
+class NothingDecoder(
+    private val error: Throwable = IllegalStateException("NothingDecoder always fails."),
+) : Decoder<Nothing> {
+
+    constructor(message: String) : this(IllegalStateException(message))
+
+    override fun decode(input: DecoderDataInput): Decoder.State<Nothing> = Decoder.State.Error(error)
+
+    override fun reset() = Unit
 
 }
 
