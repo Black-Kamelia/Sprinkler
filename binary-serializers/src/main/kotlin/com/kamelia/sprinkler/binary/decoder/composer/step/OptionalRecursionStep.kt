@@ -1,46 +1,26 @@
 package com.kamelia.sprinkler.binary.decoder.composer.step
 
 import com.kamelia.sprinkler.binary.decoder.Decoder
-import com.kamelia.sprinkler.binary.decoder.DecoderDataInput
 import com.kamelia.sprinkler.binary.decoder.composer.ComposedDecoderElementsAccumulator
 import com.zwendo.restrikt.annotation.PackagePrivate
 
 @PackagePrivate
-internal class OptionalRecursionStep(nullabilityDecoder: Decoder<Boolean>) : CompositionStep() {
+internal class OptionalRecursionStep private constructor(
+    nullabilityDecoder: Decoder<Boolean>,
+) : AbstractOptionalStep(nullabilityDecoder) {
 
-    private var isNull = false
-
-    private val decoder = object : Decoder<Boolean> {
-
-        override fun decode(input: DecoderDataInput): Decoder.State<Boolean> =
-            nullabilityDecoder.decode(input).ifDone { isNull = !it }
-
-        override fun reset() = nullabilityDecoder.reset()
-
+    override fun onLeave(accumulator: ComposedDecoderElementsAccumulator, currentIndex: Int) = if (isNull) {
+        accumulator.add(null)
+        currentIndex + 1
+    } else {
+        accumulator.addStep()
+        null
     }
 
-    override val storeResult: Boolean
-        get() = false
+    companion object {
 
-    override fun decoder(context: ComposedDecoderElementsAccumulator): Decoder<*> = decoder
+        fun addStep(builder: CompositionStepList.Builder, nullabilityDecoder: Decoder<Boolean>) =
+            builder.addStep(OptionalRecursionStep(nullabilityDecoder))
 
-    override fun nextStepCalculator(previous: NextStepCalculator?): NextStepCalculator =
-        NextStepCalculator(
-            previous,
-            { it.size == 1 },
-        ) { current, accumulator ->
-            when {
-                current != index -> StepTransition.Increment(false)
-                isNull -> {
-                    accumulator.add(null)
-                    StepTransition.Increment(true)
-                }
-                else -> {
-                    accumulator.addStep()
-                    StepTransition.GoTo(0, false)
-                }
-            }
-
-        }
-
+    }
 }

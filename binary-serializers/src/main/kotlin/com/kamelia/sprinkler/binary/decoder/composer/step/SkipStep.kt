@@ -6,7 +6,7 @@ import com.kamelia.sprinkler.binary.decoder.composer.ComposedDecoderElementsAccu
 import com.zwendo.restrikt.annotation.PackagePrivate
 
 @PackagePrivate
-internal class SkipStep(size: Long) : CompositionStep() {
+internal class SkipStep(size: Long) : CompositionStep {
 
     private val decoder = SkipDecoder(size)
 
@@ -14,7 +14,7 @@ internal class SkipStep(size: Long) : CompositionStep() {
         require(size >= 0) { "Size must be >= 0, but was $size" }
     }
 
-    override fun decoder(context: ComposedDecoderElementsAccumulator): Decoder<*> = decoder
+    override fun decoder(accumulator: ComposedDecoderElementsAccumulator): Decoder<*> = decoder
 
     override val storeResult: Boolean
         get() = false

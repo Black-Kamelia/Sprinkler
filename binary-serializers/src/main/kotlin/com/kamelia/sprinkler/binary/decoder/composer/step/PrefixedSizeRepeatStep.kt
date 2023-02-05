@@ -7,86 +7,100 @@ import com.kamelia.sprinkler.binary.decoder.composer.ComposedDecoderElementsAccu
 import com.zwendo.restrikt.annotation.PackagePrivate
 
 @PackagePrivate
-internal class PrefixedSizeRepeatStep private constructor(
-    private val repeatDecoder: RepeatDecoder<*, *>,
-) : CompositionStep() {
+internal class PrefixedSizeRepeatStep<C, E, R> private constructor(
+    private val collector: DecoderCollector<C, E, R>,
+    private val prefixIndex: Int,
+) : CompositionStep {
 
-    override fun decoder(context: ComposedDecoderElementsAccumulator): Decoder<*> = repeatDecoder
+    private var collection: C? = null
+    private var size = -1
+    private var index = -1
+
+    override fun decoder(accumulator: ComposedDecoderElementsAccumulator): Decoder<*> =
+        throw AssertionError("Should not be called")
+
+    override fun onArrive(accumulator: ComposedDecoderElementsAccumulator, currentIndex: Int): Int {
+        if (size == -1) throw AssertionError("Size should have been initialized")
+
+        val collection = collection ?: collector.supplier(size).also { this.collection = it }
+
+        return when {
+            size == 0 -> {  // empty collection
+                accumulator.add(collector.finisher(collection))
+                reset()
+
+                currentIndex + 1 // directly go to next step
+            }
+            index == size - 1 -> { // last element
+                collector.accumulator(collection, accumulator.pop(), index)
+                accumulator.add(collector.finisher(collection))
+                reset()
+
+                currentIndex + 1 // directly go to next step
+            }
+            else -> { // any other element
+                collector.accumulator(collection, accumulator.pop(), index)
+                index++
+
+                prefixIndex + 1 // rewind to the size decoder
+            }
+        }
+    }
+
+    private fun setSize(size: Int) {
+        if (this.size != -1) throw AssertionError("Size should not have been initialized")
+        require(size >= 0) { "Size must be positive" }
+        this.size = size
+        index = 0
+    }
+
+    override fun reset() {
+        collection = null
+        size = -1
+        index = -1
+    }
 
     companion object {
 
-        fun <C, E, R> create(
+        fun <C, E, R> addStep(
+            builder: CompositionStepList.Builder,
             sizeDecoder: Decoder<Int>,
             collector: DecoderCollector<C, E, R>,
-        ): Pair<CompositionStep, CompositionStep> {
-            val repeatDecoder = PrefixedSizeRepeatDecoder(collector)
+        ) {
+            val regular = PrefixedSizeRepeatStep(collector, builder.nextPrefixIndex)
+            val prefix = regular.SizeStep(sizeDecoder, builder.nextRegularIndex)
 
-            val proxy = object : Decoder<Int> {
-                override fun decode(input: DecoderDataInput): Decoder.State<Int> =
-                    sizeDecoder.decode(input).ifDone { repeatDecoder.setRepetition(it) }
-
-                override fun reset() = sizeDecoder.reset()
-            }
-
-            val repeatStep = PrefixedSizeRepeatStep(repeatDecoder)
-            val sizeDecodingStep = PrefixedSizeDecodingStep(proxy, repeatDecoder, repeatStep, collector)
-
-            return sizeDecodingStep to repeatStep
+            builder.addPrefixStep(prefix)
+            builder.addStep(regular)
         }
 
     }
 
+    private inner class SizeStep(
+        inner: Decoder<Int>,
+        private val regularIndex: Int,
+    ) : CompositionStep {
 
-    private class PrefixedSizeDecodingStep<C, E, R>(
-        private val sizeDecoder: Decoder<Int>,
-        private val repeatDecoder: PrefixedSizeRepeatDecoder<C, E, R>,
-        private val repeatStep: PrefixedSizeRepeatStep,
-        private val collector: DecoderCollector<C, E, R>,
-    ) : CompositionStep() {
+        private val proxy = object : Decoder<Int> {
 
-        override fun decoder(context: ComposedDecoderElementsAccumulator): Decoder<*> = sizeDecoder
+            override fun decode(input: DecoderDataInput): Decoder.State<Int> =
+                inner.decode(input).ifDone(this@PrefixedSizeRepeatStep::setSize)
 
-        override fun nextStepCalculator(previous: NextStepCalculator?): NextStepCalculator =
-            NextStepCalculator(previous) { index, accumulator ->
-                when {
-                    index == this.index && repeatDecoder.times == 0 -> { // empty collection
-                        val c = collector.supplier(0)
-                        accumulator.add(collector.finisher(c))
-                        StepTransition.GoTo(repeatStep.index + 1)
-                    }
-                    index == repeatStep.index - 1 -> { // index before the repeat step
-                        repeatDecoder.addElement(accumulator.pop())
-                        if (repeatDecoder.isFull) {
-                            StepTransition.Increment(true)
-                        } else {
-                            StepTransition.Rewind()
-                        }
-                    }
-                    else -> StepTransition.Increment(false)
-                }
-            }
+            override fun reset() = Unit
+
+        }
+
+        override fun decoder(accumulator: ComposedDecoderElementsAccumulator): Decoder<*> = proxy
 
         override val storeResult: Boolean
             get() = false
 
-    }
-
-    /**
-     * Repeat decoder where the size is prefixed to the elements
-     */
-    private class PrefixedSizeRepeatDecoder<C, E, R>(
-        collector: DecoderCollector<C, E, R>,
-    ) : DeterminedSizeRepeatDecoder<C, E, R>(collector) {
-
-        override fun reset() {
-            times = -1
-            super.reset()
-        }
-
-        fun setRepetition(count: Int) {
-            times = count
-        }
-
+        override fun onLeave(accumulator: ComposedDecoderElementsAccumulator, currentIndex: Int): Int =
+            if (this@PrefixedSizeRepeatStep.size == 0) { // short-circuit for empty collection
+                regularIndex
+            } else {
+                currentIndex + 1
+            }
     }
 
 }

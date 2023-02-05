@@ -4,21 +4,24 @@ import com.kamelia.sprinkler.binary.decoder.Decoder
 import com.kamelia.sprinkler.binary.decoder.composer.ComposedDecoderElementsAccumulator
 
 @PublishedApi
-internal abstract class CompositionStep {
+internal fun interface CompositionStep {
 
-    var index: Int = -1
-        private set
-
-    open val storeResult: Boolean
+    val storeResult: Boolean
         get() = true
 
-    abstract fun decoder(context: ComposedDecoderElementsAccumulator): Decoder<*>
+    fun decoder(accumulator: ComposedDecoderElementsAccumulator): Decoder<*>
 
-    open fun nextStepCalculator(previous: NextStepCalculator?): NextStepCalculator? = null
+    /**
+     * Potentially modifies the current index when arriving at this step. By default, the index is not modified and
+     * [currentIndex] is returned.
+     */
+    fun onArrive(accumulator: ComposedDecoderElementsAccumulator, currentIndex: Int): Int = currentIndex
 
-    fun setIndex(index: Int): CompositionStep = apply {
-        require(this.index == -1) { "Index already set" }
-        this.index = index
-    }
+    /**
+     * Computes the next step index after this step. By default, the next step is [currentIndex + 1][currentIndex].
+     */
+    fun onLeave(accumulator: ComposedDecoderElementsAccumulator, currentIndex: Int): Int? = currentIndex + 1
+
+    fun reset() = Unit
 
 }
