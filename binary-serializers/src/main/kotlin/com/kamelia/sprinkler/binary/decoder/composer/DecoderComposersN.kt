@@ -1,11 +1,7 @@
 package com.kamelia.sprinkler.binary.decoder.composer
 
 import com.kamelia.sprinkler.binary.decoder.BooleanDecoder
-import com.kamelia.sprinkler.binary.decoder.ByteDecoder
 import com.kamelia.sprinkler.binary.decoder.Decoder
-import com.kamelia.sprinkler.binary.decoder.IntDecoder
-import com.kamelia.sprinkler.binary.decoder.LongDecoder
-import com.kamelia.sprinkler.binary.decoder.NothingDecoder
 import com.kamelia.sprinkler.binary.decoder.mapResult
 import com.zwendo.restrikt.annotation.PackagePrivate
 
@@ -67,24 +63,4 @@ class DecoderComposer4<B, T1, T2, T3, T4> @PackagePrivate internal constructor(
         return DecoderComposer1(this)
     }
 
-}
-
-
-fun main() {
-
-    val d: Decoder<Pair<Byte, Any>> = composedDecoder {
-        beginWith(ByteDecoder())
-            .mapAndStore {
-                when (it.toInt()) {
-                    2 -> IntDecoder()
-                    4 -> LongDecoder()
-                    else -> NothingDecoder("Unknown type: $it")
-                }
-            }
-            .reduce(::Pair)
-    }
-
-    val data = byteArrayOf(2, 0, 0, 1, 0)
-    val decoded = d.decode(data)
-    println(decoded)
 }
