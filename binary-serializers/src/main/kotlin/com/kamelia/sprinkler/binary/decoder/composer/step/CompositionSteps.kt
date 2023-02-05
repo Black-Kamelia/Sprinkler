@@ -8,8 +8,11 @@ import com.kamelia.sprinkler.binary.decoder.composer.ComposedDecoderElementsAccu
 
 internal fun CompositionStepList.Builder.addThenStep(decoder: Decoder<*>) = addStep { decoder }
 
-internal fun <T> CompositionStepList.Builder.addMapStep(decoderFactory: (T) -> Decoder<*>) =
-    addStep { decoderFactory(it.pop()) }
+internal fun <T> CompositionStepList.Builder.addMapStep(popMappingElement: Boolean, decoderFactory: (T) -> Decoder<*>) =
+    addStep {
+        val element: T = if (popMappingElement) it.pop() else it.peek()
+        decoderFactory(element)
+    }
 
 internal fun CompositionStepList.Builder.addReduceStep(reducer: (ComposedDecoderElementsAccumulator) -> Any?) =
     addStep {
@@ -46,6 +49,6 @@ internal fun <C, E, R> CompositionStepList.Builder.addUntilRepeatStep(
 internal fun CompositionStepList.Builder.addOptionalStep(nullabilityDecoder: Decoder<Boolean>) =
     OptionalStep.addStep(this, nullabilityDecoder)
 
-internal fun CompositionStepList.Builder.addOptionalRecursionStep(nullabilityDecoder: Decoder<Boolean>) =
-    OptionalRecursionStep.addStep(this, nullabilityDecoder)
+internal fun CompositionStepList.Builder.addThenItselfOrNullStep(nullabilityDecoder: Decoder<Boolean>) =
+    ThenItselfStep.addStep(this, nullabilityDecoder)
 

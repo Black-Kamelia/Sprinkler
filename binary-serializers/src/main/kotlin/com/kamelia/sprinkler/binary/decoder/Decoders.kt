@@ -9,7 +9,7 @@ import java.util.*
 
 //region Primitive Decoders
 
-fun ByteDecoder(): Decoder<Byte> = ConstantSizeDecoder(Byte.SIZE_BYTES) { readByte() }
+fun ByteDecoder(): Decoder<Byte> = byteDecoderInstance
 
 @JvmOverloads
 fun ShortDecoder(endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN): Decoder<Short> =
@@ -31,7 +31,7 @@ fun FloatDecoder(endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN): Decode
 fun DoubleDecoder(endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN): Decoder<Double> =
     ConstantSizeDecoder(Double.SIZE_BYTES) { readDouble(endianness) }
 
-fun BooleanDecoder(): Decoder<Boolean> = ConstantSizeDecoder(1) { readBoolean() }
+fun BooleanDecoder(): Decoder<Boolean> = booleanDecoderInstance
 
 //endregion
 
@@ -134,5 +134,9 @@ private object NullDecoder : Decoder<Any?> {
     }
 
 }
+
+private val byteDecoderInstance = ConstantSizeDecoder(Byte.SIZE_BYTES) { readByte() }
+
+private val booleanDecoderInstance = ConstantSizeDecoder(1) { readBoolean() }
 
 //endregion

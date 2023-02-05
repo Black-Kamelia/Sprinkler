@@ -21,7 +21,7 @@ class RecursionStepTest {
         val decoder = composedDecoder<Person> {
             beginWith(UTF8StringDecoder())
                 .then(IntDecoder())
-                .optionalRecursion(BooleanDecoder())
+                .thenItselfOrNull(BooleanDecoder())
                 .reduce(::Person)
         }
 
@@ -47,7 +47,7 @@ class RecursionStepTest {
         val decoder = composedDecoder<Person> {
             beginWith(UTF8StringDecoder())
                 .then(IntDecoder())
-                .optionalRecursion(BooleanDecoder())
+                .thenItselfOrNull(BooleanDecoder())
                 .reduce(::Person)
         }
 
@@ -80,8 +80,8 @@ class RecursionStepTest {
     fun `compose with complex recursion`() {
         val decoder = composedDecoder<Node<Byte>> {
             beginWith(ByteDecoder())
-                .optionalRecursion(BooleanDecoder())
-                .optionalRecursion(BooleanDecoder())
+                .thenItselfOrNull(BooleanDecoder())
+                .thenItselfOrNull(BooleanDecoder())
                 .reduce(::Node)
         }
 

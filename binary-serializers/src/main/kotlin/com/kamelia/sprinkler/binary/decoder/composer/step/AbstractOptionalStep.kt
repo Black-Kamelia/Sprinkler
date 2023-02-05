@@ -3,7 +3,9 @@ package com.kamelia.sprinkler.binary.decoder.composer.step
 import com.kamelia.sprinkler.binary.decoder.Decoder
 import com.kamelia.sprinkler.binary.decoder.DecoderDataInput
 import com.kamelia.sprinkler.binary.decoder.composer.ComposedDecoderElementsAccumulator
+import com.zwendo.restrikt.annotation.PackagePrivate
 
+@PackagePrivate
 internal abstract class AbstractOptionalStep(
     nullabilityDecoder: Decoder<Boolean>
 ): CompositionStep {

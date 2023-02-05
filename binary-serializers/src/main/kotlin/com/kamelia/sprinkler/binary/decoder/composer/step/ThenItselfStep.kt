@@ -5,7 +5,7 @@ import com.kamelia.sprinkler.binary.decoder.composer.ComposedDecoderElementsAccu
 import com.zwendo.restrikt.annotation.PackagePrivate
 
 @PackagePrivate
-internal class OptionalRecursionStep private constructor(
+internal class ThenItselfStep private constructor(
     nullabilityDecoder: Decoder<Boolean>,
 ) : AbstractOptionalStep(nullabilityDecoder) {
 
@@ -20,7 +20,7 @@ internal class OptionalRecursionStep private constructor(
     companion object {
 
         fun addStep(builder: CompositionStepList.Builder, nullabilityDecoder: Decoder<Boolean>) =
-            builder.addStep(OptionalRecursionStep(nullabilityDecoder))
+            builder.addStep(ThenItselfStep(nullabilityDecoder))
 
     }
 }

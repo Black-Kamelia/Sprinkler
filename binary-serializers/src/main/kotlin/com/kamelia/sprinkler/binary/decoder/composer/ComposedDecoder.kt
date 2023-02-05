@@ -1,4 +1,5 @@
 @file:JvmName("ComposedDecoder")
+
 package com.kamelia.sprinkler.binary.decoder.composer
 
 import com.kamelia.sprinkler.binary.decoder.Decoder
@@ -10,7 +11,6 @@ inline fun <T> composedDecoder(block: DecoderComposer0<T>.() -> DecoderComposer1
     DecoderComposer0<T>()
         .block()
         .run { decoder ?: ComposedDecoderImpl(builder) } // decoder != null => composition contains only one step
-
 
 @PublishedApi
 internal class ComposedDecoderImpl<T>(builder: CompositionStepList.Builder) : Decoder<T> {

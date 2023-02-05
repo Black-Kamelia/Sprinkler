@@ -28,13 +28,18 @@ class ComposedDecoderElementsAccumulator @PackagePrivate internal constructor() 
         return elements.removeLast() as T
     }
 
+    @PublishedApi
+    internal fun <T> peek(): T {
+        check(index >= currentLayer.start) { "No element to peek" }
+        @Suppress("UNCHECKED_CAST")
+        return elements.last() as T
+    }
+
     internal fun addStep() {
         val newIndex = elements.size
         currentLayer = Layer(newIndex, currentLayer)
         index = newIndex
     }
-
-    internal fun isNotEmpty(): Boolean = elements.isNotEmpty()
 
     private fun updateStep() {
         if (index < elements.size) return

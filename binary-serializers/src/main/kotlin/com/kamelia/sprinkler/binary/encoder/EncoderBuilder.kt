@@ -1,8 +1,9 @@
 package com.kamelia.sprinkler.binary.encoder
 
 import java.nio.charset.Charset
+import kotlin.experimental.ExperimentalTypeInference
 
-class EncoderBuilder<T> {
+@OptIn(ExperimentalTypeInference::class) class EncoderBuilder<T> {
 
     private var encoders: MutableList<Encoder<T>> = ArrayList()
 
@@ -24,6 +25,7 @@ class EncoderBuilder<T> {
     }
 
     @JvmName("encodeByte")
+    @OverloadResolutionByLambdaReturnType
     fun encode(extractor: T.() -> Byte): EncoderBuilder<T> = encodeWith(ByteEncoder, extractor)
 
     @JvmName("encodeShort")
@@ -82,5 +84,20 @@ class EncoderBuilder<T> {
         override fun encode(obj: T, accumulator: EncodingAccumulator) = list.forEach { it.encode(obj, accumulator) }
 
     }
+
+}
+
+
+class Dumb {
+
+    fun create(factory: () -> Int): Int? = factory()
+
+    fun create(factory: () -> Double): Double? = factory()
+
+}
+
+//val newValue = create { 3.14 }
+
+fun main() {
 
 }
