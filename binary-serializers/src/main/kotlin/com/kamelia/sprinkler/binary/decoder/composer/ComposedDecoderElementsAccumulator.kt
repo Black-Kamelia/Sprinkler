@@ -34,6 +34,8 @@ class ComposedDecoderElementsAccumulator @PackagePrivate internal constructor() 
         index = newIndex
     }
 
+    internal fun isNotEmpty(): Boolean = elements.isNotEmpty()
+
     private fun updateStep() {
         if (index < elements.size) return
 
@@ -62,4 +64,5 @@ class ComposedDecoderElementsAccumulator @PackagePrivate internal constructor() 
     )
 
     override fun toString(): String = "$index $elements"
+
 }
