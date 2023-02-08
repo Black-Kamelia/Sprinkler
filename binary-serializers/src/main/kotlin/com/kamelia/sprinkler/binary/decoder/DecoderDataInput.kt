@@ -62,7 +62,7 @@ fun interface DecoderDataInput {
             override fun read(): Int {
                 inner.flip()
                 val byte = if (inner.hasRemaining()) {
-                    inner.get().toInt()
+                    inner.get().toInt() and 0xFF
                 } else {
                     -1
                 }
@@ -86,7 +86,7 @@ fun interface DecoderDataInput {
             private var index = 0
 
             override fun read(): Int = if (index < inner.size) {
-                inner[index++].toInt()
+                inner[index++].toInt() and 0xFF
             } else {
                 -1
             }
@@ -101,3 +101,4 @@ fun interface DecoderDataInput {
     }
 
 }
+

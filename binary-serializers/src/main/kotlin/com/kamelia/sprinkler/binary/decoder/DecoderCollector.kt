@@ -28,7 +28,7 @@ data class DecoderCollector<C, in E, out R>(
 
         inline fun <E> toCollection(
             crossinline factory: () -> MutableCollection<E>
-        ): DecoderCollector<MutableCollection<E>, E, MutableCollection<E>> = DecoderCollector(
+        ): DecoderCollector<MutableCollection<E>, E, Collection<E>> = DecoderCollector(
             { factory() },
             { e, _ -> add(e) },
             { this }

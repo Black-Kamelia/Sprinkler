@@ -3,7 +3,6 @@
 package com.kamelia.sprinkler.binary.decoder
 
 import com.kamelia.sprinkler.binary.common.ByteEndianness
-import com.kamelia.sprinkler.binary.common.VariableSizeDelimitationKind
 import java.nio.charset.Charset
 import java.util.*
 
@@ -38,26 +37,42 @@ fun BooleanDecoder(): Decoder<Boolean> = booleanDecoderInstance
 //region String Decoders
 
 @JvmOverloads
-fun UTF8StringDecoder(kind: VariableSizeDelimitationKind = VariableSizeDelimitationKind.PREFIXED_SIZE): Decoder<String> =
-    when (kind) {
-        VariableSizeDelimitationKind.PREFIXED_SIZE -> StringDecoder()
-        VariableSizeDelimitationKind.END_MARKER -> StringDecoderEM()
-    }
+fun UTF8StringDecoder(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<String> =
+    StringDecoder(Charsets.UTF_8, sizeDecoder)
 
 @JvmOverloads
-fun ASCIIStringDecoder(kind: VariableSizeDelimitationKind = VariableSizeDelimitationKind.PREFIXED_SIZE): Decoder<String> =
-    when (kind) {
-        VariableSizeDelimitationKind.PREFIXED_SIZE -> StringDecoder(charset = Charsets.US_ASCII)
-        VariableSizeDelimitationKind.END_MARKER -> StringDecoderEM(charset = Charsets.US_ASCII)
-    }
+fun UTF8StringDecoderEM(endMarker: ByteArray = UTF8_NULL): Decoder<String> {
+    require(endMarker.isNotEmpty()) { "End marker must be at least 1 byte long for UTF-8 (got ${endMarker.size})" }
+    return StringDecoderEM(Charsets.UTF_8, endMarker)
+}
 
 @JvmOverloads
-fun StringDecoder(sizeDecoder: Decoder<Number> = IntDecoder(), charset: Charset = Charsets.UTF_8): Decoder<String> =
+fun UTF16StringDecoder(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<String> =
+    StringDecoder(Charsets.UTF_16, sizeDecoder)
+
+@JvmOverloads
+fun UTF16StringDecoderEM(endMarker: ByteArray = UTF16_NULL): Decoder<String> {
+    require(endMarker.size >= 2) { "End marker must be at least 2 bytes long for UTF-16 (got ${endMarker.size})" }
+    return StringDecoderEM(Charsets.UTF_16, endMarker)
+}
+
+@JvmOverloads
+fun ASCIIStringDecoder(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<String> =
+    StringDecoder(Charsets.US_ASCII, sizeDecoder)
+
+@JvmOverloads
+fun ASCIIStringDecoderEM(endMarker: ByteArray = ASCII_NULL): Decoder<String> =
+    StringDecoderEM(Charsets.US_ASCII, endMarker)
+
+
+@JvmOverloads
+fun StringDecoder(charset: Charset, sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<String> =
     VariableSizePrefixedSizeDecoder(sizeDecoder) { readString(charset, it) }
 
-@JvmOverloads
-fun StringDecoderEM(endMarker: ByteArray = byteArrayOf(0), charset: Charset = Charsets.UTF_8): Decoder<String> =
-    VariableSizeEndMarkerDecoder(endMarker) { readString(charset, it) }
+fun StringDecoderEM(charset: Charset, endMarker: ByteArray): Decoder<String> {
+    require(endMarker.isNotEmpty()) { "End marker must be at least 1 byte long (got ${endMarker.size})" }
+    return VariableSizeEndMarkerDecoder(endMarker) { readString(charset, it) }
+}
 
 //endregion
 
@@ -88,17 +103,19 @@ fun UUIDDecoderString(stringDecoder: Decoder<String> = UTF8StringDecoder()): Dec
 
 // TODO date/time decoders
 
+fun <T, U> PairDecoder(firstDecoder: Decoder<T>, secondDecoder: Decoder<U>): Decoder<Pair<T, U>> {
+    var f: T? = null
+    return firstDecoder
+        .mapTo { f = it; secondDecoder }
+        .mapResult { (@Suppress("UNCHECKED_CAST") (f as T)) to it }
+}
+
 //endregion
 
 //region Special Decoders
 
-object NoOpDecoder : Decoder<Unit> {
-
-    override fun decode(input: DecoderDataInput): Decoder.State<Unit> = Decoder.State.Done(Unit)
-
-    override fun reset() = Unit
-
-}
+@JvmField
+val NoOpDecoder = ConstantDecoder(Unit)
 
 class NothingDecoder(
     private val error: Throwable = IllegalStateException("NothingDecoder always fails."),
@@ -114,12 +131,28 @@ class NothingDecoder(
 
 fun <T> NullDecoder(): Decoder<T?> = @Suppress("UNCHECKED_CAST") (NullDecoder as Decoder<T?>)
 
-fun <T, U> PairDecoder(firstDecoder: Decoder<T>, secondDecoder: Decoder<U>): Decoder<Pair<T, U>> {
-    var f: T? = null
-    return firstDecoder
-        .mapTo { f = it; secondDecoder }
-        .mapResult { (@Suppress("UNCHECKED_CAST") (f as T)) to it }
+class ConstantDecoder<T>(private val factory: () -> T) : Decoder<T> {
+
+    constructor(value: T) : this({ value })
+
+    override fun decode(input: DecoderDataInput): Decoder.State<T> = Decoder.State.Done(factory())
+
+    override fun reset() = Unit
+
 }
+
+//endregion
+
+//region Constants
+
+@JvmField
+val ASCII_NULL = byteArrayOf(0)
+
+@JvmField
+val UTF8_NULL = ASCII_NULL
+
+@JvmField
+val UTF16_NULL = byteArrayOf(0, 0)
 
 //endregion
 
