@@ -61,7 +61,6 @@ allprojects {
         sign(publishing.publications)
     }
 
-
     tasks {
         test {
             useJUnitPlatform()
