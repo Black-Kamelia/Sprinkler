@@ -3,10 +3,11 @@ import java.util.*
 plugins {
     val kotlinVersion: String by System.getProperties()
     val restriktVersion: String by System.getProperties()
+    val koverVersion: String by System.getProperties()
     java
     `maven-publish`
     signing
-    jacoco
+    id("org.jetbrains.kotlinx.kover") version koverVersion
     kotlin("jvm") version kotlinVersion
     id("com.zwendo.restrikt") version restriktVersion
 }
@@ -34,7 +35,7 @@ allprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
     apply(plugin = "com.zwendo.restrikt")
-    apply(plugin = "jacoco")
+    apply(plugin = "kover")
 
     val projectName = project.name.toLowerCase()
     val projectVersion = props["$projectName.version"] as? String ?: "0.1.0"
@@ -60,15 +61,20 @@ allprojects {
         sign(publishing.publications)
     }
 
-    restrikt {
-        enabled = false
-    }
 
     tasks {
         test {
             useJUnitPlatform()
             ignoreFailures = true
-            finalizedBy(jacocoTestReport)
+            finalizedBy(koverVerify)
+        }
+
+        koverVerify {
+            finalizedBy(koverXmlReport)
+        }
+
+        koverXmlReport {
+            finalizedBy(koverHtmlReport)
         }
 
         setupJavaCompilation {
@@ -91,13 +97,6 @@ allprojects {
             archiveBaseName.set("$rootProjectName-$projectName-$projectVersion")
         }
 
-        jacocoTestReport {
-            reports {
-                xml.required.set(true)
-                csv.required.set(false)
-                html.required.set(true)
-            }
-        }
     }
 
     publishing {
