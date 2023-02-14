@@ -1,9 +1,9 @@
 package com.kamelia.sprinkler.binary.decoder.composer.step
 
-import com.kamelia.sprinkler.binary.decoder.Decoder
-import com.kamelia.sprinkler.binary.decoder.DecoderCollector
-import com.kamelia.sprinkler.binary.decoder.DecoderDataInput
-import com.kamelia.sprinkler.binary.decoder.composer.ComposedDecoderElementsAccumulator
+import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
+import com.kamelia.sprinkler.binary.decoder.core.Decoder
+import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
+import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
 import com.zwendo.restrikt.annotation.PackagePrivate
 
 @PackagePrivate
@@ -16,10 +16,10 @@ internal class PrefixedSizeRepeatStep<C, E, R> private constructor(
     private var size = -1
     private var index = -1
 
-    override fun decoder(accumulator: ComposedDecoderElementsAccumulator): Decoder<*> =
+    override fun decoder(accumulator: ElementsAccumulator): Decoder<*> =
         throw AssertionError("Should not be called")
 
-    override fun onArrive(accumulator: ComposedDecoderElementsAccumulator, currentIndex: Int): Int {
+    override fun onArrive(accumulator: ElementsAccumulator, currentIndex: Int): Int {
         if (size == -1) throw AssertionError("Size should have been initialized")
 
         val collection = collection ?: collector.supplier(size).also { this.collection = it }
@@ -90,12 +90,12 @@ internal class PrefixedSizeRepeatStep<C, E, R> private constructor(
 
         }
 
-        override fun decoder(accumulator: ComposedDecoderElementsAccumulator): Decoder<*> = proxy
+        override fun decoder(accumulator: ElementsAccumulator): Decoder<*> = proxy
 
         override val storeResult: Boolean
             get() = false
 
-        override fun onLeave(accumulator: ComposedDecoderElementsAccumulator, currentIndex: Int): Int =
+        override fun onLeave(accumulator: ElementsAccumulator, currentIndex: Int): Int =
             if (this@PrefixedSizeRepeatStep.size == 0) { // short-circuit for empty collection
                 regularIndex
             } else {

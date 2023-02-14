@@ -1,7 +1,7 @@
-package com.kamelia.sprinkler.binary.decoder
+package com.kamelia.sprinkler.binary.decoder.core
 
-class VariableSizePrefixedSizeDecoder<E> @JvmOverloads constructor(
-    private val sizeDecoder: Decoder<Number> = IntDecoder(),
+class VariableSizePrefixedSizeDecoder<E>(
+    private val sizeDecoder: Decoder<Number>,
     private val extractor: ByteArray.(Int) -> E,
 ) : Decoder<E> {
 

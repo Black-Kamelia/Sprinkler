@@ -3,6 +3,12 @@
 package com.kamelia.sprinkler.binary.decoder
 
 import com.kamelia.sprinkler.binary.common.ByteEndianness
+import com.kamelia.sprinkler.binary.decoder.core.ConstantSizeDecoder
+import com.kamelia.sprinkler.binary.decoder.core.Decoder
+import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
+import com.kamelia.sprinkler.binary.decoder.core.VariableSizeEndMarkerDecoder
+import com.kamelia.sprinkler.binary.decoder.core.VariableSizePrefixedSizeDecoder
+import com.kamelia.sprinkler.binary.decoder.util.*
 import java.nio.charset.Charset
 import java.util.*
 
@@ -88,27 +94,6 @@ fun <T : Enum<T>> EnumDecoder(
     enumClass: Class<T>,
     stringDecoder: Decoder<String> = UTF8StringDecoder(),
 ): Decoder<T> = stringDecoder.mapResult { s -> enumClass.enumConstants.first { s == it.name } }
-
-@JvmOverloads
-fun UUIDDecoder(longDecoder: Decoder<Long> = LongDecoder()): Decoder<UUID> {
-    var msb = 0L
-    return longDecoder
-        .mapTo { msb = it; longDecoder }
-        .mapResult { UUID(msb, it) }
-}
-
-@JvmOverloads
-fun UUIDDecoderString(stringDecoder: Decoder<String> = UTF8StringDecoder()): Decoder<UUID> =
-    stringDecoder.mapResult { UUID.fromString(it) }
-
-// TODO date/time decoders
-
-fun <T, U> PairDecoder(firstDecoder: Decoder<T>, secondDecoder: Decoder<U>): Decoder<Pair<T, U>> {
-    var f: T? = null
-    return firstDecoder
-        .mapTo { f = it; secondDecoder }
-        .mapResult { (@Suppress("UNCHECKED_CAST") (f as T)) to it }
-}
 
 //endregion
 

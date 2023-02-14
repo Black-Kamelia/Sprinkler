@@ -1,4 +1,4 @@
-package com.kamelia.sprinkler.binary.decoder
+package com.kamelia.sprinkler.binary.decoder.core
 
 data class DecoderCollector<C, in E, out R>(
     val supplier: (Int) -> C,

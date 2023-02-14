@@ -1,4 +1,4 @@
-package com.kamelia.sprinkler.binary.decoder
+package com.kamelia.sprinkler.binary.decoder.core
 
 class ConstantSizeDecoder<E>(
     private val byteSize: Int,
@@ -6,7 +6,7 @@ class ConstantSizeDecoder<E>(
 ) : Decoder<E> {
 
     init {
-        require(byteSize > 0) { "Number of bytes must positive, number of bytes: $byteSize" }
+        require(byteSize >= 0) { "Number of bytes must positive or zero, number of bytes: $byteSize" }
     }
 
     private val array: ByteArray = ByteArray(byteSize)

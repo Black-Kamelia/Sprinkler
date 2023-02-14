@@ -1,8 +1,8 @@
 package com.kamelia.sprinkler.binary.decoder.composer.step
 
-import com.kamelia.sprinkler.binary.decoder.Decoder
-import com.kamelia.sprinkler.binary.decoder.DecoderCollector
-import com.kamelia.sprinkler.binary.decoder.composer.ComposedDecoderElementsAccumulator
+import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
+import com.kamelia.sprinkler.binary.decoder.core.Decoder
+import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
 import com.zwendo.restrikt.annotation.PackagePrivate
 
 @PackagePrivate
@@ -16,10 +16,10 @@ internal class UntilRepeatStep<C, E, R> private constructor(
     private var collection: C? = null
     private var size = 0
 
-    override fun decoder(accumulator: ComposedDecoderElementsAccumulator): Decoder<*> =
+    override fun decoder(accumulator: ElementsAccumulator): Decoder<*> =
         throw AssertionError("Should not be called")
 
-    override fun onArrive(accumulator: ComposedDecoderElementsAccumulator, currentIndex: Int): Int {
+    override fun onArrive(accumulator: ElementsAccumulator, currentIndex: Int): Int {
         val collection = collection ?: collector.supplier(-1).also { collection = it }
 
         val element = accumulator.pop<E>()

@@ -1,4 +1,4 @@
-package com.kamelia.sprinkler.binary.decoder
+package com.kamelia.sprinkler.binary.decoder.core
 
 class ConstantSizeCollectionDecoder<C, T, R>(
     private val collector: DecoderCollector<C, T, R>,

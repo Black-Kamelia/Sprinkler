@@ -2,9 +2,9 @@
 
 package com.kamelia.sprinkler.binary.decoder.composer
 
-import com.kamelia.sprinkler.binary.decoder.Decoder
-import com.kamelia.sprinkler.binary.decoder.DecoderDataInput
 import com.kamelia.sprinkler.binary.decoder.composer.step.CompositionStepList
+import com.kamelia.sprinkler.binary.decoder.core.Decoder
+import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
 
 @JvmName("create")
 inline fun <T> composedDecoder(block: DecoderComposer0<T>.() -> DecoderComposer1<T, T>): Decoder<T> =
@@ -17,12 +17,12 @@ internal class ComposedDecoderImpl<T>(builder: CompositionStepList.Builder) : De
 
     private val steps: CompositionStepList = builder.build()
     private var index = steps.start
-    private lateinit var accumulator: ComposedDecoderElementsAccumulator
+    private lateinit var accumulator: ElementsAccumulator
     private var currentRecursion: RecursionNode? = null
 
     override fun decode(input: DecoderDataInput): Decoder.State<T> {
         if (!::accumulator.isInitialized) { // first call
-            accumulator = ComposedDecoderElementsAccumulator()
+            accumulator = ElementsAccumulator()
             arriveAtStep(index)
         }
 
@@ -55,7 +55,7 @@ internal class ComposedDecoderImpl<T>(builder: CompositionStepList.Builder) : De
     override fun reset() {
         steps[index].reset()
         index = steps.start
-        accumulator = ComposedDecoderElementsAccumulator()
+        accumulator = ElementsAccumulator()
         arriveAtStep(index)
     }
 

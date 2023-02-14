@@ -1,4 +1,4 @@
-package com.kamelia.sprinkler.binary.decoder
+package com.kamelia.sprinkler.binary.decoder.core
 
 class VariableSizeEndMarkerDecoder<E>(
     private val endMarker: ByteArray,

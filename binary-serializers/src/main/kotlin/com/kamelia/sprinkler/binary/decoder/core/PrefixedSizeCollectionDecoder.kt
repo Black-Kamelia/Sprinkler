@@ -1,9 +1,9 @@
-package com.kamelia.sprinkler.binary.decoder
+package com.kamelia.sprinkler.binary.decoder.core
 
-class PrefixedSizeCollectionDecoder<C, T, R> @JvmOverloads constructor(
+class PrefixedSizeCollectionDecoder<C, T, R>(
     private val collector: DecoderCollector<C, T, R>,
     private val elementDecoder: Decoder<T>,
-    private val sizeDecoder: Decoder<Number> = IntDecoder(),
+    private val sizeDecoder: Decoder<Number>,
 ) : Decoder<R> {
 
     private var collection: C? = null

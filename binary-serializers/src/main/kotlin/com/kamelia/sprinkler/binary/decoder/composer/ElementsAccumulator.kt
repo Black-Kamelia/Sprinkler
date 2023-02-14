@@ -2,7 +2,7 @@ package com.kamelia.sprinkler.binary.decoder.composer
 
 import com.zwendo.restrikt.annotation.PackagePrivate
 
-class ComposedDecoderElementsAccumulator @PackagePrivate internal constructor() {
+class ElementsAccumulator @PackagePrivate internal constructor() {
 
     private var elements = ArrayList<Any?>()
     private var currentLayer = Layer(0, null)

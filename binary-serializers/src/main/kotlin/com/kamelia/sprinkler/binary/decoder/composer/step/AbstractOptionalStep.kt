@@ -1,14 +1,12 @@
 package com.kamelia.sprinkler.binary.decoder.composer.step
 
-import com.kamelia.sprinkler.binary.decoder.Decoder
-import com.kamelia.sprinkler.binary.decoder.DecoderDataInput
-import com.kamelia.sprinkler.binary.decoder.composer.ComposedDecoderElementsAccumulator
+import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
+import com.kamelia.sprinkler.binary.decoder.core.Decoder
+import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
 import com.zwendo.restrikt.annotation.PackagePrivate
 
 @PackagePrivate
-internal abstract class AbstractOptionalStep(
-    nullabilityDecoder: Decoder<Boolean>
-): CompositionStep {
+internal abstract class AbstractOptionalStep(nullabilityDecoder: Decoder<Boolean>): CompositionStep {
 
     protected var isNull = false
         private set
@@ -25,11 +23,11 @@ internal abstract class AbstractOptionalStep(
     final override val storeResult: Boolean
         get() = false
 
-    final override fun decoder(accumulator: ComposedDecoderElementsAccumulator): Decoder<*> = decoder
+    final override fun decoder(accumulator: ElementsAccumulator): Decoder<*> = decoder
 
-    final override fun onArrive(accumulator: ComposedDecoderElementsAccumulator, currentIndex: Int): Int =
+    final override fun onArrive(accumulator: ElementsAccumulator, currentIndex: Int): Int =
         super.onArrive(accumulator, currentIndex)
 
-    abstract override fun onLeave(accumulator: ComposedDecoderElementsAccumulator, currentIndex: Int): Int?
+    abstract override fun onLeave(accumulator: ElementsAccumulator, currentIndex: Int): Int?
 
 }

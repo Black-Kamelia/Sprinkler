@@ -1,4 +1,4 @@
-package com.kamelia.sprinkler.binary.decoder
+package com.kamelia.sprinkler.binary.decoder.core
 
 import java.io.InputStream
 import java.nio.ByteBuffer

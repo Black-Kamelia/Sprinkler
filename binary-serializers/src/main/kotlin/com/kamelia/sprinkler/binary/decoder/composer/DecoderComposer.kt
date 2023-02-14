@@ -1,7 +1,5 @@
 package com.kamelia.sprinkler.binary.decoder.composer
 
-import com.kamelia.sprinkler.binary.decoder.Decoder
-import com.kamelia.sprinkler.binary.decoder.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.NothingDecoder
 import com.kamelia.sprinkler.binary.decoder.composer.step.CompositionStepList
 import com.kamelia.sprinkler.binary.decoder.composer.step.addConstantSizeRepeatStep
@@ -13,6 +11,8 @@ import com.kamelia.sprinkler.binary.decoder.composer.step.addSkipStep
 import com.kamelia.sprinkler.binary.decoder.composer.step.addThenItselfOrNullStep
 import com.kamelia.sprinkler.binary.decoder.composer.step.addThenStep
 import com.kamelia.sprinkler.binary.decoder.composer.step.addUntilRepeatStep
+import com.kamelia.sprinkler.binary.decoder.core.Decoder
+import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
 
 abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
 
@@ -46,7 +46,7 @@ abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
         return MarkerDecoder
     }
 
-    protected fun <R> reduceStep(reducer: ComposedDecoderElementsAccumulator.() -> R) = builder.addReduceStep(reducer)
+    protected fun <R> reduceStep(reducer: ElementsAccumulator.() -> R) = builder.addReduceStep(reducer)
 
     protected fun <R> thenItselfOrNullStep(nullabilityDecoder: Decoder<Boolean>): Decoder<R> {
         builder.addThenItselfOrNullStep(nullabilityDecoder)

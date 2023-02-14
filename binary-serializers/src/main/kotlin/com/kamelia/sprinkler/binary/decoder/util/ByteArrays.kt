@@ -1,6 +1,6 @@
 @file:JvmName("ByteArrays")
 
-package com.kamelia.sprinkler.binary.decoder
+package com.kamelia.sprinkler.binary.decoder.util
 
 import com.kamelia.sprinkler.binary.common.ByteEndianness
 import java.nio.charset.Charset

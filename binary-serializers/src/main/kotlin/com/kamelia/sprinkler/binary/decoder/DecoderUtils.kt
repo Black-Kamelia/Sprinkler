@@ -2,6 +2,12 @@
 
 package com.kamelia.sprinkler.binary.decoder
 
+import com.kamelia.sprinkler.binary.decoder.core.ConstantSizeCollectionDecoder
+import com.kamelia.sprinkler.binary.decoder.core.Decoder
+import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
+import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
+import com.kamelia.sprinkler.binary.decoder.core.MarkerElementCollectionDecoder
+import com.kamelia.sprinkler.binary.decoder.core.PrefixedSizeCollectionDecoder
 import com.zwendo.restrikt.annotation.HideFromJava
 
 fun <T, R> Decoder<T>.mapTo(block: (T) -> Decoder<R>): Decoder<R> = object : Decoder<R> {

@@ -1,8 +1,5 @@
 package com.kamelia.sprinkler.binary.decoder.composer.step
 
-import com.zwendo.restrikt.annotation.PackagePrivate
-
-@PackagePrivate
 internal class CompositionStepList(
     private val list: List<CompositionStep>,
     private val firstRegularStepIndex: Int,

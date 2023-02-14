@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.binary.decoder.composer
 
-import com.kamelia.sprinkler.binary.decoder.Decoder
+import com.kamelia.sprinkler.binary.decoder.core.Decoder
 
 class DecoderComposer0<B> {
 

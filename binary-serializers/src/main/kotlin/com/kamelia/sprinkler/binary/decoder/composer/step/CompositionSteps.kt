@@ -1,9 +1,9 @@
 package com.kamelia.sprinkler.binary.decoder.composer.step
 
-import com.kamelia.sprinkler.binary.decoder.Decoder
-import com.kamelia.sprinkler.binary.decoder.DecoderCollector
-import com.kamelia.sprinkler.binary.decoder.DecoderDataInput
-import com.kamelia.sprinkler.binary.decoder.composer.ComposedDecoderElementsAccumulator
+import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
+import com.kamelia.sprinkler.binary.decoder.core.Decoder
+import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
+import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
 
 
 internal fun CompositionStepList.Builder.addThenStep(decoder: Decoder<*>) = addStep { decoder }
@@ -14,7 +14,7 @@ internal fun <T> CompositionStepList.Builder.addMapStep(popMappingElement: Boole
         decoderFactory(element)
     }
 
-internal fun CompositionStepList.Builder.addReduceStep(reducer: (ComposedDecoderElementsAccumulator) -> Any?) =
+internal fun CompositionStepList.Builder.addReduceStep(reducer: (ElementsAccumulator) -> Any?) =
     addStep {
         object : Decoder<Any?> {
 
