@@ -91,4 +91,3 @@ interface Decoder<out T> {
     }
 
 }
-

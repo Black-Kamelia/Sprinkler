@@ -6,7 +6,7 @@ class ConstantSizeDecoder<E>(
 ) : Decoder<E> {
 
     init {
-        require(byteSize >= 0) { "Number of bytes must positive or zero, number of bytes: $byteSize" }
+        require(byteSize > 0) { "Number of bytes must positive (was $byteSize)" }
     }
 
     private val array: ByteArray = ByteArray(byteSize)

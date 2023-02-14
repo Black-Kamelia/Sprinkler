@@ -9,8 +9,12 @@ class ConstantSizeCollectionDecoder<C, T, R>(
     private var collection: C? = null
     private var index = 0
 
+    init {
+        require(size >= 0) { "Size must be non-negative (was $size)" }
+    }
+
     override fun decode(input: DecoderDataInput): Decoder.State<R> {
-        val collection = collection ?: collector.supplier(size).also { collection = it }
+        val collection = collection ?: collector.supplier().also { collection = it }
 
         while (index < size) {
             when (val elementState = elementDecoder.decode(input)) {

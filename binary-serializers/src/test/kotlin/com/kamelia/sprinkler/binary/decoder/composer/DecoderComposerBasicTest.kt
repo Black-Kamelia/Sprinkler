@@ -1,17 +1,17 @@
-package com.kamelia.sprinkler.decoder.composer
+package com.kamelia.sprinkler.binary.decoder.composer
 
 import com.kamelia.sprinkler.binary.decoder.BooleanDecoder
 import com.kamelia.sprinkler.binary.decoder.ByteDecoder
-import com.kamelia.sprinkler.binary.decoder.Decoder
-import com.kamelia.sprinkler.binary.decoder.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.IntDecoder
 import com.kamelia.sprinkler.binary.decoder.LongDecoder
-import com.kamelia.sprinkler.binary.decoder.NothingDecoder
 import com.kamelia.sprinkler.binary.decoder.ShortDecoder
 import com.kamelia.sprinkler.binary.decoder.UTF8StringDecoder
-import com.kamelia.sprinkler.binary.decoder.composer.composedDecoder
-import com.kamelia.sprinkler.decoder.util.assertDoneAndGet
-import com.kamelia.sprinkler.decoder.util.get
+import com.kamelia.sprinkler.binary.decoder.UTF8StringDecoderEM
+import com.kamelia.sprinkler.binary.decoder.core.Decoder
+import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
+import com.kamelia.sprinkler.binary.decoder.core.NothingDecoder
+import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
+import com.kamelia.sprinkler.binary.decoder.util.get
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -24,7 +24,7 @@ class DecoderComposerBasicTest {
         val decoder = composedDecoder<Person> {
             beginWith(UTF8StringDecoder())
                 .then(IntDecoder())
-                .reduce(::Person)
+                .reduce(DecoderComposerBasicTest::Person)
         }
 
         val name = "John"
@@ -49,7 +49,7 @@ class DecoderComposerBasicTest {
             beginWith(UTF8StringDecoder())
                 .skip(4)
                 .then(IntDecoder())
-                .reduce(::Person)
+                .reduce(DecoderComposerBasicTest::Person)
         }
 
         val name = "John"
@@ -118,7 +118,7 @@ class DecoderComposerBasicTest {
         val decoder = composedDecoder<Person?> {
             beginWith(UTF8StringDecoder())
                 .then(IntDecoder())
-                .reduce(::Person)
+                .reduce(DecoderComposerBasicTest::Person)
                 .optional(BooleanDecoder())
         }
 
@@ -142,9 +142,9 @@ class DecoderComposerBasicTest {
     @Test
     fun `compose with absent optional value`() {
         val decoder = composedDecoder<Person?> {
-            beginWith(UTF8StringDecoder())
+            beginWith(UTF8StringDecoderEM())
                 .then(IntDecoder())
-                .reduce(::Person)
+                .reduce(DecoderComposerBasicTest::Person)
                 .optional(BooleanDecoder())
         }
 

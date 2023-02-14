@@ -1,6 +1,6 @@
-package com.kamelia.sprinkler.decoder.util
+package com.kamelia.sprinkler.binary.decoder.util
 
-import com.kamelia.sprinkler.binary.decoder.Decoder
+import com.kamelia.sprinkler.binary.decoder.core.Decoder
 import org.junit.jupiter.api.Assertions.assertEquals
 
 fun <T> Decoder.State<T>.assertDoneAndGet(): T {

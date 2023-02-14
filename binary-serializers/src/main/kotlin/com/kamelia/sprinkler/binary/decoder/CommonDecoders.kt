@@ -21,7 +21,7 @@ fun UUIDDecoder(longDecoder: Decoder<Long> = LongDecoder()): Decoder<UUID> {
 }
 
 @JvmOverloads
-fun UUIDDecoderString(stringDecoder: Decoder<String> = UTF8StringDecoder()): Decoder<UUID> =
+fun UUIDDecoderString(stringDecoder: Decoder<String> = UTF8StringDecoderEM()): Decoder<UUID> =
     stringDecoder.mapResult(UUID::fromString)
 
 fun <T, U> PairDecoder(firstDecoder: Decoder<T>, secondDecoder: Decoder<U>): Decoder<Pair<T, U>> {
@@ -74,7 +74,7 @@ fun LocalDateTimeDecoder(intDecoder: Decoder<Int> = IntDecoder()): Decoder<Local
 fun DateDecoder(longDecoder: Decoder<Long> = LongDecoder()): Decoder<Date> = longDecoder.mapResult(::Date)
 
 @JvmOverloads
-fun ZoneIdDecoder(stringDecoder: Decoder<String> = UTF8StringDecoder()): Decoder<ZoneId> =
+fun ZoneIdDecoder(stringDecoder: Decoder<String> = UTF8StringDecoderEM()): Decoder<ZoneId> =
     stringDecoder.mapResult(ZoneId::of)
 
 @JvmOverloads

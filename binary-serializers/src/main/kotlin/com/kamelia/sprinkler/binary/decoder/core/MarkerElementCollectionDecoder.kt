@@ -11,7 +11,7 @@ class MarkerElementCollectionDecoder<C, T, R>(
     private var index = 0
 
     override fun decode(input: DecoderDataInput): Decoder.State<R> {
-        val collection = collection ?: collector.supplier(0).also { collection = it }
+        val collection = collection ?: collector.supplier().also { collection = it }
 
         while (true) {
             when (val elementState = elementDecoder.decode(input)) {

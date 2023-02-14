@@ -1,12 +1,11 @@
-package com.kamelia.sprinkler.decoder.composer
+package com.kamelia.sprinkler.binary.decoder.composer
 
 import com.kamelia.sprinkler.binary.decoder.ByteDecoder
-import com.kamelia.sprinkler.binary.decoder.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.IntDecoder
 import com.kamelia.sprinkler.binary.decoder.UTF8StringDecoder
-import com.kamelia.sprinkler.binary.decoder.composer.composedDecoder
-import com.kamelia.sprinkler.decoder.util.assertDoneAndGet
-import com.kamelia.sprinkler.decoder.util.get
+import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
+import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
+import com.kamelia.sprinkler.binary.decoder.util.get
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -71,7 +70,7 @@ class ConstantSizeRepeatStepTest {
         val decoder = composedDecoder<List<Set<SimplePerson>>> {
             beginWith(UTF8StringDecoder())
                 .then(IntDecoder())
-                .reduce(::SimplePerson)
+                .reduce(ConstantSizeRepeatStepTest::SimplePerson)
                 .repeat(1, DecoderCollector.toSet())
                 .repeat(2, DecoderCollector.toList())
         }

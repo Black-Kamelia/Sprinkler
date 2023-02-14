@@ -1,12 +1,11 @@
-package com.kamelia.sprinkler.decoder.composer
+package com.kamelia.sprinkler.binary.decoder.composer
 
 import com.kamelia.sprinkler.binary.decoder.BooleanDecoder
 import com.kamelia.sprinkler.binary.decoder.ByteDecoder
 import com.kamelia.sprinkler.binary.decoder.IntDecoder
 import com.kamelia.sprinkler.binary.decoder.UTF8StringDecoder
-import com.kamelia.sprinkler.binary.decoder.composer.composedDecoder
-import com.kamelia.sprinkler.decoder.util.assertDoneAndGet
-import com.kamelia.sprinkler.decoder.util.get
+import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
+import com.kamelia.sprinkler.binary.decoder.util.get
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -22,7 +21,7 @@ class RecursionStepTest {
             beginWith(UTF8StringDecoder())
                 .then(IntDecoder())
                 .thenItselfOrNull(BooleanDecoder())
-                .reduce(::Person)
+                .reduce(RecursionStepTest::Person)
         }
 
         val name = "John"
@@ -48,7 +47,7 @@ class RecursionStepTest {
             beginWith(UTF8StringDecoder())
                 .then(IntDecoder())
                 .thenItselfOrNull(BooleanDecoder())
-                .reduce(::Person)
+                .reduce(RecursionStepTest::Person)
         }
 
         val name = "John"
@@ -82,7 +81,7 @@ class RecursionStepTest {
             beginWith(ByteDecoder())
                 .thenItselfOrNull(BooleanDecoder())
                 .thenItselfOrNull(BooleanDecoder())
-                .reduce(::Node)
+                .reduce(RecursionStepTest::Node)
         }
 
         val data = byteArrayOf(1, 1, 2, 0, 0, 1, 5, 0, 1, 3, 0, 0)

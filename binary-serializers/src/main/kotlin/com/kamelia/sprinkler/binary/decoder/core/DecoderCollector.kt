@@ -1,7 +1,7 @@
 package com.kamelia.sprinkler.binary.decoder.core
 
 data class DecoderCollector<C, in E, out R>(
-    val supplier: (Int) -> C,
+    val supplier: () -> C,
     val accumulator: C.(E, Int) -> Unit,
     val finisher: C.() -> R,
 ) {
@@ -34,13 +34,14 @@ data class DecoderCollector<C, in E, out R>(
             { this }
         )
 
-        fun <E> toArray(): DecoderCollector<MutableList<E>, E, Array<E>> = DecoderCollector(
+        fun <E> toArray(factory: (Int) -> Array<E?>): DecoderCollector<MutableList<E>, E, Array<E>> = DecoderCollector(
             { ArrayList() },
             { e, _ -> add(e) },
             {
-                val array = arrayOfNulls<Any?>(size)
+                @Suppress("UNCHECKED_CAST")
+                val array = factory(size) as Array<E>
                 forEachIndexed { index, e -> array[index] = e }
-                @Suppress("UNCHECKED_CAST") (array as Array<E>)
+                array
             }
         )
 

@@ -1,10 +1,9 @@
-package com.kamelia.sprinkler.decoder.composer
+package com.kamelia.sprinkler.binary.decoder.composer
 
 import com.kamelia.sprinkler.binary.decoder.ByteDecoder
-import com.kamelia.sprinkler.binary.decoder.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.IntDecoder
-import com.kamelia.sprinkler.binary.decoder.composer.composedDecoder
-import com.kamelia.sprinkler.decoder.util.assertDoneAndGet
+import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
+import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 

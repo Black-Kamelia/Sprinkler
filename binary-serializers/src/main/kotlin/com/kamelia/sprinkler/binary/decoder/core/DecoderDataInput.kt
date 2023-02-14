@@ -29,11 +29,10 @@ fun interface DecoderDataInput {
 
     fun read(collection: MutableCollection<Byte>, length: Int): Int {
         var count = 0
-        while (count < length) {
+        while (count < length && collection.size < Int.MAX_VALUE) {
             val read = read()
             if (read == -1) break
             collection.add(read.toByte())
-            if (collection.size == Int.MAX_VALUE) break
             count++
         }
         return count
@@ -53,9 +52,7 @@ fun interface DecoderDataInput {
 
     companion object {
 
-        fun from(inner: InputStream): DecoderDataInput = DecoderDataInput {
-            inner.read()
-        }
+        fun from(inner: InputStream): DecoderDataInput = DecoderDataInput(inner::read)
 
         fun from(inner: ByteBuffer): DecoderDataInput = object : DecoderDataInput {
 
@@ -71,13 +68,15 @@ fun interface DecoderDataInput {
             }
 
             override fun read(bytes: ByteArray, start: Int, length: Int): Int {
-                require(start >= 0) { "Start index must be greater than or equal to 0, got $start" }
+                require(start >= 0) { "start must be >= 0, but was $start" }
+                require(length >= 0) { "length must be >= 0, but was $length" }
+                if (inner.position() == 0) return 0
                 inner.flip()
-                val remainingBefore = inner.remaining()
-                inner.get(bytes, start, length)
-                val remainingAfter = inner.remaining()
+
+                val actualLength = min(length, inner.remaining())
+                inner.get(bytes, start, actualLength)
                 inner.compact()
-                return remainingBefore - remainingAfter
+                return actualLength
             }
 
         }

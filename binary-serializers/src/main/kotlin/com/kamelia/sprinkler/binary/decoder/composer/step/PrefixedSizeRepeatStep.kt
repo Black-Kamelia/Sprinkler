@@ -22,7 +22,7 @@ internal class PrefixedSizeRepeatStep<C, E, R> private constructor(
     override fun onArrive(accumulator: ElementsAccumulator, currentIndex: Int): Int {
         if (size == -1) throw AssertionError("Size should have been initialized")
 
-        val collection = collection ?: collector.supplier(size).also { this.collection = it }
+        val collection = collection ?: collector.supplier().also { this.collection = it }
 
         return when {
             size == 0 -> {  // empty collection

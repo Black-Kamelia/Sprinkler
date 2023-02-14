@@ -1,6 +1,5 @@
 package com.kamelia.sprinkler.binary.decoder.composer
 
-import com.kamelia.sprinkler.binary.decoder.NothingDecoder
 import com.kamelia.sprinkler.binary.decoder.composer.step.CompositionStepList
 import com.kamelia.sprinkler.binary.decoder.composer.step.addConstantSizeRepeatStep
 import com.kamelia.sprinkler.binary.decoder.composer.step.addMapStep
@@ -13,6 +12,7 @@ import com.kamelia.sprinkler.binary.decoder.composer.step.addThenStep
 import com.kamelia.sprinkler.binary.decoder.composer.step.addUntilRepeatStep
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
+import com.kamelia.sprinkler.binary.decoder.core.NothingDecoder
 
 abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
 

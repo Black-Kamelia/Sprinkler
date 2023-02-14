@@ -22,7 +22,7 @@ internal class ConstantSizeRepeatStep<C, E, R> private constructor(
         throw AssertionError("Should not be called")
 
     override fun onArrive(accumulator: ElementsAccumulator, currentIndex: Int): Int {
-        val collection = collection ?: collector.supplier(times).also { this.collection = it }
+        val collection = collection ?: collector.supplier().also { this.collection = it }
 
         return when (index) {
             times - 1 -> { // last element
@@ -67,7 +67,7 @@ internal class ConstantSizeRepeatStep<C, E, R> private constructor(
             throw AssertionError("Should not be called")
 
         override fun onArrive(accumulator: ElementsAccumulator, currentIndex: Int): Int {
-            val collection = collector.supplier(0)
+            val collection = collector.supplier()
             accumulator.add(collector.finisher(collection))
             return jumpIndex + 1
         }

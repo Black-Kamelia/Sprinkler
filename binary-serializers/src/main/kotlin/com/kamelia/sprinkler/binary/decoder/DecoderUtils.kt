@@ -2,6 +2,7 @@
 
 package com.kamelia.sprinkler.binary.decoder
 
+import com.kamelia.sprinkler.binary.decoder.core.ConstantDecoder
 import com.kamelia.sprinkler.binary.decoder.core.ConstantSizeCollectionDecoder
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
@@ -120,21 +121,21 @@ fun <K, V> Decoder<Pair<K, V>>.toMap(keepLast: Boolean = false, predicate: (Pair
     toCollection(DecoderCollector.toMap(), keepLast, predicate)
 
 @JvmOverloads
-fun <T> Decoder<T>.toArray(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Array<T>> =
-    toCollection(DecoderCollector.toArray(), sizeDecoder)
+fun <T> Decoder<T>.toArray(factory: (Int) -> Array<T?>, sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Array<T>> =
+    toCollection(DecoderCollector.toArray(factory), sizeDecoder)
 
-fun <T> Decoder<T>.toArray(size: Int): Decoder<Array<T>> {
+fun <T> Decoder<T>.toArray(size: Int, factory: (Int) -> Array<T?>): Decoder<Array<T>> {
     require(size >= 0) { "Size must be non-negative, but was $size" }
     return when (size) {
         0 -> ConstantDecoder(@Suppress("UNCHECKED_CAST") (arrayOf<Any>() as Array<T>))
         1 -> this.mapResult { @Suppress("UNCHECKED_CAST") (arrayOf<Any?>(it) as Array<T>) }
-        else -> toCollection(DecoderCollector.toArray(), size)
+        else -> toCollection(DecoderCollector.toArray(factory), size)
     }
 }
 
 @JvmOverloads
-fun <T> Decoder<T>.toArray(keepLast: Boolean = false, predicate: (T) -> Boolean): Decoder<Array<T>> =
-    toCollection(DecoderCollector.toArray(), keepLast, predicate)
+fun <T> Decoder<T>.toArray(factory: (Int) -> Array<T?>, keepLast: Boolean = false, predicate: (T) -> Boolean): Decoder<Array<T>> =
+    toCollection(DecoderCollector.toArray(factory), keepLast, predicate)
 
 @HideFromJava
 infix fun <T, U> Decoder<T>.and(other: Decoder<U>): Decoder<Pair<T, U>> = PairDecoder(this, other)

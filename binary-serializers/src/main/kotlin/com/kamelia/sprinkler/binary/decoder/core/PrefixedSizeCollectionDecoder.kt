@@ -27,9 +27,9 @@ class PrefixedSizeCollectionDecoder<C, T, R>(
             if (size == 0) { // short circuit for empty collection
                 size = -1
                 index = 0
-                return Decoder.State.Done(collector.finisher(collector.supplier(0)))
+                return Decoder.State.Done(collector.finisher(collector.supplier()))
             }
-            collection = collector.supplier(size)
+            collection = collector.supplier()
         }
 
         val collection = collection!!

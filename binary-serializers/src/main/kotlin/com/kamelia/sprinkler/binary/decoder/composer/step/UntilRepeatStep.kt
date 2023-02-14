@@ -20,7 +20,7 @@ internal class UntilRepeatStep<C, E, R> private constructor(
         throw AssertionError("Should not be called")
 
     override fun onArrive(accumulator: ElementsAccumulator, currentIndex: Int): Int {
-        val collection = collection ?: collector.supplier(-1).also { collection = it }
+        val collection = collection ?: collector.supplier().also { collection = it }
 
         val element = accumulator.pop<E>()
         if (predicate(element)) {
