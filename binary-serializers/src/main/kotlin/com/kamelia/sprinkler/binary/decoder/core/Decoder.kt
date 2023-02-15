@@ -20,11 +20,13 @@ interface Decoder<out T> {
 
         class Error(val error: Throwable) : State<Nothing>() {
 
+            constructor(message: String) : this(IllegalStateException(message))
+
             override fun toString(): String = "Error($error)"
 
         }
 
-        class Processing(val reason: String = "Missing bytes") : State<Nothing>() {
+        class Processing @JvmOverloads constructor(val reason: String = "Missing bytes") : State<Nothing>() {
 
             override fun toString(): String = "Processing($reason)"
 
@@ -32,23 +34,32 @@ interface Decoder<out T> {
 
         class Done<T>(factory: () -> T) : State<T>() {
 
-            val value: T by lazy(factory)
+            private val lazyField = lazy(LazyThreadSafetyMode.NONE, factory)
 
-            constructor(value: T) : this({ value })
+            val value: T
+                get() = lazyField.value
 
-            override fun toString(): String = "Done($value)"
+            constructor(value: T) : this({ value }) {
+                lazyField.value // force initialization
+            }
 
-        }
+            override fun toString(): String {
+                val v = if (lazyField.isInitialized()) {
+                    value.toString()
+                } else {
+                    "not initialized"
+                }
+                return "Done($v))"
+            }
 
-        inline fun <R> mapResult(block: (T) -> R): State<R> = when (this) {
-            is Done -> Done(block(value))
-            else -> mapEmptyState()
         }
 
         inline fun <R> mapState(block: (T) -> State<R>): State<R> = when (this) {
             is Done -> block(value)
             else -> mapEmptyState()
         }
+
+        inline fun <R> mapResult(block: (T) -> R): State<R> = mapState { Done(block(it)) }
 
         fun <R> mapEmptyState(): State<R> = if (this is Done) {
             throw IllegalStateException("Cannot map change type of Done state ($this).")
@@ -77,12 +88,17 @@ interface Decoder<out T> {
             else -> default
         }
 
-        inline fun getOrThrow(throwable: () -> Throwable): T = when (this) {
+        fun getOrElse(default: () -> @UnsafeVariance T): T = when (this) {
+            is Done -> value
+            else -> default()
+        }
+
+        fun getOrThrow(throwable: () -> Throwable): T = when (this) {
             is Done -> value
             else -> throw throwable()
         }
 
-        inline fun ifDone(block: (T) -> Unit): State<T> = apply {
+        fun ifDone(block: (T) -> Unit): State<T> = apply {
             if (this is Done) {
                 block(value)
             }
