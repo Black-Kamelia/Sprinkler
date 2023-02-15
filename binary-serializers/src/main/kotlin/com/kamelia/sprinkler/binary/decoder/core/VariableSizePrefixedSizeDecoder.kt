@@ -1,8 +1,18 @@
 package com.kamelia.sprinkler.binary.decoder.core
 
+/**
+ * A [Decoder] that decode an object with a variable size. The number of bytes to read are prefixed to the bytes of the
+ * object. This size is decoded by a [sizeDecoder] and then the n bytes are accumulated in a [ByteArray]. Once the
+ * [ByteArray] is full, the [converter] function is used to convert the [ByteArray] to the final object.
+ *
+ * @param E the type of the decoded object
+ * @param sizeDecoder a [Decoder] to decode the number of bytes to read
+ * @param converter a function to convert the [ByteArray] to the decoded object
+ * @constructor Creates a new [VariableSizePrefixedSizeDecoder].
+ */
 class VariableSizePrefixedSizeDecoder<E>(
     private val sizeDecoder: Decoder<Number>,
-    private val extractor: ByteArray.(Int) -> E,
+    private val converter: ByteArray.(Int) -> E,
 ) : Decoder<E> {
 
     private var array: ByteArray? = null
@@ -50,7 +60,7 @@ class VariableSizePrefixedSizeDecoder<E>(
             val finalSize = bytesToRead
             index = 0
             bytesToRead = -1
-            Decoder.State.Done(array.extractor(finalSize))
+            Decoder.State.Done(array.converter(finalSize))
         } else {
             Decoder.State.Processing(
                 "(${VariableSizePrefixedSizeDecoder::class.simpleName}) $index / $bytesToRead bytes read."
