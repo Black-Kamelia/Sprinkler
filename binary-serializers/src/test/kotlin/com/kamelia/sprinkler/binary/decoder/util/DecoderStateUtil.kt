@@ -1,11 +1,9 @@
 package com.kamelia.sprinkler.binary.decoder.util
 
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 
 fun <T> Decoder.State<T>.assertDoneAndGet(): T {
-    assertEquals(Decoder.State.Done::class.java, javaClass) {
-        "Expected Done state, but got $this"
-    }
+    assertInstanceOf(Decoder.State.Done::class.java, this)
     return this.get()
 }

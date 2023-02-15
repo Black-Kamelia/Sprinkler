@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.binary.decoder.core
 
-class MarkerElementCollectionDecoder<C, T, R>(
+class MarkerElementCollectionDecoder<C, T, R> @JvmOverloads constructor(
     private val collector: DecoderCollector<C, T, R>,
     private val elementDecoder: Decoder<T>,
     private val keepLast: Boolean = false,

@@ -2,7 +2,6 @@
 
 package com.kamelia.sprinkler.binary.decoder
 
-import com.kamelia.sprinkler.binary.decoder.core.ConstantDecoder
 import com.kamelia.sprinkler.binary.decoder.core.ConstantSizeCollectionDecoder
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
@@ -117,11 +116,17 @@ fun <K, V> Decoder<Pair<K, V>>.toMap(size: Int): Decoder<Map<K, V>> {
 }
 
 @JvmOverloads
-fun <K, V> Decoder<Pair<K, V>>.toMap(keepLast: Boolean = false, predicate: (Pair<K, V>) -> Boolean): Decoder<Map<K, V>> =
+fun <K, V> Decoder<Pair<K, V>>.toMap(
+    keepLast: Boolean = false,
+    predicate: (Pair<K, V>) -> Boolean,
+): Decoder<Map<K, V>> =
     toCollection(DecoderCollector.toMap(), keepLast, predicate)
 
 @JvmOverloads
-fun <T> Decoder<T>.toArray(factory: (Int) -> Array<T?>, sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Array<T>> =
+fun <T> Decoder<T>.toArray(
+    factory: (Int) -> Array<T?>,
+    sizeDecoder: Decoder<Number> = IntDecoder(),
+): Decoder<Array<T>> =
     toCollection(DecoderCollector.toArray(factory), sizeDecoder)
 
 fun <T> Decoder<T>.toArray(size: Int, factory: (Int) -> Array<T?>): Decoder<Array<T>> {
@@ -134,7 +139,11 @@ fun <T> Decoder<T>.toArray(size: Int, factory: (Int) -> Array<T?>): Decoder<Arra
 }
 
 @JvmOverloads
-fun <T> Decoder<T>.toArray(factory: (Int) -> Array<T?>, keepLast: Boolean = false, predicate: (T) -> Boolean): Decoder<Array<T>> =
+fun <T> Decoder<T>.toArray(
+    factory: (Int) -> Array<T?>,
+    keepLast: Boolean = false,
+    predicate: (T) -> Boolean,
+): Decoder<Array<T>> =
     toCollection(DecoderCollector.toArray(factory), keepLast, predicate)
 
 @HideFromJava

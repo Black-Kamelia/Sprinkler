@@ -3,7 +3,6 @@
 package com.kamelia.sprinkler.binary.decoder
 
 import com.kamelia.sprinkler.binary.common.ByteEndianness
-import com.kamelia.sprinkler.binary.decoder.core.ConstantDecoder
 import com.kamelia.sprinkler.binary.decoder.core.ConstantSizeDecoder
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.binary.decoder.core.VariableSizeEndMarkerDecoder
@@ -70,7 +69,6 @@ fun ASCIIStringDecoder(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Str
 fun ASCIIStringDecoderEM(endMarker: ByteArray = ASCII_NULL): Decoder<String> =
     StringDecoder(Charsets.US_ASCII, endMarker)
 
-
 @JvmOverloads
 fun StringDecoder(charset: Charset, sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<String> =
     VariableSizePrefixedSizeDecoder(sizeDecoder) { readString(charset, it) }
@@ -82,7 +80,7 @@ fun StringDecoder(charset: Charset, endMarker: ByteArray): Decoder<String> {
 
 //endregion
 
-//region Common Decoders
+//region Basic Decoders
 
 @JvmOverloads
 fun <T : Enum<T>> EnumDecoder(enumClass: Class<T>, ordinalDecoder: Decoder<Int> = IntDecoder()): Decoder<T> =
@@ -98,6 +96,10 @@ fun <T : Enum<T>> EnumDecoder(
 //endregion
 
 //region Special Decoders
+
+fun <T> ConstantDecoder(element: T): Decoder<T> = ConstantSizeDecoder(0) { element }
+
+fun <T> ConstantDecoder(factory: () -> T): Decoder<T> = ConstantSizeDecoder(0) { factory() }
 
 fun NoOpDecoder(): Decoder<Unit> = ConstantDecoder(Unit)
 

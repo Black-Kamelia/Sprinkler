@@ -32,13 +32,9 @@ class VariableSizePrefixedSizeDecoder<E>(
             else -> return sizeState.mapEmptyState()
         }
 
-        if (bytesToRead == 0) { // short circuit for empty array
-            bytesToRead = -1
-            return Decoder.State.Done(ByteArray(0).extractor(0))
-        }
-
-        if (bytesToRead > (array?.size ?: 0)) { // allocate new array if needed
-            array = ByteArray(bytesToRead)
+        val array = array
+        if (array == null || bytesToRead > (array.size)) { // allocate new array if needed
+            this.array = ByteArray(bytesToRead)
         }
 
         return null // continue decoding
@@ -63,7 +59,7 @@ class VariableSizePrefixedSizeDecoder<E>(
     }
 
     override fun reset() {
-        array = null // free memory
+        array = null
         index = 0
         bytesToRead = -1
     }

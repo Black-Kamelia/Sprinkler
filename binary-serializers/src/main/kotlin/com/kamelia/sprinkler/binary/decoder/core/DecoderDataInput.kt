@@ -52,6 +52,9 @@ fun interface DecoderDataInput {
 
     companion object {
 
+        @JvmField
+        val EMPTY_INPUT = DecoderDataInput { -1 }
+
         fun from(inner: InputStream): DecoderDataInput = DecoderDataInput(inner::read)
 
         fun from(inner: ByteBuffer): DecoderDataInput = object : DecoderDataInput {

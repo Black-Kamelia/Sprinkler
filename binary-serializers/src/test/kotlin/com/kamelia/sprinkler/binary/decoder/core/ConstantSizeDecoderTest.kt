@@ -2,6 +2,7 @@ package com.kamelia.sprinkler.binary.decoder.core
 
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
 import com.kamelia.sprinkler.binary.decoder.util.get
+import java.io.ByteArrayInputStream
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
@@ -22,10 +23,7 @@ class ConstantSizeDecoderTest {
     }
 
     @Test
-    fun `throws on negative or zero size`() {
-        assertThrows<IllegalArgumentException> {
-            ConstantSizeDecoder(0) { 0 }
-        }
+    fun `throws on negative size`() {
         assertThrows<IllegalArgumentException> {
             ConstantSizeDecoder(-1) { 0 }
         }
@@ -78,6 +76,16 @@ class ConstantSizeDecoderTest {
         val data2 = byteArrayOf(value2[1], value2[0])
         val result2 = decoder.decode(data2).assertDoneAndGet()
         assertEquals(value2, result2)
+    }
+
+    @Test
+    fun `size of zero doesn't modify the input`() {
+        val value = "a"
+        val decoder = ConstantSizeDecoder(0) { value }
+        val data = ByteArrayInputStream(byteArrayOf(1, 2, 3))
+        val result = decoder.decode(data).assertDoneAndGet()
+        assertEquals(value, result)
+        assertEquals(1, data.read())
     }
 
 }

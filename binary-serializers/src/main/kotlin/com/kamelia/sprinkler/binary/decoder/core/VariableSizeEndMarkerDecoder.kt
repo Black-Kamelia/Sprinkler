@@ -30,7 +30,7 @@ class VariableSizeEndMarkerDecoder<E>(
             buffer.addLast(byte.toByte())
         }
 
-        val result = accumulator!!.extractor(index)
+        val result = (accumulator?: ByteArray(0)).extractor(index) // can be null only if content is empty
         index = 0
         return Decoder.State.Done(result)
     }
@@ -38,6 +38,7 @@ class VariableSizeEndMarkerDecoder<E>(
     override fun reset() {
         index = 0
         accumulator = null
+        buffer = null
     }
 
     private fun bufferContentIsEndMarker(): Boolean {

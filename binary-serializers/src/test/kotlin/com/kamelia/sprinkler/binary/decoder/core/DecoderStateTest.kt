@@ -121,9 +121,9 @@ class DecoderStateTest {
     @Test
     fun `getOrElse(Function0 T) works correctly`() {
         val value = "hello"
-        val done = ConstantDecoder(value).decode(byteArrayOf())
-        val error = (NothingDecoder() as Decoder<String>).decode(byteArrayOf())
-        val processing = ConstantSizeDecoder(1) { "" }.decode(byteArrayOf())
+        val done = Decoder.State.Done(value)
+        val error: Decoder.State<String> = Decoder.State.Error(IllegalStateException())
+        val processing: Decoder.State<String> = Decoder.State.Processing()
 
         val world = "world"
         val foo = "foo"
@@ -135,9 +135,9 @@ class DecoderStateTest {
     @Test
     fun `getOrElse(T) works correctly`() {
         val value = "hello"
-        val done = ConstantDecoder(value).decode(byteArrayOf())
-        val error = (NothingDecoder() as Decoder<String>).decode(byteArrayOf())
-        val processing = ConstantSizeDecoder(1) { "" }.decode(byteArrayOf())
+        val done = Decoder.State.Done(value)
+        val error: Decoder.State<String> = Decoder.State.Error(IllegalStateException())
+        val processing: Decoder.State<String> = Decoder.State.Processing()
 
         val world = "world"
         assertEquals(value, done.getOrElse(world))
@@ -148,9 +148,9 @@ class DecoderStateTest {
     @Test
     fun `ifDone works correctly`() {
         val value = "hello"
-        val done = ConstantDecoder(value).decode(byteArrayOf())
-        val error = (NothingDecoder() as Decoder<String>).decode(byteArrayOf())
-        val processing = ConstantSizeDecoder(1) { "" }.decode(byteArrayOf())
+        val done = Decoder.State.Done(value)
+        val error = Decoder.State.Error(IllegalStateException())
+        val processing = Decoder.State.Processing()
 
         val set = mutableSetOf<Int>()
         done.ifDone { set.add(1) }
