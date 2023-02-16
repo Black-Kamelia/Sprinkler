@@ -28,10 +28,9 @@ internal class ComposedDecoderImpl<T>(builder: CompositionStepList.Builder) : De
 
         while (true) {
             if (index >= steps.maxIndex) {
-                if (currentRecursion == null) break
-                val rec = currentRecursion!!
-                index = rec.previousIndex
-                currentRecursion = rec.previousNode
+                val recursion = currentRecursion ?: break
+                index = recursion.previousIndex
+                currentRecursion = recursion.previousNode
             }
 
             val currentStep = steps[index]
