@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.binary.decoder.core
 
+import java.util.*
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -12,8 +13,8 @@ class DecoderCollectorTest {
 
         val list = collector.supplier()
 
-        collector.accumulator(list, 1, 0)
-        collector.accumulator(list, 2, 1)
+        collector.accumulator(list, 1)
+        collector.accumulator(list, 2)
 
         val result = collector.finisher(list)
 
@@ -26,8 +27,8 @@ class DecoderCollectorTest {
 
         val set = collector.supplier()
 
-        collector.accumulator(set, 1, 0)
-        collector.accumulator(set, 2, 1)
+        collector.accumulator(set, 1)
+        collector.accumulator(set, 2)
 
         val result = collector.finisher(set)
 
@@ -40,8 +41,8 @@ class DecoderCollectorTest {
 
         val map = collector.supplier()
 
-        collector.accumulator(map, 1 to "one", 0)
-        collector.accumulator(map, 2 to "two", 1)
+        collector.accumulator(map, 1 to "one")
+        collector.accumulator(map, 2 to "two")
 
         val result = collector.finisher(map)
 
@@ -54,8 +55,8 @@ class DecoderCollectorTest {
 
         val array = collector.supplier()
 
-        collector.accumulator(array, 1, 0)
-        collector.accumulator(array, 2, 1)
+        collector.accumulator(array, 1)
+        collector.accumulator(array, 2)
 
         val result = collector.finisher(array)
 
@@ -64,16 +65,16 @@ class DecoderCollectorTest {
 
     @Test
     fun `to collection works correctly`() {
-        val collector = DecoderCollector.toCollection<Int> { mutableListOf() }
+        val collector = DecoderCollector.toCollection<Int, _> { LinkedList(this) }
 
         val collection = collector.supplier()
 
-        collector.accumulator(collection, 1, 0)
-        collector.accumulator(collection, 2, 1)
+        collector.accumulator(collection, 1)
+        collector.accumulator(collection, 2)
 
         val result = collector.finisher(collection)
 
-        assertEquals(mutableListOf(1, 2), result)
+        assertEquals(LinkedList(listOf(1, 2)), result)
     }
 
 }

@@ -25,14 +25,14 @@ internal class UntilRepeatStep<C, E, R> private constructor(
         val element = accumulator.pop<E>()
         if (predicate(element)) {
             if (addLast) {
-                collector.accumulator(collection, element, size)
+                collector.accumulator(collection, element)
             }
             accumulator.add(collector.finisher(collection))
             reset()
             return currentIndex + 1
         }
 
-        collector.accumulator(collection, element, size)
+        collector.accumulator(collection, element)
         return startIndex
     }
 

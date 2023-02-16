@@ -26,14 +26,14 @@ internal class ConstantSizeRepeatStep<C, E, R> private constructor(
 
         return when (index) {
             times - 1 -> { // last element
-                collector.accumulator(collection, accumulator.pop(), index)
+                collector.accumulator(collection, accumulator.pop())
                 accumulator.add(collector.finisher(collection))
                 reset()
 
                 currentIndex + 1 // directly go to next step
             }
             else -> { // any other element
-                collector.accumulator(collection, accumulator.pop(), index)
+                collector.accumulator(collection, accumulator.pop())
                 index++
                 prefixIndex + 1
             }

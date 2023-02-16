@@ -32,14 +32,14 @@ internal class PrefixedSizeRepeatStep<C, E, R> private constructor(
                 currentIndex + 1 // directly go to next step
             }
             index == size - 1 -> { // last element
-                collector.accumulator(collection, accumulator.pop(), index)
+                collector.accumulator(collection, accumulator.pop())
                 accumulator.add(collector.finisher(collection))
                 reset()
 
                 currentIndex + 1 // directly go to next step
             }
             else -> { // any other element
-                collector.accumulator(collection, accumulator.pop(), index)
+                collector.accumulator(collection, accumulator.pop())
                 index++
 
                 prefixIndex + 1 // rewind to the size decoder

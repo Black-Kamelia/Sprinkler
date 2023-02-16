@@ -30,7 +30,7 @@ class PrefixedSizeCollectionDecoder<C, T, R>(
         while (index < size) {
             when (val elementState = elementDecoder.decode(input)) {
                 is Decoder.State.Done -> {
-                    collector.accumulator(collection, elementState.value, index)
+                    collector.accumulator(collection, elementState.value)
                     index++
                 }
                 else -> return elementState.mapEmptyState()

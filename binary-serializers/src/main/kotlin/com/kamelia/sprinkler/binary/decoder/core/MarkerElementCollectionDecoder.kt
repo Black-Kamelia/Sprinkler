@@ -19,7 +19,7 @@ class MarkerElementCollectionDecoder<C, T, R> @JvmOverloads constructor(
                     val element = elementState.value
                     if (predicate(element)) {
                         if (keepLast) {
-                            collector.accumulator(collection, element, index)
+                            collector.accumulator(collection, element)
                             index++
                         }
 
@@ -27,7 +27,7 @@ class MarkerElementCollectionDecoder<C, T, R> @JvmOverloads constructor(
                         this.collection = null
                         return Decoder.State.Done(collector.finisher(collection))
                     } else {
-                        collector.accumulator(collection, element, index)
+                        collector.accumulator(collection, element)
                         index++
                     }
                 }
