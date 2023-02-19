@@ -8,5 +8,5 @@ pluginManagement {
 
 include(
     "readonly-collections",
-    "binary-serializers",
+    "util",
 )

@@ -12,18 +12,10 @@ plugins {
     id("com.zwendo.restrikt") version restriktVersion
 }
 
-val projectGroup: String by project
-val projectGroupFqName: String by project
-val projectMembers: String by project
-val projectWebsite: String by project
-
-val kotlinVersion: String by System.getProperties()
 val jvmVersion: String by project
-val junitVersion: String by project
-
 val rootProjectName = rootProject.name.toLowerCase()
 
-group = projectGroup
+group = findProp<String>("projectGroup")
 
 val props = Properties().apply { load(file("gradle.properties").reader()) }
 
@@ -38,16 +30,17 @@ allprojects {
     apply(plugin = "kover")
 
     val projectName = project.name.toLowerCase()
-    val projectVersion = props["$projectName.version"] as? String ?: "0.1.0"
+    val projectVersion = findProp("$projectName.version") ?: "0.1.0"
 
     repositories {
         mavenCentral()
     }
 
     dependencies {
+        val junitVersion: String by project
+
         testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
         testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
-        testImplementation("org.junit.jupiter", "junit-jupiter-params", junitVersion)
     }
 
     java {
@@ -56,9 +49,14 @@ allprojects {
     }
 
     signing {
-        val signingKey = findProperty("signingKey") as? String ?: ""
-        val signingPassword = findProperty("signingPassword") as? String ?: ""
-        useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
+        val signingKey = findProp<String?>("signingKey")
+        val signingPassword = findProp<String?>("signingPassword")
+        if (signingKey != null && signingPassword != null) {
+            logger.info("Using in memory keys for signing")
+            useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
+        } else {
+            logger.info("Using local GPG keys for signing")
+        }
         sign(publishing.publications)
     }
 
@@ -103,7 +101,7 @@ allprojects {
         publications {
             val artifactName = "$rootProjectName-$projectName"
             create<MavenPublication>("maven-$artifactName") {
-                groupId = projectGroup
+                groupId = findProp("projectGroup")
                 artifactId = artifactName
                 version = projectVersion
                 from(components["java"])
@@ -114,7 +112,7 @@ allprojects {
                     url.set("https://github.com/Black-Kamelia/Sprinkler")
 
                     developers {
-                        projectMembers.split(",").forEach {
+                        findProp<String>("projectMembers").split(",").forEach {
                             developer {
                                 id.set(it)
                             }
@@ -153,3 +151,6 @@ fun TaskContainerScope.setupKotlinCompilation(block: org.jetbrains.kotlin.gradle
     compileKotlin(block)
     compileTestKotlin(block)
 }
+
+@Suppress("UNCHECKED_CAST")
+fun <T> Project.findProp(name: String): T = findProperty(name) as T
