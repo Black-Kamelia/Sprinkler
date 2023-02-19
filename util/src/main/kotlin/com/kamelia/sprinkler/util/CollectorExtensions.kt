@@ -38,7 +38,7 @@ inline fun <T, C> Collector<T, C, *>.accumulate(c: C, e: T): Unit = accumulator(
 inline fun <C, R> Collector<*, C, R>.finish(c: C): R = finisher().apply(c)
 
 /**
- * Shorthand method for [Collector#characteristics()][Collector.characteristics].
+ * Shorthand property for [Collector#characteristics()][Collector.characteristics].
  *
  * @receiver the collector to get the characteristics from
  */

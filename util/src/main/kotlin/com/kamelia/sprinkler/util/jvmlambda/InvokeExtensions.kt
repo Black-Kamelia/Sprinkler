@@ -24,6 +24,8 @@ inline operator fun <T> Callable<T>.invoke(): T = call()
 @Suppress("NOTHING_TO_INLINE")
 inline operator fun Runnable.invoke() = run()
 
+//region Consumer
+
 /**
  * Alias for [Consumer.accept].
  *
@@ -65,9 +67,9 @@ inline operator fun LongConsumer.invoke(l: Long): Unit = accept(l)
 @Suppress("NOTHING_TO_INLINE")
 inline operator fun DoubleConsumer.invoke(d: Double): Unit = accept(d)
 
-//region Consumer
-
 //endregion
+
+//region BiConsumer
 
 /**
  * Alias for [BiConsumer.accept].
@@ -118,9 +120,9 @@ inline operator fun <T> ObjLongConsumer<T>.invoke(t: T, l: Long): Unit = accept(
 @Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> ObjDoubleConsumer<T>.invoke(t: T, d: Double): Unit = accept(t, d)
 
-//region BiConsumer
-
 //endregion
+
+//region Function
 
 /**
  * Alias for [Function.apply].
@@ -273,9 +275,9 @@ inline operator fun DoubleToIntFunction.invoke(d: Double): Int = applyAsInt(d)
 @Suppress("NOTHING_TO_INLINE")
 inline operator fun DoubleToLongFunction.invoke(d: Double): Long = applyAsLong(d)
 
-//region Function
-
 //endregion
+
+//region BiFunction
 
 /**
  * Alias for [BiFunction.apply].
@@ -334,9 +336,9 @@ inline operator fun <T, U> ToLongBiFunction<T, U>.invoke(t: T, u: U): Long = app
 @Suppress("NOTHING_TO_INLINE")
 inline operator fun <T, U> ToDoubleBiFunction<T, U>.invoke(t: T, u: U): Double = applyAsDouble(t, u)
 
-//region BiFunction
-
 //endregion
+
+//region Predicate
 
 /**
  * Alias for [Predicate.test].
@@ -383,9 +385,9 @@ inline operator fun LongPredicate.invoke(l: Long): Boolean = test(l)
 @Suppress("NOTHING_TO_INLINE")
 inline operator fun DoublePredicate.invoke(d: Double): Boolean = test(d)
 
-//region Predicate
-
 //endregion
+
+//region Supplier
 
 /**
  * Alias for [Supplier.get].
@@ -428,9 +430,9 @@ inline operator fun LongSupplier.invoke(): Long = getAsLong()
 @Suppress("NOTHING_TO_INLINE")
 inline operator fun DoubleSupplier.invoke(): Double = getAsDouble()
 
-//region Supplier
-
 //endregion
+
+//region UnaryOperator
 
 /**
  * Alias for [IntUnaryOperator.applyAsInt].
@@ -465,9 +467,9 @@ inline operator fun LongUnaryOperator.invoke(l: Long): Long = applyAsLong(l)
 @Suppress("NOTHING_TO_INLINE")
 inline operator fun DoubleUnaryOperator.invoke(d: Double): Double = applyAsDouble(d)
 
-//region UnaryOperator
-
 //endregion
+
+//region BinaryOperator
 
 /**
  * Alias for [IntBinaryOperator.applyAsInt].
@@ -505,9 +507,9 @@ inline operator fun LongBinaryOperator.invoke(l1: Long, l2: Long): Long = applyA
 @Suppress("NOTHING_TO_INLINE")
 inline operator fun DoubleBinaryOperator.invoke(d1: Double, d2: Double): Double = applyAsDouble(d1, d2)
 
-//region BinaryOperator
-
 //endregion
+
+//region BiConsumer
 
 /**
  * Alias for [BiPredicate.test].
@@ -523,4 +525,4 @@ inline operator fun DoubleBinaryOperator.invoke(d1: Double, d2: Double): Double 
 @Suppress("NOTHING_TO_INLINE")
 inline operator fun <T, U> BiPredicate<T, U>.invoke(t1: T, t2: U): Boolean = test(t1, t2)
 
-//region BiPredicate
+//endregion

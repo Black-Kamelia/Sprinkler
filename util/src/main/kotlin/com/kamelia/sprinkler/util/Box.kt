@@ -73,11 +73,47 @@ interface Box<T> {
 
     }
 
+    companion object {
+
+        /**
+         * Creates a new [SingleWriteBox].
+         *
+         * @param T the type of the value
+         * @return a new [SingleWriteBox]
+         */
+        fun <T> singleWriteBox(): SingleWriteBox<T> = SingleWriteBox()
+
+        /**
+         * Creates a new [RewritableBox].
+         *
+         * @param T the type of the value
+         * @return a new [RewritableBox]
+         */
+        fun <T> rewritableBox(): RewritableBox<T> = RewritableBox()
+
+        /**
+         * Creates a new [PrefilledBox] with the given value.
+         *
+         * @param T the type of the value
+         * @param value the value to fill the box with
+         */
+        fun <T> prefilledBox(value: T): PrefilledBox<T> = PrefilledBox(value)
+
+        /**
+         * Creates a new [EmptyBox].
+         *
+         * @param T the type of the value
+         * @return a new [EmptyBox]
+         */
+        fun <T> emptyBox(): EmptyBox<T> = EmptyBox()
+
+    }
+
     /**
      * A box that can only be filled once. Any subsequent call to [fill] will return false.
      * @param T the type of the value
      */
-    class SingleWriteBox<T> : Mutable<T> {
+    class SingleWriteBox<T> internal constructor() : Mutable<T> {
 
         private var valueField: T? = null
 
@@ -104,7 +140,7 @@ interface Box<T> {
      * A box that can be filled multiple times. Any call to [fill] will return true and overwrite the previous value.
      * @param T the type of the value
      */
-    class RewritableBox<T> : Mutable<T> {
+    class RewritableBox<T> internal constructor() : Mutable<T> {
 
         private var valueField: T? = null
 
@@ -130,7 +166,7 @@ interface Box<T> {
      * A box that is already filled with a value.
      * @param T the type of the value
      */
-    class PrefilledBox<T>(override val value: T) : Box<T> {
+    class PrefilledBox<T> internal constructor(override val value: T) : Box<T> {
 
         override val isFilled: Boolean
             get() = true
@@ -138,10 +174,10 @@ interface Box<T> {
     }
 
     /**
-     * A box is empty and cannot be filled.
+     * A box that is empty and cannot be filled.
      * @param T the type of the value
      */
-    class EmptyBox<T> : Box<T> {
+    class EmptyBox<T> internal constructor() : Box<T> {
 
         override val value: T
             get() = throw IllegalStateException("Box is not filled.")

@@ -49,8 +49,8 @@ allprojects {
     }
 
     signing {
-        val signingKey = findProperty("signingKey") as? String
-        val signingPassword = findProperty("signingPassword") as? String
+        val signingKey = findProp<String?>("signingKey")
+        val signingPassword = findProp<String?>("signingPassword")
         if (signingKey != null && signingPassword != null) {
             logger.info("Using in memory keys for signing")
             useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)

@@ -6,7 +6,7 @@ import java.nio.ByteOrder
 import java.nio.charset.Charset
 
 /**
- * Read a [Byte] from the beginning a byte array.
+ * Read a [Byte] from a byte array.
  *
  * @receiver the byte array to read from
  * @param start the index to start reading from (defaults to 0)
@@ -20,7 +20,7 @@ fun ByteArray.readByte(start: Int = 0): Byte {
 }
 
 /**
- * Read a [Short] from the beginning of a byte array.
+ * Read a [Short] from a byte array.
  *
  * @receiver the byte array to read from
  * @param endianness the endianness of the short (defaults to [ByteOrder.BIG_ENDIAN])
@@ -40,7 +40,7 @@ fun ByteArray.readShort(endianness: ByteOrder = ByteOrder.BIG_ENDIAN, start: Int
 }
 
 /**
- * Read an [Int] from the beginning of a byte array.
+ * Read an [Int] from a byte array.
  *
  * @receiver the byte array to read from
  * @param endianness the endianness of the int (defaults to [ByteOrder.BIG_ENDIAN])
@@ -62,7 +62,7 @@ fun ByteArray.readInt(endianness: ByteOrder = ByteOrder.BIG_ENDIAN, start: Int =
 }
 
 /**
- * Read a [Long] from the beginning of a byte array.
+ * Read a [Long] from a byte array.
  *
  * @receiver the byte array to read from
  * @param endianness the endianness of the long (defaults to [ByteOrder.BIG_ENDIAN])
@@ -88,7 +88,7 @@ fun ByteArray.readLong(endianness: ByteOrder = ByteOrder.BIG_ENDIAN, start: Int 
 }
 
 /**
- * Read a [Float] from the beginning of a byte array.
+ * Read a [Float] from a byte array.
  *
  * @receiver the byte array to read from
  * @param endianness the endianness of the float (defaults to [ByteOrder.BIG_ENDIAN])
@@ -104,7 +104,7 @@ fun ByteArray.readFloat(endianness: ByteOrder = ByteOrder.BIG_ENDIAN, start: Int
 }
 
 /**
- * Read a [Double] from the beginning of a byte array.
+ * Read a [Double] from a byte array.
  *
  * @receiver the byte array to read from
  * @param endianness the endianness of the double (defaults to [ByteOrder.BIG_ENDIAN])
@@ -120,7 +120,7 @@ fun ByteArray.readDouble(endianness: ByteOrder = ByteOrder.BIG_ENDIAN, start: In
 }
 
 /**
- * Read a [Boolean] from the beginning of a byte array.
+ * Read a [Boolean] from a byte array.
  *
  * @receiver the byte array to read from
  * @param start the index to start reading from (defaults to 0)
@@ -134,7 +134,7 @@ fun ByteArray.readBoolean(start: Int = 0): Boolean {
 }
 
 /**
- * Read a [String] from the beginning of a byte array.
+ * Read a [String] from a byte array.
  *
  * @receiver the byte array to read from
  * @param charset the charset to use to decode the string (defaults to [Charsets.UTF_8])
