@@ -1,12 +1,15 @@
 package com.kamelia.sprinkler.binary.decoder.composer.step
 
 import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
-import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
+import com.kamelia.sprinkler.utils.accumulate
+import com.kamelia.sprinkler.utils.finish
+import com.kamelia.sprinkler.utils.supply
 import com.zwendo.restrikt.annotation.PackagePrivate
+import java.util.stream.Collector
 
 @PackagePrivate
 internal class ConstantSizeRepeatStep<C, E, R> private constructor(
-    private val collector: DecoderCollector<C, E, R>,
+    private val collector: Collector<E, C, R>,
     private val times: Int,
     private val prefixIndex: Int,
 ) : CompositionStep {
@@ -22,18 +25,18 @@ internal class ConstantSizeRepeatStep<C, E, R> private constructor(
         throw AssertionError("Should not be called")
 
     override fun onArrive(accumulator: ElementsAccumulator, currentIndex: Int): Int {
-        val collection = collection ?: collector.supplier().also { this.collection = it }
+        val collection = collection ?: collector.supply().also { this.collection = it }
 
         return when (index) {
             times - 1 -> { // last element
-                collector.accumulator(collection, accumulator.pop())
-                accumulator.add(collector.finisher(collection))
+                collector.accumulate(collection, accumulator.pop())
+                accumulator.add(collector.finish(collection))
                 reset()
 
                 currentIndex + 1 // directly go to next step
             }
             else -> { // any other element
-                collector.accumulator(collection, accumulator.pop())
+                collector.accumulate(collection, accumulator.pop())
                 index++
                 prefixIndex + 1
             }
@@ -49,7 +52,7 @@ internal class ConstantSizeRepeatStep<C, E, R> private constructor(
 
         fun <C, E, R> addStep(
             builder: CompositionStepList.Builder,
-            collector: DecoderCollector<C, E, R>,
+            collector: Collector<E, C, R>,
             times: Int,
         ) = if (times == 0) {
             builder.addPrefixStep(NoElementStep(collector, builder.nextRegularIndex))
@@ -59,7 +62,7 @@ internal class ConstantSizeRepeatStep<C, E, R> private constructor(
     }
 
     private class NoElementStep<C, E, R>(
-        private val collector: DecoderCollector<C, E, R>,
+        private val collector: Collector<E, C, R>,
         private val jumpIndex: Int,
     ) : CompositionStep {
 
@@ -67,8 +70,8 @@ internal class ConstantSizeRepeatStep<C, E, R> private constructor(
             throw AssertionError("Should not be called")
 
         override fun onArrive(accumulator: ElementsAccumulator, currentIndex: Int): Int {
-            val collection = collector.supplier()
-            accumulator.add(collector.finisher(collection))
+            val collection = collector.supply()
+            accumulator.add(collector.finish(collection))
             return jumpIndex + 1
         }
 

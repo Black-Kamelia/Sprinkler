@@ -1,8 +1,19 @@
 package com.kamelia.sprinkler.binary.decoder.core
 
+/**
+ * A [Decoder] decoding objects represented by a variable number of bytes. The number of bytes to read is undefined and
+ * bytes are accumulated internally until an [endMarker] is found. Once the end marker is found, the [converter] function
+ * is used to convert all the accumulated bytes to the decoded object.
+ *
+ * @param E the type of the decoded object
+ * @param endMarker the bytes marking the end of the object
+ * @param converter a function to convert the bytes (stored in a [ByteArray]) to the decoded object
+ * @constructor Creates a new [VariableSizeEndMarkerDecoder].
+ * @throws IllegalArgumentException if [endMarker] is empty
+ */
 class VariableSizeEndMarkerDecoder<E>(
     private val endMarker: ByteArray,
-    private val extractor: ByteArray.(Int) -> E,
+    private val converter: ByteArray.(Int) -> E,
 ) : Decoder<E> {
 
     private var accumulator: ByteArray? = null
@@ -30,7 +41,7 @@ class VariableSizeEndMarkerDecoder<E>(
             buffer.addLast(byte.toByte())
         }
 
-        val result = (accumulator?: ByteArray(0)).extractor(index) // can be null only if content is empty
+        val result = (accumulator?: ByteArray(0)).converter(index) // can be null only if content is empty
         index = 0
         return Decoder.State.Done(result)
     }

@@ -2,12 +2,15 @@ package com.kamelia.sprinkler.binary.decoder.composer.step
 
 import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
+import com.kamelia.sprinkler.utils.accumulate
+import com.kamelia.sprinkler.utils.finish
+import com.kamelia.sprinkler.utils.supply
 import com.zwendo.restrikt.annotation.PackagePrivate
+import java.util.stream.Collector
 
 @PackagePrivate
 internal class UntilRepeatStep<C, E, R> private constructor(
-    private val collector: DecoderCollector<C, E, R>,
+    private val collector: Collector<E, C, R>,
     private val addLast: Boolean,
     private val startIndex: Int,
     private val predicate: (E) -> Boolean,
@@ -20,19 +23,19 @@ internal class UntilRepeatStep<C, E, R> private constructor(
         throw AssertionError("Should not be called")
 
     override fun onArrive(accumulator: ElementsAccumulator, currentIndex: Int): Int {
-        val collection = collection ?: collector.supplier().also { collection = it }
+        val collection = collection ?: collector.supply().also { collection = it }
 
         val element = accumulator.pop<E>()
         if (predicate(element)) {
             if (addLast) {
-                collector.accumulator(collection, element)
+                collector.accumulate(collection, element)
             }
-            accumulator.add(collector.finisher(collection))
+            accumulator.add(collector.finish(collection))
             reset()
             return currentIndex + 1
         }
 
-        collector.accumulator(collection, element)
+        collector.accumulate(collection, element)
         return startIndex
     }
 
@@ -45,7 +48,7 @@ internal class UntilRepeatStep<C, E, R> private constructor(
 
         fun <C, E, R> addStep(
             builder: CompositionStepList.Builder,
-            collector: DecoderCollector<C, E, R>,
+            collector: Collector<E, C, R>,
             addLast: Boolean,
             predicate: (E) -> Boolean,
         ) {

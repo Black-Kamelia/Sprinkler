@@ -2,12 +2,20 @@
 
 package com.kamelia.sprinkler.binary.decoder
 
-import com.kamelia.sprinkler.binary.common.ByteEndianness
 import com.kamelia.sprinkler.binary.decoder.core.ConstantSizeDecoder
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.binary.decoder.core.VariableSizeEndMarkerDecoder
 import com.kamelia.sprinkler.binary.decoder.core.VariableSizePrefixedSizeDecoder
 import com.kamelia.sprinkler.binary.decoder.util.*
+import com.kamelia.sprinkler.util.readBoolean
+import com.kamelia.sprinkler.util.readByte
+import com.kamelia.sprinkler.util.readDouble
+import com.kamelia.sprinkler.util.readFloat
+import com.kamelia.sprinkler.util.readInt
+import com.kamelia.sprinkler.util.readLong
+import com.kamelia.sprinkler.util.readShort
+import com.kamelia.sprinkler.util.readString
+import java.nio.ByteOrder
 import java.nio.charset.Charset
 import java.util.*
 
@@ -16,23 +24,23 @@ import java.util.*
 fun ByteDecoder(): Decoder<Byte> = ConstantSizeDecoder(Byte.SIZE_BYTES) { readByte() }
 
 @JvmOverloads
-fun ShortDecoder(endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN): Decoder<Short> =
+fun ShortDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Short> =
     ConstantSizeDecoder(Short.SIZE_BYTES) { readShort(endianness) }
 
 @JvmOverloads
-fun IntDecoder(endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN): Decoder<Int> =
+fun IntDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Int> =
     ConstantSizeDecoder(Int.SIZE_BYTES) { readInt(endianness) }
 
 @JvmOverloads
-fun LongDecoder(endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN): Decoder<Long> =
+fun LongDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Long> =
     ConstantSizeDecoder(Long.SIZE_BYTES) { readLong(endianness) }
 
 @JvmOverloads
-fun FloatDecoder(endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN): Decoder<Float> =
+fun FloatDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Float> =
     ConstantSizeDecoder(Float.SIZE_BYTES) { readFloat(endianness) }
 
 @JvmOverloads
-fun DoubleDecoder(endianness: ByteEndianness = ByteEndianness.BIG_ENDIAN): Decoder<Double> =
+fun DoubleDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Double> =
     ConstantSizeDecoder(Double.SIZE_BYTES) { readDouble(endianness) }
 
 fun BooleanDecoder(): Decoder<Boolean> = ConstantSizeDecoder(1) { readBoolean() }

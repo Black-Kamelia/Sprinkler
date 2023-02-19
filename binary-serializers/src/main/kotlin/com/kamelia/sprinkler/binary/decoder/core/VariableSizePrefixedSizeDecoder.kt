@@ -2,12 +2,12 @@ package com.kamelia.sprinkler.binary.decoder.core
 
 /**
  * A [Decoder] that decode an object with a variable size. The number of bytes to read are prefixed to the bytes of the
- * object. This size is decoded by a [sizeDecoder] and then the n bytes are accumulated in a [ByteArray]. Once the
- * [ByteArray] is full, the [converter] function is used to convert the [ByteArray] to the final object.
+ * object. This size is decoded by a [sizeDecoder] and then the n bytes are accumulated internally. Once all bytes have
+ * been collected, the [converter] function is used to convert these bytes to the decoded object.
  *
  * @param E the type of the decoded object
  * @param sizeDecoder a [Decoder] to decode the number of bytes to read
- * @param converter a function to convert the [ByteArray] to the decoded object
+ * @param converter a function to convert the bytes (stored in a [ByteArray]) to the decoded object
  * @constructor Creates a new [VariableSizePrefixedSizeDecoder].
  */
 class VariableSizePrefixedSizeDecoder<E>(

@@ -14,7 +14,9 @@ internal class CompositionStepList(
         [A, B, C, D, E]
                ^ firstRegularStepIndex = 2
 
-        get(0) = firstRegularStepIndex + 0 = 2              => C
+        final index = firstRegularStepIndex + index
+
+        get(0)  = firstRegularStepIndex + 0 = 2             => C
         get(-1) = firstRegularStepIndex + (-1) = 2 - 1 = 1  => B
         get(-2) = firstRegularStepIndex + (-2) = 2 - 2 = 0  => A
     */

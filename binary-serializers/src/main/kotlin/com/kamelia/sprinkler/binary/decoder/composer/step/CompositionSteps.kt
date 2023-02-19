@@ -2,8 +2,8 @@ package com.kamelia.sprinkler.binary.decoder.composer.step
 
 import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
+import java.util.stream.Collector
 
 
 internal fun CompositionStepList.Builder.addThenStep(decoder: Decoder<*>) = addStep { decoder }
@@ -31,16 +31,16 @@ internal fun CompositionStepList.Builder.addSkipStep(size: Long) = addStep(SkipS
 
 internal fun <C, E, R> CompositionStepList.Builder.addConstantSizeRepeatStep(
     times: Int,
-    collector: DecoderCollector<C, E, R>,
+    collector: Collector<E, C, R>,
 ) = ConstantSizeRepeatStep.addStep(this, collector, times)
 
 internal fun <C, E, R> CompositionStepList.Builder.addPrefixedSizeRepeatStep(
-    collector: DecoderCollector<C, E, R>,
+    collector: Collector<E, C, R>,
     sizeDecoder: Decoder<Int>,
 ) = PrefixedSizeRepeatStep.addStep(this, sizeDecoder, collector)
 
 internal fun <C, E, R> CompositionStepList.Builder.addUntilRepeatStep(
-    collector: DecoderCollector<C, E, R>,
+    collector: Collector<E, C, R>,
     addLast: Boolean,
     predicate: (E) -> Boolean,
 ) = UntilRepeatStep.addStep(this, collector, addLast, predicate)

@@ -11,17 +11,16 @@ import com.kamelia.sprinkler.binary.decoder.composer.step.addThenItselfOrNullSte
 import com.kamelia.sprinkler.binary.decoder.composer.step.addThenStep
 import com.kamelia.sprinkler.binary.decoder.composer.step.addUntilRepeatStep
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.core.NothingDecoder
+import java.util.stream.Collector
 
 abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
 
     @PublishedApi
     internal val builder: CompositionStepList.Builder
 
-    internal constructor(decoder: Decoder<T>) {
+    internal constructor() {
         builder = CompositionStepList.Builder()
-        thenStep(decoder)
     }
 
     protected constructor(previous: DecoderComposer<B, *, *>, decoder: Decoder<T>) {
@@ -63,14 +62,14 @@ abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
 
     //region Internal
 
-    internal fun <C, R> repeatStep(collector: DecoderCollector<C, T, R>, sizeDecoder: Decoder<Int>) =
+    internal fun <C, R> repeatStep(collector: Collector<T, C, R>, sizeDecoder: Decoder<Int>) =
         builder.addPrefixedSizeRepeatStep(collector, sizeDecoder)
 
-    internal fun <C, R> repeatStep(times: Int, collector: DecoderCollector<C, T, R>) =
+    internal fun <C, R> repeatStep(times: Int, collector: Collector<T, C, R>) =
         builder.addConstantSizeRepeatStep(times, collector)
 
     internal fun <C, R> untilStep(
-        collector: DecoderCollector<C, T, R>,
+        collector: Collector<T, C, R>,
         addLast: Boolean,
         predicate: (T) -> Boolean,
     ) = builder.addUntilRepeatStep(collector, addLast, predicate)

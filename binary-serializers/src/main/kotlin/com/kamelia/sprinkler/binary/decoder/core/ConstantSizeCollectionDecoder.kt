@@ -1,7 +1,12 @@
 package com.kamelia.sprinkler.binary.decoder.core
 
-class ConstantSizeCollectionDecoder<C, T, R>(
-    private val collector: DecoderCollector<C, T, R>,
+import com.kamelia.sprinkler.util.accumulate
+import com.kamelia.sprinkler.util.finish
+import com.kamelia.sprinkler.util.supply
+import java.util.stream.Collector
+
+class ConstantSizeCollectionDecoder<T, C, R>(
+    private val collector: Collector<T, C, R>,
     private val elementDecoder: Decoder<T>,
     private val size: Int,
 ) : Decoder<R> {
@@ -14,12 +19,12 @@ class ConstantSizeCollectionDecoder<C, T, R>(
     }
 
     override fun decode(input: DecoderDataInput): Decoder.State<R> {
-        val collection = collection ?: collector.supplier().also { collection = it }
+        val collection = collection ?: collector.supply().also { collection = it }
 
         while (index < size) {
             when (val elementState = elementDecoder.decode(input)) {
                 is Decoder.State.Done -> {
-                    collector.accumulator(collection, elementState.value)
+                    collector.accumulate(collection, elementState.value)
                     index++
                 }
                 else -> return elementState.mapEmptyState()
@@ -28,7 +33,7 @@ class ConstantSizeCollectionDecoder<C, T, R>(
 
         this.collection = null
         index = 0
-        return Decoder.State.Done(collector.finisher(collection))
+        return Decoder.State.Done(collector.finish(collection))
     }
 
     override fun reset() {

@@ -2,13 +2,16 @@ package com.kamelia.sprinkler.binary.decoder.composer.step
 
 import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
+import com.kamelia.sprinkler.utils.accumulate
+import com.kamelia.sprinkler.utils.finish
+import com.kamelia.sprinkler.utils.supply
 import com.zwendo.restrikt.annotation.PackagePrivate
+import java.util.stream.Collector
 
 @PackagePrivate
 internal class PrefixedSizeRepeatStep<C, E, R> private constructor(
-    private val collector: DecoderCollector<C, E, R>,
+    private val collector: Collector<E, C, R>,
     private val prefixIndex: Int,
 ) : CompositionStep {
 
@@ -22,24 +25,24 @@ internal class PrefixedSizeRepeatStep<C, E, R> private constructor(
     override fun onArrive(accumulator: ElementsAccumulator, currentIndex: Int): Int {
         if (size == -1) throw AssertionError("Size should have been initialized")
 
-        val collection = collection ?: collector.supplier().also { this.collection = it }
+        val collection = collection ?: collector.supply().also { this.collection = it }
 
         return when {
             size == 0 -> {  // empty collection
-                accumulator.add(collector.finisher(collection))
+                accumulator.add(collector.finish(collection))
                 reset()
 
                 currentIndex + 1 // directly go to next step
             }
             index == size - 1 -> { // last element
-                collector.accumulator(collection, accumulator.pop())
-                accumulator.add(collector.finisher(collection))
+                collector.accumulate(collection, accumulator.pop())
+                accumulator.add(collector.finish(collection))
                 reset()
 
                 currentIndex + 1 // directly go to next step
             }
             else -> { // any other element
-                collector.accumulator(collection, accumulator.pop())
+                collector.accumulate(collection, accumulator.pop())
                 index++
 
                 prefixIndex + 1 // rewind to the size decoder
@@ -65,7 +68,7 @@ internal class PrefixedSizeRepeatStep<C, E, R> private constructor(
         fun <C, E, R> addStep(
             builder: CompositionStepList.Builder,
             sizeDecoder: Decoder<Int>,
-            collector: DecoderCollector<C, E, R>,
+            collector: Collector<E, C, R>,
         ) {
             val regular = PrefixedSizeRepeatStep(collector, builder.nextPrefixIndex)
             val prefix = regular.SizeStep(sizeDecoder, builder.nextRegularIndex)
@@ -104,4 +107,3 @@ internal class PrefixedSizeRepeatStep<C, E, R> private constructor(
     }
 
 }
-

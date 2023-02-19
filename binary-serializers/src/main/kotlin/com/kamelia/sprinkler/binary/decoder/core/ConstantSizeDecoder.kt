@@ -1,12 +1,12 @@
 package com.kamelia.sprinkler.binary.decoder.core
 
 /**
- * A [Decoder] decoding objects represented by a fixed number of bytes. This decoder accumulates the bytes read in a
- * [ByteArray] and calls a [converter] function to convert the [ByteArray] to the decoded object.
+ * A [Decoder] decoding objects represented by a fixed number of bytes. This decoder accumulates the bytes read and
+ * calls a [converter] function to convert these bytes to the decoded object.
  *
  * @param E the type of the decoded object
  * @param byteSize the number of bytes to read
- * @param converter a function to convert the [ByteArray] to the decoded object
+ * @param converter a function to convert the bytes (stored in a [ByteArray]) to the decoded object
  * @constructor Creates a new [ConstantSizeDecoder].
  * @throws IllegalArgumentException if [byteSize] is negative
  */
