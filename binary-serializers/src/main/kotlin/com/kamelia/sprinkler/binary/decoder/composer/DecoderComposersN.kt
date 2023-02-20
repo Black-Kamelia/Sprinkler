@@ -11,7 +11,7 @@ class DecoderComposer2<B, T1, T2> @PackagePrivate internal constructor(
     decoder: Decoder<T2>,
 ) : DecoderComposer<B, T2, DecoderComposer2<B, T1, T2>>(previous, decoder) {
 
-    fun <R> map(block: (T2) -> Decoder<R>): DecoderComposer2<B, T1, R> = thisCasted { mapStep(block) }
+    fun <R> map(block: (T2) -> Decoder<R>): DecoderComposer2<B, T1, R> = thisCast { mapStep(block) }
 
     fun <R> then(decoder: Decoder<R>): DecoderComposer3<B, T1, T2, R> = DecoderComposer3(this, decoder)
 
@@ -34,7 +34,7 @@ class DecoderComposer3<B, T1, T2, T3> @PackagePrivate internal constructor(
     decoder: Decoder<T3>,
 ) : DecoderComposer<B, T3, DecoderComposer3<B, T1, T2, T3>>(previous, decoder) {
 
-    fun <R> map(block: (T3) -> Decoder<R>): DecoderComposer3<B, T1, T2, R> = thisCasted { mapStep(block) }
+    fun <R> map(block: (T3) -> Decoder<R>): DecoderComposer3<B, T1, T2, R> = thisCast { mapStep(block) }
 
     fun <R> then(decoder: Decoder<R>): DecoderComposer4<B, T1, T2, T3, R> = DecoderComposer4(this, decoder)
 
@@ -56,7 +56,7 @@ class DecoderComposer4<B, T1, T2, T3, T4> @PackagePrivate internal constructor(
     decoder: Decoder<T4>,
 ) : DecoderComposer<B, T4, DecoderComposer4<B, T1, T2, T3, T4>>(previous, decoder) {
 
-    fun <R> map(block: (T4) -> Decoder<R>): DecoderComposer4<B, T1, T2, T3, R> = thisCasted { mapStep(block) }
+    fun <R> map(block: (T4) -> Decoder<R>): DecoderComposer4<B, T1, T2, T3, R> = thisCast { mapStep(block) }
 
     fun <R> then(decoder: Decoder<R>): DecoderComposer5<B, T1, T2, T3, T4, R> = DecoderComposer5(this, decoder)
 
@@ -78,7 +78,7 @@ class DecoderComposer5<B, T1, T2, T3, T4, T5> @PackagePrivate internal construct
     decoder: Decoder<T5>,
 ) : DecoderComposer<B, T5, DecoderComposer5<B, T1, T2, T3, T4, T5>>(previous, decoder) {
 
-    fun <R> map(block: (T5) -> Decoder<R>): DecoderComposer5<B, T1, T2, T3, T4, R> = thisCasted { mapStep(block) }
+    fun <R> map(block: (T5) -> Decoder<R>): DecoderComposer5<B, T1, T2, T3, T4, R> = thisCast { mapStep(block) }
 
     fun <R> then(decoder: Decoder<R>): DecoderComposer6<B, T1, T2, T3, T4, T5, R> = DecoderComposer6(this, decoder)
 
@@ -100,7 +100,7 @@ class DecoderComposer6<B, T1, T2, T3, T4, T5, T6> @PackagePrivate internal const
     decoder: Decoder<T6>,
 ) : DecoderComposer<B, T6, DecoderComposer6<B, T1, T2, T3, T4, T5, T6>>(previous, decoder) {
 
-    fun <R> map(block: (T6) -> Decoder<R>): DecoderComposer6<B, T1, T2, T3, T4, T5, R> = thisCasted { mapStep(block) }
+    fun <R> map(block: (T6) -> Decoder<R>): DecoderComposer6<B, T1, T2, T3, T4, T5, R> = thisCast { mapStep(block) }
 
     fun <R> then(decoder: Decoder<R>): DecoderComposer7<B, T1, T2, T3, T4, T5, T6, R> = DecoderComposer7(this, decoder)
 
@@ -122,7 +122,7 @@ class DecoderComposer7<B, T1, T2, T3, T4, T5, T6, T7> @PackagePrivate internal c
     decoder: Decoder<T7>,
 ) : DecoderComposer<B, T7, DecoderComposer7<B, T1, T2, T3, T4, T5, T6, T7>>(previous, decoder) {
 
-    fun <R> map(block: (T7) -> Decoder<R>): DecoderComposer7<B, T1, T2, T3, T4, T5, T6, R> = thisCasted { mapStep(block) }
+    fun <R> map(block: (T7) -> Decoder<R>): DecoderComposer7<B, T1, T2, T3, T4, T5, T6, R> = thisCast { mapStep(block) }
 
     fun <R> then(decoder: Decoder<R>): DecoderComposer8<B, T1, T2, T3, T4, T5, T6, T7, R> = DecoderComposer8(this, decoder)
 
@@ -144,7 +144,7 @@ class DecoderComposer8<B, T1, T2, T3, T4, T5, T6, T7, T8> @PackagePrivate intern
     decoder: Decoder<T8>,
 ) : DecoderComposer<B, T8, DecoderComposer8<B, T1, T2, T3, T4, T5, T6, T7, T8>>(previous, decoder) {
 
-    fun <R> map(block: (T8) -> Decoder<R>): DecoderComposer8<B, T1, T2, T3, T4, T5, T6, T7, R> = thisCasted { mapStep(block) }
+    fun <R> map(block: (T8) -> Decoder<R>): DecoderComposer8<B, T1, T2, T3, T4, T5, T6, T7, R> = thisCast { mapStep(block) }
 
     fun <R> reduce(reducer: (T1, T2, T3, T4, T5, T6, T7, T8) -> R): DecoderComposer1<B, R> {
         reduceStep { reducer(next(), next(), next(), next(), next(), next(), next(), next()) }

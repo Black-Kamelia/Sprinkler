@@ -34,7 +34,7 @@ abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
         builder = previous.builder
     }
 
-    fun skip(amount: Long): D = thisCasted { builder.addSkipStep(amount) }
+    fun skip(amount: Long): D = thisCast { builder.addSkipStep(amount) }
 
     //region Subclasses API
 
@@ -52,7 +52,7 @@ abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
         return MARKER_DECODER
     }
 
-    protected inline fun <R> thisCasted(block: () -> Unit): R {
+    protected inline fun <R> thisCast(block: () -> Unit): R {
         block()
         @Suppress("UNCHECKED_CAST")
         return this as R
