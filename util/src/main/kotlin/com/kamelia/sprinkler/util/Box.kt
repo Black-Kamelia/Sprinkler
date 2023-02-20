@@ -81,7 +81,8 @@ interface Box<T> {
          * @param T the type of the value
          * @return a new [SingleWriteBox]
          */
-        fun <T> singleWriteBox(): SingleWriteBox<T> = SingleWriteBox()
+        @JvmStatic
+        fun <T> singleWrite(): SingleWriteBox<T> = SingleWriteBox()
 
         /**
          * Creates a new [RewritableBox].
@@ -89,7 +90,8 @@ interface Box<T> {
          * @param T the type of the value
          * @return a new [RewritableBox]
          */
-        fun <T> rewritableBox(): RewritableBox<T> = RewritableBox()
+        @JvmStatic
+        fun <T> rewritable(): RewritableBox<T> = RewritableBox()
 
         /**
          * Creates a new [PrefilledBox] with the given value.
@@ -97,7 +99,8 @@ interface Box<T> {
          * @param T the type of the value
          * @param value the value to fill the box with
          */
-        fun <T> prefilledBox(value: T): PrefilledBox<T> = PrefilledBox(value)
+        @JvmStatic
+        fun <T> prefilled(value: T): PrefilledBox<T> = PrefilledBox(value)
 
         /**
          * Creates a new [EmptyBox].
@@ -105,7 +108,8 @@ interface Box<T> {
          * @param T the type of the value
          * @return a new [EmptyBox]
          */
-        fun <T> emptyBox(): EmptyBox<T> = EmptyBox()
+        @JvmStatic
+        fun <T> empty(): EmptyBox<T> = EmptyBox()
 
     }
 

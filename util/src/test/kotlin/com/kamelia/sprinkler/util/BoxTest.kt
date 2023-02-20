@@ -10,7 +10,7 @@ class BoxTest {
 
     @Test
     fun `single write box test`() {
-        val box = Box.SingleWriteBox<Int>()
+        val box = Box.singleWrite<Int>()
 
         assertFalse(box.isFilled)
         assertThrows<IllegalStateException> {
@@ -28,7 +28,7 @@ class BoxTest {
 
     @Test
     fun `rewritable box test`() {
-        val box = Box.RewritableBox<Int>()
+        val box = Box.rewritable<Int>()
 
         assertFalse(box.isFilled)
         assertThrows<IllegalStateException> {
@@ -47,7 +47,7 @@ class BoxTest {
     @Test
     fun `prefilled box test`() {
         val expected = 1
-        val box = Box.PrefilledBox(expected)
+        val box = Box.prefilled(expected)
 
         assertTrue(box.isFilled)
         assertEquals(expected, box.value)
@@ -55,7 +55,7 @@ class BoxTest {
 
     @Test
     fun `empty box test`() {
-        val box = Box.EmptyBox<Int>()
+        val box = Box.empty<Int>()
         val v by box
 
         assertFalse(box.isFilled)
