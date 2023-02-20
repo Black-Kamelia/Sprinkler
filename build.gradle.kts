@@ -1,5 +1,4 @@
-import java.util.Base64
-import java.util.Properties
+import java.util.*
 
 plugins {
     val kotlinVersion: String by System.getProperties()
@@ -62,7 +61,7 @@ allprojects {
     }
 
     restrikt {
-        enabled = findProp<String?>("enableRestrikt")?.toBoolean() ?: true
+        enabled = findProp("enableRestrikt") ?: false
     }
 
     tasks {
@@ -158,4 +157,12 @@ fun TaskContainerScope.setupKotlinCompilation(block: org.jetbrains.kotlin.gradle
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <T> Project.findProp(name: String): T = findProperty(name) as T
+inline fun <reified T> Project.findProp(name: String): T {
+    val strProp = findProperty(name) as? String
+    return when (T::class.java) {
+        Boolean::class.javaPrimitiveType -> strProp?.toBoolean() as T
+        Boolean::class.javaObjectType -> strProp?.toBoolean() as T
+        Int::class.java -> strProp?.toInt() as T
+        else -> strProp as T
+    }
+}
