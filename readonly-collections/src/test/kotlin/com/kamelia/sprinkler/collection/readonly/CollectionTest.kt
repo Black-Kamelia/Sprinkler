@@ -7,7 +7,7 @@ import org.junit.jupiter.api.assertThrows
 class CollectionTest {
 
     @Test
-    fun `read only collection cannot be casted to mutable collection`() {
+    fun `read only collection cannot be cast to mutable collection`() {
         val readOnlyCollection = listOf(1, 2, 3).asReadOnlyCollection()
 
         @Suppress("UNCHECKED_CAST")
@@ -15,7 +15,7 @@ class CollectionTest {
     }
 
     @Test
-    fun `read only collection iterator cannot be casted to mutable iterator`() {
+    fun `read only collection iterator cannot be cast to mutable iterator`() {
         val readOnlyCollection = listOf(1, 2, 3).asReadOnlyCollection()
         val iterator = readOnlyCollection.iterator()
 

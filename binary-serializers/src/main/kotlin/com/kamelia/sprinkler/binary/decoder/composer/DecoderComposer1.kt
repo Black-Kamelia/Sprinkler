@@ -20,7 +20,7 @@ class DecoderComposer1<B, T> : DecoderComposer<B, T, DecoderComposer1<B, T>> {
         decoder = null
     }
 
-    fun <R> map(block: (T) -> Decoder<R>): DecoderComposer1<B, R> = casted { mapStep(block) }
+    fun <R> map(block: (T) -> Decoder<R>): DecoderComposer1<B, R> = cast { mapStep(block) }
 
     fun <R> mapAndStore(block: (T) -> Decoder<R>): DecoderComposer2<B, T, R> =
         DecoderComposer2(this, mapAndStoreStep(block))
@@ -30,7 +30,7 @@ class DecoderComposer1<B, T> : DecoderComposer<B, T, DecoderComposer1<B, T>> {
     fun <E, R> then(decoder: Decoder<E>, mapper: (E) -> R): DecoderComposer2<B, T, R> =
         DecoderComposer2(this, decoder.mapResult(mapper))
 
-    fun <C, R> repeat(times: Int, collector: Collector<T, C, R>): DecoderComposer1<B, R> = casted {
+    fun <C, R> repeat(times: Int, collector: Collector<T, C, R>): DecoderComposer1<B, R> = cast {
         repeatStep(times, collector)
     }
 
@@ -40,7 +40,7 @@ class DecoderComposer1<B, T> : DecoderComposer<B, T, DecoderComposer1<B, T>> {
     fun <C, R> repeat(
         collector: Collector<T, C, R>,
         sizeDecoder: Decoder<Int> = IntDecoder(),
-    ): DecoderComposer1<B, R> = casted { repeatStep(collector, sizeDecoder) }
+    ): DecoderComposer1<B, R> = cast { repeatStep(collector, sizeDecoder) }
 
     @JvmOverloads
     fun repeat(sizeDecoder: Decoder<Int> = IntDecoder()): DecoderComposer1<B, List<T>> =
@@ -51,14 +51,14 @@ class DecoderComposer1<B, T> : DecoderComposer<B, T, DecoderComposer1<B, T>> {
         collector: Collector<T, C, R>,
         addLast: Boolean = false,
         predicate: (T) -> Boolean,
-    ): DecoderComposer1<B, R> = casted { untilStep(collector, addLast, predicate) }
+    ): DecoderComposer1<B, R> = cast { untilStep(collector, addLast, predicate) }
 
     @JvmOverloads
     fun until(addLast: Boolean = false, predicate: (T) -> Boolean): DecoderComposer1<B, List<T>> =
         until(Collectors.toList(), addLast, predicate)
 
     @JvmOverloads
-    fun optional(nullabilityDecoder: Decoder<Boolean> = BooleanDecoder()): DecoderComposer1<B, T?> = casted {
+    fun optional(nullabilityDecoder: Decoder<Boolean> = BooleanDecoder()): DecoderComposer1<B, T?> = cast {
         optionalStep(nullabilityDecoder)
     }
 
@@ -66,7 +66,7 @@ class DecoderComposer1<B, T> : DecoderComposer<B, T, DecoderComposer1<B, T>> {
     fun thenItselfOrNull(nullabilityDecoder: Decoder<Boolean> = BooleanDecoder()): DecoderComposer2<B, T, B?> =
         DecoderComposer2(this, thenItselfOrNullStep(nullabilityDecoder))
 
-    private inline fun <R> casted(block: DecoderComposer1<B, T>.() -> Unit): DecoderComposer1<B, R> {
+    private inline fun <R> cast(block: DecoderComposer1<B, T>.() -> Unit): DecoderComposer1<B, R> {
         block()
         decoder = null
         @Suppress("UNCHECKED_CAST")

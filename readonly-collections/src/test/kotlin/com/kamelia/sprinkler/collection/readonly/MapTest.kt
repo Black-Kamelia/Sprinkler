@@ -7,7 +7,7 @@ import org.junit.jupiter.api.assertThrows
 class MapTest {
 
     @Test
-    fun `read only map cannot be casted to mutable map`() {
+    fun `read only map cannot be cast to mutable map`() {
         val readOnlyMap = readOnlyMapOf(1 to "one", 2 to "two", 3 to "three")
 
         @Suppress("UNCHECKED_CAST")
@@ -15,7 +15,7 @@ class MapTest {
     }
 
     @Test
-    fun `read only map iterator cannot be casted to mutable iterator`() {
+    fun `read only map iterator cannot be cast to mutable iterator`() {
         val readOnlyMap = readOnlyMapOf(1 to "one", 2 to "two", 3 to "three")
         val iterator = readOnlyMap.iterator()
 
@@ -105,7 +105,7 @@ class MapTest {
     }
 
     @Test
-    fun `map entries cannot be casted to mutable map entries`() {
+    fun `map entries cannot be cast to mutable map entries`() {
         val readOnlyMap = readOnlyMapOf(1 to "one", 2 to "two", 3 to "three")
         val entries = readOnlyMap.entries
 
@@ -114,7 +114,7 @@ class MapTest {
     }
 
     @Test
-    fun `map keys cannot be casted to mutable map keys`() {
+    fun `map keys cannot be cast to mutable map keys`() {
         val readOnlyMap = mapOf(1 to "one", 2 to "two", 3 to "three").asReadOnlyMap()
         val keys = readOnlyMap.keys
 
@@ -123,7 +123,7 @@ class MapTest {
     }
 
     @Test
-    fun `map values cannot be casted to mutable map values`() {
+    fun `map values cannot be cast to mutable map values`() {
         val readOnlyMap = readOnlyMapOf(1 to "one", 2 to "two", 3 to "three")
         val values = readOnlyMap.values
 
@@ -132,7 +132,7 @@ class MapTest {
     }
 
     @Test
-    fun `map entries iterator cannot be casted to mutable map entries iterator`() {
+    fun `map entries iterator cannot be cast to mutable map entries iterator`() {
         val readOnlyMap = readOnlyMapOf(1 to "one", 2 to "two", 3 to "three")
         val entries = readOnlyMap.entries
         val iterator = entries.iterator()

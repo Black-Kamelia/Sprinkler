@@ -7,7 +7,7 @@ import org.junit.jupiter.api.assertThrows
 class IterableTest {
 
     @Test
-    fun `read only iterable cannot be casted to mutable iterable`() {
+    fun `read only iterable cannot be cast to mutable iterable`() {
         val readOnlyIterable = listOf(1, 2, 3).asReadOnlyIterable()
 
         @Suppress("UNCHECKED_CAST")
