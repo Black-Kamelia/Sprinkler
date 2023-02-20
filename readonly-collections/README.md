@@ -1,4 +1,4 @@
-# Sprinkler: Collections
+# Sprinkler: ReadOnly Collections
 
 ## Summary
 
@@ -48,9 +48,9 @@ val readOnlyListWrapped = list.asReadOnlyList()
 
 This applies to the other interfaces as well.
 
-It is to be noted that `toReadOnlyX` methods creates a copy of the collection, 
+It is to be noted that `toReadOnlyX` methods create a copy of the collection, 
 while `asReadOnlyX` methods wrap the collection when necessary 
-(as in, it does nothing if it already was read-only).
+(as in, they do nothing if the collection was already read-only).
 
 ## API Documentation
 

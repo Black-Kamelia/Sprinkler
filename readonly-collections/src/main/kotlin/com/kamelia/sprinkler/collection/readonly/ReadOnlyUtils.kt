@@ -47,7 +47,7 @@ fun <T> Iterable<T>.readOnlyIterator(): ReadOnlyIterator<T> = when (this) {
  * @return a [ReadOnlyCollection] copy of the given [Iterable]
  * @param T the type of the elements in the [Iterable]
  */
-fun <T> Iterable<T>.toReadOnlyCollection(): ReadOnlyCollection<T> = ReadOnlyCollectionImpl(toList())
+fun <T> Iterable<T>.toReadOnlyCollection(): ReadOnlyCollection<T> = toList().asReadOnlyCollection()
 
 /**
  * Wraps the given [Collection] into a [ReadOnlyCollection].
@@ -81,7 +81,7 @@ fun <T> List<T>.readOnlyListIterator(): ReadOnlyListIterator<T> = ReadOnlyListIt
  * @return a [ReadOnlyList] copy of the given [Iterable]
  * @param T the type of the elements in the [Iterable]
  */
-fun <T> Iterable<T>.toReadOnlyList(): ReadOnlyList<T> = ReadOnlyListImpl(toList())
+fun <T> Iterable<T>.toReadOnlyList(): ReadOnlyList<T> = toList().asReadOnlyList()
 
 /**
  * Wraps the given [List] into a [ReadOnlyList].
@@ -102,7 +102,7 @@ fun <T> List<T>.asReadOnlyList(): ReadOnlyList<T> = when (this) {
  * @return a [ReadOnlyList] copy of the given [Array]
  * @param T the type of the elements in the [Array]
  */
-fun <T> Array<T>.toReadOnlyList(): ReadOnlyList<T> = ReadOnlyListImpl(toList())
+fun <T> Array<T>.toReadOnlyList(): ReadOnlyList<T> = toList().asReadOnlyList()
 
 /**
  * Wraps the given [Array] into a [ReadOnlyList].
@@ -111,7 +111,7 @@ fun <T> Array<T>.toReadOnlyList(): ReadOnlyList<T> = ReadOnlyListImpl(toList())
  * @return a [ReadOnlyList] wrapping the given [Array]
  * @param T the type of the elements in the [Array]
  */
-fun <T> Array<T>.asReadOnlyList(): ReadOnlyList<T> = ReadOnlyListImpl(asList())
+fun <T> Array<T>.asReadOnlyList(): ReadOnlyList<T> = asList().asReadOnlyList()
 
 /**
  * Creates a [ReadOnlyList] from the given vararg [elements].
@@ -119,7 +119,7 @@ fun <T> Array<T>.asReadOnlyList(): ReadOnlyList<T> = ReadOnlyListImpl(asList())
  * @param elements the elements to create the [ReadOnlyList] from
  * @return a [ReadOnlyList] from the given vararg [elements]
  */
-fun <T> readOnlyListOf(vararg elements: T): ReadOnlyList<T> = ReadOnlyListImpl(elements.asList())
+fun <T> readOnlyListOf(vararg elements: T): ReadOnlyList<T> = elements.asReadOnlyList()
 
 //endregion
 
@@ -132,7 +132,7 @@ fun <T> readOnlyListOf(vararg elements: T): ReadOnlyList<T> = ReadOnlyListImpl(e
  * @return a [ReadOnlySet] copy of the given [Iterable]
  * @param T the type of the elements in the [Iterable]
  */
-fun <T> Iterable<T>.toReadOnlySet(): ReadOnlySet<T> = ReadOnlySetImpl(toSet())
+fun <T> Iterable<T>.toReadOnlySet(): ReadOnlySet<T> = toSet().asReadOnlySet()
 
 /**
  * Wraps the given [Set] into a [ReadOnlySet].
@@ -186,7 +186,7 @@ fun <K, V> Iterable<Pair<K, V>>.toReadOnlyMap(): ReadOnlyMap<K, V> = toMap().asR
  * @param K the type of the keys in the [Map]
  * @param V the type of the values in the [Map]
  */
-fun <K, V> Map<K, V>.toReadOnlyMap(): ReadOnlyMap<K, V> = ReadOnlyMapImpl(toMap())
+fun <K, V> Map<K, V>.toReadOnlyMap(): ReadOnlyMap<K, V> = toMap().asReadOnlyMap()
 
 /**
  * Wraps the given [Map] into a [ReadOnlyMap].
