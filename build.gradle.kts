@@ -30,10 +30,6 @@ allprojects {
     apply(plugin = "com.zwendo.restrikt")
     apply(plugin = "kover")
 
-    restrikt {
-        enabled = findProp("enableRestrikt") ?: true
-    }
-
     val projectName = project.name.toLowerCase()
     val projectVersion = findProp("$projectName.version") ?: "0.1.0"
 
@@ -63,6 +59,10 @@ allprojects {
             logger.info("Using local GPG keys for signing")
         }
         sign(publishing.publications)
+    }
+
+    restrikt {
+        enabled = findProp<String?>("enableRestrikt")?.toBoolean() ?: true
     }
 
     tasks {
