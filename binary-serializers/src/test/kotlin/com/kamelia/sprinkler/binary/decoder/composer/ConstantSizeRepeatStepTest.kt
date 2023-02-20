@@ -3,9 +3,9 @@ package com.kamelia.sprinkler.binary.decoder.composer
 import com.kamelia.sprinkler.binary.decoder.ByteDecoder
 import com.kamelia.sprinkler.binary.decoder.IntDecoder
 import com.kamelia.sprinkler.binary.decoder.UTF8StringDecoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
 import com.kamelia.sprinkler.binary.decoder.util.get
+import java.util.stream.Collectors
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -17,7 +17,7 @@ class ConstantSizeRepeatStepTest {
     fun `compose with constant repetition greater than 1`() {
         val decoder = composedDecoder<List<Byte>> {
             beginWith(ByteDecoder())
-                .repeat(3, DecoderCollector.toList())
+                .repeat(3, Collectors.toList())
         }
 
         val data = byteArrayOf(1, 2, 3)
@@ -29,7 +29,7 @@ class ConstantSizeRepeatStepTest {
     fun `compose with constant repetition equal to 1`() {
         val decoder = composedDecoder<List<Byte>> {
             beginWith(ByteDecoder())
-                .repeat(1, DecoderCollector.toList())
+                .repeat(1, Collectors.toList())
         }
 
         val data = byteArrayOf(1)
@@ -41,7 +41,7 @@ class ConstantSizeRepeatStepTest {
     fun `compose with constant repetition equal to 0`() {
         val decoder = composedDecoder<List<Byte>> {
             beginWith(ByteDecoder())
-                .repeat(0, DecoderCollector.toList())
+                .repeat(0, Collectors.toList())
         }
 
         val data = byteArrayOf()
@@ -53,8 +53,8 @@ class ConstantSizeRepeatStepTest {
     fun `compose primitive's nested collection using constant size repetition`() {
         val decoder = composedDecoder<List<Set<Int>>> {
             beginWith(IntDecoder())
-                .repeat(1, DecoderCollector.toSet())
-                .repeat(2, DecoderCollector.toList())
+                .repeat(1, Collectors.toSet())
+                .repeat(2, Collectors.toList())
         }
 
         val data = byteArrayOf(
@@ -71,8 +71,8 @@ class ConstantSizeRepeatStepTest {
             beginWith(UTF8StringDecoder())
                 .then(IntDecoder())
                 .reduce(ConstantSizeRepeatStepTest::SimplePerson)
-                .repeat(1, DecoderCollector.toSet())
-                .repeat(2, DecoderCollector.toList())
+                .repeat(1, Collectors.toSet())
+                .repeat(2, Collectors.toList())
         }
 
         val name1 = "John"

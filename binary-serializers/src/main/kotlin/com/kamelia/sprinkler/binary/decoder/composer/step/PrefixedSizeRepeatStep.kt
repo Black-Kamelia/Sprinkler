@@ -3,9 +3,9 @@ package com.kamelia.sprinkler.binary.decoder.composer.step
 import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
-import com.kamelia.sprinkler.utils.accumulate
-import com.kamelia.sprinkler.utils.finish
-import com.kamelia.sprinkler.utils.supply
+import com.kamelia.sprinkler.util.accumulate
+import com.kamelia.sprinkler.util.finish
+import com.kamelia.sprinkler.util.supply
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.stream.Collector
 

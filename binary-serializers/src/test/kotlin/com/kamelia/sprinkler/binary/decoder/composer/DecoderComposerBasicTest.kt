@@ -8,10 +8,10 @@ import com.kamelia.sprinkler.binary.decoder.ShortDecoder
 import com.kamelia.sprinkler.binary.decoder.UTF8StringDecoder
 import com.kamelia.sprinkler.binary.decoder.UTF8StringDecoderEM
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.core.NothingDecoder
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
 import com.kamelia.sprinkler.binary.decoder.util.get
+import java.util.stream.Collectors
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -96,7 +96,7 @@ class DecoderComposerBasicTest {
     fun `compose with simple map`() {
         val decoder = composedDecoder<List<Number>> {
             beginWith(ByteDecoder())
-                .map {
+                .map<Number> {
                     when (it.toInt()) {
                         1 -> ByteDecoder()
                         2 -> ShortDecoder()
@@ -105,7 +105,7 @@ class DecoderComposerBasicTest {
                         else -> NothingDecoder("Unexpected value: $it")
                     }
                 }
-                .repeat(3, DecoderCollector.toList())
+                .repeat(3, Collectors.toList())
         }
 
         val data = byteArrayOf(1, 2, 2, 0, 5, 4, 0, 0, 0, 17)

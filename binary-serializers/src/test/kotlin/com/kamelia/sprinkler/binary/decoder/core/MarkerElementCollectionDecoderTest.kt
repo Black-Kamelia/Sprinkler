@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.binary.decoder.core
 
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
+import java.util.stream.Collectors
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
@@ -11,7 +12,7 @@ class MarkerElementCollectionDecoderTest {
     fun `basic test works correctly`() {
         var value = 1
         val decoder = MarkerElementCollectionDecoder(
-            DecoderCollector.toList(),
+            Collectors.toList(),
             ConstantSizeDecoder(1) { value },
         ) {
             it == 0
@@ -30,7 +31,7 @@ class MarkerElementCollectionDecoderTest {
     @Test
     fun `keepLast correctly keeps the last element`() {
         val decoder = MarkerElementCollectionDecoder(
-            DecoderCollector.toList(),
+            Collectors.toList(),
             ConstantSizeDecoder(1) { get(0) },
             true
         ) {
@@ -46,7 +47,7 @@ class MarkerElementCollectionDecoderTest {
     @Test
     fun `reset works correctly`() {
         val decoder = MarkerElementCollectionDecoder(
-            DecoderCollector.toList(),
+            Collectors.toList(),
             ConstantSizeDecoder(1) { get(0) },
         ) {
             it == 0.toByte()

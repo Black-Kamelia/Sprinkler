@@ -2,8 +2,8 @@ package com.kamelia.sprinkler.binary.decoder.composer
 
 import com.kamelia.sprinkler.binary.decoder.ByteDecoder
 import com.kamelia.sprinkler.binary.decoder.IntDecoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderCollector
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
+import java.util.stream.Collectors
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -13,7 +13,7 @@ class PrefixedSizeRepeatStepTest {
     fun `compose with prefixed size repetition greater than 1`() {
         val decoder = composedDecoder<List<Byte>> {
             beginWith(ByteDecoder())
-                .repeat(DecoderCollector.toList(), IntDecoder())
+                .repeat(Collectors.toList(), IntDecoder())
         }
 
         val data = byteArrayOf(0, 0, 0, 2, 1, 6)
@@ -25,7 +25,7 @@ class PrefixedSizeRepeatStepTest {
     fun `compose with prefixed size repetition equal to 1`() {
         val decoder = composedDecoder<List<Byte>> {
             beginWith(ByteDecoder())
-                .repeat(DecoderCollector.toList(), IntDecoder())
+                .repeat(Collectors.toList(), IntDecoder())
         }
 
         val data = byteArrayOf(0, 0, 0, 1, 1)
@@ -37,7 +37,7 @@ class PrefixedSizeRepeatStepTest {
     fun `compose with prefixed size repetition equal to 0`() {
         val decoder = composedDecoder<List<Byte>> {
             beginWith(ByteDecoder())
-                .repeat(DecoderCollector.toList(), IntDecoder())
+                .repeat(Collectors.toList(), IntDecoder())
         }
 
         val data = byteArrayOf(0, 0, 0, 0)

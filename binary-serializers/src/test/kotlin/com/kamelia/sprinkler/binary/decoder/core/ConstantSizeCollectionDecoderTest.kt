@@ -3,6 +3,7 @@ package com.kamelia.sprinkler.binary.decoder.core
 import com.kamelia.sprinkler.binary.decoder.ASCIIStringDecoder
 import com.kamelia.sprinkler.binary.decoder.ByteDecoder
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
+import java.util.stream.Collectors
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
@@ -12,7 +13,7 @@ class ConstantSizeCollectionDecoderTest {
 
     @Test
     fun `works correctly`() {
-        val decoder = ConstantSizeCollectionDecoder(DecoderCollector.toList(), ByteDecoder(), 3)
+        val decoder = ConstantSizeCollectionDecoder(Collectors.toList(), ByteDecoder(), 3)
 
         val b1 = 5.toByte()
         val b2 = 57.toByte()
@@ -27,7 +28,7 @@ class ConstantSizeCollectionDecoderTest {
 
     @Test
     fun `works correctly with empty collection`() {
-        val decoder = ConstantSizeCollectionDecoder(DecoderCollector.toList(), ASCIIStringDecoder(), 0)
+        val decoder = ConstantSizeCollectionDecoder(Collectors.toList(), ASCIIStringDecoder(), 0)
 
         val data = byteArrayOf()
 
@@ -40,13 +41,13 @@ class ConstantSizeCollectionDecoderTest {
     @Test
     fun `throws on negative size`() {
         assertThrows<IllegalArgumentException> {
-            ConstantSizeCollectionDecoder(DecoderCollector.toList(), ASCIIStringDecoder(), -1)
+            ConstantSizeCollectionDecoder(Collectors.toList(), ASCIIStringDecoder(), -1)
         }
     }
 
     @Test
     fun `stores decoded element to decode in several steps`() {
-        val decoder = ConstantSizeCollectionDecoder(DecoderCollector.toList(), ByteDecoder(), 2)
+        val decoder = ConstantSizeCollectionDecoder(Collectors.toList(), ByteDecoder(), 2)
 
         val b1 = 9.toByte()
         val b2 = 111.toByte()
@@ -61,7 +62,7 @@ class ConstantSizeCollectionDecoderTest {
 
     @Test
     fun `reset works correctly`() {
-        val decoder = ConstantSizeCollectionDecoder(DecoderCollector.toList(), ByteDecoder(), 2)
+        val decoder = ConstantSizeCollectionDecoder(Collectors.toList(), ByteDecoder(), 2)
 
         val b1 = 9.toByte()
         val b2 = 111.toByte()
@@ -78,7 +79,7 @@ class ConstantSizeCollectionDecoderTest {
 
     @Test
     fun `successive decoding works correctly`() {
-        val decoder = ConstantSizeCollectionDecoder(DecoderCollector.toList(), ByteDecoder(), 2)
+        val decoder = ConstantSizeCollectionDecoder(Collectors.toList(), ByteDecoder(), 2)
 
         val b1 = 9.toByte()
         val b2 = 111.toByte()

@@ -1,8 +1,8 @@
 package com.kamelia.sprinkler.binary.decoder
 
-import com.kamelia.sprinkler.binary.common.ByteEndianness
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
 import com.kamelia.sprinkler.binary.decoder.util.get
+import java.nio.ByteOrder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -30,7 +30,7 @@ class DecodersTest {
 
     @Test
     fun `little endian short decoder works correctly`() {
-        val decoder = ShortDecoder(ByteEndianness.LITTLE_ENDIAN)
+        val decoder = ShortDecoder(ByteOrder.LITTLE_ENDIAN)
         val value = 35.toShort()
         val data = byteArrayOf(value[0], value[1])
 
@@ -50,7 +50,7 @@ class DecodersTest {
 
     @Test
     fun `little endian int decoder works correctly`() {
-        val decoder = IntDecoder(ByteEndianness.LITTLE_ENDIAN)
+        val decoder = IntDecoder(ByteOrder.LITTLE_ENDIAN)
         val value = 35
         val data = byteArrayOf(value[0], value[1], value[2], value[3])
 
@@ -70,7 +70,7 @@ class DecodersTest {
 
     @Test
     fun `little endian long decoder works correctly`() {
-        val decoder = LongDecoder(ByteEndianness.LITTLE_ENDIAN)
+        val decoder = LongDecoder(ByteOrder.LITTLE_ENDIAN)
         val value = 35L
         val data = byteArrayOf(value[0], value[1], value[2], value[3], value[4], value[5], value[6], value[7])
 
@@ -90,7 +90,7 @@ class DecodersTest {
 
     @Test
     fun `little endian float decoder works correctly`() {
-        val decoder = FloatDecoder(ByteEndianness.LITTLE_ENDIAN)
+        val decoder = FloatDecoder(ByteOrder.LITTLE_ENDIAN)
         val value = 93.12f
         val data = byteArrayOf(value[0], value[1], value[2], value[3])
 
@@ -110,7 +110,7 @@ class DecodersTest {
 
     @Test
     fun `little endian double decoder works correctly`() {
-        val decoder = DoubleDecoder(ByteEndianness.LITTLE_ENDIAN)
+        val decoder = DoubleDecoder(ByteOrder.LITTLE_ENDIAN)
         val value = 35.312
         val data = byteArrayOf(value[0], value[1], value[2], value[3], value[4], value[5], value[6], value[7])
 

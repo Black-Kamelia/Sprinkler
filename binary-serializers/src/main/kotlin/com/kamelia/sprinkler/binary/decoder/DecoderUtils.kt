@@ -7,6 +7,7 @@ import com.kamelia.sprinkler.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
 import com.kamelia.sprinkler.binary.decoder.core.MarkerElementCollectionDecoder
 import com.kamelia.sprinkler.binary.decoder.core.PrefixedSizeCollectionDecoder
+import com.kamelia.sprinkler.util.ExtendedCollectors
 import com.zwendo.restrikt.annotation.HideFromJava
 import java.util.stream.Collector
 import java.util.stream.Collectors
@@ -105,14 +106,14 @@ fun <T> Decoder<T>.toSet(keepLast: Boolean = false, predicate: (T) -> Boolean): 
 
 @JvmOverloads
 fun <K, V> Decoder<Pair<K, V>>.toMap(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Map<K, V>> =
-    toCollection(Collectors.toMap(), sizeDecoder)
+    toCollection(ExtendedCollectors.toMap(), sizeDecoder)
 
 fun <K, V> Decoder<Pair<K, V>>.toMap(size: Int): Decoder<Map<K, V>> {
     require(size >= 0) { "Size must be non-negative, but was $size" }
     return when (size) {
         0 -> ConstantDecoder(emptyMap())
         1 -> this.mapResult { mapOf(it) }
-        else -> toCollection(Collectors.toMap(), size)
+        else -> toCollection(ExtendedCollectors.toMap(), size)
     }
 }
 
@@ -121,21 +122,21 @@ fun <K, V> Decoder<Pair<K, V>>.toMap(
     keepLast: Boolean = false,
     predicate: (Pair<K, V>) -> Boolean,
 ): Decoder<Map<K, V>> =
-    toCollection(Collectors.toMap(), keepLast, predicate)
+    toCollection(ExtendedCollectors.toMap(), keepLast, predicate)
 
 @JvmOverloads
 fun <T> Decoder<T>.toArray(
     factory: (Int) -> Array<T?>,
     sizeDecoder: Decoder<Number> = IntDecoder(),
 ): Decoder<Array<T>> =
-    toCollection(Collectors.toArray(factory), sizeDecoder)
+    toCollection(ExtendedCollectors.toArray(factory), sizeDecoder)
 
 fun <T> Decoder<T>.toArray(size: Int, factory: (Int) -> Array<T?>): Decoder<Array<T>> {
     require(size >= 0) { "Size must be non-negative, but was $size" }
     return when (size) {
         0 -> ConstantDecoder(@Suppress("UNCHECKED_CAST") (arrayOf<Any>() as Array<T>))
         1 -> this.mapResult { @Suppress("UNCHECKED_CAST") (arrayOf<Any?>(it) as Array<T>) }
-        else -> toCollection(Collectors.toArray(factory), size)
+        else -> toCollection(ExtendedCollectors.toArray(factory), size)
     }
 }
 
@@ -145,7 +146,7 @@ fun <T> Decoder<T>.toArray(
     keepLast: Boolean = false,
     predicate: (T) -> Boolean,
 ): Decoder<Array<T>> =
-    toCollection(Collectors.toArray(factory), keepLast, predicate)
+    toCollection(ExtendedCollectors.toArray(factory), keepLast, predicate)
 
 @HideFromJava
 infix fun <T, U> Decoder<T>.and(other: Decoder<U>): Decoder<Pair<T, U>> = PairDecoder(this, other)

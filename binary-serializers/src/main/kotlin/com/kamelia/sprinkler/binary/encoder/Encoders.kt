@@ -2,7 +2,7 @@
 
 package com.kamelia.sprinkler.binary.encoder
 
-import com.kamelia.sprinkler.binary.common.ByteEndianness
+import java.nio.ByteOrder
 import java.nio.charset.Charset
 
 //region Primitive Encoders
@@ -17,35 +17,34 @@ val ByteEncoder: Encoder<Byte> = object : Encoder<Byte> {
 }
 
 @JvmField
-val ShortEncoder: Encoder<Short> = shortEncoder(ByteEndianness.BIG_ENDIAN)
+val ShortEncoder: Encoder<Short> = shortEncoder(ByteOrder.BIG_ENDIAN)
 
 @JvmField
-val ShortLittleEndianEncoder: Encoder<Short> = shortEncoder(ByteEndianness.LITTLE_ENDIAN)
+val ShortLittleEndianEncoder: Encoder<Short> = shortEncoder(ByteOrder.LITTLE_ENDIAN)
 
 @JvmField
-val IntEncoder: Encoder<Int> = intEncoder(ByteEndianness.BIG_ENDIAN)
+val IntEncoder: Encoder<Int> = intEncoder(ByteOrder.BIG_ENDIAN)
 
 @JvmField
-val IntLittleEndianEncoder: Encoder<Int> = intEncoder(ByteEndianness.LITTLE_ENDIAN)
+val IntLittleEndianEncoder: Encoder<Int> = intEncoder(ByteOrder.LITTLE_ENDIAN)
 
 @JvmField
-val LongEncoder: Encoder<Long> = longEncoder(ByteEndianness.BIG_ENDIAN)
+val LongEncoder: Encoder<Long> = longEncoder(ByteOrder.BIG_ENDIAN)
 
 @JvmField
-val LongLittleEndianEncoder: Encoder<Long> = longEncoder(ByteEndianness.LITTLE_ENDIAN)
+val LongLittleEndianEncoder: Encoder<Long> = longEncoder(ByteOrder.LITTLE_ENDIAN)
 
 @JvmField
-val FloatEncoder: Encoder<Float> = floatEncoder(ByteEndianness.BIG_ENDIAN)
+val FloatEncoder: Encoder<Float> = floatEncoder(ByteOrder.BIG_ENDIAN)
 
 @JvmField
-val FloatLittleEndianEncoder: Encoder<Float> = floatEncoder(ByteEndianness.LITTLE_ENDIAN)
+val FloatLittleEndianEncoder: Encoder<Float> = floatEncoder(ByteOrder.LITTLE_ENDIAN)
 
 @JvmField
-val DoubleEncoder: Encoder<Double> = doubleEncoder(ByteEndianness.BIG_ENDIAN)
+val DoubleEncoder: Encoder<Double> = doubleEncoder(ByteOrder.BIG_ENDIAN)
 
 @JvmField
-val DoubleLittleEndianEncoder: Encoder<Double> = doubleEncoder(ByteEndianness.LITTLE_ENDIAN)
-
+val DoubleLittleEndianEncoder: Encoder<Double> = doubleEncoder(ByteOrder.LITTLE_ENDIAN)
 
 @JvmField
 val BooleanEncoder: Encoder<Boolean> = object : Encoder<Boolean> {
@@ -62,11 +61,10 @@ val BooleanEncoder: Encoder<Boolean> = object : Encoder<Boolean> {
 @JvmField
 val UTF8StringEncoder: Encoder<String> = StringEncoder(Charsets.UTF_8)
 
-
 @JvmOverloads
 fun StringEncoder(
     charset: Charset,
-    sizeEncoder: Encoder<Int> = IntEncoder
+    sizeEncoder: Encoder<Int> = IntEncoder,
 ): Encoder<String> = Encoder {
     val bytes = it.toByteArray(charset)
     val sizeBytes = sizeEncoder.encode(bytes.size)
@@ -85,7 +83,7 @@ fun StringEncoderEM(
 
 //region Internal
 
-private fun shortEncoder(endianness: ByteEndianness): Encoder<Short> = object : Encoder<Short> {
+private fun shortEncoder(endianness: ByteOrder): Encoder<Short> = object : Encoder<Short> {
 
     override fun encode(obj: Short): ByteArray = ByteArray(Short.SIZE_BYTES) {
         if (endianness.isBigEndian) {
@@ -104,7 +102,7 @@ private fun shortEncoder(endianness: ByteEndianness): Encoder<Short> = object : 
 
 }
 
-private fun intEncoder(endianness: ByteEndianness): Encoder<Int> = object : Encoder<Int> {
+private fun intEncoder(endianness: ByteOrder): Encoder<Int> = object : Encoder<Int> {
 
     override fun encode(obj: Int): ByteArray = ByteArray(Int.SIZE_BYTES) {
         if (endianness.isBigEndian) {
@@ -123,7 +121,7 @@ private fun intEncoder(endianness: ByteEndianness): Encoder<Int> = object : Enco
 
 }
 
-private fun longEncoder(endianness: ByteEndianness): Encoder<Long> = object : Encoder<Long> {
+private fun longEncoder(endianness: ByteOrder): Encoder<Long> = object : Encoder<Long> {
 
     override fun encode(obj: Long): ByteArray = ByteArray(Long.SIZE_BYTES) {
         if (endianness.isBigEndian) {
@@ -142,7 +140,7 @@ private fun longEncoder(endianness: ByteEndianness): Encoder<Long> = object : En
 
 }
 
-private fun floatEncoder(endianness: ByteEndianness): Encoder<Float> = object : Encoder<Float> {
+private fun floatEncoder(endianness: ByteOrder): Encoder<Float> = object : Encoder<Float> {
     private val inner = if (endianness.isBigEndian) IntEncoder else IntLittleEndianEncoder
 
     override fun encode(obj: Float): ByteArray = inner.encode(obj.toRawBits())
@@ -151,7 +149,7 @@ private fun floatEncoder(endianness: ByteEndianness): Encoder<Float> = object : 
 
 }
 
-private fun doubleEncoder(endianness: ByteEndianness): Encoder<Double> = object : Encoder<Double> {
+private fun doubleEncoder(endianness: ByteOrder): Encoder<Double> = object : Encoder<Double> {
     private val inner = if (endianness.isBigEndian) LongEncoder else LongLittleEndianEncoder
 
     override fun encode(obj: Double): ByteArray = inner.encode(obj.toRawBits())
@@ -161,3 +159,10 @@ private fun doubleEncoder(endianness: ByteEndianness): Encoder<Double> = object 
 }
 
 //endregion
+
+//region Internal
+
+private inline val ByteOrder.isBigEndian: Boolean
+    get() = ByteOrder.BIG_ENDIAN === this
+
+//

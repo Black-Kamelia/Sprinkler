@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.binary.decoder.core
 
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
+import java.util.stream.Collectors
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
@@ -10,7 +11,7 @@ class PrefixedSizeCollectionDecoderTest {
     @Test
     fun `basic test works correctly`() {
         val decoder = PrefixedSizeCollectionDecoder(
-            DecoderCollector.toList(),
+            Collectors.toList(),
             ConstantSizeDecoder(1) { get(0).toString() },
             ConstantSizeDecoder(1) { get(0) },
         )
@@ -25,7 +26,7 @@ class PrefixedSizeCollectionDecoderTest {
     @Test
     fun `error on invalid size`() {
         val decoder = PrefixedSizeCollectionDecoder(
-            DecoderCollector.toList(),
+            Collectors.toList(),
             ConstantSizeDecoder(0) { 1 },
             ConstantSizeDecoder(1) { get(0) },
         )
@@ -38,7 +39,7 @@ class PrefixedSizeCollectionDecoderTest {
     @Test
     fun `can decode in several times`() {
         val decoder = PrefixedSizeCollectionDecoder(
-            DecoderCollector.toList(),
+            Collectors.toList(),
             ConstantSizeDecoder(1) { get(0).toString() },
             ConstantSizeDecoder(1) { get(0) },
         )
@@ -58,7 +59,7 @@ class PrefixedSizeCollectionDecoderTest {
     @Test
     fun `reset works correctly`() {
         val decoder = PrefixedSizeCollectionDecoder(
-            DecoderCollector.toList(),
+            Collectors.toList(),
             ConstantSizeDecoder(1) { get(0).toString() },
             ConstantSizeDecoder(1) { get(0) },
         )
