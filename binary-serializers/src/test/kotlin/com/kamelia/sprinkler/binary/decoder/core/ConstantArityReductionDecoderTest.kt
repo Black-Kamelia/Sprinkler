@@ -9,11 +9,11 @@ import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class ConstantSizeCollectionDecoderTest {
+class ConstantArityReductionDecoderTest {
 
     @Test
     fun `works correctly`() {
-        val decoder = ConstantSizeCollectionDecoder(Collectors.toList(), ByteDecoder(), 3)
+        val decoder = ConstantArityReductionDecoder(Collectors.toList(), ByteDecoder(), 3)
 
         val b1 = 5.toByte()
         val b2 = 57.toByte()
@@ -28,7 +28,7 @@ class ConstantSizeCollectionDecoderTest {
 
     @Test
     fun `works correctly with empty collection`() {
-        val decoder = ConstantSizeCollectionDecoder(Collectors.toList(), ASCIIStringDecoder(), 0)
+        val decoder = ConstantArityReductionDecoder(Collectors.toList(), ASCIIStringDecoder(), 0)
 
         val data = byteArrayOf()
 
@@ -41,13 +41,13 @@ class ConstantSizeCollectionDecoderTest {
     @Test
     fun `throws on negative size`() {
         assertThrows<IllegalArgumentException> {
-            ConstantSizeCollectionDecoder(Collectors.toList(), ASCIIStringDecoder(), -1)
+            ConstantArityReductionDecoder(Collectors.toList(), ASCIIStringDecoder(), -1)
         }
     }
 
     @Test
     fun `stores decoded element to decode in several steps`() {
-        val decoder = ConstantSizeCollectionDecoder(Collectors.toList(), ByteDecoder(), 2)
+        val decoder = ConstantArityReductionDecoder(Collectors.toList(), ByteDecoder(), 2)
 
         val b1 = 9.toByte()
         val b2 = 111.toByte()
@@ -62,7 +62,7 @@ class ConstantSizeCollectionDecoderTest {
 
     @Test
     fun `reset works correctly`() {
-        val decoder = ConstantSizeCollectionDecoder(Collectors.toList(), ByteDecoder(), 2)
+        val decoder = ConstantArityReductionDecoder(Collectors.toList(), ByteDecoder(), 2)
 
         val b1 = 9.toByte()
         val b2 = 111.toByte()
@@ -79,7 +79,7 @@ class ConstantSizeCollectionDecoderTest {
 
     @Test
     fun `successive decoding works correctly`() {
-        val decoder = ConstantSizeCollectionDecoder(Collectors.toList(), ByteDecoder(), 2)
+        val decoder = ConstantArityReductionDecoder(Collectors.toList(), ByteDecoder(), 2)
 
         val b1 = 9.toByte()
         val b2 = 111.toByte()

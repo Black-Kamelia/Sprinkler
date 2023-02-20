@@ -2,11 +2,11 @@
 
 package com.kamelia.sprinkler.binary.decoder
 
-import com.kamelia.sprinkler.binary.decoder.core.ConstantSizeCollectionDecoder
+import com.kamelia.sprinkler.binary.decoder.core.ConstantArityReductionDecoder
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
-import com.kamelia.sprinkler.binary.decoder.core.MarkerElementCollectionDecoder
-import com.kamelia.sprinkler.binary.decoder.core.PrefixedSizeCollectionDecoder
+import com.kamelia.sprinkler.binary.decoder.core.DecoderInputData
+import com.kamelia.sprinkler.binary.decoder.core.MarkerEndedReductionDecoder
+import com.kamelia.sprinkler.binary.decoder.core.PrefixedArityReductionDecoder
 import com.kamelia.sprinkler.util.ExtendedCollectors
 import com.zwendo.restrikt.annotation.HideFromJava
 import java.util.stream.Collector
@@ -15,7 +15,7 @@ import java.util.stream.Collectors
 fun <T, R> Decoder<T>.mapTo(block: (T) -> Decoder<R>): Decoder<R> = object : Decoder<R> {
     private var nextReader: Decoder<R>? = null
 
-    override fun decode(input: DecoderDataInput): Decoder.State<R> = if (nextReader == null) {
+    override fun decode(input: DecoderInputData): Decoder.State<R> = if (nextReader == null) {
         this@mapTo.decode(input).mapState {
             nextReader = block(it)
             decodeNext(input)
@@ -24,7 +24,7 @@ fun <T, R> Decoder<T>.mapTo(block: (T) -> Decoder<R>): Decoder<R> = object : Dec
         decodeNext(input)
     }
 
-    private fun decodeNext(input: DecoderDataInput) = nextReader!!.decode(input).ifDone { nextReader = null }
+    private fun decodeNext(input: DecoderInputData) = nextReader!!.decode(input).ifDone { nextReader = null }
 
     override fun reset() {
         this@mapTo.reset()
@@ -35,7 +35,7 @@ fun <T, R> Decoder<T>.mapTo(block: (T) -> Decoder<R>): Decoder<R> = object : Dec
 
 fun <T, E> Decoder<T>.mapResult(block: (T) -> E): Decoder<E> = object : Decoder<E> {
 
-    override fun decode(input: DecoderDataInput): Decoder.State<E> = this@mapResult.decode(input).mapResult(block)
+    override fun decode(input: DecoderInputData): Decoder.State<E> = this@mapResult.decode(input).mapResult(block)
 
     override fun reset() = this@mapResult.reset()
 
@@ -56,19 +56,19 @@ fun <T : Any> Decoder<T>.toOptional(
 fun <T, C, R> Decoder<T>.toCollection(
     collector: Collector<T, C, R>,
     sizeDecoder: Decoder<Number> = IntDecoder(),
-): Decoder<R> = PrefixedSizeCollectionDecoder(collector, this, sizeDecoder)
+): Decoder<R> = PrefixedArityReductionDecoder(collector, this, sizeDecoder)
 
 fun <T, C, R> Decoder<T>.toCollection(
     collector: Collector<T, C, R>,
     size: Int,
-): Decoder<R> = ConstantSizeCollectionDecoder(collector, this, size)
+): Decoder<R> = ConstantArityReductionDecoder(collector, this, size)
 
 @JvmOverloads
 fun <T, C, R> Decoder<T>.toCollection(
     collector: Collector<T, C, R>,
     keepLast: Boolean = false,
     predicate: (T) -> Boolean,
-): Decoder<R> = MarkerElementCollectionDecoder(collector, this, keepLast, predicate)
+): Decoder<R> = MarkerEndedReductionDecoder(collector, this, keepLast, predicate)
 
 @JvmOverloads
 fun <T> Decoder<T>.toList(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<List<T>> =

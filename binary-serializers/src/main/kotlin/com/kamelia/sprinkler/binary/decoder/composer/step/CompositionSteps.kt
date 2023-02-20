@@ -2,7 +2,7 @@ package com.kamelia.sprinkler.binary.decoder.composer.step
 
 import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
+import com.kamelia.sprinkler.binary.decoder.core.DecoderInputData
 import java.util.stream.Collector
 
 
@@ -18,7 +18,7 @@ internal fun CompositionStepList.Builder.addReduceStep(reducer: (ElementsAccumul
     addStep {
         object : Decoder<Any?> {
 
-            override fun decode(input: DecoderDataInput): Decoder.State<Any?> = Decoder.State.Done(reducer(it))
+            override fun decode(input: DecoderInputData): Decoder.State<Any?> = Decoder.State.Done(reducer(it))
 
             override fun reset() {
                 // nothing to do

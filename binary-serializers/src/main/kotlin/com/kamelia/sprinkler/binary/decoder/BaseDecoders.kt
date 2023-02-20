@@ -2,11 +2,10 @@
 
 package com.kamelia.sprinkler.binary.decoder
 
-import com.kamelia.sprinkler.binary.decoder.core.ConstantSizeDecoder
+import com.kamelia.sprinkler.binary.decoder.core.ConstantSizedItemDecoder
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.VariableSizeEndMarkerDecoder
-import com.kamelia.sprinkler.binary.decoder.core.VariableSizePrefixedSizeDecoder
-import com.kamelia.sprinkler.binary.decoder.util.*
+import com.kamelia.sprinkler.binary.decoder.core.MarkerEndedItemDecoder
+import com.kamelia.sprinkler.binary.decoder.core.PrefixedSizeItemDecoder
 import com.kamelia.sprinkler.util.readBoolean
 import com.kamelia.sprinkler.util.readByte
 import com.kamelia.sprinkler.util.readDouble
@@ -21,29 +20,29 @@ import java.util.*
 
 //region Primitive Decoders
 
-fun ByteDecoder(): Decoder<Byte> = ConstantSizeDecoder(Byte.SIZE_BYTES) { readByte() }
+fun ByteDecoder(): Decoder<Byte> = ConstantSizedItemDecoder(Byte.SIZE_BYTES) { readByte() }
 
 @JvmOverloads
 fun ShortDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Short> =
-    ConstantSizeDecoder(Short.SIZE_BYTES) { readShort(endianness) }
+    ConstantSizedItemDecoder(Short.SIZE_BYTES) { readShort(endianness) }
 
 @JvmOverloads
 fun IntDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Int> =
-    ConstantSizeDecoder(Int.SIZE_BYTES) { readInt(endianness) }
+    ConstantSizedItemDecoder(Int.SIZE_BYTES) { readInt(endianness) }
 
 @JvmOverloads
 fun LongDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Long> =
-    ConstantSizeDecoder(Long.SIZE_BYTES) { readLong(endianness) }
+    ConstantSizedItemDecoder(Long.SIZE_BYTES) { readLong(endianness) }
 
 @JvmOverloads
 fun FloatDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Float> =
-    ConstantSizeDecoder(Float.SIZE_BYTES) { readFloat(endianness) }
+    ConstantSizedItemDecoder(Float.SIZE_BYTES) { readFloat(endianness) }
 
 @JvmOverloads
 fun DoubleDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Double> =
-    ConstantSizeDecoder(Double.SIZE_BYTES) { readDouble(endianness) }
+    ConstantSizedItemDecoder(Double.SIZE_BYTES) { readDouble(endianness) }
 
-fun BooleanDecoder(): Decoder<Boolean> = ConstantSizeDecoder(1) { readBoolean() }
+fun BooleanDecoder(): Decoder<Boolean> = ConstantSizedItemDecoder(1) { readBoolean() }
 
 //endregion
 
@@ -79,11 +78,11 @@ fun ASCIIStringDecoderEM(endMarker: ByteArray = ASCII_NULL): Decoder<String> =
 
 @JvmOverloads
 fun StringDecoder(charset: Charset, sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<String> =
-    VariableSizePrefixedSizeDecoder(sizeDecoder) { readString(charset, it) }
+    PrefixedSizeItemDecoder(sizeDecoder) { readString(charset, it) }
 
 fun StringDecoder(charset: Charset, endMarker: ByteArray): Decoder<String> {
     require(endMarker.isNotEmpty()) { "End marker must be at least 1 byte long (got ${endMarker.size})" }
-    return VariableSizeEndMarkerDecoder(endMarker) { readString(charset, it) }
+    return MarkerEndedItemDecoder(endMarker) { readString(charset, it) }
 }
 
 //endregion
@@ -105,9 +104,9 @@ fun <T : Enum<T>> EnumDecoder(
 
 //region Special Decoders
 
-fun <T> ConstantDecoder(element: T): Decoder<T> = ConstantSizeDecoder(0) { element }
+fun <T> ConstantDecoder(element: T): Decoder<T> = ConstantSizedItemDecoder(0) { element }
 
-fun <T> ConstantDecoder(factory: () -> T): Decoder<T> = ConstantSizeDecoder(0) { factory() }
+fun <T> ConstantDecoder(factory: () -> T): Decoder<T> = ConstantSizedItemDecoder(0) { factory() }
 
 fun NoOpDecoder(): Decoder<Unit> = ConstantDecoder(Unit)
 

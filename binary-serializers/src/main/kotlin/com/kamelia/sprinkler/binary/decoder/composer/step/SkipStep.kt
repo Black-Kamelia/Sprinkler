@@ -2,7 +2,7 @@ package com.kamelia.sprinkler.binary.decoder.composer.step
 
 import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
+import com.kamelia.sprinkler.binary.decoder.core.DecoderInputData
 import com.zwendo.restrikt.annotation.PackagePrivate
 
 @PackagePrivate
@@ -23,7 +23,7 @@ internal class SkipStep(size: Long) : CompositionStep {
 
         private var left = size
 
-        override fun decode(input: DecoderDataInput): Decoder.State<Nothing> {
+        override fun decode(input: DecoderInputData): Decoder.State<Nothing> {
             left -= input.skip(left)
             return if (left > 0) {
                 Decoder.State.Processing()

@@ -6,12 +6,12 @@ import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class VariableSizeEndMarkerDecoderTest {
+class MarkerEndedItemDecoderTest {
 
     @Test
     fun `basic test works correctly`() {
         val endMarker = byteArrayOf(0x0)
-        val decoder = VariableSizeEndMarkerDecoder(endMarker) { String(this, 0, it, Charsets.US_ASCII) }
+        val decoder = MarkerEndedItemDecoder(endMarker) { String(this, 0, it, Charsets.US_ASCII) }
 
         val value = "Hello World"
         val data = value.toByteArray(Charsets.US_ASCII) + endMarker
@@ -22,14 +22,14 @@ class VariableSizeEndMarkerDecoderTest {
     @Test
     fun `throws on empty end marker`() {
         assertThrows<IllegalArgumentException> {
-            VariableSizeEndMarkerDecoder(byteArrayOf()) { "" }
+            MarkerEndedItemDecoder(byteArrayOf()) { "" }
         }
     }
 
     @Test
     fun `can decode in several times`() {
         val endMarker = byteArrayOf(0x0)
-        val decoder = VariableSizeEndMarkerDecoder(endMarker) { String(this, 0, it, Charsets.US_ASCII) }
+        val decoder = MarkerEndedItemDecoder(endMarker) { String(this, 0, it, Charsets.US_ASCII) }
 
         val value = "Hello World!"
         val data = value.toByteArray(Charsets.US_ASCII)
@@ -47,7 +47,7 @@ class VariableSizeEndMarkerDecoderTest {
     @Test
     fun `reset works correctly`() {
         val endMarker = byteArrayOf(0x0)
-        val decoder = VariableSizeEndMarkerDecoder(endMarker) { String(this, 0, it, Charsets.US_ASCII) }
+        val decoder = MarkerEndedItemDecoder(endMarker) { String(this, 0, it, Charsets.US_ASCII) }
 
         val value = "Hello World!"
         val data = value.toByteArray(Charsets.US_ASCII)

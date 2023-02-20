@@ -8,11 +8,11 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
-class DecoderDataInputTest {
+class DecoderInputDataTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
-    fun `read works correctly`(factory: (ByteArray) -> DecoderDataInput) {
+    fun `read works correctly`(factory: (ByteArray) -> DecoderInputData) {
         val b1 = 3.toByte()
         val b2 = 5.toByte()
         val input = factory(byteArrayOf(b1, b2))
@@ -24,7 +24,7 @@ class DecoderDataInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
-    fun `read to byte array works correctly`(factory: (ByteArray) -> DecoderDataInput) {
+    fun `read to byte array works correctly`(factory: (ByteArray) -> DecoderInputData) {
         val b1 = 3.toByte()
         val b2 = 5.toByte()
         val b3 = 19.toByte()
@@ -42,7 +42,7 @@ class DecoderDataInputTest {
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
     fun `read to byte array throws IllegalArgumentException with invalid parameters`(
-        factory: (ByteArray) -> DecoderDataInput,
+        factory: (ByteArray) -> DecoderInputData,
     ) {
         val input = factory(byteArrayOf())
         val receiver = ByteArray(1)
@@ -56,7 +56,7 @@ class DecoderDataInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
-    fun `read to collection works correctly`(factory: (ByteArray) -> DecoderDataInput) {
+    fun `read to collection works correctly`(factory: (ByteArray) -> DecoderInputData) {
         val b1 = 3.toByte()
         val b2 = 5.toByte()
         val b3 = 7.toByte()
@@ -71,7 +71,7 @@ class DecoderDataInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
-    fun `read to collection stops when collection size has reached max int`(factory: (ByteArray) -> DecoderDataInput) {
+    fun `read to collection stops when collection size has reached max int`(factory: (ByteArray) -> DecoderInputData) {
         val b1 = 3.toByte()
 
         var isMaxValue = false
@@ -90,7 +90,7 @@ class DecoderDataInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
-    fun `skip works correctly`(factory: (ByteArray) -> DecoderDataInput) {
+    fun `skip works correctly`(factory: (ByteArray) -> DecoderInputData) {
         val b1 = 3.toByte()
         val b2 = 5.toByte()
         val b3 = 7.toByte()
@@ -104,10 +104,10 @@ class DecoderDataInputTest {
     private companion object {
 
         @JvmStatic
-        fun decoderDataInputImplementations(): Stream<(ByteArray) -> DecoderDataInput> = Stream.of(
-            DecoderDataInput.Companion::from,
-            { DecoderDataInput.from(ByteArrayInputStream(it)) },
-            { DecoderDataInput.from(ByteBuffer.wrap(it).apply { position(limit()) }) },
+        fun decoderDataInputImplementations(): Stream<(ByteArray) -> DecoderInputData> = Stream.of(
+            DecoderInputData.Companion::from,
+            { DecoderInputData.from(ByteArrayInputStream(it)) },
+            { DecoderInputData.from(ByteBuffer.wrap(it).apply { position(limit()) }) },
         )
 
     }

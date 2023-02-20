@@ -1,16 +1,16 @@
 package com.kamelia.sprinkler.binary.decoder.core
 
 /**
- * A [Decoder] that decode an object with a variable size. The number of bytes to read are prefixed to the bytes of the
- * object. This size is decoded by a [sizeDecoder] and then the n bytes are accumulated internally. Once all bytes have
- * been collected, the [converter] function is used to convert these bytes to the decoded object.
+ * A [Decoder] that decode an object with a variable size. The number of bytes to read are prefixed to the actual bytes
+ * of the object. This size is decoded by a [sizeDecoder] and then the n bytes are accumulated internally. Once all
+ * bytes have been collected, the [converter] function is used to convert these bytes to the decoded object.
  *
  * @param E the type of the decoded object
  * @param sizeDecoder a [Decoder] to decode the number of bytes to read
  * @param converter a function to convert the bytes (stored in a [ByteArray]) to the decoded object
- * @constructor Creates a new [VariableSizePrefixedSizeDecoder].
+ * @constructor Creates a new [PrefixedSizeItemDecoder].
  */
-class VariableSizePrefixedSizeDecoder<E>(
+class PrefixedSizeItemDecoder<E>(
     private val sizeDecoder: Decoder<Number>,
     private val converter: ByteArray.(Int) -> E,
 ) : Decoder<E> {
@@ -19,7 +19,7 @@ class VariableSizePrefixedSizeDecoder<E>(
     private var index = 0
     private var bytesToRead = -1
 
-    override fun decode(input: DecoderDataInput): Decoder.State<E> {
+    override fun decode(input: DecoderInputData): Decoder.State<E> {
         if (bytesToRead == -1) {
             val state = decodeSize(input)
             if (state != null) {
@@ -30,7 +30,7 @@ class VariableSizePrefixedSizeDecoder<E>(
         return decodeContent(input)
     }
 
-    private fun decodeSize(input: DecoderDataInput): Decoder.State<E>? {
+    private fun decodeSize(input: DecoderInputData): Decoder.State<E>? {
         when (val sizeState = sizeDecoder.decode(input)) {
             is Decoder.State.Done -> {
                 val size = sizeState.value.toInt()
@@ -50,7 +50,7 @@ class VariableSizePrefixedSizeDecoder<E>(
         return null // continue decoding
     }
 
-    private fun decodeContent(input: DecoderDataInput): Decoder.State<E> {
+    private fun decodeContent(input: DecoderInputData): Decoder.State<E> {
         val array = array!!
         if (index < bytesToRead) {
             index += input.read(array, index, bytesToRead - index)
@@ -63,7 +63,7 @@ class VariableSizePrefixedSizeDecoder<E>(
             Decoder.State.Done(array.converter(finalSize))
         } else {
             Decoder.State.Processing(
-                "(${VariableSizePrefixedSizeDecoder::class.simpleName}) $index / $bytesToRead bytes read."
+                "(${PrefixedSizeItemDecoder::class.simpleName}) $index / $bytesToRead bytes read."
             )
         }
     }

@@ -5,11 +5,11 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 
-class VariableSizePrefixedSizeDecoderTest {
+class PrefixedSizeItemDecoderTest {
 
     @Test
     fun `basic test works correctly`() {
-        val decoder = VariableSizePrefixedSizeDecoder(ConstantSizeDecoder(1) { get(0) }) {
+        val decoder = PrefixedSizeItemDecoder(ConstantSizedItemDecoder(1) { get(0) }) {
             String(this, 0, it, Charsets.US_ASCII)
         }
 
@@ -23,7 +23,7 @@ class VariableSizePrefixedSizeDecoderTest {
 
     @Test
     fun `negative size returns an error state`() {
-        val decoder = VariableSizePrefixedSizeDecoder(ConstantSizeDecoder(1) { get(0) }) {
+        val decoder = PrefixedSizeItemDecoder(ConstantSizedItemDecoder(1) { get(0) }) {
             String(this, 0, it, Charsets.US_ASCII)
         }
 
@@ -34,7 +34,7 @@ class VariableSizePrefixedSizeDecoderTest {
 
     @Test
     fun `can decode in several times`() {
-        val decoder = VariableSizePrefixedSizeDecoder(ConstantSizeDecoder(1) { get(0) }) {
+        val decoder = PrefixedSizeItemDecoder(ConstantSizedItemDecoder(1) { get(0) }) {
             String(this, 0, it, Charsets.US_ASCII)
         }
 
@@ -58,7 +58,7 @@ class VariableSizePrefixedSizeDecoderTest {
 
     @Test
     fun `can read a size of 0`() {
-        val decoder = VariableSizePrefixedSizeDecoder(ConstantSizeDecoder(1) { get(0) }) {
+        val decoder = PrefixedSizeItemDecoder(ConstantSizedItemDecoder(1) { get(0) }) {
             String(this, 0, it, Charsets.US_ASCII)
         }
 
@@ -69,7 +69,7 @@ class VariableSizePrefixedSizeDecoderTest {
 
     @Test
     fun `reset works correctly`() {
-        val decoder = VariableSizePrefixedSizeDecoder(ConstantSizeDecoder(1) { get(0) }) {
+        val decoder = PrefixedSizeItemDecoder(ConstantSizedItemDecoder(1) { get(0) }) {
             String(this, 0, it, Charsets.US_ASCII)
         }
 
@@ -88,7 +88,7 @@ class VariableSizePrefixedSizeDecoderTest {
 
     @Test
     fun `can decode elements with a length inferior to the array size`() {
-        val decoder = VariableSizePrefixedSizeDecoder(ConstantSizeDecoder(1) { get(0) }) {
+        val decoder = PrefixedSizeItemDecoder(ConstantSizedItemDecoder(1) { get(0) }) {
             String(this, 0, it, Charsets.US_ASCII)
         }
 

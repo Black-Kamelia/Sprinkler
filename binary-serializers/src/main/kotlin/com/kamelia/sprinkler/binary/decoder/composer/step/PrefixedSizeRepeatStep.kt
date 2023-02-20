@@ -2,7 +2,7 @@ package com.kamelia.sprinkler.binary.decoder.composer.step
 
 import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
+import com.kamelia.sprinkler.binary.decoder.core.DecoderInputData
 import com.kamelia.sprinkler.util.accumulate
 import com.kamelia.sprinkler.util.finish
 import com.kamelia.sprinkler.util.supply
@@ -86,7 +86,7 @@ internal class PrefixedSizeRepeatStep<C, E, R> private constructor(
 
         private val proxy = object : Decoder<Int> {
 
-            override fun decode(input: DecoderDataInput): Decoder.State<Int> =
+            override fun decode(input: DecoderInputData): Decoder.State<Int> =
                 inner.decode(input).ifDone(this@PrefixedSizeRepeatStep::setSize)
 
             override fun reset() = Unit

@@ -2,7 +2,7 @@ package com.kamelia.sprinkler.binary.decoder.composer.step
 
 import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderDataInput
+import com.kamelia.sprinkler.binary.decoder.core.DecoderInputData
 import com.zwendo.restrikt.annotation.PackagePrivate
 
 @PackagePrivate
@@ -13,7 +13,7 @@ internal abstract class AbstractOptionalStep(nullabilityDecoder: Decoder<Boolean
 
     private val decoder = object : Decoder<Boolean> {
 
-        override fun decode(input: DecoderDataInput): Decoder.State<Boolean> =
+        override fun decode(input: DecoderInputData): Decoder.State<Boolean> =
             nullabilityDecoder.decode(input).ifDone { isNull = !it }
 
         override fun reset() = nullabilityDecoder.reset()

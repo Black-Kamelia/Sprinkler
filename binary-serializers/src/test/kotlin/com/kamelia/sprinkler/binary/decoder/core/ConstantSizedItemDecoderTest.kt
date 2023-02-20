@@ -8,11 +8,11 @@ import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class ConstantSizeDecoderTest {
+class ConstantSizedItemDecoderTest {
 
     @Test
     fun `works correctly`() {
-        val decoder = ConstantSizeDecoder(2) {
+        val decoder = ConstantSizedItemDecoder(2) {
             ((this[0].toInt() shl 8) or (this[1].toInt() and 0xFF)).toShort()
         }
 
@@ -25,13 +25,13 @@ class ConstantSizeDecoderTest {
     @Test
     fun `throws on negative size`() {
         assertThrows<IllegalArgumentException> {
-            ConstantSizeDecoder(-1) { 0 }
+            ConstantSizedItemDecoder(-1) { 0 }
         }
     }
 
     @Test
     fun `stores read bytes to decode in several steps`() {
-        val decoder = ConstantSizeDecoder(2) {
+        val decoder = ConstantSizedItemDecoder(2) {
             ((this[0].toInt() shl 8) or (this[1].toInt() and 0xFF)).toShort()
         }
 
@@ -47,7 +47,7 @@ class ConstantSizeDecoderTest {
 
     @Test
     fun `reset works correctly`() {
-        val decoder = ConstantSizeDecoder(2) {
+        val decoder = ConstantSizedItemDecoder(2) {
             ((this[0].toInt() shl 8) or (this[1].toInt() and 0xFF)).toShort()
         }
 
@@ -63,7 +63,7 @@ class ConstantSizeDecoderTest {
 
     @Test
     fun `successive calls to decode work correctly`() {
-        val decoder = ConstantSizeDecoder(2) {
+        val decoder = ConstantSizedItemDecoder(2) {
             ((this[0].toInt() shl 8) or (this[1].toInt() and 0xFF)).toShort()
         }
 
@@ -81,7 +81,7 @@ class ConstantSizeDecoderTest {
     @Test
     fun `size of zero doesn't modify the input`() {
         val value = "a"
-        val decoder = ConstantSizeDecoder(0) { value }
+        val decoder = ConstantSizedItemDecoder(0) { value }
         val data = ByteArrayInputStream(byteArrayOf(1, 2, 3))
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)

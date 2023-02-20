@@ -6,14 +6,14 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 
-class PrefixedSizeCollectionDecoderTest {
+class PrefixedArityReductionDecoderTest {
 
     @Test
     fun `basic test works correctly`() {
-        val decoder = PrefixedSizeCollectionDecoder(
+        val decoder = PrefixedArityReductionDecoder(
             Collectors.toList(),
-            ConstantSizeDecoder(1) { get(0).toString() },
-            ConstantSizeDecoder(1) { get(0) },
+            ConstantSizedItemDecoder(1) { get(0).toString() },
+            ConstantSizedItemDecoder(1) { get(0) },
         )
 
         val array = byteArrayOf(5, 19)
@@ -25,10 +25,10 @@ class PrefixedSizeCollectionDecoderTest {
 
     @Test
     fun `error on invalid size`() {
-        val decoder = PrefixedSizeCollectionDecoder(
+        val decoder = PrefixedArityReductionDecoder(
             Collectors.toList(),
-            ConstantSizeDecoder(0) { 1 },
-            ConstantSizeDecoder(1) { get(0) },
+            ConstantSizedItemDecoder(0) { 1 },
+            ConstantSizedItemDecoder(1) { get(0) },
         )
 
         val data = byteArrayOf(-2)
@@ -38,10 +38,10 @@ class PrefixedSizeCollectionDecoderTest {
 
     @Test
     fun `can decode in several times`() {
-        val decoder = PrefixedSizeCollectionDecoder(
+        val decoder = PrefixedArityReductionDecoder(
             Collectors.toList(),
-            ConstantSizeDecoder(1) { get(0).toString() },
-            ConstantSizeDecoder(1) { get(0) },
+            ConstantSizedItemDecoder(1) { get(0).toString() },
+            ConstantSizedItemDecoder(1) { get(0) },
         )
 
         val b1 = 5.toByte()
@@ -58,10 +58,10 @@ class PrefixedSizeCollectionDecoderTest {
 
     @Test
     fun `reset works correctly`() {
-        val decoder = PrefixedSizeCollectionDecoder(
+        val decoder = PrefixedArityReductionDecoder(
             Collectors.toList(),
-            ConstantSizeDecoder(1) { get(0).toString() },
-            ConstantSizeDecoder(1) { get(0) },
+            ConstantSizedItemDecoder(1) { get(0).toString() },
+            ConstantSizedItemDecoder(1) { get(0) },
         )
 
         val processing = decoder.decode(byteArrayOf(50, 1, 2))

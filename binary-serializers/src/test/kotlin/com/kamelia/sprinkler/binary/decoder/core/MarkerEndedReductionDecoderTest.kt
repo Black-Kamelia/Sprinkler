@@ -6,14 +6,14 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 
-class MarkerElementCollectionDecoderTest {
+class MarkerEndedReductionDecoderTest {
 
     @Test
     fun `basic test works correctly`() {
         var value = 1
-        val decoder = MarkerElementCollectionDecoder(
+        val decoder = MarkerEndedReductionDecoder(
             Collectors.toList(),
-            ConstantSizeDecoder(1) { value },
+            ConstantSizedItemDecoder(1) { value },
         ) {
             it == 0
         }
@@ -30,9 +30,9 @@ class MarkerElementCollectionDecoderTest {
 
     @Test
     fun `keepLast correctly keeps the last element`() {
-        val decoder = MarkerElementCollectionDecoder(
+        val decoder = MarkerEndedReductionDecoder(
             Collectors.toList(),
-            ConstantSizeDecoder(1) { get(0) },
+            ConstantSizedItemDecoder(1) { get(0) },
             true
         ) {
             it == 0.toByte()
@@ -46,9 +46,9 @@ class MarkerElementCollectionDecoderTest {
 
     @Test
     fun `reset works correctly`() {
-        val decoder = MarkerElementCollectionDecoder(
+        val decoder = MarkerEndedReductionDecoder(
             Collectors.toList(),
-            ConstantSizeDecoder(1) { get(0) },
+            ConstantSizedItemDecoder(1) { get(0) },
         ) {
             it == 0.toByte()
         }

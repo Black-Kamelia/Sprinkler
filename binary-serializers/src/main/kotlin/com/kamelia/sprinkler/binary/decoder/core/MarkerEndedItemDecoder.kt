@@ -8,10 +8,10 @@ package com.kamelia.sprinkler.binary.decoder.core
  * @param E the type of the decoded object
  * @param endMarker the bytes marking the end of the object
  * @param converter a function to convert the bytes (stored in a [ByteArray]) to the decoded object
- * @constructor Creates a new [VariableSizeEndMarkerDecoder].
+ * @constructor Creates a new [MarkerEndedItemDecoder].
  * @throws IllegalArgumentException if [endMarker] is empty
  */
-class VariableSizeEndMarkerDecoder<E>(
+class MarkerEndedItemDecoder<E>(
     private val endMarker: ByteArray,
     private val converter: ByteArray.(Int) -> E,
 ) : Decoder<E> {
@@ -24,7 +24,7 @@ class VariableSizeEndMarkerDecoder<E>(
         require(endMarker.isNotEmpty()) { "endMarker must be greater than 0 (${endMarker.size})" }
     }
 
-    override fun decode(input: DecoderDataInput): Decoder.State<E> {
+    override fun decode(input: DecoderInputData): Decoder.State<E> {
         val buffer = buffer ?: ArrayDeque<Byte>(endMarker.size).also { buffer = it }
 
         input.read(buffer, endMarker.size - buffer.size) // fill buffer
