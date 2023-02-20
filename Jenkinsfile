@@ -27,7 +27,7 @@ pipeline {
             post {
                 always {
                     junit checksName: 'Tests', allowEmptyResults: true, testResults: '**/build/test-results/test/TEST-*.xml'
-                    publishCoverage adapters: [jacocoAdapter(mergeToOneReport: true, path: '**/build/reports/kover/xml/*.xml')], sourceDirectories: [[path: 'readonly-collections/src'], [path: 'util/src']], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+                    publishCoverage adapters: [jacocoAdapter(mergeToOneReport: true, path: '**/build/reports/kover/xml/*.xml')], sourceDirectories: [[path: '**/src/main/kotlin'], [path: '**/src/main/java']], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
                 }
             }
         }
