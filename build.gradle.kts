@@ -61,7 +61,7 @@ allprojects {
     }
 
     restrikt {
-        enabled = findProp("enableRestrikt") ?: false
+        enabled = findProp("enableRestrikt") ?: true
     }
 
     tasks {
