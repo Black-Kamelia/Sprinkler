@@ -1,6 +1,5 @@
 package com.kamelia.sprinkler.collection.readonly
 
-import java.util.NoSuchElementException
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -8,7 +7,7 @@ import org.junit.jupiter.api.assertThrows
 class ListTest {
 
     @Test
-    fun `read only list cannot be casted to mutable list`() {
+    fun `read only list cannot be cast to mutable list`() {
         val readOnlyList = readOnlyListOf(1, 2, 3)
 
         @Suppress("UNCHECKED_CAST")
@@ -16,7 +15,7 @@ class ListTest {
     }
 
     @Test
-    fun `read only list iterator cannot be casted to mutable iterator`() {
+    fun `read only list iterator cannot be cast to mutable iterator`() {
         val readOnlyList = readOnlyListOf(1, 2, 3)
         val iterator = readOnlyList.iterator()
 
@@ -103,7 +102,7 @@ class ListTest {
     }
 
     @Test
-    fun `read only listIterator cannot be casted to mutable listIterator`() {
+    fun `read only listIterator cannot be cast to mutable listIterator`() {
         val readOnlyList = readOnlyListOf(1, 2, 3)
         val listIterator = readOnlyList.listIterator()
 
@@ -127,7 +126,7 @@ class ListTest {
     }
 
     @Test
-    fun `read only subList cannot be casted to mutable subList`() {
+    fun `read only subList cannot be cast to mutable subList`() {
         val readOnlyList = listOf(1, 2, 3).asReadOnlyList()
         val subList = readOnlyList.subList(0, 2)
 
@@ -153,7 +152,7 @@ class ListTest {
     }
 
     @Test
-    fun `read only subList iterator cannot be casted to mutable subList iterator`() {
+    fun `read only subList iterator cannot be cast to mutable subList iterator`() {
         val readOnlyList = listOf(1, 2, 3).asReadOnlyList()
         val subList = readOnlyList.subList(0, 2)
         val iterator = subList.iterator()
@@ -163,7 +162,7 @@ class ListTest {
     }
 
     @Test
-    fun `read only subList listIterator cannot be casted to mutable subList listIterator`() {
+    fun `read only subList listIterator cannot be cast to mutable subList listIterator`() {
         val readOnlyList = listOf(1, 2, 3).asReadOnlyList()
         val subList = readOnlyList.subList(0, 2)
         val listIterator = subList.listIterator()

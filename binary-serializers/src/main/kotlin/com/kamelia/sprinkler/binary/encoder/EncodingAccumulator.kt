@@ -11,5 +11,7 @@ class EncodingAccumulator {
         this.bytes.addAll(bytes.toList())
     }
 
+    fun toByteArray(): ByteArray = bytes.toByteArray()
+
     override fun toString(): String = bytes.toString()
 }

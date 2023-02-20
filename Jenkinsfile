@@ -22,12 +22,19 @@ pipeline {
         }
         stage('Test') {
             steps {
-                sh 'gradle test'
+                sh 'gradle test -PenableRestrikt=false'
             }
             post {
                 always {
                     junit checksName: 'Tests', allowEmptyResults: true, testResults: '**/build/test-results/test/TEST-*.xml'
-                    publishCoverage adapters: [jacocoAdapter(mergeToOneReport: true, path: '**/build/reports/jacoco/test/*.xml')]
+                    publishCoverage adapters: [jacocoAdapter(mergeToOneReport: true, path: '**/build/reports/kover/xml/*.xml')],
+                        sourceDirectories: [
+                            [path: 'readonly-collections/src/main/kotlin'],
+                            [path: 'readonly-collections/src/main/java'],
+                            [path: 'util/src/main/kotlin'],
+                            [path: 'util/src/main/java']
+                        ],
+                        sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
                 }
             }
         }
