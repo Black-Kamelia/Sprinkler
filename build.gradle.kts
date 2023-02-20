@@ -30,6 +30,10 @@ allprojects {
     apply(plugin = "com.zwendo.restrikt")
     apply(plugin = "kover")
 
+    restrikt {
+        enabled = findProp("enableRestrikt") ?: true
+    }
+
     val projectName = project.name.toLowerCase()
     val projectVersion = findProp("$projectName.version") ?: "0.1.0"
 

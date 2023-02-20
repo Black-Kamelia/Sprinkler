@@ -22,7 +22,7 @@ pipeline {
         }
         stage('Test') {
             steps {
-                sh 'gradle test'
+                sh 'gradle test -PenableRestrikt=false'
             }
             post {
                 always {
