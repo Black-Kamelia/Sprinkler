@@ -1,4 +1,5 @@
-import java.util.*
+import java.util.Base64
+import java.util.Properties
 
 plugins {
     val kotlinVersion: String by System.getProperties()
@@ -58,6 +59,10 @@ allprojects {
             logger.info("Using local GPG keys for signing")
         }
         sign(publishing.publications)
+    }
+
+    restrikt {
+        enabled = findProp<String?>("enableRestrikt")?.toBoolean() ?: true
     }
 
     tasks {
