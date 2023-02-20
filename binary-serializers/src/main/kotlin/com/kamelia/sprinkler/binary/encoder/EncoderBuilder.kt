@@ -86,18 +86,3 @@ import kotlin.experimental.ExperimentalTypeInference
     }
 
 }
-
-
-class Dumb {
-
-    fun create(factory: () -> Int): Int? = factory()
-
-    fun create(factory: () -> Double): Double? = factory()
-
-}
-
-//val newValue = create { 3.14 }
-
-fun main() {
-
-}

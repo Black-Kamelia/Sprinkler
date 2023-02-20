@@ -25,7 +25,7 @@ abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
 
     protected constructor(previous: DecoderComposer<B, *, *>, decoder: Decoder<T>) {
         builder = previous.builder
-        if (decoder !== MarkerDecoder) {
+        if (decoder !== MARKER_DECODER) {
             thenStep(decoder)
         }
     }
@@ -42,14 +42,14 @@ abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
 
     protected fun <R> mapAndStoreStep(mapper: (T) -> Decoder<R>): Decoder<R> {
         builder.addMapStep(false, mapper)
-        return MarkerDecoder
+        return MARKER_DECODER
     }
 
     protected fun <R> reduceStep(reducer: ElementsAccumulator.() -> R) = builder.addReduceStep(reducer)
 
     protected fun <R> thenItselfOrNullStep(nullabilityDecoder: Decoder<Boolean>): Decoder<R> {
         builder.addThenItselfOrNullStep(nullabilityDecoder)
-        return MarkerDecoder
+        return MARKER_DECODER
     }
 
     protected inline fun <R> thisCasted(block: () -> Unit): R {
@@ -78,7 +78,10 @@ abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
 
     private fun <R> thenStep(decoder: Decoder<R>) = builder.addThenStep(decoder)
 
-    private object MarkerDecoder : Decoder<Nothing> by NothingDecoder()
+    private companion object {
+
+        val MARKER_DECODER = NothingDecoder()
+    }
 
     //endregion
 
