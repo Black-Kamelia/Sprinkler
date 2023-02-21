@@ -48,6 +48,7 @@ internal class ComposedDecoderImpl<T>(builder: CompositionStepList.Builder) : De
             }
         }
 
+        index = steps.start // reset index for next decode call
         return Decoder.State.Done(@Suppress("UNCHECKED_CAST") (accumulator.pop() as T))
     }
 
@@ -74,7 +75,10 @@ internal class ComposedDecoderImpl<T>(builder: CompositionStepList.Builder) : De
     }
 
     private fun moveToNextStep() {
-        val nextIndex = steps[index].onLeave(accumulator, index) ?: recurse()
+        var nextIndex = steps[index].onLeave(accumulator, index)
+        if (nextIndex == index) {
+            nextIndex = recurse()
+        }
         if (nextIndex >= steps.maxIndex) {
             index = nextIndex
             return

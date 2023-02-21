@@ -5,7 +5,7 @@ import com.kamelia.sprinkler.binary.decoder.ByteDecoder
 import com.kamelia.sprinkler.binary.decoder.IntDecoder
 import com.kamelia.sprinkler.binary.decoder.UTF8StringDecoder
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
-import com.kamelia.sprinkler.binary.decoder.util.get
+import com.kamelia.sprinkler.util.byte
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -30,9 +30,9 @@ class RecursionStepTest {
         val age = 42
 
         val data = byteArrayOf(
-            size[3], size[2], size[1], size[0],
+            size.byte(3), size.byte(2), size.byte(1), size.byte(0),
             *nameBytes,
-            age[3], age[2], age[1], age[0],
+            age.byte(3), age.byte(2), age.byte(1), age.byte(0),
             0
         )
 
@@ -56,17 +56,17 @@ class RecursionStepTest {
         val age = 42
 
         val data = byteArrayOf(
-            size[3], size[2], size[1], size[0],
+            size.byte(3), size.byte(2), size.byte(1), size.byte(0),
             *nameBytes,
-            age[3], age[2], age[1], age[0],
+            age.byte(3), age.byte(2), age.byte(1), age.byte(0),
             1,
-            size[3], size[2], size[1], size[0],
+            size.byte(3), size.byte(2), size.byte(1), size.byte(0),
             *nameBytes,
-            age[3], age[2], age[1], age[0],
+            age.byte(3), age.byte(2), age.byte(1), age.byte(0),
             1,
-            size[3], size[2], size[1], size[0],
+            size.byte(3), size.byte(2), size.byte(1), size.byte(0),
             *nameBytes,
-            age[3], age[2], age[1], age[0],
+            age.byte(3), age.byte(2), age.byte(1), age.byte(0),
             0
         )
 

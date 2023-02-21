@@ -19,8 +19,9 @@ internal fun interface CompositionStep {
 
     /**
      * Computes the next step index after this step. By default, the next step is [currentIndex + 1][currentIndex].
+     * To recurse the whole composition, return [currentIndex].
      */
-    fun onLeave(accumulator: ElementsAccumulator, currentIndex: Int): Int? = currentIndex + 1
+    fun onLeave(accumulator: ElementsAccumulator, currentIndex: Int): Int = currentIndex + 1
 
     fun reset() = Unit
 

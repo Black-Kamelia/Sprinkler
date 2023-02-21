@@ -1,7 +1,7 @@
 package com.kamelia.sprinkler.binary.decoder.core
 
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
-import com.kamelia.sprinkler.binary.decoder.util.get
+import com.kamelia.sprinkler.util.byte
 import java.io.ByteArrayInputStream
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -17,7 +17,7 @@ class ConstantSizedItemDecoderTest {
         }
 
         val value = 12.toShort()
-        val data = byteArrayOf(value[1], value[0])
+        val data = byteArrayOf(value.byte(1), value.byte(0))
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
     }
@@ -36,11 +36,11 @@ class ConstantSizedItemDecoderTest {
         }
 
         val value = 12.toShort()
-        val data = byteArrayOf(value[1])
+        val data = byteArrayOf(value.byte(1))
 
         val processing = decoder.decode(data)
         assertInstanceOf(Decoder.State.Processing::class.java, processing)
-        val result = decoder.decode(byteArrayOf(value[0])).assertDoneAndGet()
+        val result = decoder.decode(byteArrayOf(value.byte(0))).assertDoneAndGet()
 
         assertEquals(value, result)
     }
@@ -52,7 +52,7 @@ class ConstantSizedItemDecoderTest {
         }
 
         val value = 12.toShort()
-        val data = byteArrayOf(value[1], value[0])
+        val data = byteArrayOf(value.byte(1), value.byte(0))
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
 
@@ -68,12 +68,12 @@ class ConstantSizedItemDecoderTest {
         }
 
         val value = 12.toShort()
-        val data = byteArrayOf(value[1], value[0])
+        val data = byteArrayOf(value.byte(1), value.byte(0))
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
 
         val value2 = 13.toShort()
-        val data2 = byteArrayOf(value2[1], value2[0])
+        val data2 = byteArrayOf(value2.byte(1), value2.byte(0))
         val result2 = decoder.decode(data2).assertDoneAndGet()
         assertEquals(value2, result2)
     }

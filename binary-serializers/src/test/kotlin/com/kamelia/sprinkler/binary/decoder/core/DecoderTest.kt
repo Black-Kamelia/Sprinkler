@@ -2,7 +2,7 @@ package com.kamelia.sprinkler.binary.decoder.core
 
 import com.kamelia.sprinkler.binary.decoder.IntDecoder
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
-import com.kamelia.sprinkler.binary.decoder.util.get
+import com.kamelia.sprinkler.util.byte
 import java.io.ByteArrayInputStream
 import java.nio.ByteBuffer
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -14,7 +14,7 @@ class DecoderTest {
     @Test
     fun `decode behaves the same way for all overloads`() {
         val value = 5
-        val byteArray = byteArrayOf(value[3], value[2], value[1], value[0])
+        val byteArray = byteArrayOf(value.byte(3), value.byte(2), value.byte(1), value.byte(0))
         val stream = ByteArrayInputStream(byteArray.copyOf())
         val buffer = ByteBuffer.wrap(byteArray.copyOf()).apply { position(limit()) }
 

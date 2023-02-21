@@ -1,7 +1,7 @@
 package com.kamelia.sprinkler.binary.decoder
 
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
-import com.kamelia.sprinkler.binary.decoder.util.get
+import com.kamelia.sprinkler.util.byte
 import java.nio.ByteOrder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -22,7 +22,7 @@ class DecodersTest {
     fun `short decoder works correctly`() {
         val decoder = ShortDecoder()
         val value = 12.toShort()
-        val data = byteArrayOf(value[1], value[0])
+        val data = byteArrayOf(value.byte(1), value.byte(0))
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
@@ -32,7 +32,7 @@ class DecodersTest {
     fun `little endian short decoder works correctly`() {
         val decoder = ShortDecoder(ByteOrder.LITTLE_ENDIAN)
         val value = 35.toShort()
-        val data = byteArrayOf(value[0], value[1])
+        val data = byteArrayOf(value.byte(0), value.byte(1))
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
@@ -42,7 +42,7 @@ class DecodersTest {
     fun `int decoder works correctly`() {
         val decoder = IntDecoder()
         val value = 12
-        val data = byteArrayOf(value[3], value[2], value[1], value[0])
+        val data = byteArrayOf(value.byte(3), value.byte(2), value.byte(1), value.byte(0))
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
@@ -52,7 +52,7 @@ class DecodersTest {
     fun `little endian int decoder works correctly`() {
         val decoder = IntDecoder(ByteOrder.LITTLE_ENDIAN)
         val value = 35
-        val data = byteArrayOf(value[0], value[1], value[2], value[3])
+        val data = byteArrayOf(value.byte(0), value.byte(1), value.byte(2), value.byte(3))
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
@@ -62,7 +62,17 @@ class DecodersTest {
     fun `long decoder works correctly`() {
         val decoder = LongDecoder()
         val value = 12L
-        val data = byteArrayOf(value[7], value[6], value[5], value[4], value[3], value[2], value[1], value[0])
+        val data =
+            byteArrayOf(
+                value.byte(7),
+                value.byte(6),
+                value.byte(5),
+                value.byte(4),
+                value.byte(3),
+                value.byte(2),
+                value.byte(1),
+                value.byte(0)
+            )
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
@@ -72,7 +82,17 @@ class DecodersTest {
     fun `little endian long decoder works correctly`() {
         val decoder = LongDecoder(ByteOrder.LITTLE_ENDIAN)
         val value = 35L
-        val data = byteArrayOf(value[0], value[1], value[2], value[3], value[4], value[5], value[6], value[7])
+        val data =
+            byteArrayOf(
+                value.byte(0),
+                value.byte(1),
+                value.byte(2),
+                value.byte(3),
+                value.byte(4),
+                value.byte(5),
+                value.byte(6),
+                value.byte(7)
+            )
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
@@ -82,7 +102,7 @@ class DecodersTest {
     fun `float decoder works correctly`() {
         val decoder = FloatDecoder()
         val value = 23.19f
-        val data = byteArrayOf(value[3], value[2], value[1], value[0])
+        val data = byteArrayOf(value.byte(3), value.byte(2), value.byte(1), value.byte(0))
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
@@ -92,7 +112,7 @@ class DecodersTest {
     fun `little endian float decoder works correctly`() {
         val decoder = FloatDecoder(ByteOrder.LITTLE_ENDIAN)
         val value = 93.12f
-        val data = byteArrayOf(value[0], value[1], value[2], value[3])
+        val data = byteArrayOf(value.byte(0), value.byte(1), value.byte(2), value.byte(3))
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
@@ -102,7 +122,17 @@ class DecodersTest {
     fun `double decoder works correctly`() {
         val decoder = DoubleDecoder()
         val value = 12.213
-        val data = byteArrayOf(value[7], value[6], value[5], value[4], value[3], value[2], value[1], value[0])
+        val data =
+            byteArrayOf(
+                value.byte(7),
+                value.byte(6),
+                value.byte(5),
+                value.byte(4),
+                value.byte(3),
+                value.byte(2),
+                value.byte(1),
+                value.byte(0)
+            )
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
@@ -112,7 +142,17 @@ class DecodersTest {
     fun `little endian double decoder works correctly`() {
         val decoder = DoubleDecoder(ByteOrder.LITTLE_ENDIAN)
         val value = 35.312
-        val data = byteArrayOf(value[0], value[1], value[2], value[3], value[4], value[5], value[6], value[7])
+        val data =
+            byteArrayOf(
+                value.byte(0),
+                value.byte(1),
+                value.byte(2),
+                value.byte(3),
+                value.byte(4),
+                value.byte(5),
+                value.byte(6),
+                value.byte(7)
+            )
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
@@ -125,7 +165,7 @@ class DecodersTest {
         val value = "Hello World"
         val bytes = value.toByteArray()
         val size = bytes.size
-        val data = byteArrayOf(size[3], size[2], size[1], size[0]) + bytes
+        val data = byteArrayOf(size.byte(3), size.byte(2), size.byte(1), size.byte(0)) + bytes
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)
@@ -139,7 +179,7 @@ class DecodersTest {
         val value = "Hello World"
         val bytes = value.toByteArray(charset)
         val size = bytes.size
-        val data = byteArrayOf(size[3], size[2], size[1], size[0]) + bytes
+        val data = byteArrayOf(size.byte(3), size.byte(2), size.byte(1), size.byte(0)) + bytes
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(value, result)

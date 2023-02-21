@@ -1,17 +1,16 @@
 package com.kamelia.sprinkler.binary.decoder.composer
 
-import com.kamelia.sprinkler.binary.decoder.BooleanDecoder
 import com.kamelia.sprinkler.binary.decoder.ByteDecoder
 import com.kamelia.sprinkler.binary.decoder.IntDecoder
 import com.kamelia.sprinkler.binary.decoder.LongDecoder
 import com.kamelia.sprinkler.binary.decoder.ShortDecoder
 import com.kamelia.sprinkler.binary.decoder.UTF8StringDecoder
-import com.kamelia.sprinkler.binary.decoder.UTF8StringDecoderEM
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.binary.decoder.core.NothingDecoder
+import com.kamelia.sprinkler.binary.decoder.toList
+import com.kamelia.sprinkler.binary.decoder.toOptional
 import com.kamelia.sprinkler.binary.decoder.util.assertDoneAndGet
-import com.kamelia.sprinkler.binary.decoder.util.get
-import java.util.stream.Collectors
+import com.kamelia.sprinkler.util.byte
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -33,9 +32,9 @@ class DecoderComposerBasicTest {
         val nameBytes = name.toByteArray()
         val size = nameBytes.size
         val data = byteArrayOf(
-            size[3], size[2], size[1], size[0],
+            size.byte(3), size.byte(2), size.byte(1), size.byte(0),
             *nameBytes,
-            age[3], age[2], age[1], age[0],
+            age.byte(3), age.byte(2), age.byte(1), age.byte(0),
         )
 
         val expected = Person(name, age)
@@ -58,10 +57,10 @@ class DecoderComposerBasicTest {
         val nameBytes = name.toByteArray()
         val size = nameBytes.size
         val data = byteArrayOf(
-            size[3], size[2], size[1], size[0],
+            size.byte(3), size.byte(2), size.byte(1), size.byte(0),
             *nameBytes,
             1, 3, 2, 5,
-            age[3], age[2], age[1], age[0],
+            age.byte(3), age.byte(2), age.byte(1), age.byte(0),
         )
 
         val expected = Person(name, age)
@@ -94,7 +93,7 @@ class DecoderComposerBasicTest {
 
     @Test
     fun `compose with simple map`() {
-        val decoder = composedDecoder<List<Number>> {
+        val decoder = composedDecoder<Number> {
             beginWith(ByteDecoder())
                 .map<Number> {
                     when (it.toInt()) {
@@ -105,8 +104,7 @@ class DecoderComposerBasicTest {
                         else -> NothingDecoder("Unexpected value: $it")
                     }
                 }
-                .repeat(3, Collectors.toList())
-        }
+        }.toList(3)
 
         val data = byteArrayOf(1, 2, 2, 0, 5, 4, 0, 0, 0, 17)
         val result = decoder.decode(data).assertDoneAndGet()
@@ -114,44 +112,24 @@ class DecoderComposerBasicTest {
     }
 
     @Test
-    fun `compose with present optional value`() {
-        val decoder = composedDecoder<Person?> {
-            beginWith(UTF8StringDecoder())
-                .then(IntDecoder())
-                .reduce(DecoderComposerBasicTest::Person)
-                .optional(BooleanDecoder())
+    fun `decode several times with the same decoder`() {
+        val decoder = composedDecoder<Triple<Byte, Int?, String>> {
+            beginWith(ByteDecoder())
+                .then(IntDecoder().toOptional())
+                .then(UTF8StringDecoder())
+                .reduce(::Triple)
         }
 
-        val name = "John"
-        val age = 42
-        val nameBytes = name.toByteArray()
-        val size = nameBytes.size
-
+        val byte = 19.toByte()
+        val string = "Hello world!"
+        val stringArray = string.toByteArray()
+        val size = stringArray.size
         val data = byteArrayOf(
-            1,
-            size[3], size[2], size[1], size[0],
-            *nameBytes,
-            age[3], age[2], age[1], age[0],
+            byte,
+            0,
+            size.byte(3), size.byte(2), size.byte(1), size.byte(0),
+            *stringArray
         )
-
-        val expected = Person(name, age)
-        val result = decoder.decode(data).assertDoneAndGet()
-        assertEquals(expected, result)
-    }
-
-    @Test
-    fun `compose with absent optional value`() {
-        val decoder = composedDecoder<Person?> {
-            beginWith(UTF8StringDecoderEM())
-                .then(IntDecoder())
-                .reduce(DecoderComposerBasicTest::Person)
-                .optional(BooleanDecoder())
-        }
-
-        val data = byteArrayOf(0)
-
-        val result = decoder.decode(data).assertDoneAndGet()
-        assertEquals(null, result)
     }
 
 }
