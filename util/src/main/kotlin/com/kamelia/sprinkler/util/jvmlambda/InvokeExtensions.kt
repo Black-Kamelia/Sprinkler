@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.kamelia.sprinkler.util.jvmlambda
 
 import com.zwendo.restrikt.annotation.HideFromJava
@@ -12,7 +14,6 @@ import java.util.function.Function
  * @return [Callable.call] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> Callable<T>.invoke(): T = call()
 
 /**
@@ -21,7 +22,6 @@ inline operator fun <T> Callable<T>.invoke(): T = call()
  * @receiver the called [Runnable]
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun Runnable.invoke() = run()
 
 //region Consumer
@@ -34,7 +34,6 @@ inline operator fun Runnable.invoke() = run()
  * @param T the type of the value to accept
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> Consumer<T>.invoke(t: T): Unit = accept(t)
 
 /**
@@ -44,7 +43,6 @@ inline operator fun <T> Consumer<T>.invoke(t: T): Unit = accept(t)
  * @param i value ([Int]) to accept
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun IntConsumer.invoke(i: Int): Unit = accept(i)
 
 /**
@@ -54,7 +52,6 @@ inline operator fun IntConsumer.invoke(i: Int): Unit = accept(i)
  * @param l value ([Long]) to accept
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun LongConsumer.invoke(l: Long): Unit = accept(l)
 
 /**
@@ -64,7 +61,6 @@ inline operator fun LongConsumer.invoke(l: Long): Unit = accept(l)
  * @param d value ([Double]) to accept
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun DoubleConsumer.invoke(d: Double): Unit = accept(d)
 
 //endregion
@@ -81,7 +77,6 @@ inline operator fun DoubleConsumer.invoke(d: Double): Unit = accept(d)
  * @param U the type of the second value to accept
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T, U> BiConsumer<T, U>.invoke(t: T, u: U): Unit = accept(t, u)
 
 /**
@@ -93,7 +88,6 @@ inline operator fun <T, U> BiConsumer<T, U>.invoke(t: T, u: U): Unit = accept(t,
  * @param T the type of the first value to accept
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> ObjIntConsumer<T>.invoke(t: T, i: Int): Unit = accept(t, i)
 
 /**
@@ -105,7 +99,6 @@ inline operator fun <T> ObjIntConsumer<T>.invoke(t: T, i: Int): Unit = accept(t,
  * @param T the type of the first value to accept
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> ObjLongConsumer<T>.invoke(t: T, l: Long): Unit = accept(t, l)
 
 /**
@@ -117,7 +110,6 @@ inline operator fun <T> ObjLongConsumer<T>.invoke(t: T, l: Long): Unit = accept(
  * @param T the type of the first value to accept
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> ObjDoubleConsumer<T>.invoke(t: T, d: Double): Unit = accept(t, d)
 
 //endregion
@@ -134,7 +126,6 @@ inline operator fun <T> ObjDoubleConsumer<T>.invoke(t: T, d: Double): Unit = acc
  * @return [Function.apply] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T, R> Function<T, R>.invoke(t: T): R = apply(t)
 
 /**
@@ -146,7 +137,6 @@ inline operator fun <T, R> Function<T, R>.invoke(t: T): R = apply(t)
  * @return [IntFunction.apply] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> IntFunction<T>.invoke(i: Int): T = apply(i)
 
 /**
@@ -158,7 +148,6 @@ inline operator fun <T> IntFunction<T>.invoke(i: Int): T = apply(i)
  * @return [LongFunction.apply] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> LongFunction<T>.invoke(l: Long): T = apply(l)
 
 /**
@@ -170,7 +159,6 @@ inline operator fun <T> LongFunction<T>.invoke(l: Long): T = apply(l)
  * @return [DoubleFunction.apply] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> DoubleFunction<T>.invoke(d: Double): T = apply(d)
 
 /**
@@ -182,7 +170,6 @@ inline operator fun <T> DoubleFunction<T>.invoke(d: Double): T = apply(d)
  * @return [ToIntFunction.applyAsInt] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> ToIntFunction<T>.invoke(t: T): Int = applyAsInt(t)
 
 /**
@@ -194,7 +181,6 @@ inline operator fun <T> ToIntFunction<T>.invoke(t: T): Int = applyAsInt(t)
  * @return [ToLongFunction.applyAsLong] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> ToLongFunction<T>.invoke(t: T): Long = applyAsLong(t)
 
 /**
@@ -206,7 +192,6 @@ inline operator fun <T> ToLongFunction<T>.invoke(t: T): Long = applyAsLong(t)
  * @return [ToDoubleFunction.applyAsDouble] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> ToDoubleFunction<T>.invoke(t: T): Double = applyAsDouble(t)
 
 /**
@@ -217,7 +202,6 @@ inline operator fun <T> ToDoubleFunction<T>.invoke(t: T): Double = applyAsDouble
  * @return [IntToLongFunction.applyAsLong] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun IntToLongFunction.invoke(i: Int): Long = applyAsLong(i)
 
 /**
@@ -228,7 +212,6 @@ inline operator fun IntToLongFunction.invoke(i: Int): Long = applyAsLong(i)
  * @return [IntToDoubleFunction.applyAsDouble] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun IntToDoubleFunction.invoke(i: Int): Double = applyAsDouble(i)
 
 /**
@@ -239,7 +222,6 @@ inline operator fun IntToDoubleFunction.invoke(i: Int): Double = applyAsDouble(i
  * @return [LongToIntFunction.applyAsInt] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun LongToIntFunction.invoke(l: Long): Int = applyAsInt(l)
 
 /**
@@ -250,7 +232,6 @@ inline operator fun LongToIntFunction.invoke(l: Long): Int = applyAsInt(l)
  * @return [LongToDoubleFunction.applyAsDouble] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun LongToDoubleFunction.invoke(l: Long): Double = applyAsDouble(l)
 
 /**
@@ -261,7 +242,6 @@ inline operator fun LongToDoubleFunction.invoke(l: Long): Double = applyAsDouble
  * @return [DoubleToIntFunction.applyAsInt] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun DoubleToIntFunction.invoke(d: Double): Int = applyAsInt(d)
 
 /**
@@ -272,7 +252,6 @@ inline operator fun DoubleToIntFunction.invoke(d: Double): Int = applyAsInt(d)
  * @return [DoubleToLongFunction.applyAsLong] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun DoubleToLongFunction.invoke(d: Double): Long = applyAsLong(d)
 
 //endregion
@@ -291,7 +270,6 @@ inline operator fun DoubleToLongFunction.invoke(d: Double): Long = applyAsLong(d
  * @return [BiFunction.apply] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T, U, R> BiFunction<T, U, R>.invoke(t: T, u: U): R = apply(t, u)
 
 /**
@@ -305,7 +283,6 @@ inline operator fun <T, U, R> BiFunction<T, U, R>.invoke(t: T, u: U): R = apply(
  * @return [ToIntBiFunction.applyAsInt] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T, U> ToIntBiFunction<T, U>.invoke(t: T, u: U): Int = applyAsInt(t, u)
 
 /**
@@ -319,7 +296,6 @@ inline operator fun <T, U> ToIntBiFunction<T, U>.invoke(t: T, u: U): Int = apply
  * @return [ToLongBiFunction.applyAsLong] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T, U> ToLongBiFunction<T, U>.invoke(t: T, u: U): Long = applyAsLong(t, u)
 
 /**
@@ -333,7 +309,6 @@ inline operator fun <T, U> ToLongBiFunction<T, U>.invoke(t: T, u: U): Long = app
  * @return [ToDoubleBiFunction.applyAsDouble] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T, U> ToDoubleBiFunction<T, U>.invoke(t: T, u: U): Double = applyAsDouble(t, u)
 
 //endregion
@@ -349,7 +324,6 @@ inline operator fun <T, U> ToDoubleBiFunction<T, U>.invoke(t: T, u: U): Double =
  * @return [Predicate.test] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> Predicate<T>.invoke(t: T): Boolean = test(t)
 
 /**
@@ -360,7 +334,6 @@ inline operator fun <T> Predicate<T>.invoke(t: T): Boolean = test(t)
  * @return [IntPredicate.test] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun IntPredicate.invoke(i: Int): Boolean = test(i)
 
 /**
@@ -371,7 +344,6 @@ inline operator fun IntPredicate.invoke(i: Int): Boolean = test(i)
  * @return [LongPredicate.test] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun LongPredicate.invoke(l: Long): Boolean = test(l)
 
 /**
@@ -382,7 +354,6 @@ inline operator fun LongPredicate.invoke(l: Long): Boolean = test(l)
  * @return [DoublePredicate.test] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun DoublePredicate.invoke(d: Double): Boolean = test(d)
 
 //endregion
@@ -397,7 +368,6 @@ inline operator fun DoublePredicate.invoke(d: Double): Boolean = test(d)
  * @return [Supplier.get] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T> Supplier<T>.invoke(): T = get()
 
 /**
@@ -407,7 +377,6 @@ inline operator fun <T> Supplier<T>.invoke(): T = get()
  * @return [IntSupplier.getAsInt] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun IntSupplier.invoke(): Int = getAsInt()
 
 /**
@@ -417,7 +386,6 @@ inline operator fun IntSupplier.invoke(): Int = getAsInt()
  * @return [LongSupplier.getAsLong] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun LongSupplier.invoke(): Long = getAsLong()
 
 /**
@@ -427,7 +395,6 @@ inline operator fun LongSupplier.invoke(): Long = getAsLong()
  * @return [DoubleSupplier.getAsDouble] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun DoubleSupplier.invoke(): Double = getAsDouble()
 
 //endregion
@@ -442,7 +409,6 @@ inline operator fun DoubleSupplier.invoke(): Double = getAsDouble()
  * @return [IntUnaryOperator.applyAsInt] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun IntUnaryOperator.invoke(i: Int): Int = applyAsInt(i)
 
 /**
@@ -453,7 +419,6 @@ inline operator fun IntUnaryOperator.invoke(i: Int): Int = applyAsInt(i)
  * @return [LongUnaryOperator.applyAsLong] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun LongUnaryOperator.invoke(l: Long): Long = applyAsLong(l)
 
 /**
@@ -464,7 +429,6 @@ inline operator fun LongUnaryOperator.invoke(l: Long): Long = applyAsLong(l)
  * @return [DoubleUnaryOperator.applyAsDouble] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun DoubleUnaryOperator.invoke(d: Double): Double = applyAsDouble(d)
 
 //endregion
@@ -480,7 +444,6 @@ inline operator fun DoubleUnaryOperator.invoke(d: Double): Double = applyAsDoubl
  * @return [IntBinaryOperator.applyAsInt] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun IntBinaryOperator.invoke(i1: Int, i2: Int): Int = applyAsInt(i1, i2)
 
 /**
@@ -492,7 +455,6 @@ inline operator fun IntBinaryOperator.invoke(i1: Int, i2: Int): Int = applyAsInt
  * @return [LongBinaryOperator.applyAsLong] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun LongBinaryOperator.invoke(l1: Long, l2: Long): Long = applyAsLong(l1, l2)
 
 /**
@@ -504,7 +466,6 @@ inline operator fun LongBinaryOperator.invoke(l1: Long, l2: Long): Long = applyA
  * @return [DoubleBinaryOperator.applyAsDouble] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun DoubleBinaryOperator.invoke(d1: Double, d2: Double): Double = applyAsDouble(d1, d2)
 
 //endregion
@@ -522,7 +483,6 @@ inline operator fun DoubleBinaryOperator.invoke(d1: Double, d2: Double): Double 
  * @return [BiPredicate.test] result
  */
 @HideFromJava
-@Suppress("NOTHING_TO_INLINE")
 inline operator fun <T, U> BiPredicate<T, U>.invoke(t1: T, t2: U): Boolean = test(t1, t2)
 
 //endregion

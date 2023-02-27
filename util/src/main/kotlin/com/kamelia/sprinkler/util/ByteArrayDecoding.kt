@@ -122,6 +122,8 @@ fun ByteArray.readDouble(endianness: ByteOrder = ByteOrder.BIG_ENDIAN, start: In
 /**
  * Read a [Boolean] from a byte array.
  *
+ * The boolean is read as a single byte, where 0 is `false` and any other value is `true`.
+ *
  * @receiver the byte array to read from
  * @param start the index to start reading from (defaults to 0)
  * @return the boolean read
