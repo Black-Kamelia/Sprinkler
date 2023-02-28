@@ -5,6 +5,9 @@ package com.kamelia.sprinkler.binary.decoder.core
  * of the object. This size is decoded by a [sizeDecoder] and then the n bytes are accumulated internally. Once all
  * bytes have been collected, the [converter] function is used to convert these bytes to the decoded object.
  *
+ * **NOTE**:
+ * The created decoder will return an [error][Decoder.State.Error] if the size is negative.
+ *
  * @param E the type of the decoded object
  * @param sizeDecoder a [Decoder] to decode the number of bytes to read
  * @param converter a function to convert the bytes (stored in a [ByteArray]) to the decoded object
@@ -35,7 +38,7 @@ class PrefixedSizeItemDecoder<E>(
             is Decoder.State.Done -> {
                 val size = sizeState.value.toInt()
                 if (size < 0) {
-                    return Decoder.State.Error(IllegalStateException("Size must be positive, but was $size"))
+                    return Decoder.State.Error("Size must be positive, but was $size")
                 }
                 bytesToRead = size
             }

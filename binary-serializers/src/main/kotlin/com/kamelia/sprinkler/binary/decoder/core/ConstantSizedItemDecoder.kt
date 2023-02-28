@@ -11,7 +11,7 @@ package com.kamelia.sprinkler.binary.decoder.core
  * @throws IllegalArgumentException if [byteSize] is negative
  */
 class ConstantSizedItemDecoder<E>(
-    private val byteSize: Int = 0,
+    byteSize: Int,
     private val converter: ByteArray.() -> E,
 ) : Decoder<E> {
 
@@ -23,14 +23,14 @@ class ConstantSizedItemDecoder<E>(
     private var index = 0
 
     override fun decode(input: DecoderInputData): Decoder.State<E> {
-        if (byteSize == 0) return Decoder.State.Done(array.converter()) // shortcut
+        if (array.isEmpty()) return Decoder.State.Done(array.converter()) // shortcut
 
         index += input.read(array, index)
-        return if (index == byteSize) {
+        return if (index == array.size) {
             Decoder.State.Done(array.converter()).also { index = 0 }
         } else {
             Decoder.State.Processing(
-                "(${ConstantSizedItemDecoder::class.simpleName}) $index / $byteSize bytes read."
+                "(${ConstantSizedItemDecoder::class.simpleName}) $index / ${array.size} bytes read."
             )
         }
     }

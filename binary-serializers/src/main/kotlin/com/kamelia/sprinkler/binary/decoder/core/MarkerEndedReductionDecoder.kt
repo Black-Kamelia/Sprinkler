@@ -11,12 +11,18 @@ import java.util.stream.Collector
  * [variable polyadic (aka variadic)](https://en.wikipedia.org/wiki/Arity#Varying_arity) reduction on a sequence of
  * these elements.
  *
+ * &nbsp;
+ *
  * The number of elements to decode is undefined, and is determined by a [predicate][shouldStop] that tests each element
  * decoded by the [elementDecoder]. It accumulates them until the predicate returns `true`, and finally creates the
  * resulting object.
  *
+ * &nbsp;
+ *
  * This decoder works by using a [Collector] for the accumulation and creation of the resulting object. It effectively
  * does a reduction of the elements decoded by the [elementDecoder] into the resulting object.
+ *
+ * &nbsp;
  *
  * Here is an example of how to use this class:
  *
