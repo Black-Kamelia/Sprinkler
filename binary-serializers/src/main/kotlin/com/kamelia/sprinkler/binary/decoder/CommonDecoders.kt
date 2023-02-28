@@ -1,4 +1,5 @@
-@file:JvmName("CommonDecoders")
+@file:JvmName("Decoders")
+@file:JvmMultifileClass
 
 package com.kamelia.sprinkler.binary.decoder
 

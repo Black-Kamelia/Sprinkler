@@ -1,4 +1,5 @@
-@file:JvmName("BaseDecoders")
+@file:JvmName("Decoders")
+@file:JvmMultifileClass
 
 package com.kamelia.sprinkler.binary.decoder
 
@@ -316,19 +317,19 @@ fun <T : Any> NullDecoder(): Decoder<T?> = ConstantDecoder(null)
 /**
  * The default [String] end marker used for the [ascii][Charsets.US_ASCII].
  */
-@JvmField
+@get:JvmName("asciiNull")
 val ASCII_NULL = byteArrayOf(0)
 
 /**
  * The default [String] end marker used for the [UTF-8][Charsets.UTF_8].
  */
-@JvmField
+@get:JvmName("utf8Null")
 val UTF8_NULL = ASCII_NULL
 
 /**
  * The default [String] end marker used for the [UTF-16][Charsets.UTF_16].
  */
-@JvmField
+@get:JvmName("utf16Null")
 val UTF16_NULL = byteArrayOf(0, 0)
 
 //endregion

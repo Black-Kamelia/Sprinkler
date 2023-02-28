@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class DecodersTest {
+class BaseDecodersTest {
 
     @Test
     fun `byte decoder works correctly`() {
