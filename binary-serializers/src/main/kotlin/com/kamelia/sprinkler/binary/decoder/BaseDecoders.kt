@@ -299,7 +299,7 @@ fun <T> ConstantDecoder(factory: () -> T): Decoder<T> = ConstantSizedItemDecoder
  *
  * @return a [Decoder] that reads [Unit] from the input
  */
-fun NoOpDecoder(): Decoder<Unit> = ConstantDecoder(Unit)
+fun NoOpDecoder(): Decoder<Unit> = UNIT_DECODER
 
 /**
  * Creates a [Decoder] that reads `null` from the input.
@@ -308,7 +308,7 @@ fun NoOpDecoder(): Decoder<Unit> = ConstantDecoder(Unit)
  *
  * @return a [Decoder] that reads a nullable value from the input
  */
-fun <T : Any> NullDecoder(): Decoder<T?> = ConstantDecoder(null)
+fun <T : Any> NullDecoder(): Decoder<T?> = NULL_DECODER
 
 //endregion
 
@@ -331,5 +331,13 @@ val UTF8_NULL = ASCII_NULL
  */
 @get:JvmName("utf16Null")
 val UTF16_NULL = byteArrayOf(0, 0)
+
+//endregion
+
+//region Internal
+
+private val UNIT_DECODER = ConstantDecoder(Unit)
+
+private val NULL_DECODER = ConstantDecoder(null)
 
 //endregion

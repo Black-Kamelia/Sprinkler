@@ -22,10 +22,11 @@ import java.util.stream.Collectors
  *
  * ```
  * val numberDecoder = ByteDecoder().mapTo {
- *     when (it) {
+ *     when (it.toInt()) {
  *       0 -> ByteDecoder()
  *       1 -> ShortDecoder()
  *       2 -> IntDecoder()
+ *       else -> LongDecoder()
  *     }
  * }
  *
@@ -200,7 +201,10 @@ fun <T, C, R> Decoder<T>.toCollection(
 fun <T, C, R> Decoder<T>.toCollection(
     collector: Collector<T, C, R>,
     size: Int,
-): Decoder<R> = ConstantArityReductionDecoder(collector, this, size)
+): Decoder<R> {
+    require(size >= 0) { "Size must be non-negative, but was $size" }
+    return ConstantArityReductionDecoder(collector, this, size)
+}
 
 /**
  * Creates a new decoder that decodes a collection of [T]s.
@@ -208,7 +212,7 @@ fun <T, C, R> Decoder<T>.toCollection(
  * &nbsp;
  *
  * The created decoder will read elements from the input until the specified [shouldStop] returns `true`, then it will
- * return the read elements as a collection. If [keepLast] is `true`, the last element will be kept in the collection,
+ * return the read elements as a collection. If [keepLast] is `true`, the last element will be kept in the collection.
  *
  * @receiver the decoder decoding the elements of the collection
  * @param collector the collector used to create the collection
@@ -260,11 +264,7 @@ fun <T> Decoder<T>.toList(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<
  */
 fun <T> Decoder<T>.toList(size: Int): Decoder<List<T>> {
     require(size >= 0) { "Size must be non-negative, but was $size" }
-    return when (size) {
-        0 -> ConstantDecoder(emptyList())
-        1 -> this.mapResult { listOf(it) }
-        else -> toCollection(Collectors.toList(), size)
-    }
+    return toCollection(Collectors.toList(), size)
 }
 
 /**
@@ -273,7 +273,7 @@ fun <T> Decoder<T>.toList(size: Int): Decoder<List<T>> {
  * &nbsp;
  *
  * The created decoder will read elements from the input until the specified [shouldStop] returns `true`, then it will
- * return the read elements as a list. If [keepLast] is `true`, the last element will be kept in the list,
+ * return the read elements as a list. If [keepLast] is `true`, the last element will be kept in the list.
  *
  * @receiver the decoder decoding the elements of the list
  * @param keepLast whether the last element should be kept in the list (defaults to `false`)
@@ -319,11 +319,7 @@ fun <T> Decoder<T>.toSet(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<S
  */
 fun <T> Decoder<T>.toSet(size: Int): Decoder<Set<T>> {
     require(size >= 0) { "Size must be non-negative, but was $size" }
-    return when (size) {
-        0 -> ConstantDecoder(emptySet())
-        1 -> this.mapResult { setOf(it) }
-        else -> toCollection(Collectors.toSet(), size)
-    }
+    return toCollection(Collectors.toSet(), size)
 }
 
 /**
@@ -332,7 +328,7 @@ fun <T> Decoder<T>.toSet(size: Int): Decoder<Set<T>> {
  * &nbsp;
  *
  * The created decoder will read elements from the input until the specified [shouldStop] returns `true`, then it will
- * return the read elements as a set. If [keepLast] is `true`, the last element will be kept in the set,
+ * return the read elements as a set. If [keepLast] is `true`, the last element will be kept in the set.
  *
  * @receiver the decoder decoding the elements of the set
  * @param keepLast whether the last element should be kept in the set (defaults to `false`)
@@ -380,11 +376,7 @@ fun <K, V> Decoder<Pair<K, V>>.toMap(sizeDecoder: Decoder<Number> = IntDecoder()
  */
 fun <K, V> Decoder<Pair<K, V>>.toMap(size: Int): Decoder<Map<K, V>> {
     require(size >= 0) { "Size must be non-negative, but was $size" }
-    return when (size) {
-        0 -> ConstantDecoder(emptyMap())
-        1 -> this.mapResult { mapOf(it) }
-        else -> toCollection(ExtendedCollectors.toMap(), size)
-    }
+    return toCollection(ExtendedCollectors.toMap(), size)
 }
 
 /**
@@ -393,7 +385,7 @@ fun <K, V> Decoder<Pair<K, V>>.toMap(size: Int): Decoder<Map<K, V>> {
  * &nbsp;
  *
  * The created decoder will read elements from the input until the specified [shouldStop] returns `true`, then it will
- * return the read elements as a map. If [keepLast] is `true`, the last element will be kept in the map,
+ * return the read elements as a map. If [keepLast] is `true`, the last element will be kept in the map.
  *
  * @receiver a [Pair] decoder decoding the keys and values of the map
  * @param keepLast whether the last element should be kept in the map (defaults to `false`)
@@ -416,17 +408,21 @@ fun <K, V> Decoder<Pair<K, V>>.toMap(
  *
  * The created decoder will read the specified number of elements from the input and return them as an array.
  *
+ * &nbsp;
+ *
+ * **NOTE**: most of the time the [factory] parameter can be [::arrayOfNulls][arrayOfNulls].
+ *
  * @receiver the decoder decoding the elements of the array
- * @param sizeDecoder the decoder decoding the size of the array (defaults to the default [IntDecoder])
  * @param factory the factory used to create the array from the size
+ * @param sizeDecoder the decoder decoding the size of the array (defaults to the default [IntDecoder])
  * @return a decoder decoding an array of [T]s
  * @param T the type of the elements of the array
  * @see toCollection
  */
 @JvmOverloads
 fun <T> Decoder<T>.toArray(
-    sizeDecoder: Decoder<Number> = IntDecoder(),
     factory: (Int) -> Array<T?>,
+    sizeDecoder: Decoder<Number> = IntDecoder(),
 ): Decoder<Array<T>> = toCollection(ExtendedCollectors.toArray(factory), sizeDecoder)
 
 /**
@@ -436,14 +432,18 @@ fun <T> Decoder<T>.toArray(
  *
  * The created decoder will read the specified number of elements from the input and return them as an array.
  *
+ * &nbsp;
+ *
+ * **NOTE**: most of the time the [factory] parameter can be [::arrayOfNulls][arrayOfNulls].
+ *
  * @receiver the decoder decoding the elements of the array
- * @param size the size of the array
  * @param factory the factory used to create the array from the size
+ * @param size the size of the array
  * @return a decoder decoding an array of [T]s
  * @param T the type of the elements of the array
  * @see toCollection
  */
-fun <T> Decoder<T>.toArray(size: Int, factory: (Int) -> Array<T?>): Decoder<Array<T>> {
+fun <T> Decoder<T>.toArray(factory: (Int) -> Array<T?>, size: Int): Decoder<Array<T>> {
     require(size >= 0) { "Size must be non-negative, but was $size" }
     return toCollection(ExtendedCollectors.toArray(factory), size)
 }
@@ -454,7 +454,11 @@ fun <T> Decoder<T>.toArray(size: Int, factory: (Int) -> Array<T?>): Decoder<Arra
  * &nbsp;
  *
  * The created decoder will read elements from the input until the specified [shouldStop] returns `true`, then it will
- * return the read elements as an array. If [keepLast] is `true`, the last element will be kept in the array,
+ * return the read elements as an array. If [keepLast] is `true`, the last element will be kept in the array.
+ *
+ * &nbsp;
+ *
+ * **NOTE**: most of the time the [factory] parameter can be [::arrayOfNulls][arrayOfNulls].
  *
  * @receiver the decoder decoding the elements of the array
  * @param keepLast whether the last element should be kept in the array (defaults to `false`)
@@ -469,8 +473,7 @@ fun <T> Decoder<T>.toArray(
     factory: (Int) -> Array<T?>,
     keepLast: Boolean = false,
     shouldStop: (T) -> Boolean,
-): Decoder<Array<T>> =
-    toCollection(ExtendedCollectors.toArray(factory), keepLast, shouldStop)
+): Decoder<Array<T>> = toCollection(ExtendedCollectors.toArray(factory), keepLast, shouldStop)
 
 /**
  * Creates a new decoder that decodes a pair of [T]s and [U]s from two decoders.
