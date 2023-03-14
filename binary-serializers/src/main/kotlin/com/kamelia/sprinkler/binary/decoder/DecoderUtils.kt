@@ -78,6 +78,8 @@ fun <T, R> Decoder<T>.mapTo(mapper: (T) -> Decoder<R>): Decoder<R> = object : De
  * **NOTE**: This method uses [Decoder.State.mapResult] to map the result, which means that the [mapper] will be called
  * only if the decoder returns a [Decoder.State.Done] state.
  *
+ * &nbsp;
+ *
  * @receiver the decoder producing the result to be mapped
  * @param mapper the mapping function
  * @return a decoder producing a result of type [R]
@@ -121,6 +123,8 @@ fun <T, R> Decoder<T>.mapResult(mapper: (T) -> R): Decoder<R> = object : Decoder
  *
  * **NOTE**: This method uses [Decoder.State.mapState] to map the result, which means that the [mapper] will not be
  * called if the decoder returns an error.
+ *
+ * &nbsp;
  *
  * @receiver the decoder producing the result to be mapped
  * @param mapper the mapping function
@@ -412,6 +416,8 @@ fun <K, V> Decoder<Pair<K, V>>.toMap(
  *
  * **NOTE**: most of the time the [factory] parameter can be [::arrayOfNulls][arrayOfNulls].
  *
+ * &nbsp;
+ *
  * @receiver the decoder decoding the elements of the array
  * @param factory the factory used to create the array from the size
  * @param sizeDecoder the decoder decoding the size of the array (defaults to the default [IntDecoder])
@@ -436,6 +442,8 @@ fun <T> Decoder<T>.toArray(
  *
  * **NOTE**: most of the time the [factory] parameter can be [::arrayOfNulls][arrayOfNulls].
  *
+ * &nbsp;
+ *
  * @receiver the decoder decoding the elements of the array
  * @param factory the factory used to create the array from the size
  * @param size the size of the array
@@ -459,6 +467,8 @@ fun <T> Decoder<T>.toArray(factory: (Int) -> Array<T?>, size: Int): Decoder<Arra
  * &nbsp;
  *
  * **NOTE**: most of the time the [factory] parameter can be [::arrayOfNulls][arrayOfNulls].
+ *
+ * &nbsp;
  *
  * @receiver the decoder decoding the elements of the array
  * @param keepLast whether the last element should be kept in the array (defaults to `false`)
