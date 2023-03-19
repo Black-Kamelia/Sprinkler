@@ -9,6 +9,13 @@ import com.kamelia.sprinkler.binary.decoder.composer.step.addThenStep
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.binary.decoder.core.NothingDecoder
 
+/**
+ * Base class for all [DecoderComposer]s. It provides the basic functionality for composing decoders.
+ *
+ * @param B the type of the final result of the composition
+ * @param T the type of the current decoder's result
+ * @param D the concrete type of the subclass of [DecoderComposer]
+ */
 abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
 
     @PublishedApi
@@ -18,6 +25,16 @@ abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
         builder = CompositionStepList.Builder()
     }
 
+    /**
+     * Creates a new [DecoderComposer], created using the previous [DecoderComposer] as a base. The [decoder] will be
+     * added to the composition as a then step.
+     *
+     * This constructor should be called when the object [T] decoded by the current [DecoderComposer] should be stored
+     * in the [ElementsAccumulator].
+     *
+     * @param previous the previous [DecoderComposer]
+     * @param decoder the decoder to add to the composition
+     */
     protected constructor(previous: DecoderComposer<B, *, *>, decoder: Decoder<T>) {
         builder = previous.builder
         if (decoder !== MARKER_DECODER) {
@@ -29,7 +46,17 @@ abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
         builder = previous.builder
     }
 
-    fun skip(amount: Long): D = thisCast { builder.addSkipStep(amount) }
+    /**
+     * Adds a composition step that skips the given [amount] of bytes.
+     *
+     * @param amount the amount of bytes to skip
+     * @return the current [DecoderComposer] instance
+     * @throws IllegalArgumentException if [amount] is negative
+     */
+    fun skip(amount: Long): D {
+        require(amount >= 0) { "Amount of bytes to skip must be non-negative, but was $amount" }
+        return thisCast { builder.addSkipStep(amount) }
+    }
 
     //region Subclasses API
 

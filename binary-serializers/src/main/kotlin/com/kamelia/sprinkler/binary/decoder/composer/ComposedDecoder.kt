@@ -6,11 +6,21 @@ import com.kamelia.sprinkler.binary.decoder.composer.step.CompositionStepList
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.binary.decoder.core.DecoderInputData
 
+/**
+ * Creates a decoder that is composed by the given [block].
+ *
+ * @param block a lambda that composes the decoder.
+ * @return a decoder composed by the given [block].
+ * @param T the type decoded by the returned decoder
+ */
 @JvmName("create")
 inline fun <T> composedDecoder(block: DecoderComposer0<T>.() -> DecoderComposer1<T, T>): Decoder<T> =
     DecoderComposer0<T>()
         .block()
         .run { decoder ?: ComposedDecoderImpl(builder) } // decoder != null => composition contains only one step
+
+
+
 
 @PublishedApi
 internal class ComposedDecoderImpl<T>(builder: CompositionStepList.Builder) : Decoder<T> {

@@ -3,7 +3,8 @@ package com.kamelia.sprinkler.binary.encoder
 import java.nio.charset.Charset
 import kotlin.experimental.ExperimentalTypeInference
 
-@OptIn(ExperimentalTypeInference::class) class EncoderBuilder<T> {
+@OptIn(ExperimentalTypeInference::class)
+class EncoderBuilder<T> {
 
     private var encoders: MutableList<Encoder<T>> = ArrayList()
 
