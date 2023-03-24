@@ -24,7 +24,7 @@ class MarkerEndedItemDecoder<E>(
         require(endMarker.isNotEmpty()) { "endMarker must be greater than 0 (${endMarker.size})" }
     }
 
-    override fun decode(input: DecoderInputData): Decoder.State<E> {
+    override fun decode(input: DecoderInput): Decoder.State<E> {
         val buffer = buffer ?: ArrayDeque<Byte>(endMarker.size).also { buffer = it }
 
         input.read(buffer, endMarker.size - buffer.size) // fill buffer

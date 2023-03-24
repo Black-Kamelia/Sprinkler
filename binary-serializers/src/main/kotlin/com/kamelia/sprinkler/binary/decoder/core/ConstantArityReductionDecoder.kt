@@ -52,7 +52,7 @@ class ConstantArityReductionDecoder<T, C, R>(
         require(size >= 0) { "Size must be non-negative (was $size)" }
     }
 
-    override fun decode(input: DecoderInputData): Decoder.State<R> {
+    override fun decode(input: DecoderInput): Decoder.State<R> {
         val collection = collection ?: collector.supply().also { collection = it }
 
         while (index < size) {

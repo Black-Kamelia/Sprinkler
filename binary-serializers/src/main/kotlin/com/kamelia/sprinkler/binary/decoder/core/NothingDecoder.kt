@@ -17,7 +17,7 @@ class NothingDecoder(
      */
     constructor(message: String) : this(IllegalStateException(message))
 
-    override fun decode(input: DecoderInputData): Decoder.State<Nothing> = Decoder.State.Error(error)
+    override fun decode(input: DecoderInput): Decoder.State<Nothing> = Decoder.State.Error(error)
 
     override fun reset() = Unit
 

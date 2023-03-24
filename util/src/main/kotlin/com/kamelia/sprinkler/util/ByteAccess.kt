@@ -1,4 +1,5 @@
 @file:JvmName("ByteAccess")
+@file:Suppress("NOTHING_TO_INLINE")
 package com.kamelia.sprinkler.util
 
 /**
@@ -6,12 +7,12 @@ package com.kamelia.sprinkler.util
  *
  * @receiver the [Byte] to access
  * @param index the index of the bit to return
- * @return the bit at the given [index]
- * @throws IllegalArgumentException if [index] is not in between 0 and [Byte.SIZE_BITS] (exclusive)
+ * @return the bit at the given [index] or 0 if [index] is greater than or equal to [Byte.SIZE_BITS]
+ * @throws IllegalArgumentException if [index] is negative
  */
-fun Byte.bit(index: Int): Byte {
-    require(index in 0..7) { "Index $index is out of bounds ([0, ${Byte.SIZE_BITS}[)." }
-    return (this.toInt() ushr index and 0x1).toByte()
+inline fun Byte.bit(index: Int): Byte {
+    require(index >= 0) { "index must be >= 0, but was $index" }
+    return if (index >= Byte.SIZE_BITS) 0 else (toInt() ushr index and 0x1).toByte()
 }
 
 /**
@@ -19,12 +20,12 @@ fun Byte.bit(index: Int): Byte {
  *
  * @receiver the [Short] to access
  * @param index the index of the byte to return
- * @return the byte at the given [index]
- * @throws IllegalArgumentException if [index] is not in between 0 and [Short.SIZE_BYTES] (exclusive)
+ * @return the byte at the given [index] or 0 if [index] is greater than or equal to [Short.SIZE_BYTES]
+ * @throws IllegalArgumentException if [index] is negative
  */
-fun Short.byte(index: Int): Byte {
-    require(index in 0..1) { "Index $index is out of bounds ([0, ${Short.SIZE_BYTES}[)." }
-    return (this.toInt() ushr (index * 8) and 0xFF).toByte()
+inline fun Short.byte(index: Int): Byte {
+    require(index >= 0) { "index must be >= 0, but was $index" }
+    return if (index >= Short.SIZE_BYTES) 0 else (toInt() ushr (index * 8) and 0xFF).toByte()
 }
 
 /**
@@ -32,12 +33,12 @@ fun Short.byte(index: Int): Byte {
  *
  * @receiver the [Short] to access
  * @param index the index of the bit to return
- * @return the bit at the given [index]
- * @throws IllegalArgumentException if [index] is not in between 0 and [Short.SIZE_BITS] (exclusive)
+ * @return the bit at the given [index] or 0 if [index] is greater than or equal to [Short.SIZE_BITS]
+ * @throws IllegalArgumentException if [index] is negative
  */
-fun Short.bit(index: Int): Byte {
-    require(index in 0..15) { "Index $index is out of bounds ([0, ${Short.SIZE_BITS}[)." }
-    return (this.toInt() ushr index and 0x1).toByte()
+inline fun Short.bit(index: Int): Byte {
+    require(index >= 0) { "index must be >= 0, but was $index" }
+    return if (index >= Short.SIZE_BITS) 0 else (toInt() ushr index and 0x1).toByte()
 }
 
 /**
@@ -45,12 +46,12 @@ fun Short.bit(index: Int): Byte {
  *
  * @receiver the [Int] to access
  * @param index the index of the byte to return
- * @return the byte at the given [index]
- * @throws IllegalArgumentException if [index] is not in between 0 and [Int.SIZE_BYTES] (exclusive)
+ * @return the byte at the given [index] or 0 if [index] is greater than or equal to [Int.SIZE_BYTES]
+ * @throws IllegalArgumentException if [index] is negative
  */
-fun Int.byte(index: Int): Byte {
-    require(index in 0..3) { "Index $index is out of bounds ([0, ${Int.SIZE_BYTES}[)." }
-    return (this ushr (index * 8) and 0xFF).toByte()
+inline fun Int.byte(index: Int): Byte {
+    require(index >= 0) { "index must be >= 0, but was $index" }
+    return if (index >= Int.SIZE_BYTES) 0 else (this ushr (index * 8) and 0xFF).toByte()
 }
 
 /**
@@ -58,12 +59,12 @@ fun Int.byte(index: Int): Byte {
  *
  * @receiver the [Int] to access
  * @param index the index of the bit to return
- * @return the bit at the given [index]
- * @throws IllegalArgumentException if [index] is not in between 0 and [Int.SIZE_BITS] (exclusive)
+ * @return the bit at the given [index] or 0 if [index] is greater than or equal to [Int.SIZE_BITS]
+ * @throws IllegalArgumentException if [index] is negative
  */
-fun Int.bit(index: Int): Byte {
-    require(index in 0..31) { "Index $index is out of bounds ([0, ${Int.SIZE_BITS}[)." }
-    return (this ushr index and 0x1).toByte()
+inline fun Int.bit(index: Int): Byte {
+
+    return if (index >= Int.SIZE_BITS) 0 else (this ushr index and 0x1).toByte()
 }
 
 /**
@@ -71,11 +72,11 @@ fun Int.bit(index: Int): Byte {
  *
  * @receiver the [Long] to access
  * @param index the index of the byte to return
- * @return the byte at the given [index]
- * @throws IllegalArgumentException if [index] is not in between 0 and [Long.SIZE_BYTES] (exclusive)
+ * @return the byte at the given [index] or 0 if [index] is greater than or equal to [Long.SIZE_BYTES]
+ * @throws IllegalArgumentException if [index] is negative
  */
 fun Long.byte(index: Int): Byte {
-    require(index in 0..7) { "Index $index is out of bounds ([0, ${Long.SIZE_BYTES}[)." }
+    require(index >= 0) { "index must be >= 0, but was $index" }
     return (this ushr (index * 8) and 0xFF).toByte()
 }
 

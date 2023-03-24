@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
  * }
  * ```
  *
- * The [decode] method is the entry point for decoding. It takes a [DecoderInputData] and returns a [State] object.
+ * The [decode] method is the entry point for decoding. It takes a [DecoderInput] and returns a [State] object.
  * The [State] object aims to represent the state of the decoding process. It can be one of the following:
  *
  * - [State.Done] - the decoding process is complete and the decoded object can be accessed via the
@@ -40,18 +40,18 @@ import java.nio.ByteBuffer
  * is not in a [State.Done] state (e.g. an error occurred and the decoder must be reset).
  *
  * @param T the type of the object to be decoded.
- * @see DecoderInputData
+ * @see DecoderInput
  * @see State
  */
 interface Decoder<out T> {
 
     /**
-     * Tries to decode an object of type [T] from the given [DecoderInputData] [input].
+     * Tries to decode an object of type [T] from the given [DecoderInput] [input].
      *
      * @param input the input from which to decode the object
      * @return a [State] object representing the state of the decoding process
      */
-    fun decode(input: DecoderInputData): State<T>
+    fun decode(input: DecoderInput): State<T>
 
     /**
      * Tries to decode an object of type [T] from the given [InputStream] [input].
@@ -59,7 +59,7 @@ interface Decoder<out T> {
      * @param input the input from which to decode the object
      * @return a [State] object representing the state of the decoding process
      */
-    fun decode(input: InputStream): State<T> = decode(DecoderInputData.from(input))
+    fun decode(input: InputStream): State<T> = decode(DecoderInput.from(input))
 
     /**
      * Tries to decode an object of type [T] from the given [ByteBuffer] [input].
@@ -67,7 +67,7 @@ interface Decoder<out T> {
      * @param input the input from which to decode the object
      * @return a [State] object representing the state of the decoding process
      */
-    fun decode(input: ByteBuffer): State<T> = decode(DecoderInputData.from(input))
+    fun decode(input: ByteBuffer): State<T> = decode(DecoderInput.from(input))
 
     /**
      * Tries to decode an object of type [T] from the given [ByteArray] [input].
@@ -75,7 +75,7 @@ interface Decoder<out T> {
      * @param input the input from which to decode the object
      * @return a [State] object representing the state of the decoding process
      */
-    fun decode(input: ByteArray): State<T> = decode(DecoderInputData.from(input))
+    fun decode(input: ByteArray): State<T> = decode(DecoderInput.from(input))
 
     /**
      * Resets the internal state of the decoder. This method can be called at any time, even if the decoder is not in a

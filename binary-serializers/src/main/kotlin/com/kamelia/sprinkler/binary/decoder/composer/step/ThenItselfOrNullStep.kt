@@ -2,7 +2,7 @@ package com.kamelia.sprinkler.binary.decoder.composer.step
 
 import com.kamelia.sprinkler.binary.decoder.composer.ElementsAccumulator
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderInputData
+import com.kamelia.sprinkler.binary.decoder.core.DecoderInput
 import com.zwendo.restrikt.annotation.PackagePrivate
 
 @PackagePrivate
@@ -15,7 +15,7 @@ internal class ThenItselfOrNullStep private constructor(nullabilityDecoder: Deco
 
     private val decoder = object : Decoder<Boolean> {
 
-        override fun decode(input: DecoderInputData): Decoder.State<Boolean> =
+        override fun decode(input: DecoderInput): Decoder.State<Boolean> =
             nullabilityDecoder.decode(input).ifDone { isNull = !it }
 
         override fun reset() = nullabilityDecoder.reset()

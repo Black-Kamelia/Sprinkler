@@ -22,7 +22,7 @@ class PrefixedSizeItemDecoder<E>(
     private var index = 0
     private var bytesToRead = -1
 
-    override fun decode(input: DecoderInputData): Decoder.State<E> {
+    override fun decode(input: DecoderInput): Decoder.State<E> {
         if (bytesToRead == -1) {
             val state = decodeSize(input)
             if (state != null) {
@@ -33,7 +33,7 @@ class PrefixedSizeItemDecoder<E>(
         return decodeContent(input)
     }
 
-    private fun decodeSize(input: DecoderInputData): Decoder.State<E>? {
+    private fun decodeSize(input: DecoderInput): Decoder.State<E>? {
         when (val sizeState = sizeDecoder.decode(input)) {
             is Decoder.State.Done -> {
                 val size = sizeState.value.toInt()
@@ -53,7 +53,7 @@ class PrefixedSizeItemDecoder<E>(
         return null // continue decoding
     }
 
-    private fun decodeContent(input: DecoderInputData): Decoder.State<E> {
+    private fun decodeContent(input: DecoderInput): Decoder.State<E> {
         val array = array!!
         if (index < bytesToRead) {
             index += input.read(array, index, bytesToRead - index)

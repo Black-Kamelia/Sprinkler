@@ -52,7 +52,7 @@ class PrefixedArityReductionDecoder<T, C, R>(
     private var size = -1
     private var index = 0
 
-    override fun decode(input: DecoderInputData): Decoder.State<R> {
+    override fun decode(input: DecoderInput): Decoder.State<R> {
         if (size == -1) {
             when (val sizeState = sizeDecoder.decode(input)) {
                 is Decoder.State.Done -> {

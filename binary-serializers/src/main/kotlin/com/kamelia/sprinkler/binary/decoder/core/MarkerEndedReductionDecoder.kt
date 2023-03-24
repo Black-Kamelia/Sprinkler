@@ -61,7 +61,7 @@ class MarkerEndedReductionDecoder<T, C, R> @JvmOverloads constructor(
     private var collection: C? = null
     private var index = 0
 
-    override fun decode(input: DecoderInputData): Decoder.State<R> {
+    override fun decode(input: DecoderInput): Decoder.State<R> {
         val collection = collection ?: collector.supply().also { collection = it }
 
         while (true) {

@@ -4,7 +4,7 @@ package com.kamelia.sprinkler.binary.decoder
 
 import com.kamelia.sprinkler.binary.decoder.core.ConstantArityReductionDecoder
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderInputData
+import com.kamelia.sprinkler.binary.decoder.core.DecoderInput
 import com.kamelia.sprinkler.binary.decoder.core.MarkerEndedReductionDecoder
 import com.kamelia.sprinkler.binary.decoder.core.PrefixedArityReductionDecoder
 import com.kamelia.sprinkler.util.ExtendedCollectors
@@ -43,7 +43,7 @@ import java.util.stream.Collectors
 fun <T, R> Decoder<T>.mapTo(mapper: (T) -> Decoder<R>): Decoder<R> = object : Decoder<R> {
     private var nextReader: Decoder<R>? = null
 
-    override fun decode(input: DecoderInputData): Decoder.State<R> = if (nextReader == null) {
+    override fun decode(input: DecoderInput): Decoder.State<R> = if (nextReader == null) {
         this@mapTo.decode(input).mapState {
             nextReader = mapper(it)
             decodeNext(input)
@@ -52,7 +52,7 @@ fun <T, R> Decoder<T>.mapTo(mapper: (T) -> Decoder<R>): Decoder<R> = object : De
         decodeNext(input)
     }
 
-    private fun decodeNext(input: DecoderInputData) = nextReader!!.decode(input).ifDone { nextReader = null }
+    private fun decodeNext(input: DecoderInput) = nextReader!!.decode(input).ifDone { nextReader = null }
 
     override fun reset() {
         this@mapTo.reset()
@@ -88,7 +88,7 @@ fun <T, R> Decoder<T>.mapTo(mapper: (T) -> Decoder<R>): Decoder<R> = object : De
  */
 fun <T, R> Decoder<T>.mapResult(mapper: (T) -> R): Decoder<R> = object : Decoder<R> {
 
-    override fun decode(input: DecoderInputData): Decoder.State<R> = this@mapResult.decode(input).mapResult(mapper)
+    override fun decode(input: DecoderInput): Decoder.State<R> = this@mapResult.decode(input).mapResult(mapper)
 
     override fun reset() = this@mapResult.reset()
 
@@ -134,7 +134,7 @@ fun <T, R> Decoder<T>.mapResult(mapper: (T) -> R): Decoder<R> = object : Decoder
  */
 fun <T, R> Decoder<T>.mapState(mapper: (T) -> Decoder.State<R>): Decoder<R> = object : Decoder<R> {
 
-    override fun decode(input: DecoderInputData): Decoder.State<R> = this@mapState.decode(input).mapState(mapper)
+    override fun decode(input: DecoderInput): Decoder.State<R> = this@mapState.decode(input).mapState(mapper)
 
     override fun reset() = this@mapState.reset()
 

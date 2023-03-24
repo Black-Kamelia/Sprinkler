@@ -60,6 +60,10 @@ abstract class DecoderComposer<B, T, D : DecoderComposer<B, T, D>> {
 
     //region Subclasses API
 
+//    protected open fun <R> then(decoder: Decoder<R>): DecoderComposer<B, R, *> {
+//        throw UnsupportedOperationException("This method should be overridden by subclasses")
+//    }
+
     protected fun <R> mapStep(mapper: (T) -> Decoder<R>) = builder.addMapStep(true, mapper)
 
     protected fun <R> mapAndStoreStep(mapper: (T) -> Decoder<R>): Decoder<R> {

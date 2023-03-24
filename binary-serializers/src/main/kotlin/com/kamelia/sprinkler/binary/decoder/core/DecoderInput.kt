@@ -12,7 +12,7 @@ import kotlin.math.min
  * terms of this method, meaning that this interface is actually a functional interface and can be implemented as a
  * lambda.
  */
-fun interface DecoderInputData {
+fun interface DecoderInput {
 
     /**
      * Reads a single byte from the source. Returns -1 if there are no more bytes to read.
@@ -69,15 +69,15 @@ fun interface DecoderInputData {
      * Reads bytes from the source into the given [MutableCollection] and returns the number of bytes read. The [length]
      * parameter specifies the maximum number of bytes to read.
      *
-     * @param collection the [MutableCollection] to read into
+     * @param bytes the [MutableCollection] to read into
      * @param length the maximum number of bytes to read
      */
-    fun read(collection: MutableCollection<Byte>, length: Int): Int {
+    fun read(bytes: MutableCollection<Byte>, length: Int): Int {
         var count = 0
-        while (count < length && collection.size < Int.MAX_VALUE) {
+        while (count < length && bytes.size < Int.MAX_VALUE) {
             val read = read()
             if (read == -1) break
-            collection.add(read.toByte())
+            bytes += read.toByte()
             count++
         }
         return count
@@ -111,23 +111,23 @@ fun interface DecoderInputData {
     companion object {
 
         /**
-         * An empty [DecoderInputData] that always returns -1.
+         * An empty [DecoderInput] that always returns -1.
          */
         @JvmField
-        val EMPTY_INPUT = DecoderInputData { -1 }
+        val EMPTY_INPUT = DecoderInput { -1 }
 
         /**
-         * Creates a [DecoderInputData] from the given [InputStream]. All changes to the [InputStream] will be reflected
-         * in the [DecoderInputData] and vice versa.
+         * Creates a [DecoderInput] from the given [InputStream]. All changes to the [InputStream] will be reflected
+         * in the [DecoderInput] and vice versa.
          *
          * @param inner the [InputStream] to read from
-         * @return a [DecoderInputData] that reads from the given [InputStream]
+         * @return a [DecoderInput] that reads from the given [InputStream]
          */
-        fun from(inner: InputStream): DecoderInputData = DecoderInputData(inner::read)
+        fun from(inner: InputStream): DecoderInput = DecoderInput(inner::read)
 
         /**
-         * Creates a [DecoderInputData] from the given [ByteBuffer]. All changes to the [ByteBuffer] will be reflected
-         * in the [DecoderInputData] and vice versa.
+         * Creates a [DecoderInput] from the given [ByteBuffer]. All changes to the [ByteBuffer] will be reflected
+         * in the [DecoderInput] and vice versa.
          *
          * All reading methods will expect the [ByteBuffer] to be in write mode before the method is called and will
          * leave it in write mode after the method is called. This means that the [ByteBuffer] will be flipped before
@@ -135,9 +135,9 @@ fun interface DecoderInputData {
          * having to flip it back and forth.
          *
          * @param inner the [ByteBuffer] to read from
-         * @return a [DecoderInputData] that reads from the given [ByteBuffer]
+         * @return a [DecoderInput] that reads from the given [ByteBuffer]
          */
-        fun from(inner: ByteBuffer): DecoderInputData = object : DecoderInputData {
+        fun from(inner: ByteBuffer): DecoderInput = object : DecoderInput {
 
             override fun read(): Int {
                 inner.flip()
@@ -165,14 +165,14 @@ fun interface DecoderInputData {
         }
 
         /**
-         * Creates a [DecoderInputData] from the given [ByteArray]. The [ByteArray] will not be modified by the returned
-         * [DecoderInputData]. However, the [ByteArray] will not be copied, so any changes to the [ByteArray] will be
-         * reflected in the [DecoderInputData].
+         * Creates a [DecoderInput] from the given [ByteArray]. The [ByteArray] will not be modified by the returned
+         * [DecoderInput]. However, the [ByteArray] will not be copied, so any changes to the [ByteArray] will be
+         * reflected in the [DecoderInput].
          *
          * @param inner the [ByteArray] to read from
-         * @return a [DecoderInputData] that reads from the given [ByteArray]
+         * @return a [DecoderInput] that reads from the given [ByteArray]
          */
-        fun from(inner: ByteArray): DecoderInputData = object : DecoderInputData {
+        fun from(inner: ByteArray): DecoderInput = object : DecoderInput {
             private var index = 0
 
             override fun read(): Int = if (index < inner.size) {

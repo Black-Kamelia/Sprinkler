@@ -4,7 +4,7 @@ package com.kamelia.sprinkler.binary.decoder.composer
 
 import com.kamelia.sprinkler.binary.decoder.composer.step.CompositionStepList
 import com.kamelia.sprinkler.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.binary.decoder.core.DecoderInputData
+import com.kamelia.sprinkler.binary.decoder.core.DecoderInput
 
 /**
  * Creates a decoder that is composed by the given [block].
@@ -30,7 +30,7 @@ internal class ComposedDecoderImpl<T>(builder: CompositionStepList.Builder) : De
     private lateinit var accumulator: ElementsAccumulator
     private var currentRecursion: RecursionNode? = null
 
-    override fun decode(input: DecoderInputData): Decoder.State<T> {
+    override fun decode(input: DecoderInput): Decoder.State<T> {
         if (!::accumulator.isInitialized) { // first call
             accumulator = ElementsAccumulator()
             arriveAtStep(index)

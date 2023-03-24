@@ -22,12 +22,12 @@ class ConstantSizedItemDecoder<E>(
     private val array: ByteArray = ByteArray(byteSize)
     private var index = 0
 
-    override fun decode(input: DecoderInputData): Decoder.State<E> {
+    override fun decode(input: DecoderInput): Decoder.State<E> {
         if (array.isEmpty()) return Decoder.State.Done(array.converter()) // shortcut
 
         index += input.read(array, index)
         return if (index == array.size) {
-            Decoder.State.Done(array.converter()).also { index = 0 }
+            Decoder.State.Done(array.converter().also { println(it) }).also { index = 0 }
         } else {
             Decoder.State.Processing(
                 "(${ConstantSizedItemDecoder::class.simpleName}) $index / ${array.size} bytes read."
