@@ -27,13 +27,12 @@ value class CloseableScope @PublishedApi internal constructor(private val closea
      * @receiver The [Closeable] to add.
      * @return The [Closeable] that was added.
      */
-    fun <T : Closeable> T.using(): T = using(this)
+    fun <T : Closeable> T.usingSelf(): T = using(this)
 
     @PublishedApi
     internal fun closeAll() {
-        val iterator = closeables.listIterator()
-        while (iterator.hasPrevious()) {
-            iterator.previous().close()
+        for (i in closeables.lastIndex downTo 0) {
+            closeables[i].close()
         }
     }
 
