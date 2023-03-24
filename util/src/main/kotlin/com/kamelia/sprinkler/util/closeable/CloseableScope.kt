@@ -7,8 +7,6 @@ import java.io.Closeable
 
 /**
  * A scope for managing the lifecycle of [Closeable]s.
- *
- * @param closeables The [Closeable]s to manage.
  */
 @JvmInline
 value class CloseableScope @PublishedApi internal constructor(private val closeables: ArrayList<Closeable> = ArrayList()) {
@@ -17,6 +15,7 @@ value class CloseableScope @PublishedApi internal constructor(private val closea
      * Adds a [Closeable] to the scope. When the scope ends, this [Closeable] will be closed.
      *
      * @param closeable The [Closeable] to add.
+     * @param T The type of the given [Closeable].
      * @return The [Closeable] that was added.
      */
     fun <T : Closeable> using(closeable: T): T = closeable.also(closeables::add)
@@ -25,6 +24,7 @@ value class CloseableScope @PublishedApi internal constructor(private val closea
      * Adds a [Closeable] to the scope. When the scope ends, this [Closeable] will be closed.
      *
      * @receiver The [Closeable] to add.
+     * @param T The type of the received [Closeable].
      * @return The [Closeable] that was added.
      */
     fun <T : Closeable> T.usingSelf(): T = using(this)
@@ -59,6 +59,7 @@ value class CloseableScope @PublishedApi internal constructor(private val closea
  *
  * @param closeables The initial [Closeable]s to add to the scope.
  * @param block The block to execute in the scope.
+ * @param R The return type of the scope.
  * @return The result of the block.
  */
 inline fun <R> closeableScope(vararg closeables: Closeable, block: CloseableScope.() -> R): R {
