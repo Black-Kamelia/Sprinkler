@@ -110,7 +110,7 @@ class CloseableScopeTest {
     }
 
     @Test
-    fun _forceCallPrimaryConstructor() {
+    fun _forceCallPrimaryConstructorOfValueClassForCoverage() {
         listOf(CloseableScope())
     }
 
