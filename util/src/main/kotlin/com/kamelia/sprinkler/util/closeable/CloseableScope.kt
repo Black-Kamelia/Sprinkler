@@ -3,53 +3,65 @@
 package com.kamelia.sprinkler.util.closeable
 
 import com.zwendo.restrikt.annotation.HideFromJava
-import java.io.Closeable
 
 /**
- * A scope for managing the lifecycle of [Closeable]s.
+ * A scope for managing the lifecycle of [AutoCloseable]s.
  */
 @JvmInline
-value class CloseableScope @PublishedApi internal constructor(private val closeables: ArrayList<Closeable> = ArrayList()) {
+value class CloseableScope private constructor(private val closeables: ArrayList<AutoCloseable>) {
+
+    @PublishedApi
+    internal constructor() : this(ArrayList())
 
     /**
-     * Adds a [Closeable] to the scope. When the scope ends, this [Closeable] will be closed.
+     * Adds a [AutoCloseable] to the scope. When the scope ends, this [AutoCloseable] will be closed.
      *
-     * @param closeable The [Closeable] to add.
-     * @param T The type of the given [Closeable].
-     * @return The [Closeable] that was added.
+     * @param closeable The [AutoCloseable] to add.
+     * @param T The type of the given [AutoCloseable].
+     * @return The [AutoCloseable] that was added.
      */
-    fun <T : Closeable> using(closeable: T): T = closeable.also(closeables::add)
+    fun <T : AutoCloseable> using(closeable: T): T = closeable.also(closeables::add)
 
     /**
-     * Adds a [Closeable] to the scope. When the scope ends, this [Closeable] will be closed.
+     * Adds a [AutoCloseable] to the scope. When the scope ends, this [AutoCloseable] will be closed.
      *
-     * @receiver The [Closeable] to add.
-     * @param T The type of the received [Closeable].
-     * @return The [Closeable] that was added.
+     * @receiver The [AutoCloseable] to add.
+     * @param T The type of the received [AutoCloseable].
+     * @return The [AutoCloseable] that was added.
      */
-    fun <T : Closeable> T.usingSelf(): T = using(this)
+    fun <T : AutoCloseable> T.usingSelf(): T = using(this)
 
     @PublishedApi
     internal fun closeAll() {
+        var exception: Throwable? = null
         for (i in closeables.lastIndex downTo 0) {
-            closeables[i].close()
+            try {
+                closeables[i].close()
+            } catch (e: Throwable) {
+                if (exception == null) {
+                    exception = e
+                } else {
+                    exception.addSuppressed(e)
+                }
+            }
         }
+        exception?.let { throw it }
     }
 
 }
 
 /**
- * Creates a [CloseableScope] and adds the given [Closeable]s to it.
- * Within the scope, one can use the [CloseableScope.using] function to add more [Closeable]s.
- * When the scope ends, all registered [Closeable]s will be closed.
+ * Creates a [CloseableScope] and adds the given [AutoCloseable]s to it.
+ * Within the scope, one can use the [CloseableScope.using] function to add more [AutoCloseable]s.
+ * When the scope ends, all registered [AutoCloseable]s will be closed.
  *
  * ```
  * val someCloseable = MyCloseable()
  * val ok = closeableScope(someCloseable) {
  *     val sin = using(System.`in`)
  *     val f = File("someFile")
- *         .inputStream().using()
- *         .buffered().using()
+ *         .inputStream().usingSelf()
+ *         .buffered().usingSelf()
  *
  *     // Do stuff with sin and f
  *
@@ -57,12 +69,12 @@ value class CloseableScope @PublishedApi internal constructor(private val closea
  * }
  * ```
  *
- * @param closeables The initial [Closeable]s to add to the scope.
+ * @param closeables The initial [AutoCloseable]s to add to the scope.
  * @param block The block to execute in the scope.
  * @param R The return type of the scope.
  * @return The result of the block.
  */
-inline fun <R> closeableScope(vararg closeables: Closeable, block: CloseableScope.() -> R): R {
+inline fun <R> closeableScope(vararg closeables: AutoCloseable, block: CloseableScope.() -> R): R {
     val scope = CloseableScope()
     closeables.forEach(scope::using)
     try {

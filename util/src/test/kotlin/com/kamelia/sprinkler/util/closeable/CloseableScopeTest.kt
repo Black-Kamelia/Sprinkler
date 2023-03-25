@@ -1,6 +1,8 @@
 package com.kamelia.sprinkler.util.closeable
 
 import java.io.Closeable
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -15,6 +17,19 @@ class CloseableScopeTest {
 
     class NestedCloseableMock : CloseableMock() {
         fun other(): CloseableMock = CloseableMock()
+    }
+
+    class ThrowingCloseableMock : CloseableMock() {
+        override fun close() {
+            super.close()
+            throw RuntimeException()
+        }
+
+        val index = i++
+
+        companion object {
+            var i = 0
+        }
     }
 
     @Test
@@ -67,6 +82,36 @@ class CloseableScopeTest {
         assertTrue(closeable3.isClosed)
         assertTrue(closeable4.isClosed)
         assertTrue(closeable5.isClosed)
+    }
+
+    @Test
+    fun `should close scoped closeables even if an exception is thrown in a closeable`() {
+        lateinit var closeable1: ThrowingCloseableMock
+        lateinit var closeable2: ThrowingCloseableMock
+
+        val res = runCatching {
+            closeableScope {
+                closeable1 = using(ThrowingCloseableMock())
+                closeable2 = using(ThrowingCloseableMock())
+            }
+        }
+
+        assertTrue(closeable1.isClosed)
+        assertTrue(closeable2.isClosed)
+        assertEquals(0, closeable1.index)
+        assertEquals(1, closeable2.index)
+        assertTrue(res.isFailure)
+        val exception = res.exceptionOrNull()
+        assertNotNull(exception)
+        assertTrue(exception is RuntimeException)
+        assertEquals(1, exception!!.suppressed.size)
+        assertEquals(0, exception.suppressed[0].suppressed.size)
+        assertTrue(exception.suppressed[0] is RuntimeException)
+    }
+
+    @Test
+    fun _forceCallPrimaryConstructor() {
+        listOf(CloseableScope())
     }
 
 }
