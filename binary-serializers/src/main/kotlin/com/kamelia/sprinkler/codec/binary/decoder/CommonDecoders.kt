@@ -207,7 +207,20 @@ fun LocalDateDecoder(intDecoder: Decoder<Int> = IntDecoder()): Decoder<LocalDate
 fun LocalDateTimeDecoder(
     decodeNanos: Boolean = false,
     intDecoder: Decoder<Int> = IntDecoder(),
-): Decoder<LocalDateTime> = dateTimeDecoder(decodeNanos, intDecoder, LocalDateTime::of, LocalDateTime::of)
+): Decoder<LocalDateTime> = composedDecoder {
+    val decoder = beginWith(intDecoder)
+        .then(intDecoder)
+        .then(intDecoder)
+        .then(intDecoder)
+        .then(intDecoder)
+        .then(intDecoder)
+
+    if (decodeNanos) {
+        decoder.then(intDecoder).reduce(LocalDateTime::of)
+    } else {
+        decoder.reduce(LocalDateTime::of)
+    }
+}
 
 /**
  * Creates a [Decoder] that reads a [Date] from the input.
@@ -248,29 +261,3 @@ fun ZonedDateTimeDecoder(
         .then(zoneIdDecoder)
         .reduce(ZonedDateTime::ofInstant)
 }
-
-//region internal
-
-private fun <T> dateTimeDecoder(
-    seventhParameter: Boolean,
-    intDecoder: Decoder<Int>,
-    factory6: (Int, Int, Int, Int, Int, Int) -> T,
-    factory7: ((Int, Int, Int, Int, Int, Int, Int) -> T)? = null,
-): Decoder<T> = composedDecoder {
-    val decoder = beginWith(intDecoder)
-        .then(intDecoder)
-        .then(intDecoder)
-        .then(intDecoder)
-        .then(intDecoder)
-        .then(intDecoder)
-
-    if (seventhParameter) {
-        factory7?.let {
-            decoder.then(intDecoder).reduce(it)
-        } ?: throw AssertionError("factory7 must not be null if seventhParameter is true")
-    } else {
-        decoder.reduce(factory6)
-    }
-}
-
-//endregion
