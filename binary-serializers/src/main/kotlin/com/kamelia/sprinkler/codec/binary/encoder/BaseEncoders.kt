@@ -3,6 +3,9 @@
 
 package com.kamelia.sprinkler.codec.binary.encoder
 
+import com.kamelia.sprinkler.codec.binary.core.ASCII_NULL
+import com.kamelia.sprinkler.codec.binary.core.UTF16_NULL
+import com.kamelia.sprinkler.codec.binary.core.UTF8_NULL
 import com.kamelia.sprinkler.codec.binary.encoder.core.Encoder
 import com.kamelia.sprinkler.codec.binary.encoder.core.EncoderOutput
 import java.nio.ByteOrder
@@ -75,7 +78,7 @@ fun UTF8StringEncoder(sizeEncoder: Encoder<Int> = IntEncoder()): Encoder<String>
     StringEncoder(Charsets.UTF_8, sizeEncoder)
 
 @JvmOverloads
-fun UTF8StringEncoderEM(endMarker: ByteArray = byteArrayOf(0)): Encoder<String> {
+fun UTF8StringEncoderEM(endMarker: ByteArray = UTF8_NULL): Encoder<String> {
     require(endMarker.isNotEmpty()) { "End marker must be at least 1 byte long for UTF-8 (got ${endMarker.size})" }
     return StringEncoderEM(Charsets.UTF_8, endMarker)
 }
@@ -85,7 +88,7 @@ fun UTF16StringEncoder(sizeEncoder: Encoder<Int> = IntEncoder()): Encoder<String
     StringEncoder(Charsets.UTF_16, sizeEncoder)
 
 @JvmOverloads
-fun UTF16StringEncoderEM(endMarker: ByteArray = byteArrayOf(0)): Encoder<String> {
+fun UTF16StringEncoderEM(endMarker: ByteArray = UTF16_NULL): Encoder<String> {
     require(endMarker.size >= 2) { "End marker must be at least 2 bytes long for UTF-16 (got ${endMarker.size})" }
     return StringEncoderEM(Charsets.UTF_16, endMarker)
 }
@@ -95,7 +98,7 @@ fun ASCIIStringEncoder(sizeEncoder: Encoder<Int> = IntEncoder()): Encoder<String
     StringEncoder(Charsets.US_ASCII, sizeEncoder)
 
 @JvmOverloads
-fun ASCIIStringEncoderEM(endMarker: ByteArray = byteArrayOf(0)): Encoder<String> {
+fun ASCIIStringEncoderEM(endMarker: ByteArray = ASCII_NULL): Encoder<String> {
     require(endMarker.isNotEmpty()) { "End marker must be at least 1 byte long for ASCII (got ${endMarker.size})" }
     return StringEncoderEM(Charsets.US_ASCII, endMarker)
 }
@@ -104,28 +107,20 @@ fun ASCIIStringEncoderEM(endMarker: ByteArray = byteArrayOf(0)): Encoder<String>
 fun StringEncoder(
     charset: Charset,
     sizeEncoder: Encoder<Int> = IntEncoder(),
-): Encoder<String> = object : Encoder<String> {
-
-    override fun encode(obj: String, output: EncoderOutput) {
-        val bytes = obj.toByteArray(charset)
-        sizeEncoder.encode(bytes.size, output)
-        output.write(bytes)
-    }
-
+): Encoder<String> = Encoder { obj, output ->
+    val bytes = obj.toByteArray(charset)
+    sizeEncoder.encode(bytes.size, output)
+    output.write(bytes)
 }
 
 @JvmOverloads
 fun StringEncoderEM(
     charset: Charset = Charsets.UTF_8,
     endMarker: ByteArray = byteArrayOf(0),
-): Encoder<String> = object : Encoder<String> {
-
-    override fun encode(obj: String, output: EncoderOutput) {
-        val bytes = obj.toByteArray(charset)
-        output.write(bytes)
-        output.write(endMarker)
-    }
-
+): Encoder<String> = Encoder { obj, output ->
+    val bytes = obj.toByteArray(charset)
+    output.write(bytes)
+    output.write(endMarker)
 }
 
 //endregion

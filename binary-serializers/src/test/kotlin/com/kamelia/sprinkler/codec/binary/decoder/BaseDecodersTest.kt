@@ -1,10 +1,10 @@
 package com.kamelia.sprinkler.codec.binary.decoder
 
+import com.kamelia.sprinkler.codec.binary.core.ASCII_NULL
+import com.kamelia.sprinkler.codec.binary.core.UTF16_NULL
+import com.kamelia.sprinkler.codec.binary.core.UTF8_NULL
 import com.kamelia.sprinkler.codec.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.codec.binary.decoder.util.assertDoneAndGet
-import com.kamelia.sprinkler.codec.binary.util.ASCII_NULL
-import com.kamelia.sprinkler.codec.binary.util.UTF16_NULL
-import com.kamelia.sprinkler.codec.binary.util.UTF8_NULL
 import com.kamelia.sprinkler.util.byte
 import java.nio.ByteOrder
 import org.junit.jupiter.api.Assertions.assertEquals
