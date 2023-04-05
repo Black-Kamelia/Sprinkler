@@ -7,51 +7,23 @@ import com.kamelia.sprinkler.codec.binary.encoder.FloatEncoder
 import com.kamelia.sprinkler.codec.binary.encoder.IntEncoder
 import com.kamelia.sprinkler.codec.binary.encoder.LongEncoder
 import com.kamelia.sprinkler.codec.binary.encoder.ShortEncoder
-import com.kamelia.sprinkler.codec.binary.encoder.UTF8StringEncoder
 import com.kamelia.sprinkler.codec.binary.encoder.core.Encoder
 import com.kamelia.sprinkler.codec.binary.encoder.core.EncoderOutput
-import com.zwendo.restrikt.annotation.HideFromJava
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.nio.ByteOrder
 
+@PackagePrivate
 @Suppress("INAPPLICABLE_JVM_NAME")
-class BasicEncoderComposer<T : Any> private constructor(
+internal class BasicEncoderComposer<T : Any>(
     private val endianness: ByteOrder,
     private val stringEncoderFactory: () -> Encoder<String>,
-) : EncoderComposer<T, BasicEncoderComposer<T>> {
+) : EncoderComposer.Basic<T> {
 
     private var list = ArrayList<(T, EncoderOutput) -> Unit>()
 
     private val map by lazy { HashMap<Class<*>, Encoder<*>>() }
 
     private var inner = encoder(list)
-
-    companion object {
-
-        @JvmStatic
-        fun <T : Any> builder(): Builder<T> = Builder()
-
-        @JvmStatic
-        fun <T : Any> create(): BasicEncoderComposer<T> = builder<T>().build()
-
-    }
-
-    class Builder<T : Any> @PackagePrivate internal constructor() {
-
-        private var endianness = ByteOrder.BIG_ENDIAN
-        private var stringEncoderFactory: () -> Encoder<String> = { UTF8StringEncoder() }
-
-        fun endianness(endianness: ByteOrder): Builder<T> = apply {
-            this.endianness = endianness
-        }
-
-        fun stringEncoderFactory(factory: () -> Encoder<String>): Builder<T> = apply {
-            this.stringEncoderFactory = factory
-        }
-
-        fun build(): BasicEncoderComposer<T> = BasicEncoderComposer(endianness, stringEncoderFactory)
-
-    }
 
     override fun <E> encodeWith(encoder: Encoder<E>, extractor: T.() -> E): BasicEncoderComposer<T> = apply {
         list += { value, output -> encoder.encode(value.extractor(), output) }
@@ -87,9 +59,10 @@ class BasicEncoderComposer<T : Any> private constructor(
     override fun encode(extractor: T.() -> String): BasicEncoderComposer<T> =
         encodeWith(extractor, stringEncoderFactory)
 
-    override fun encodeWithSelf(block: BasicEncoderComposer<T>.(Encoder<T>) -> Unit): BasicEncoderComposer<T> = apply {
-        block(this, inner)
-    }
+    override fun encodeWithSelf(block: EncoderComposer.Basic<T>.(Encoder<T>) -> Unit): BasicEncoderComposer<T> =
+        apply {
+            block(this, inner)
+        }
 
     private inline fun <reified E> encodeWith(
         noinline extractor: T.() -> E,
@@ -107,13 +80,8 @@ class BasicEncoderComposer<T : Any> private constructor(
         return result
     }
 
-    private fun encoder(list: ArrayList<(T, EncoderOutput) -> Unit>): Encoder<T> = object : Encoder<T> {
-
-        override fun encode(obj: T, output: EncoderOutput) = list.forEach { it(obj, output) }
-
-    }
+    private fun encoder(list: ArrayList<(T, EncoderOutput) -> Unit>): Encoder<T> =
+        Encoder { obj, output -> list.forEach { it(obj, output) } }
 
 }
 
-@HideFromJava
-fun <T : Any> composedEncoder(): BasicEncoderComposer<T> = BasicEncoderComposer.create()
