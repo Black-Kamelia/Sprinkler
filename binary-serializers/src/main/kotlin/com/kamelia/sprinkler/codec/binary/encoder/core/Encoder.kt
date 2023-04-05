@@ -4,18 +4,20 @@ import java.io.File
 import java.io.OutputStream
 import java.nio.file.Path
 
-interface Encoder<in T> {
+fun interface Encoder<in T> {
 
-    fun <O : EncoderOutput> encode(obj: T, output: O): O
+    fun encode(obj: T, output: EncoderOutput)
 
-    fun encodeToByteArray(obj: T): ByteArray = encode(obj, EncoderOutput.ByteArrayOutput()).toByteArray()
+    fun encodeToByteArray(obj: T): ByteArray {
+        val output = EncoderOutput.ByteListOutput()
+        encode(obj, output)
+        return output.toByteArray()
+    }
 
-    fun encodeToOutputStream(obj: T, output: OutputStream): EncoderOutput.OutputStreamOutput =
-        encode(obj, EncoderOutput.OutputStreamOutput(output))
+    fun encode(obj: T, output: OutputStream): Unit = encode(obj, EncoderOutput.OutputStreamOutput(output))
 
-    fun encodeToPath(obj: T, path: Path): EncoderOutput.OutputStreamOutput = encodeToFile(obj, path.toFile())
+    fun encode(obj: T, output: Path): Unit = encode(obj, output.toFile())
 
-    fun encodeToFile(obj: T, file: File): EncoderOutput.OutputStreamOutput =
-        file.outputStream().use { encodeToOutputStream(obj, it) }
+    fun encode(obj: T, output: File): Unit = output.outputStream().use { encode(obj, it) }
 
 }

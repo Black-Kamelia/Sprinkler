@@ -10,62 +10,60 @@ import java.nio.charset.Charset
 
 //region Primitive Encoders
 
-fun ByteEncoder(): Encoder<Byte> = object : Encoder<Byte> {
-
-    override fun <R : EncoderOutput> encode(obj: Byte, output: R): R = output.apply { write(obj) }
-
-}
+fun ByteEncoder(): Encoder<Byte> =
+    Encoder { obj, output ->
+        output.write(obj)
+    }
 
 @JvmOverloads
-fun ShortEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Short> = object : Encoder<Short> {
-
-    override fun <O : EncoderOutput> encode(obj: Short, output: O): O = output.apply {
+fun ShortEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Short> =
+    Encoder { obj, output ->
         val offset = if (endianness == ByteOrder.BIG_ENDIAN) Short.SIZE_BYTES - 1 else 0
         repeat(Short.SIZE_BYTES) {
-            write((obj.toInt() shr (8 * (offset - it))).toByte())
+            output.write((obj.toInt() shr (8 * (offset - it))).toByte())
         }
     }
 
-}
-
 @JvmOverloads
-fun IntEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Int> = object : Encoder<Int> {
-
-    override fun <O : EncoderOutput> encode(obj: Int, output: O): O = output.apply {
+fun IntEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Int> =
+    Encoder { obj, output ->
         val offset = if (endianness == ByteOrder.BIG_ENDIAN) Int.SIZE_BYTES - 1 else 0
         repeat(Int.SIZE_BYTES) {
-            write((obj shr (8 * (offset - it))).toByte())
+            output.write((obj shr (8 * (offset - it))).toByte())
         }
     }
 
-}
-
 @JvmOverloads
-fun LongEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Long> = object : Encoder<Long> {
-
-    override fun <O : EncoderOutput> encode(obj: Long, output: O): O = output.apply {
+fun LongEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Long> =
+    Encoder { obj, output ->
         val offset = if (endianness == ByteOrder.BIG_ENDIAN) Long.SIZE_BYTES - 1 else 0
         repeat(Long.SIZE_BYTES) {
-            write((obj shr (8 * (offset - it))).toByte())
+            output.write((obj shr (8 * (offset - it))).toByte())
         }
     }
 
-}
+@JvmOverloads
+fun FloatEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Float> =
+    Encoder { obj, output ->
+        val offset = if (endianness == ByteOrder.BIG_ENDIAN) Float.SIZE_BYTES - 1 else 0
+        val asInt = obj.toRawBits()
+        repeat(Float.SIZE_BYTES) {
+            output.write((asInt shr (8 * (offset - it))).toByte())
+        }
+    }
 
 @JvmOverloads
-fun FloatEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Float> = IntEncoder(endianness).withMappedInput {
-    it.toRawBits()
-}
+fun DoubleEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Double> =
+    Encoder { obj, output ->
+        val offset = if (endianness == ByteOrder.BIG_ENDIAN) Double.SIZE_BYTES - 1 else 0
+        val asLong = obj.toRawBits()
+        repeat(Double.SIZE_BYTES) {
+            output.write((asLong shr (8 * (offset - it))).toByte())
+        }
+    }
 
-
-@JvmOverloads
-fun DoubleEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Double> = LongEncoder(endianness).withMappedInput {
-    it.toRawBits()
-}
-
-
-fun BooleanEncoder(): Encoder<Boolean> = ByteEncoder().withMappedInput {
-    if (it) 1 else 0
+fun BooleanEncoder(): Encoder<Boolean> = Encoder { obj, output ->
+    output.write(if (obj) 1 else 0)
 }
 
 //endregion
@@ -108,10 +106,10 @@ fun StringEncoder(
     sizeEncoder: Encoder<Int> = IntEncoder(),
 ): Encoder<String> = object : Encoder<String> {
 
-    override fun <R : EncoderOutput> encode(obj: String, output: R): R = output.apply {
+    override fun encode(obj: String, output: EncoderOutput) {
         val bytes = obj.toByteArray(charset)
-        sizeEncoder.encode(bytes.size, this)
-        write(bytes)
+        sizeEncoder.encode(bytes.size, output)
+        output.write(bytes)
     }
 
 }
@@ -122,10 +120,10 @@ fun StringEncoderEM(
     endMarker: ByteArray = byteArrayOf(0),
 ): Encoder<String> = object : Encoder<String> {
 
-    override fun <R : EncoderOutput> encode(obj: String, output: R): R = output.apply {
+    override fun encode(obj: String, output: EncoderOutput) {
         val bytes = obj.toByteArray(charset)
-        write(bytes)
-        write(endMarker)
+        output.write(bytes)
+        output.write(endMarker)
     }
 
 }
@@ -137,9 +135,7 @@ fun StringEncoderEM(
 @JvmOverloads
 fun <T : Enum<T>> EnumEncoder(intEncoder: Encoder<Int> = IntEncoder()): Encoder<T> = object : Encoder<T> {
 
-    override fun <R : EncoderOutput> encode(obj: T, output: R): R = output.apply {
-        intEncoder.encode(obj.ordinal, this)
-    }
+    override fun encode(obj: T, output: EncoderOutput): Unit = intEncoder.encode(obj.ordinal, output)
 
 }
 
@@ -148,10 +144,14 @@ fun <T : Enum<T>> EnumEncoderString(
     stringEncoder: Encoder<String> = UTF8StringEncoder(),
 ): Encoder<T> = object : Encoder<T> {
 
-    override fun <R : EncoderOutput> encode(obj: T, output: R): R = output.apply {
-        stringEncoder.encode(obj.name, this)
-    }
+    override fun encode(obj: T, output: EncoderOutput): Unit = stringEncoder.encode(obj.name, output)
 
 }
+
+//endregion
+
+//region Special Encoders
+
+fun <T> NoOpEncoder(): Encoder<T> = Encoder { _, _ -> /* do nothing */ }
 
 //endregion
