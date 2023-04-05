@@ -24,22 +24,6 @@ fun interface EncoderOutput {
 
     fun write(bytes: Iterable<Byte>): Unit = bytes.forEach(::write)
 
-    class ByteListOutput : EncoderOutput {
-
-        private val inner = ArrayList<Byte>()
-
-        override fun write(byte: Byte) {
-            inner.add(byte)
-        }
-
-        fun toByteArray(): ByteArray = inner.toByteArray()
-
-        fun toList(): List<Byte> = inner.toList()
-
-        override fun toString(): String = inner.toString()
-
-    }
-
     class OutputStreamOutput(private val output: OutputStream) : EncoderOutput {
 
         override fun write(byte: Byte): Unit = output.write(byte.toInt())

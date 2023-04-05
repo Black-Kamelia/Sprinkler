@@ -9,8 +9,8 @@ fun interface Encoder<in T> {
     fun encode(obj: T, output: EncoderOutput)
 
     fun encodeToByteArray(obj: T): ByteArray {
-        val output = EncoderOutput.ByteListOutput()
-        encode(obj, output)
+        val output = ArrayList<Byte>()
+        encode(obj, output::add)
         return output.toByteArray()
     }
 
