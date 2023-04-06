@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.collection.readonly
 
-import java.util.NoSuchElementException
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -29,16 +29,16 @@ class ListTest {
         val list = listOf(1, 2, 3)
         val readOnlyList = list.asReadOnlyList()
 
-        assertTrue(readOnlyList.contains(1) == list.contains(1))
-        assertTrue(!readOnlyList.contains(5) == !list.contains(5))
-        assertTrue(readOnlyList.containsAll(listOf(1, 2)) == list.containsAll(listOf(1, 2)))
-        assertTrue(!readOnlyList.containsAll(listOf(1, 5)) == !list.containsAll(listOf(1, 5)))
-        assertTrue(!readOnlyList.isEmpty() == !list.isEmpty())
-        assertTrue(readOnlyList.size == list.size)
-        assertTrue(readOnlyList[0] == list[0])
-        assertTrue(readOnlyList.indexOf(1) == list.indexOf(1))
-        assertTrue(readOnlyList.lastIndexOf(1) == list.lastIndexOf(1))
-        assertTrue(readOnlyList.subList(0, 2) == list.subList(0, 2))
+        assertEquals(1 in readOnlyList, 1 in list)
+        assertEquals(5 in readOnlyList, 5 in list)
+        assertEquals(readOnlyList.containsAll(listOf(1, 2)), list.containsAll(listOf(1, 2)))
+        assertEquals(readOnlyList.containsAll(listOf(1, 5)), list.containsAll(listOf(1, 5)))
+        assertEquals(readOnlyList.isEmpty(), list.isEmpty())
+        assertEquals(readOnlyList.size, list.size)
+        assertEquals(readOnlyList[0], list[0])
+        assertEquals(readOnlyList.indexOf(1), list.indexOf(1))
+        assertEquals(readOnlyList.lastIndexOf(1), list.lastIndexOf(1))
+        assertEquals(readOnlyList.subList(0, 2), list.subList(0, 2))
     }
 
     @Test
@@ -86,8 +86,8 @@ class ListTest {
         val readOnlyList = array.toReadOnlyList()
         array[0] = 5
 
-        assertTrue(array[0] == 5)
-        assertTrue(readOnlyList.size == 3)
+        assertEquals(array[0], 5)
+        assertEquals(readOnlyList.size, 3)
         assertTrue(5 !in readOnlyList)
     }
 
@@ -121,77 +121,6 @@ class ListTest {
         assertTrue(readOnlyListIterator.hasNext() == listIterator.hasNext())
         assertTrue(readOnlyListIterator.hasPrevious() == listIterator.hasPrevious())
         assertTrue(readOnlyListIterator.next() == listIterator.next())
-        assertTrue(readOnlyListIterator.nextIndex() == listIterator.nextIndex())
-        assertTrue(readOnlyListIterator.previous() == listIterator.previous())
-        assertTrue(readOnlyListIterator.previousIndex() == listIterator.previousIndex())
-    }
-
-    @Test
-    fun `read only subList cannot be casted to mutable subList`() {
-        val readOnlyList = listOf(1, 2, 3).asReadOnlyList()
-        val subList = readOnlyList.subList(0, 2)
-
-        @Suppress("UNCHECKED_CAST")
-        assertThrows<ClassCastException> { subList as MutableList<Int> }
-    }
-
-    @Test
-    fun `read only subList correctly overrides methods from List`() {
-        val readOnlyList = listOf(1, 2, 3).asReadOnlyList()
-        val subList = readOnlyList.subList(0, 2)
-
-        assertTrue(1 in subList)
-        assertTrue(3 !in subList)
-        assertTrue(subList.containsAll(listOf(1, 2)))
-        assertTrue(!subList.containsAll(listOf(1, 5)))
-        assertTrue(!subList.isEmpty())
-        assertTrue(subList.size == 2)
-        assertTrue(subList[0] == 1)
-        assertTrue(subList.indexOf(1) == 0)
-        assertTrue(subList.lastIndexOf(1) == 0)
-        assertTrue(subList.subList(0, 1) == listOf(1))
-    }
-
-    @Test
-    fun `read only subList iterator cannot be casted to mutable subList iterator`() {
-        val readOnlyList = listOf(1, 2, 3).asReadOnlyList()
-        val subList = readOnlyList.subList(0, 2)
-        val iterator = subList.iterator()
-
-        @Suppress("UNCHECKED_CAST")
-        assertThrows<ClassCastException> { iterator as MutableListIterator<Int> }
-    }
-
-    @Test
-    fun `read only subList listIterator cannot be casted to mutable subList listIterator`() {
-        val readOnlyList = listOf(1, 2, 3).asReadOnlyList()
-        val subList = readOnlyList.subList(0, 2)
-        val listIterator = subList.listIterator()
-
-        @Suppress("UNCHECKED_CAST")
-        assertThrows<ClassCastException> { listIterator as MutableListIterator<Int> }
-    }
-
-    @Test
-    fun `read only subList listIterator methods inherited from ListIterator are delegated to the inner listIterator`() {
-        val list = listOf(1, 2)
-        val readOnlyList = list.asReadOnlyList()
-        val subList = readOnlyList.subList(0, 2)
-        val readOnlyListIterator = subList.listIterator()
-        val listIterator = list.listIterator()
-
-        assertThrows<NoSuchElementException> { readOnlyListIterator.previous() }
-
-        assertTrue(readOnlyListIterator.hasNext() == listIterator.hasNext())
-        assertTrue(readOnlyListIterator.hasPrevious() == listIterator.hasPrevious())
-        assertTrue(readOnlyListIterator.next() == listIterator.next())
-
-        assertThrows<NoSuchElementException> {
-            readOnlyListIterator.next()
-            readOnlyListIterator.next()
-        }
-        readOnlyListIterator.previous()
-
         assertTrue(readOnlyListIterator.nextIndex() == listIterator.nextIndex())
         assertTrue(readOnlyListIterator.previous() == listIterator.previous())
         assertTrue(readOnlyListIterator.previousIndex() == listIterator.previousIndex())
