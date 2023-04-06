@@ -1,10 +1,8 @@
-package com.kamelia.sprinkler.collection.readonly.internal
+package com.kamelia.sprinkler.collection.readonly
 
-import com.kamelia.sprinkler.collection.readonly.ReadOnlyCollection
-import com.kamelia.sprinkler.collection.readonly.ReadOnlyIterator
-import com.kamelia.sprinkler.collection.readonly.readOnlyIterator
+import com.zwendo.restrikt.annotation.PackagePrivate
 
-
+@PackagePrivate
 internal open class ReadOnlyCollectionImpl<E>(
     private val inner: Collection<E>,
 ) : ReadOnlyCollection<E>, Collection<E> by inner {
