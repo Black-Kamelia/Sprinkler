@@ -70,6 +70,25 @@ class CommonDecodersTest {
     }
 
     @Test
+    fun `instant decoder works correctly with nanos`() {
+        val decoder = InstantDecoder(true)
+        val instant = Instant.now()
+
+        val millis = instant.epochSecond
+        val nanos = instant.nano.toLong()
+        val data = byteArrayOf(
+            millis.byte(7), millis.byte(6), millis.byte(5), millis.byte(4),
+            millis.byte(3), millis.byte(2), millis.byte(1), millis.byte(0),
+            nanos.byte(7), nanos.byte(6), nanos.byte(5), nanos.byte(4),
+            nanos.byte(3), nanos.byte(2), nanos.byte(1), nanos.byte(0)
+        )
+
+        val result = decoder.decode(data).assertDoneAndGet()
+        assertEquals(instant.toEpochMilli(), result.toEpochMilli())
+        assertEquals(instant.nano, result.nano)
+    }
+
+    @Test
     fun `local time decoder works correctly`() {
         val decoder = LocalTimeDecoder(true)
         val localTime = LocalTime.now()
@@ -209,7 +228,7 @@ class CommonDecodersTest {
     @Test
     fun `zoned date time decoder works correctly`() {
         val decoder = ZonedDateTimeDecoder()
-        val zonedDateTime = ZonedDateTime.now()
+        val zonedDateTime = ZonedDateTime.now().withNano(0)
 
         val instant = zonedDateTime.toInstant().toEpochMilli()
         val zoneId = zonedDateTime.zone
@@ -219,6 +238,30 @@ class CommonDecodersTest {
         val data = byteArrayOf(
             instant.byte(7), instant.byte(6), instant.byte(5), instant.byte(4),
             instant.byte(3), instant.byte(2), instant.byte(1), instant.byte(0),
+            size.byte(3), size.byte(2), size.byte(1), size.byte(0)
+        ) + array
+
+        val result = decoder.decode(data).assertDoneAndGet()
+        assertEquals(zonedDateTime, result)
+    }
+
+    @Test
+    fun `zoned date time decoder with nanos works correctly`() {
+        val decoder = ZonedDateTimeDecoder(InstantDecoder(true))
+        val zonedDateTime = ZonedDateTime.now()
+
+        val instant = zonedDateTime.toInstant()
+        val seconds = instant.epochSecond
+        val nanos = instant.nano
+        val zoneId = zonedDateTime.zone
+
+        val array = zoneId.id.toByteArray()
+        val size = array.size
+        val data = byteArrayOf(
+            seconds.byte(7), seconds.byte(6), seconds.byte(5), seconds.byte(4),
+            seconds.byte(3), seconds.byte(2), seconds.byte(1), seconds.byte(0),
+            nanos.byte(7), nanos.byte(6), nanos.byte(5), nanos.byte(4),
+            nanos.byte(3), nanos.byte(2), nanos.byte(1), nanos.byte(0),
             size.byte(3), size.byte(2), size.byte(1), size.byte(0)
         ) + array
 
