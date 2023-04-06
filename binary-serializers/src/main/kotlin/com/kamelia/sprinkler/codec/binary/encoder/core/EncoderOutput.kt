@@ -24,15 +24,18 @@ fun interface EncoderOutput {
 
     fun write(bytes: Iterable<Byte>): Unit = bytes.forEach(::write)
 
-    class OutputStreamOutput(private val output: OutputStream) : EncoderOutput {
+    companion object {
 
-        override fun write(byte: Byte): Unit = output.write(byte.toInt())
+        @JvmStatic
+        fun from(output: OutputStream): EncoderOutput = object : EncoderOutput {
 
-        override fun write(bytes: ByteArray) {
-            output.write(bytes)
+            override fun write(byte: Byte): Unit = output.write(byte.toInt())
+
+            override fun write(bytes: ByteArray, start: Int, length: Int) = output.write(bytes, start, length)
+
+            override fun toString(): String = output.toString()
+
         }
-
-        override fun toString(): String = output.toString()
 
     }
 
