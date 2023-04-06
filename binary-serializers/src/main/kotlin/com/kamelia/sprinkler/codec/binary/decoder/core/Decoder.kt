@@ -6,19 +6,6 @@ import com.kamelia.sprinkler.codec.binary.decoder.core.Decoder.State.Error
 import com.kamelia.sprinkler.codec.binary.decoder.core.Decoder.State.Processing
 import java.io.InputStream
 import java.nio.ByteBuffer
-import kotlin.Boolean
-import kotlin.ByteArray
-import kotlin.IllegalStateException
-import kotlin.LazyThreadSafetyMode
-import kotlin.Nothing
-import kotlin.String
-import kotlin.Suppress
-import kotlin.Throwable
-import kotlin.Unit
-import kotlin.UnsafeVariance
-import kotlin.apply
-import kotlin.lazy
-import kotlin.toString
 
 /**
  * Represents an object that can convert a stream of bytes into an object of type [T]. A decoder is stateful and can
@@ -28,7 +15,7 @@ import kotlin.toString
  *
  * ```
  * fun myDecoding(decoder: Decoder<Byte>) {
- *     val input = FileInputStream("file.txt") // a file containing the byte 5
+ *     val input = FileInputStream("file") // a binary file containing the byte 5
  *     val value = decoder.decode(input).get()
  *     println(value) // prints 5
  * }
