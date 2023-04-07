@@ -8,6 +8,7 @@ import com.kamelia.sprinkler.codec.binary.core.UTF16_NULL
 import com.kamelia.sprinkler.codec.binary.core.UTF8_NULL
 import com.kamelia.sprinkler.codec.binary.encoder.core.Encoder
 import com.kamelia.sprinkler.codec.binary.encoder.core.EncoderOutput
+import com.kamelia.sprinkler.util.byte
 import java.nio.ByteOrder
 import java.nio.charset.Charset
 
@@ -19,51 +20,61 @@ fun ByteEncoder(): Encoder<Byte> =
     }
 
 @JvmOverloads
-fun ShortEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Short> =
-    Encoder { obj, output ->
-        val offset = if (endianness == ByteOrder.BIG_ENDIAN) Short.SIZE_BYTES - 1 else 0
+fun ShortEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Short> {
+    val isLittleEndian = endianness === ByteOrder.LITTLE_ENDIAN
+    return Encoder { obj, output ->
         repeat(Short.SIZE_BYTES) {
-            output.write((obj.toInt() shr (8 * (offset - it))).toByte())
+            val byte = obj.byte(it, isLittleEndian)
+            output.write(byte)
         }
     }
+}
 
 @JvmOverloads
-fun IntEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Int> =
-    Encoder { obj, output ->
-        val offset = if (endianness == ByteOrder.BIG_ENDIAN) Int.SIZE_BYTES - 1 else 0
+fun IntEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Int> {
+    val isLittleEndian = endianness === ByteOrder.LITTLE_ENDIAN
+    return Encoder { obj, output ->
         repeat(Int.SIZE_BYTES) {
-            output.write((obj shr (8 * (offset - it))).toByte())
+            val byte = obj.byte(it, isLittleEndian)
+            output.write(byte)
         }
     }
+}
 
 @JvmOverloads
-fun LongEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Long> =
-    Encoder { obj, output ->
-        val offset = if (endianness == ByteOrder.BIG_ENDIAN) Long.SIZE_BYTES - 1 else 0
+fun LongEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Long> {
+    val isLittleEndian = endianness === ByteOrder.LITTLE_ENDIAN
+    return Encoder { obj, output ->
         repeat(Long.SIZE_BYTES) {
-            output.write((obj shr (8 * (offset - it))).toByte())
+            val byte = obj.byte(it, isLittleEndian)
+            output.write(byte)
         }
     }
+}
 
 @JvmOverloads
-fun FloatEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Float> =
-    Encoder { obj, output ->
-        val offset = if (endianness == ByteOrder.BIG_ENDIAN) Float.SIZE_BYTES - 1 else 0
+fun FloatEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Float> {
+    val isLittleEndian = endianness === ByteOrder.LITTLE_ENDIAN
+    return Encoder { obj, output ->
         val asInt = obj.toRawBits()
         repeat(Float.SIZE_BYTES) {
-            output.write((asInt shr (8 * (offset - it))).toByte())
+            val byte = asInt.byte(it, isLittleEndian)
+            output.write(byte)
         }
     }
+}
 
 @JvmOverloads
-fun DoubleEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Double> =
-    Encoder { obj, output ->
-        val offset = if (endianness == ByteOrder.BIG_ENDIAN) Double.SIZE_BYTES - 1 else 0
+fun DoubleEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Double> {
+    val isLittleEndian = endianness === ByteOrder.LITTLE_ENDIAN
+    return Encoder { obj, output ->
         val asLong = obj.toRawBits()
         repeat(Double.SIZE_BYTES) {
-            output.write((asLong shr (8 * (offset - it))).toByte())
+            val byte = asLong.byte(it, isLittleEndian)
+            output.write(byte)
         }
     }
+}
 
 fun BooleanEncoder(): Encoder<Boolean> = Encoder { obj, output ->
     output.write(if (obj) 1 else 0)
