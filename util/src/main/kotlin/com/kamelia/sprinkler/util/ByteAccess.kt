@@ -3,144 +3,156 @@
 package com.kamelia.sprinkler.util
 
 /**
- * Returns the bit at the given [index] in a [Byte].
+ * Returns the bit at the given [index] in a [Byte], starting from the least significant bit.
  *
  * @receiver the [Byte] to access
  * @param index the index of the bit to return
- * @return the bit at the given [index] or 0 if [index] is greater than or equal to [Byte.SIZE_BITS]
- * @throws IllegalArgumentException if [index] is negative
+ * @return the bit at the given [index]
  */
-inline fun Byte.bit(index: Int): Byte {
-    require(index >= 0) { "index must be >= 0, but was $index" }
-    return if (index >= Byte.SIZE_BITS) 0 else (toInt() ushr index and 0x1).toByte()
-}
+inline fun Byte.bit(index: Int): Byte = (toInt() ushr index and 0x1).toByte()
 
 /**
- * Returns the byte at the given [index] in a [Short].
+ * Returns the byte at the given [index] in a [Short] starting from the least significant byte.
  *
  * @receiver the [Short] to access
  * @param index the index of the byte to return
- * @return the byte at the given [index] or 0 if [index] is greater than or equal to [Short.SIZE_BYTES]
- * @throws IllegalArgumentException if [index] is negative
+ * @param bigEndian whether to access the byte in big-endian order
+ * @return the byte at the given [index]
  */
-inline fun Short.byte(index: Int): Byte {
-    require(index >= 0) { "index must be >= 0, but was $index" }
-    return if (index >= Short.SIZE_BYTES) 0 else (toInt() ushr (index * 8) and 0xFF).toByte()
+@JvmOverloads
+inline fun Short.byte(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
+    (toInt() ushr (index shl 3) and 0xFF).toByte()
+} else {
+    (toInt() ushr ((Short.SIZE_BYTES - 1 - index) shl 3) and 0xFF).toByte()
 }
 
 /**
- * Returns the bit at the given [index] in a [Short].
+ * Returns the bit at the given [index] in a [Short], starting from the least significant bit of the least significant
+ * byte.
  *
  * @receiver the [Short] to access
  * @param index the index of the bit to return
- * @return the bit at the given [index] or 0 if [index] is greater than or equal to [Short.SIZE_BITS]
- * @throws IllegalArgumentException if [index] is negative
+ * @param bigEndian whether to access the bit in big-endian order
+ * @return the bit at the given [index]
  */
-inline fun Short.bit(index: Int): Byte {
-    require(index >= 0) { "index must be >= 0, but was $index" }
-    return if (index >= Short.SIZE_BITS) 0 else (toInt() ushr index and 0x1).toByte()
+@JvmOverloads
+inline fun Short.bit(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
+    (toInt() ushr index and 0x1).toByte()
+} else {
+    val byteIndex = index shl 3 // index / 8 (integer division)
+    val bitIndex = (index - byteIndex) shr 3 // index % 8
+    (toInt() ushr (((Short.SIZE_BYTES - 1 - byteIndex) shl 3) + bitIndex) and 0x1).toByte()
 }
 
 /**
- * Returns the byte at the given [index] in an [Int].
+ * Returns the byte at the given [index] in an [Int], starting from the least significant byte.
  *
  * @receiver the [Int] to access
  * @param index the index of the byte to return
- * @return the byte at the given [index] or 0 if [index] is greater than or equal to [Int.SIZE_BYTES]
- * @throws IllegalArgumentException if [index] is negative
+ * @param bigEndian whether to access the byte in big-endian order
+ * @return the byte at the given [index]
  */
-inline fun Int.byte(index: Int): Byte {
-    require(index >= 0) { "index must be >= 0, but was $index" }
-    return if (index >= Int.SIZE_BYTES) 0 else (this ushr (index * 8) and 0xFF).toByte()
+@JvmOverloads
+inline fun Int.byte(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
+    (this ushr (index shl 3) and 0xFF).toByte()
+} else {
+    (this ushr ((Int.SIZE_BYTES - 1 - index) shl 3) and 0xFF).toByte()
 }
 
 /**
- * Returns the bit at the given [index] in an [Int].
+ * Returns the bit at the given [index] in an [Int], starting from the least significant bit of the least significant
+ * byte.
  *
  * @receiver the [Int] to access
  * @param index the index of the bit to return
- * @return the bit at the given [index] or 0 if [index] is greater than or equal to [Int.SIZE_BITS]
- * @throws IllegalArgumentException if [index] is negative
+ * @param bigEndian whether to access the bit in big-endian order
+ * @return the bit at the given [index]
  */
-inline fun Int.bit(index: Int): Byte {
-
-    return if (index >= Int.SIZE_BITS) 0 else (this ushr index and 0x1).toByte()
+@JvmOverloads
+inline fun Int.bit(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
+    (this ushr index and 0x1).toByte()
+} else {
+    val byteIndex = index shr 3 // index / 8 (integer division)
+    val bitIndex = (index - byteIndex) shr 3 // index % 8
+    println("byteIndex: $byteIndex, bitIndex: $bitIndex")
+    (this ushr ((Int.SIZE_BYTES - 1 - byteIndex) shl 3) + bitIndex and 0x1).toByte()
 }
 
 /**
- * Returns the byte at the given [index] in a [Long].
+ * Returns the byte at the given [index] in a [Long], starting from the least significant byte.
  *
  * @receiver the [Long] to access
  * @param index the index of the byte to return
- * @return the byte at the given [index] or 0 if [index] is greater than or equal to [Long.SIZE_BYTES]
- * @throws IllegalArgumentException if [index] is negative
+ * @param bigEndian whether to access the byte in big-endian order
+ * @return the byte at the given [index]
  */
-fun Long.byte(index: Int): Byte {
-    require(index >= 0) { "index must be >= 0, but was $index" }
-    return (this ushr (index * 8) and 0xFF).toByte()
+@JvmOverloads
+fun Long.byte(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
+    (this ushr (index shl 3) and 0xFF).toByte()
+} else {
+    (this ushr ((Long.SIZE_BYTES - 1 - index) shl 3) and 0xFF).toByte()
 }
 
 /**
- * Returns the bit at the given [index] in a [Long].
+ * Returns the bit at the given [index] in a [Long], starting from the least significant bit of the least significant
+ * byte.
  *
  * @receiver the [Long] to access
  * @param index the index of the bit to return
+ * @param bigEndian whether to access the bit in big-endian order
  * @return the bit at the given [index]
- * @throws IllegalArgumentException if [index] is not in between 0 and [Long.SIZE_BITS] (exclusive)
  */
-fun Long.bit(index: Int): Byte {
-    require(index in 0..63) { "Index $index is out of bounds ([0, ${Long.SIZE_BITS}[)." }
-    return (this ushr index and 0x1).toByte()
+@JvmOverloads
+fun Long.bit(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
+    (this ushr index and 0x1).toByte()
+} else {
+    val byteIndex = index shr 3 // index / 8 (integer division)
+    val bitIndex = (index - byteIndex) shr 3 // index % 8
+    (this ushr ((Long.SIZE_BYTES - 1 - byteIndex) shl 3) + bitIndex and 0x1).toByte()
 }
 
 /**
- * Returns the byte at the given [index] in a [Float].
+ * Returns the byte at the given [index] in a [Float], starting from the least significant byte.
  *
  * @receiver the [Float] to access
  * @param index the index of the byte to return
+ * @param bigEndian whether to access the byte in big-endian order
  * @return the byte at the given [index]
- * @throws IllegalArgumentException if [index] is not in between 0 and [Float.SIZE_BYTES] (exclusive)
  */
-fun Float.byte(index: Int): Byte {
-    require(index in 0..3) { "Index $index is out of bounds ([0, ${Float.SIZE_BYTES}[)." }
-    return (this.toRawBits() ushr (index * 8) and 0xFF).toByte()
-}
+@JvmOverloads
+fun Float.byte(index: Int, bigEndian: Boolean = true): Byte = toRawBits().byte(index, bigEndian)
 
 /**
- * Returns the bit at the given [index] in a [Float].
+ * Returns the bit at the given [index] in a [Float], starting from the least significant bit of the least significant
+ * byte.
  *
  * @receiver the [Float] to access
  * @param index the index of the bit to return
+ * @param bigEndian whether to access the bit in big-endian order
  * @return the bit at the given [index]
- * @throws IllegalArgumentException if [index] is not in between 0 and [Float.SIZE_BITS] (exclusive)
  */
-fun Float.bit(index: Int): Byte {
-    require(index in 0..31) { "Index $index is out of bounds ([0, ${Float.SIZE_BITS}[)." }
-    return (this.toRawBits() ushr index and 0x1).toByte()
-}
+@JvmOverloads
+fun Float.bit(index: Int, bigEndian: Boolean = true): Byte = toRawBits().bit(index, bigEndian)
 
 /**
- * Returns the byte at the given [index] in a [Double].
+ * Returns the byte at the given [index] in a [Double], starting from the least significant byte.
  *
  * @receiver the [Double] to access
  * @param index the index of the byte to return
+ * @param bigEndian whether to access the byte in big-endian order
  * @return the byte at the given [index]
- * @throws IllegalArgumentException if [index] is not in between 0 and [Double.SIZE_BYTES] (exclusive)
  */
-fun Double.byte(index: Int): Byte {
-    require(index in 0..7) { "Index $index is out of bounds ([0, ${Double.SIZE_BYTES}[)." }
-    return (this.toRawBits() ushr (index * 8) and 0xFF).toByte()
-}
+@JvmOverloads
+fun Double.byte(index: Int, bigEndian: Boolean = true): Byte = toRawBits().byte(index, bigEndian)
 
 /**
- * Returns the bit at the given [index] in a [Double].
+ * Returns the bit at the given [index] in a [Double], starting from the least significant bit of the least significant
+ * byte.
  *
  * @receiver the [Double] to access
  * @param index the index of the bit to return
+ * @param bigEndian whether to access the bit in big-endian order
  * @return the bit at the given [index]
- * @throws IllegalArgumentException if [index] is not in between 0 and [Double.SIZE_BITS] (exclusive)
  */
-fun Double.bit(index: Int): Byte {
-    require(index in 0..63) { "Index $index is out of bounds ([0, ${Double.SIZE_BITS}[)." }
-    return (this.toRawBits() ushr index and 0x1).toByte()
-}
+@JvmOverloads
+fun Double.bit(index: Int, bigEndian: Boolean = true): Byte = toRawBits().bit(index, bigEndian)
