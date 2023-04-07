@@ -17,18 +17,20 @@ pipeline {
                         error 'Only develop branch can be merged into master'
                     }
                 }
-                sh 'gradle build -x test'
+                sh 'gradle build -q -x test'
             }
         }
         stage('Test') {
             steps {
-                sh 'gradle test -PenableRestrikt=false'
+                sh 'gradle test -q -PenableRestrikt=false'
             }
             post {
                 always {
                     junit checksName: 'Tests', allowEmptyResults: true, testResults: '**/build/test-results/test/TEST-*.xml'
                     publishCoverage adapters: [jacocoAdapter(mergeToOneReport: true, path: '**/build/reports/kover/xml/*.xml')],
                         sourceDirectories: [
+                            [path: 'binary-serializers/src/main/kotlin'],
+                            [path: 'binary-serializers/src/main/java'],
                             [path: 'readonly-collections/src/main/kotlin'],
                             [path: 'readonly-collections/src/main/java'],
                             [path: 'util/src/main/kotlin'],
@@ -47,7 +49,7 @@ pipeline {
                         usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
                         usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass'),
                 ]) {
-                    sh 'gradle publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
+                    sh 'gradle -q publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
                 }
             }
         }
