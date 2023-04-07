@@ -8,4 +8,5 @@ pluginManagement {
 
 include(
     "readonly-collections",
+    "util",
 )
