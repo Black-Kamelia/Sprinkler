@@ -1,5 +1,7 @@
 package com.kamelia.sprinkler.collection.readonly
 
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -139,6 +141,35 @@ class MapTest {
 
         @Suppress("UNCHECKED_CAST")
         assertThrows<ClassCastException> { iterator as MutableIterator<MutableMap.MutableEntry<Int, String>> }
+    }
+
+    @Test
+    fun `map entries methods inherited from Set are delegated to the inner set`() {
+        val map = mutableMapOf(1 to "one", 2 to "two", 3 to "three")
+        val readOnlyMap = map.asReadOnlyMap()
+        val readOnlyEntries = readOnlyMap.entries as Set<Map.Entry<Int, String>>
+        val entries = map.entries
+
+        val entry = entries.first()
+        assertTrue(readOnlyEntries.contains(entry))
+        assertTrue(readOnlyEntries.containsAll(entries))
+        entries.remove(entry)
+        assertFalse(entry in readOnlyEntries)
+        assertTrue(readOnlyEntries.isNotEmpty())
+        assertEquals(readOnlyEntries.size, entries.size)
+        assertTrue(readOnlyEntries.containsAll(entries))
+    }
+
+    @Test
+    fun `map entries methods inherited from Any are delegated to the inner set`() {
+        val map = mapOf(1 to "one", 2 to "two", 3 to "three")
+        val readOnlyMap = map.asReadOnlyMap()
+        val readOnlyEntries = readOnlyMap.entries
+        val entries = map.entries
+
+        assertTrue(readOnlyEntries.toString() == entries.toString())
+        assertTrue(readOnlyEntries.hashCode() == entries.hashCode())
+        assertTrue(readOnlyEntries == entries)
     }
 
     @Test
