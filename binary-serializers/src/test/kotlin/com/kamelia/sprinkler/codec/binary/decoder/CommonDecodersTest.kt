@@ -220,7 +220,6 @@ class CommonDecodersTest {
             size.byte(3), size.byte(2), size.byte(1), size.byte(0)
         ) + array
 
-
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(zoneId, result)
     }
@@ -252,37 +251,22 @@ class CommonDecodersTest {
 
         val instant = zonedDateTime.toInstant()
         val seconds = instant.epochSecond
-        val nanos = instant.nano
+        val nanos = instant.nano.toLong()
         val zoneId = zonedDateTime.zone
 
         val array = zoneId.id.toByteArray()
         val size = array.size
-        val data = byteArrayOf(
-            seconds.byte(7), seconds.byte(6), seconds.byte(5), seconds.byte(4),
-            seconds.byte(3), seconds.byte(2), seconds.byte(1), seconds.byte(0),
-            nanos.byte(7), nanos.byte(6), nanos.byte(5), nanos.byte(4),
-            nanos.byte(3), nanos.byte(2), nanos.byte(1), nanos.byte(0),
-            size.byte(3), size.byte(2), size.byte(1), size.byte(0)
-        ) + array
+        val data = ByteArray(Long.SIZE_BYTES * 2 + Int.SIZE_BYTES + array.size) {
+            when (it) {
+                in 0..7 -> seconds.byte(it, false)
+                in 8..15 -> nanos.byte(it - 8, false)
+                in 16..19 -> size.byte(it - 16, false)
+                else -> array[it - 20]
+            }
+        }
 
         val result = decoder.decode(data).assertDoneAndGet()
         assertEquals(zonedDateTime, result)
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
