@@ -2,14 +2,6 @@
 
 package com.kamelia.sprinkler.collection.readonly
 
-import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlyCollectionImpl
-import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlyIterableImpl
-import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlyIteratorImpl
-import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlyListImpl
-import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlyListIteratorImpl
-import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlyMapImpl
-import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlySetImpl
-
 //region ReadOnlyIterables
 
 /**
