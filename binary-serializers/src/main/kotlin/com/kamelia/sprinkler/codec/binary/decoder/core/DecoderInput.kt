@@ -98,10 +98,10 @@ fun interface DecoderInput {
      * Reads bytes from the source into the given [MutableCollection] and returns the number of bytes read. The method
      * will read as many bytes as possible, up to [Int.MAX_VALUE] element.
      *
-     * @param collection the [MutableCollection] to read into
+     * @param bytes the [MutableCollection] to read into
      * @return the number of bytes read
      */
-    fun read(collection: MutableCollection<Byte>): Int = read(collection, Int.MAX_VALUE)
+    fun read(bytes: MutableCollection<Byte>): Int = read(bytes, Int.MAX_VALUE)
 
     /**
      * Skips the given number of bytes. Returns the number of bytes actually skipped.
