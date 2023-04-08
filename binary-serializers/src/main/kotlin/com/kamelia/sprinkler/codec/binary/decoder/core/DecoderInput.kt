@@ -2,6 +2,7 @@ package com.kamelia.sprinkler.codec.binary.decoder.core
 
 import java.io.InputStream
 import java.nio.ByteBuffer
+import java.util.*
 import kotlin.math.min
 
 /**
@@ -40,10 +41,10 @@ fun interface DecoderInput {
      * @param start the inclusive start index in the [ByteArray] to read into
      * @param length the exclusive end index in the [ByteArray] to read into
      * @return the number of bytes read
-     * @throws IllegalArgumentException if [start] < 0 or [length] < 0 or [start] + [length] > [ByteArray.size]
+     * @throws IndexOutOfBoundsException if [start] < 0 or [length] < 0 or [start] + [length] > [ByteArray.size]
      */
     fun read(bytes: ByteArray, start: Int, length: Int): Int {
-        checkArrayRange(bytes, start, length)
+        Objects.checkFromIndexSize(start, length, bytes.size)
         var index = start
         val end = start + length
         while (index < end) {
@@ -161,7 +162,7 @@ fun interface DecoderInput {
             }
 
             override fun read(bytes: ByteArray, start: Int, length: Int): Int {
-                checkArrayRange(bytes, start, length)
+                Objects.checkFromIndexSize(start, length, bytes.size)
                 if (inner.position() == 0) return 0
                 inner.flip()
 
@@ -194,14 +195,6 @@ fun interface DecoderInput {
                 val oldIndex = index
                 index = min(index + n.toInt(), inner.size)
                 return index - oldIndex.toLong()
-            }
-        }
-
-        private fun checkArrayRange(bytes: ByteArray, start: Int, length: Int) {
-            require(start >= 0) { "start must be >= 0, but was $start" }
-            require(length >= 0) { "length must be >= 0, but was $length" }
-            require(start + length <= bytes.size) {
-                "start + length must be <= bytes.size, but sum was ${start + length}, bytes.size was ${bytes.size}"
             }
         }
 

@@ -46,13 +46,13 @@ class DecoderInputTest {
     ) {
         val input = factory(byteArrayOf())
         val receiver = ByteArray(1)
-        assertThrows<IllegalArgumentException> {
+        assertThrows<IndexOutOfBoundsException> {
             input.read(receiver, -1, 1)
         }
-        assertThrows<IllegalArgumentException> {
+        assertThrows<IndexOutOfBoundsException> {
             input.read(receiver, 1, -1)
         }
-        assertThrows<IllegalArgumentException> {
+        assertThrows<IndexOutOfBoundsException> {
             input.read(receiver, 1, 2)
         }
     }

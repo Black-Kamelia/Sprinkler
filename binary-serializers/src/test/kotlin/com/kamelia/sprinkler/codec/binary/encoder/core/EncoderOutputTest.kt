@@ -101,28 +101,28 @@ class EncoderOutputTest {
     fun `write byte array throws exception when start index is negative`() {
         val output = EncoderOutput { }
         val bytes = byteArrayOf(4, 23, 87, -1)
-        assertThrows<IllegalArgumentException> { output.write(bytes, -1) }
+        assertThrows<IndexOutOfBoundsException> { output.write(bytes, -1) }
     }
 
     @Test
     fun `write byte array throws exception when length is negative`() {
         val output = EncoderOutput { }
         val bytes = byteArrayOf(4, 23, 87, -1)
-        assertThrows<IllegalArgumentException> { output.write(bytes, 0, -1) }
+        assertThrows<IndexOutOfBoundsException> { output.write(bytes, 0, -1) }
     }
 
     @Test
     fun `write byte array throws exception when start index is greater than array size`() {
         val output = EncoderOutput { }
         val bytes = byteArrayOf(4, 23, 87, -1)
-        assertThrows<IllegalArgumentException> { output.write(bytes, bytes.size + 1) }
+        assertThrows<IndexOutOfBoundsException> { output.write(bytes, bytes.size + 1) }
     }
 
     @Test
     fun `write byte array throws exception when start index plus length is greater than array size`() {
         val output = EncoderOutput { }
         val bytes = byteArrayOf(4, 23, 87, -1)
-        assertThrows<IllegalArgumentException> { output.write(bytes, 1, bytes.size) }
+        assertThrows<IndexOutOfBoundsException> { output.write(bytes, 1, bytes.size) }
     }
 
 }
