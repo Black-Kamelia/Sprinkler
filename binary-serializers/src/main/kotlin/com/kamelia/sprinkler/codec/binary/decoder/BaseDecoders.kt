@@ -34,7 +34,7 @@ fun ByteDecoder(): Decoder<Byte> = ConstantSizedItemDecoder(Byte.SIZE_BYTES) { r
  * Creates a [Decoder] that reads a [Short] from the input. The endianness of the short is specified by the [endianness]
  * parameter.
  *
- * @param endianness the endianness of the short (default is [ByteOrder.BIG_ENDIAN])
+ * @param endianness the endianness of the short (defaults to [ByteOrder.BIG_ENDIAN])
  * @return a [Decoder] that reads [Short] from the input
  */
 @JvmOverloads
@@ -45,7 +45,7 @@ fun ShortDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Short> =
  * Creates a [Decoder] that reads an [Int] from the input. The endianness of the int is specified by the [endianness]
  * parameter.
  *
- * @param endianness the endianness of the int (default is [ByteOrder.BIG_ENDIAN])
+ * @param endianness the endianness of the int (defaults to [ByteOrder.BIG_ENDIAN])
  * @return a [Decoder] that reads [Int] from the input
  */
 @JvmOverloads
@@ -56,7 +56,7 @@ fun IntDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Int> =
  * Creates a [Decoder] that reads a [Long] from the input. The endianness of the long is specified by the [endianness]
  * parameter.
  *
- * @param endianness the endianness of the long (default is [ByteOrder.BIG_ENDIAN])
+ * @param endianness the endianness of the long (defaults to [ByteOrder.BIG_ENDIAN])
  * @return a [Decoder] that reads [Long] from the input
  */
 @JvmOverloads
@@ -67,7 +67,7 @@ fun LongDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Long> =
  * Creates a [Decoder] that reads a [Float] from the input. The endianness of the float is specified by the [endianness]
  * parameter.
  *
- * @param endianness the endianness of the float (default is [ByteOrder.BIG_ENDIAN])
+ * @param endianness the endianness of the float (defaults to [ByteOrder.BIG_ENDIAN])
  * @return a [Decoder] that reads [Float] from the input
  */
 @JvmOverloads
@@ -78,7 +78,7 @@ fun FloatDecoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Decoder<Float> =
  * Creates a [Decoder] that reads a [Double] from the input. The endianness of the double is specified by the
  * [endianness] parameter.
  *
- * @param endianness the endianness of the double (default is [ByteOrder.BIG_ENDIAN])
+ * @param endianness the endianness of the double (defaults to [ByteOrder.BIG_ENDIAN])
  * @return a [Decoder] that reads [Double] from the input
  */
 @JvmOverloads
@@ -104,7 +104,7 @@ fun BooleanDecoder(): Decoder<Boolean> = ConstantSizedItemDecoder(1) { readBoole
  * The string is encoded using the [utf8][Charsets.UTF_8] charset, and is prefixed with the number of bytes in the
  * string. The size of the string is decoded using the [sizeDecoder] parameter.
  *
- * @param sizeDecoder the [Decoder] used to decode the size of the string (default is the default [IntDecoder])
+ * @param sizeDecoder the [Decoder] used to decode the size of the string (defaults to the default [IntDecoder])
  * @return a [Decoder] that reads a [String] from the input
  */
 @JvmOverloads
@@ -117,15 +117,12 @@ fun UTF8StringDecoder(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Stri
  * The string is encoded using the [utf8][Charsets.UTF_8] charset, and is terminated by a predefined sequence of bytes
  * represented by the [endMarker] parameter.
  *
- * @param endMarker the sequence of bytes that marks the end of the string (default is [UTF8_NULL])
+ * @param endMarker the sequence of bytes that marks the end of the string (defaults to [UTF8_NULL])
  * @return a [Decoder] that reads a [String] from the input
  * @throws IllegalArgumentException if the [endMarker] is empty
  */
 @JvmOverloads
-fun UTF8StringDecoderEM(endMarker: ByteArray = UTF8_NULL): Decoder<String> {
-    require(endMarker.isNotEmpty()) { "End marker must be at least 1 byte long for UTF-8 (got ${endMarker.size})" }
-    return StringDecoder(Charsets.UTF_8, endMarker)
-}
+fun UTF8StringDecoderEM(endMarker: ByteArray = UTF8_NULL): Decoder<String> = StringDecoder(Charsets.UTF_8, endMarker)
 
 /**
  * Creates a [Decoder] that reads a [String] from the input.
@@ -133,7 +130,7 @@ fun UTF8StringDecoderEM(endMarker: ByteArray = UTF8_NULL): Decoder<String> {
  * The string is encoded using the [utf16][Charsets.UTF_16] charset, and is prefixed with the number of bytes in the
  * string. The size of the string is decoded using the [sizeDecoder] parameter.
  *
- * @param sizeDecoder the [Decoder] used to decode the size of the string (default is the default [IntDecoder])
+ * @param sizeDecoder the [Decoder] used to decode the size of the string (defaults to the default [IntDecoder])
  * @return a [Decoder] that reads a [String] from the input
  */
 @JvmOverloads
@@ -146,7 +143,7 @@ fun UTF16StringDecoder(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Str
  * The string is encoded using the [utf16][Charsets.UTF_16] charset, and is terminated by a predefined sequence of bytes
  * represented by the [endMarker] parameter.
  *
- * @param endMarker the sequence of bytes that marks the end of the string (default is [UTF16_NULL])
+ * @param endMarker the sequence of bytes that marks the end of the string (defaults to [UTF16_NULL])
  * @return a [Decoder] that reads a [String] from the input
  * @throws IllegalArgumentException if the [endMarker] is less than 2 bytes long
  */
@@ -162,7 +159,7 @@ fun UTF16StringDecoderEM(endMarker: ByteArray = UTF16_NULL): Decoder<String> {
  * The string is encoded using the [ascii][Charsets.US_ASCII] charset, and is prefixed with the number of bytes in the
  * string. The size of the string is decoded using the [sizeDecoder] parameter.
  *
- * @param sizeDecoder the [Decoder] used to decode the size of the string (default is the default [IntDecoder])
+ * @param sizeDecoder the [Decoder] used to decode the size of the string (defaults to the default [IntDecoder])
  * @return a [Decoder] that reads a [String] from the input
  */
 @JvmOverloads
@@ -175,7 +172,7 @@ fun ASCIIStringDecoder(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Str
  * The string is encoded using the [ascii][Charsets.US_ASCII] charset, and is terminated by a predefined sequence of bytes
  * represented by the [endMarker] parameter.
  *
- * @param endMarker the sequence of bytes that marks the end of the string (default is [ASCII_NULL])
+ * @param endMarker the sequence of bytes that marks the end of the string (defaults to [ASCII_NULL])
  * @return a [Decoder] that reads a [String] from the input
  * @throws IllegalArgumentException if the [endMarker] is empty
  */
@@ -190,7 +187,7 @@ fun ASCIIStringDecoderEM(endMarker: ByteArray = ASCII_NULL): Decoder<String> =
  * of the string is decoded using the [sizeDecoder] parameter.
  *
  * @param charset the [Charset] used to encode the string
- * @param sizeDecoder the [Decoder] used to decode the size of the string (default is the default [IntDecoder])
+ * @param sizeDecoder the [Decoder] used to decode the size of the string (defaults to the default [IntDecoder])
  * @return a [Decoder] that reads a [String] from the input
  */
 @JvmOverloads
@@ -209,7 +206,7 @@ fun StringDecoder(charset: Charset, sizeDecoder: Decoder<Number> = IntDecoder())
  * @throws IllegalArgumentException if the [endMarker] is empty
  */
 fun StringDecoder(charset: Charset, endMarker: ByteArray): Decoder<String> {
-    require(endMarker.isNotEmpty()) { "End marker must be at least 1 byte long (got ${endMarker.size})" }
+    require(endMarker.isNotEmpty()) { "End marker must be at least 1 byte long" }
     return MarkerEndedItemDecoder(endMarker) { readString(charset, it) }
 }
 
@@ -227,7 +224,7 @@ fun StringDecoder(charset: Charset, endMarker: ByteArray): Decoder<String> {
  * given [enumClass].
  *
  * @param enumClass the [Class] of the enum
- * @param ordinalDecoder the [Decoder] used to decode the ordinal of the enum constant (default is the default
+ * @param ordinalDecoder the [Decoder] used to decode the ordinal of the enum constant (defaults to the default
  * [IntDecoder])
  * @return a [Decoder] that reads a [Boolean] from the input
  */
@@ -246,14 +243,14 @@ fun <T : Enum<T>> EnumDecoder(enumClass: Class<T>, ordinalDecoder: Decoder<Int> 
 /**
  * Creates a [Decoder] that reads an [Enum] from the input.
  *
- * The enum is decoded using the [stringDecoder] parameter, which is used to decode the name of the enum constant.
+ * The enum is decoded using the [stringDecoder] parameter, which decodes the [name][Enum.name] of the enum constant.
  *
  * **NOTE**:
  * The created decoder will return an [error][Decoder.State.Error] if the decoded string does not match any of the
  * enum constants.
  *
  * @param enumClass the [Class] of the enum
- * @param stringDecoder the [Decoder] used to decode the name of the enum constant (default is the default
+ * @param stringDecoder the [Decoder] used to decode the name of the enum constant (defaults to the default
  * [UTF8StringDecoder])
  * @return a [Decoder] that reads a [Boolean] from the input
  */
