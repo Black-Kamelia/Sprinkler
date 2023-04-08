@@ -6,11 +6,21 @@ import kotlin.math.min
 
 /**
  * Abstraction allowing [Decoders][Decoder] to read bytes from a source. This interface provides methods for reading
- * bytes in various ways, including reading a single byte, reading a [ByteArray], reading a [MutableCollection], etc.
+ * bytes in various ways, including reading a single byte, reading bytes into a [ByteArray], reading bytes into a
+ * [MutableCollection], etc.
  *
- * To implement this interface, [read] is the only method must be implemented. All other methods are implemented in
+ * To implement this interface, [read] is the only method that must be implemented. All other methods are implemented in
  * terms of this method, meaning that this interface is actually a functional interface and can be implemented as a
- * lambda.
+ * lambda, as shown below:
+ *
+ * &nbsp;
+ *
+ * ```
+ * var byte = 0.toByte()
+ * val myInput = DecoderInput { byte++ } // myInput.read() will return 0, 1, 2, 3, ...
+ * ```
+ *
+ * @see Decoder
  */
 fun interface DecoderInput {
 
@@ -30,12 +40,12 @@ fun interface DecoderInput {
      * @param start the inclusive start index in the [ByteArray] to read into
      * @param length the exclusive end index in the [ByteArray] to read into
      * @return the number of bytes read
+     * @throws IllegalArgumentException if [start] < 0 or [length] < 0 or [start] + [length] > [ByteArray.size]
      */
     fun read(bytes: ByteArray, start: Int, length: Int): Int {
-        require(start >= 0) { "start must be >= 0, but was $start" }
-        require(length >= 0) { "length must be >= 0, but was $length" }
+        checkArrayRange(bytes, start, length)
         var index = start
-        val end = min(start + length, bytes.size)
+        val end = start + length
         while (index < end) {
             val read = read()
             if (read == -1) break
@@ -151,8 +161,7 @@ fun interface DecoderInput {
             }
 
             override fun read(bytes: ByteArray, start: Int, length: Int): Int {
-                require(start >= 0) { "start must be >= 0, but was $start" }
-                require(length >= 0) { "length must be >= 0, but was $length" }
+                checkArrayRange(bytes, start, length)
                 if (inner.position() == 0) return 0
                 inner.flip()
 
@@ -185,6 +194,14 @@ fun interface DecoderInput {
                 val oldIndex = index
                 index = min(index + n.toInt(), inner.size)
                 return index - oldIndex.toLong()
+            }
+        }
+
+        private fun checkArrayRange(bytes: ByteArray, start: Int, length: Int) {
+            require(start >= 0) { "start must be >= 0, but was $start" }
+            require(length >= 0) { "length must be >= 0, but was $length" }
+            require(start + length <= bytes.size) {
+                "start + length must be <= bytes.size, but sum was ${start + length}, bytes.size was ${bytes.size}"
             }
         }
 

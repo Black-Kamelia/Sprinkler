@@ -52,6 +52,9 @@ class DecoderInputTest {
         assertThrows<IllegalArgumentException> {
             input.read(receiver, 1, -1)
         }
+        assertThrows<IllegalArgumentException> {
+            input.read(receiver, 1, 2)
+        }
     }
 
     @ParameterizedTest
