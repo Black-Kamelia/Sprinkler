@@ -12,7 +12,7 @@ package com.kamelia.sprinkler.codec.binary.decoder.core
  * @throws IllegalArgumentException if [endMarker] is empty
  */
 class MarkerEndedItemDecoder<E>(
-    private val endMarker: ByteArray,
+    endMarker: ByteArray,
     private val converter: ByteArray.(Int) -> E,
 ) : Decoder<E> {
 
@@ -23,6 +23,8 @@ class MarkerEndedItemDecoder<E>(
     init {
         require(endMarker.isNotEmpty()) { "endMarker must be greater than 0 (${endMarker.size})" }
     }
+
+    private val endMarker = endMarker.copyOf()
 
     override fun decode(input: DecoderInput): Decoder.State<E> {
         val buffer = buffer ?: ArrayDeque<Byte>(endMarker.size).also { buffer = it }
