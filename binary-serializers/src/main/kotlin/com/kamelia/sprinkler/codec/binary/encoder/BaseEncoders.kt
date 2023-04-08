@@ -124,14 +124,16 @@ fun StringEncoder(
     output.write(bytes)
 }
 
-@JvmOverloads
 fun StringEncoderEM(
-    charset: Charset = Charsets.UTF_8,
-    endMarker: ByteArray = byteArrayOf(0),
-): Encoder<String> = Encoder { obj, output ->
-    val bytes = obj.toByteArray(charset)
-    output.write(bytes)
-    output.write(endMarker)
+    charset: Charset,
+    endMarker: ByteArray,
+): Encoder<String> {
+    val copy = endMarker.copyOf()
+    return Encoder { obj, output ->
+        val bytes = obj.toByteArray(charset)
+        output.write(bytes)
+        output.write(copy)
+    }
 }
 
 //endregion
@@ -139,11 +141,8 @@ fun StringEncoderEM(
 //region Basic Encoders
 
 @JvmOverloads
-fun <T : Enum<T>> EnumEncoder(intEncoder: Encoder<Int> = IntEncoder()): Encoder<T> = object : Encoder<T> {
-
-    override fun encode(obj: T, output: EncoderOutput): Unit = intEncoder.encode(obj.ordinal, output)
-
-}
+fun <T : Enum<T>> EnumEncoder(intEncoder: Encoder<Int> = IntEncoder()): Encoder<T> =
+    Encoder { obj, output -> intEncoder.encode(obj.ordinal, output) }
 
 @JvmOverloads
 fun <T : Enum<T>> EnumEncoderString(
