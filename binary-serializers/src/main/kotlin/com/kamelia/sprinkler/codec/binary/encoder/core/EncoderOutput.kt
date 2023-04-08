@@ -33,8 +33,6 @@ fun interface EncoderOutput {
 
             override fun write(bytes: ByteArray, start: Int, length: Int) = output.write(bytes, start, length)
 
-            override fun toString(): String = output.toString()
-
         }
 
     }
