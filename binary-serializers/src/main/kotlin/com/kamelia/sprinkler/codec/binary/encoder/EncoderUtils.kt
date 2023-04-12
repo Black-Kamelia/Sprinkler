@@ -7,12 +7,9 @@ import com.kamelia.sprinkler.codec.binary.encoder.core.Encoder
 inline fun <T, R> Encoder<T>.withMappedInput(crossinline mapper: (R) -> T): Encoder<R> =
     Encoder { obj, output -> this@withMappedInput.encode(mapper(obj), output) }
 
-fun <T> Encoder<T>.toIterable(endMarker: ByteArray): Encoder<Iterable<T>> {
-    require(endMarker.isNotEmpty()) { "End marker must not be empty" }
-    return Encoder { obj, output ->
-        obj.forEach { this@toIterable.encode(it, output) }
-        output.write(endMarker)
-    }
+fun <T> Encoder<T>.toIterable(endMarker: T): Encoder<Iterable<T>> = Encoder { obj, output ->
+    obj.forEach { this@toIterable.encode(it, output) }
+    this@toIterable.encode(endMarker, output)
 }
 
 @JvmOverloads
@@ -24,18 +21,16 @@ fun <T> Encoder<T>.toCollection(sizeEncoder: Encoder<Int> = IntEncoder()): Encod
 
 @JvmOverloads
 fun <K, V> Encoder<Map.Entry<K, V>>.toMap(sizeEncoder: Encoder<Int> = IntEncoder()): Encoder<Map<K, V>> =
-    toCollection(sizeEncoder).withMappedInput { it.entries }
+    toCollection(sizeEncoder).withMappedInput(Map<K, V>::entries)
 
-fun <K, V> Encoder<Map.Entry<K, V>>.toMap(endMarker: ByteArray): Encoder<Map<K, V>> {
-    require(endMarker.isNotEmpty()) { "End marker must not be empty" }
-    return toIterable(endMarker).withMappedInput { it.entries }
+fun <K, V> Encoder<Map.Entry<K, V>>.toMap(endMarker: Pair<K, V>): Encoder<Map<K, V>> {
+    return toIterable(endMarker.toEntry()).withMappedInput(Map<K, V>::entries)
 }
 
 fun <K, V> Encoder<K>.toMap(valueEncoder: Encoder<V>, sizeEncoder: Encoder<Int> = IntEncoder()): Encoder<Map<K, V>> =
     toMapEntryEncoder(valueEncoder).toMap(sizeEncoder)
 
-fun <K, V> Encoder<K>.toMap(valueEncoder: Encoder<V>, endMarker: ByteArray): Encoder<Map<K, V>> {
-    require(endMarker.isNotEmpty()) { "End marker must not be empty" }
+fun <K, V> Encoder<K>.toMap(valueEncoder: Encoder<V>, endMarker: Pair<K, V>): Encoder<Map<K, V>> {
     return toMapEntryEncoder(valueEncoder).toMap(endMarker)
 }
 
@@ -61,3 +56,10 @@ fun <K, V> Encoder<K>.toMapEntryEncoder(valueEncoder: Encoder<V>): Encoder<Map.E
         this@toMapEntryEncoder.encode(obj.key, output)
         valueEncoder.encode(obj.value, output)
     }
+
+private fun <K, V> Pair<K, V>.toEntry(): Map.Entry<K, V> = object : Map.Entry<K, V> {
+    override val key: K
+        get() = first
+    override val value: V
+        get() = second
+}
