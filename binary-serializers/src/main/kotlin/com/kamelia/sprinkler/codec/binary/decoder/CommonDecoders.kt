@@ -17,7 +17,7 @@ import java.util.*
  * Creates a [Decoder] that reads an [UUID] from the input. The [UUID] os represented as two [Long]s, and the final
  * [UUID] is created using the [UUID] constructor.
  *
- * @param longDecoder the [Decoder] to use for reading the [Long]s (defaults to default [LongDecoder])
+ * @param longDecoder the [Decoder] to use for reading the [Long]s (defaults to the default [LongDecoder])
  * @return the [Decoder] that reads the [UUID]
  */
 @JvmOverloads
@@ -31,7 +31,7 @@ fun UUIDDecoder(longDecoder: Decoder<Long> = LongDecoder()): Decoder<UUID> {
 /**
  * Creates a [Decoder] that reads an [UUID] from the input. The [UUID] os represented as a [String].
  *
- * @param stringDecoder the [Decoder] to use for reading the [String] (defaults to default [UTF8StringDecoder])
+ * @param stringDecoder the [Decoder] to use for reading the [String] (defaults to the default [UTF8StringDecoder])
  * @return the [Decoder] that reads the [UUID]
  */
 @JvmOverloads
@@ -122,7 +122,7 @@ fun InstantDecoder(
  *
  * @param decodeNanos `true` to represent the [LocalTime] as four [Int]s, false to represent the [LocalTime] as three
  * [Int]s (defaults to `false`)
- * @param intDecoder the [Decoder] to use for reading the [Int]s (defaults to default [IntDecoder])
+ * @param intDecoder the [Decoder] to use for reading the [Int]s (defaults to the default [IntDecoder])
  * @return the [Decoder] that reads the [LocalTime]
  */
 @JvmOverloads
@@ -164,7 +164,7 @@ fun LocalTimeDecoder(decodeNanos: Boolean = false, intDecoder: Decoder<Int> = In
  *
  * &nbsp;
  *
- * @param intDecoder the [Decoder] to use for reading the [Int]s (defaults to default [IntDecoder])
+ * @param intDecoder the [Decoder] to use for reading the [Int]s (defaults to the default [IntDecoder])
  * @return the [Decoder] that reads the [LocalDate]
  */
 @JvmOverloads
@@ -200,7 +200,7 @@ fun LocalDateDecoder(intDecoder: Decoder<Int> = IntDecoder()): Decoder<LocalDate
  *
  * @param decodeNanos `true` to represent the [LocalDateTime] as seven [Int]s, false to represent the [LocalDateTime] as
  * six [Int]s (defaults to `false`)
- * @param intDecoder the [Decoder] to use for reading the [Int]s (defaults to default [IntDecoder])
+ * @param intDecoder the [Decoder] to use for reading the [Int]s (defaults to the default [IntDecoder])
  * @return the [Decoder] that reads the [LocalDateTime]
  */
 @JvmOverloads
@@ -227,7 +227,7 @@ fun LocalDateTimeDecoder(
  *
  * The [Date] is represented as a [Long]. The final [Date] is created using the [Date] constructor.
  *
- * @param longDecoder the [Decoder] to use for reading the [Long] (defaults to default [LongDecoder])
+ * @param longDecoder the [Decoder] to use for reading the [Long] (defaults to the default [LongDecoder])
  * @return the [Decoder] that reads the [Date]
  */
 @JvmOverloads
@@ -237,7 +237,7 @@ fun DateDecoder(longDecoder: Decoder<Long> = LongDecoder()): Decoder<Date> = lon
  * Creates a [Decoder] that reads a [ZoneId] from the input. The [ZoneId] is represented as a [String]. The final
  * [ZoneId] is created using the [ZoneId.of] method.
  *
- * @param stringDecoder the [Decoder] to use for reading the [String] (defaults to default [UTF8StringDecoder])
+ * @param stringDecoder the [Decoder] to use for reading the [String] (defaults to the default [UTF8StringDecoder])
  * @return the [Decoder] that reads the [ZoneId]
  */
 @JvmOverloads
@@ -248,8 +248,8 @@ fun ZoneIdDecoder(stringDecoder: Decoder<String> = UTF8StringDecoder()): Decoder
  * Creates a [Decoder] that reads a [ZonedDateTime] from the input. The [ZonedDateTime] is represented as an [Instant]
  * and a [ZoneId]. The final [ZonedDateTime] is created using the [ZonedDateTime.ofInstant] method.
  *
- * @param instantDecoder the [Decoder] to use for reading the [Instant] (defaults to default [InstantDecoder])
- * @param zoneIdDecoder the [Decoder] to use for reading the [ZoneId] (defaults to default [ZoneIdDecoder])
+ * @param instantDecoder the [Decoder] to use for reading the [Instant] (defaults to the default [InstantDecoder])
+ * @param zoneIdDecoder the [Decoder] to use for reading the [ZoneId] (defaults to the default [ZoneIdDecoder])
  * @return the [Decoder] that reads the [ZonedDateTime]
  */
 @JvmOverloads
