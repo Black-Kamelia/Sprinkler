@@ -146,7 +146,7 @@ class CommonDecodersTest {
 
     @Test
     fun `local date time decoder works correctly`() {
-        val decoder = LocalDateTimeDecoder(true)
+        val decoder = LocalDateTimeDecoder(localTimeDecoder = LocalTimeDecoder(true))
         val localDateTime = LocalDateTime.now()
 
         val year = localDateTime.year

@@ -178,48 +178,22 @@ fun LocalDateDecoder(intDecoder: Decoder<Int> = IntDecoder()): Decoder<LocalDate
 }
 
 /**
- * Creates a [Decoder] that reads a [LocalDateTime] from the input.
+ * Creates a [Decoder] that reads a [LocalDateTime] from the input. The [LocalDateTime] is represented as a [LocalDate]
+ * and a [LocalTime]. The final [LocalDateTime] is created using the [LocalDateTime.of] method.
  *
- * Depending on the [decodeNanos] parameter, the [LocalDateTime] can be represented as six [Int]s:
- *
- * - the year
- * - the month
- * - the day
- * - the hour
- * - the minute
- * - the second
- *
- * or as seven [Int]s, using the same representation but with an additional [Int] for the nanosecond.
- *
- * &nbsp;
- *
- * **NOTE**: As the [LocalDateTime.of] method overloads are used internally, the [Decoder.decode] method of the returned
- * [Decoder] can throw a [DateTimeException][java.time.DateTimeException] as specified by the method.
- *
- * &nbsp;
- *
- * @param decodeNanos `true` to represent the [LocalDateTime] as seven [Int]s, false to represent the [LocalDateTime] as
- * six [Int]s (defaults to `false`)
- * @param intDecoder the [Decoder] to use for reading the [Int]s (defaults to the default [IntDecoder])
+ * @param localDateDecoder the [Decoder] to use for reading the [LocalDate] (defaults to the default [LocalDateDecoder])
+ * @param localTimeDecoder the [Decoder] to use for reading the [LocalTime] (defaults to the default [LocalTimeDecoder])
  * @return the [Decoder] that reads the [LocalDateTime]
  */
 @JvmOverloads
 fun LocalDateTimeDecoder(
-    decodeNanos: Boolean = false,
-    intDecoder: Decoder<Int> = IntDecoder(),
-): Decoder<LocalDateTime> = composedDecoder {
-    val decoder = beginWith(intDecoder)
-        .then(intDecoder)
-        .then(intDecoder)
-        .then(intDecoder)
-        .then(intDecoder)
-        .then(intDecoder)
-
-    if (decodeNanos) {
-        decoder.then(intDecoder).reduce(LocalDateTime::of)
-    } else {
-        decoder.reduce(LocalDateTime::of)
-    }
+    localDateDecoder: Decoder<LocalDate> = LocalDateDecoder(),
+    localTimeDecoder: Decoder<LocalTime> = LocalTimeDecoder(),
+): Decoder<LocalDateTime> {
+    var date: LocalDate? = null
+    return localDateDecoder
+        .mapTo { date = it; localTimeDecoder }
+        .mapResult { LocalDateTime.of(date, it) }
 }
 
 /**
