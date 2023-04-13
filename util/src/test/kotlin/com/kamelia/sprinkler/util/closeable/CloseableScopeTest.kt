@@ -1,5 +1,7 @@
 package com.kamelia.sprinkler.util.closeable
 
+import com.kamelia.sprinkler.util.CloseableScope
+import com.kamelia.sprinkler.util.closeableScope
 import java.io.Closeable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull

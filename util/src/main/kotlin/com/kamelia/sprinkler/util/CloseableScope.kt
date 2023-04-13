@@ -1,6 +1,6 @@
 @file:HideFromJava("This is a Kotlin only API")
 
-package com.kamelia.sprinkler.util.closeable
+package com.kamelia.sprinkler.util
 
 import com.zwendo.restrikt.annotation.HideFromJava
 
