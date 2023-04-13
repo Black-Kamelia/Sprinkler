@@ -146,7 +146,11 @@ fun ByteArray.readBoolean(start: Int = 0): Boolean {
  * @throws IllegalArgumentException if [this.size] < [start] + [length] || [start] < 0 || [length] < 0 || [start] + [length] < 0
  */
 @JvmOverloads
-fun ByteArray.readString(charset: Charset = Charsets.UTF_8, length: Int = this.size, start: Int = 0): String {
-    require(start + length <= size && start >= 0 && length >= 0) { "Index $start is out of bounds for array of size $size." }
+fun ByteArray.readString(charset: Charset = Charsets.UTF_8, length: Int = size, start: Int = 0): String {
+    require(start >= 0) { "Start must be non-negative, but was $start." }
+    require(length >= 0) { "Length must be non-negative, but was $length." }
+    require(start + length <= size) {
+        "Start + length must be less than or equal to size, but was ${start + length} = ($start + $length) > $size."
+    }
     return String(this, start, length, charset)
 }
