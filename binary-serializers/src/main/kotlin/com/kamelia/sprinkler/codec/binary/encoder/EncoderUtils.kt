@@ -4,7 +4,7 @@ package com.kamelia.sprinkler.codec.binary.encoder
 
 import com.kamelia.sprinkler.codec.binary.encoder.core.Encoder
 
-inline fun <T, R> Encoder<T>.withMappedInput(crossinline mapper: (R) -> T): Encoder<R> =
+fun <T, R> Encoder<T>.withMappedInput(mapper: (R) -> T): Encoder<R> =
     Encoder { obj, output -> this@withMappedInput.encode(mapper(obj), output) }
 
 fun <T> Encoder<T>.toIterable(endMarker: T): Encoder<Iterable<T>> = Encoder { obj, output ->
