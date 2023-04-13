@@ -3,7 +3,6 @@
 
 package com.kamelia.sprinkler.codec.binary.encoder
 
-import com.kamelia.sprinkler.codec.binary.encoder.composer.composedEncoder
 import com.kamelia.sprinkler.codec.binary.encoder.core.Encoder
 import java.time.Instant
 import java.time.LocalDate
@@ -23,9 +22,9 @@ import java.util.*
  */
 @JvmOverloads
 fun UUIDEncoder(longEncoder: Encoder<Long> = LongEncoder()): Encoder<UUID> =
-    composedEncoder {
-        encode(it.mostSignificantBits, longEncoder)
-        encode(it.leastSignificantBits, longEncoder)
+    Encoder { obj, output ->
+        longEncoder.encode(obj.mostSignificantBits, output)
+        longEncoder.encode(obj.leastSignificantBits, output)
     }
 
 /**
@@ -50,9 +49,9 @@ fun UUIDStringEncoder(stringEncoder: Encoder<String> = UTF8StringEncoder()): Enc
  * @param U the type of the second value
  */
 fun <T, U> PairEncoder(firstEncoder: Encoder<T>, secondEncoder: Encoder<U>): Encoder<Pair<T, U>> =
-    composedEncoder {
-        encode(it.first, firstEncoder)
-        encode(it.second, secondEncoder)
+    Encoder { obj, output ->
+        firstEncoder.encode(obj.first, output)
+        secondEncoder.encode(obj.second, output)
     }
 
 /**
@@ -81,9 +80,9 @@ fun InstantEncoder(
     secondNanoEncoding: Boolean = false,
     longEncoder: Encoder<Long> = LongEncoder(),
 ): Encoder<Instant> = if (secondNanoEncoding) {
-    composedEncoder {
-        encode(it.epochSecond, longEncoder)
-        encode(it.nano.toLong(), longEncoder)
+    Encoder { obj, output ->
+        longEncoder.encode(obj.epochSecond, output)
+        longEncoder.encode(obj.nano.toLong(), output)
     }
 } else {
     longEncoder.withMappedInput(Instant::toEpochMilli)
@@ -110,12 +109,12 @@ fun InstantEncoder(
  */
 @JvmOverloads
 fun LocalTimeEncoder(encodeNanos: Boolean = false, intEncoder: Encoder<Int> = IntEncoder()): Encoder<LocalTime> =
-    composedEncoder {
-        encode(it.hour, intEncoder)
-        encode(it.minute, intEncoder)
-        encode(it.second, intEncoder)
+    Encoder { obj, output ->
+        intEncoder.encode(obj.hour, output)
+        intEncoder.encode(obj.minute, output)
+        intEncoder.encode(obj.second, output)
         if (encodeNanos) {
-            encode(it.nano, intEncoder)
+            intEncoder.encode(obj.nano, output)
         }
     }
 
@@ -135,10 +134,10 @@ fun LocalTimeEncoder(encodeNanos: Boolean = false, intEncoder: Encoder<Int> = In
  */
 @JvmOverloads
 fun LocalDateEncoder(intEncoder: Encoder<Int> = IntEncoder()): Encoder<LocalDate> =
-    composedEncoder {
-        encode(it.year, intEncoder)
-        encode(it.monthValue, intEncoder)
-        encode(it.dayOfMonth, intEncoder)
+    Encoder { obj, output ->
+        intEncoder.encode(obj.year, output)
+        intEncoder.encode(obj.monthValue, output)
+        intEncoder.encode(obj.dayOfMonth, output)
     }
 
 /**
@@ -154,9 +153,9 @@ fun LocalDateTimeEncoder(
     localDateEncoder: Encoder<LocalDate> = LocalDateEncoder(),
     localTimeEncoder: Encoder<LocalTime> = LocalTimeEncoder(),
 ): Encoder<LocalDateTime> =
-    composedEncoder {
-        encode(it.toLocalDate(), localDateEncoder)
-        encode(it.toLocalTime(), localTimeEncoder)
+    Encoder { obj, output ->
+        localDateEncoder.encode(obj.toLocalDate(), output)
+        localTimeEncoder.encode(obj.toLocalTime(), output)
     }
 
 /**
@@ -193,7 +192,7 @@ fun ZonedDateTimeEncoder(
     instantEncoder: Encoder<Instant> = InstantEncoder(),
     zoneIdEncoder: Encoder<ZoneId> = ZoneIdEncoder(),
 ): Encoder<ZonedDateTime> =
-    composedEncoder {
-        encode(it.toInstant(), instantEncoder)
-        encode(it.zone, zoneIdEncoder)
+    Encoder { obj, output ->
+        instantEncoder.encode(obj.toInstant(), output)
+        zoneIdEncoder.encode(obj.zone, output)
     }
