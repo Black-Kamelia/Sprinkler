@@ -159,7 +159,7 @@ private class SingleWriteBox<T> : Box.Mutable<T> {
 
 }
 
-class RewritableBox<T> : Box.Mutable<T> {
+private class RewritableBox<T> : Box.Mutable<T> {
 
     constructor() {
         valueField = null
@@ -191,7 +191,7 @@ class RewritableBox<T> : Box.Mutable<T> {
 
 }
 
-class PrefilledBox<T>(override val value: T) : Box<T> {
+private class PrefilledBox<T>(override val value: T) : Box<T> {
 
     override val isFilled: Boolean
         get() = true
