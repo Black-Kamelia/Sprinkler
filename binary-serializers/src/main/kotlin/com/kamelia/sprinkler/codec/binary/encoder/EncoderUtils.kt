@@ -146,6 +146,21 @@ fun <T> Encoder<T>.toArray(sizeEncoder: Encoder<Int> = IntEncoder()): Encoder<Ar
     }
 
 /**
+ * Creates an encoder that encodes an [Array] of objects of type [T]. The created encoder will encode each object in
+ * the array using the original encoder, and then encode the [endMarker] in the same way. The end marker is used to
+ * indicate the end of the array.
+ *
+ * @receiver the original encoder of type [T]
+ * @param endMarker the end marker that is used to indicate the end of the array
+ * @return an encoder that encodes an [Array] of objects of type [T]
+ */
+fun <T> Encoder<T>.toArray(endMarker: T): Encoder<Array<T>> =
+    Encoder { obj, output ->
+        obj.forEach { this@toArray.encode(it, output) }
+        this@toArray.encode(endMarker, output)
+    }
+
+/**
  * Creates an encoder that encodes a nullable [T] object. The created encoder will encode a [Boolean] indicating
  * whether the object is null or not, and then encode the object using the original encoder if it is not null.
  *
