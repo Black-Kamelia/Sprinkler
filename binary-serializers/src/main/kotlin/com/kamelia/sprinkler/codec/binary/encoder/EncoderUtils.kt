@@ -172,9 +172,10 @@ fun <T> Encoder<T>.toArray(endMarker: T): Encoder<Array<T>> =
 @JvmOverloads
 fun <T : Any> Encoder<T>.toOptional(nullabilityEncoder: Encoder<Boolean> = BooleanEncoder()): Encoder<T?> =
     Encoder { obj, output ->
-        val isNotNull = obj != null
-        nullabilityEncoder.encode(isNotNull, output)
-        if (isNotNull) {
-            this@toOptional.encode(obj!!, output)
+        if (obj == null) {
+            nullabilityEncoder.encode(false, output)
+            return@Encoder
         }
+        nullabilityEncoder.encode(true, output)
+        this@toOptional.encode(obj, output)
     }
