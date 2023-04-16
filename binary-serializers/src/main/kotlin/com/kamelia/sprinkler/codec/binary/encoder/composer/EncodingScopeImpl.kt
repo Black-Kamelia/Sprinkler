@@ -55,25 +55,32 @@ internal class EncodingScopeImpl<E>(
         }
     }
 
-    override fun encode(obj: Byte): EncodingScope<E> = encodeWithComputed(obj, ::ByteEncoder)
+    override fun encode(obj: Byte): EncodingScope<E> = encodeWithComputed(Byte::class.java, obj, ::ByteEncoder)
 
-    override fun encode(obj: Short): EncodingScope<E> = encodeWithComputed(obj) { ShortEncoder(endianness) }
+    override fun encode(obj: Short): EncodingScope<E> =
+        encodeWithComputed(Short::class.java, obj) { ShortEncoder(endianness) }
 
-    override fun encode(obj: Int): EncodingScope<E> = encodeWithComputed(obj) { IntEncoder(endianness) }
+    override fun encode(obj: Int): EncodingScope<E> =
+        encodeWithComputed(Int::class.java, obj) { IntEncoder(endianness) }
 
-    override fun encode(obj: Long): EncodingScope<E> = encodeWithComputed(obj) { LongEncoder(endianness) }
+    override fun encode(obj: Long): EncodingScope<E> =
+        encodeWithComputed(Long::class.java, obj) { LongEncoder(endianness) }
 
-    override fun encode(obj: Float): EncodingScope<E> = encodeWithComputed(obj) { FloatEncoder(endianness) }
+    override fun encode(obj: Float): EncodingScope<E> =
+        encodeWithComputed(Float::class.java, obj) { FloatEncoder(endianness) }
 
-    override fun encode(obj: Double): EncodingScope<E> = encodeWithComputed(obj) { DoubleEncoder(endianness) }
+    override fun encode(obj: Double): EncodingScope<E> =
+        encodeWithComputed(Double::class.java, obj) { DoubleEncoder(endianness) }
 
-    override fun encode(obj: Boolean): EncodingScope<E> = encodeWithComputed(obj, ::BooleanEncoder)
+    override fun encode(obj: Boolean): EncodingScope<E> = encodeWithComputed(Boolean::class.java, obj, ::BooleanEncoder)
 
-    override fun encode(obj: String): EncodingScope<E> = encodeWithComputed(obj) {
-        throw AssertionError("A String encoder should always be present")
-    }
+    override fun encode(obj: String): EncodingScope<E> =
+        encodeWithComputed(String::class.java, obj) {
+            throw AssertionError("A String encoder should always be present")
+        }
 
-    override fun encode(obj: Array<E>): EncodingScope<E> = encode(obj, computed { IntEncoder(endianness) })
+    override fun encode(obj: Array<E>): EncodingScope<E> =
+        encode(obj, computed(Int::class.java) { IntEncoder(endianness) })
 
     override fun encode(obj: Array<E>, sizeEncoder: Encoder<Int>): EncodingScope<E> =
         encode(obj, self.toArray(sizeEncoder))
@@ -81,24 +88,26 @@ internal class EncodingScopeImpl<E>(
     override fun encode(obj: Iterable<E>, endMarker: E): EncodingScope<E> =
         encode(obj, self.toIterable(endMarker))
 
-    override fun encode(obj: Collection<E>): EncodingScope<E> = encode(obj, computed { IntEncoder(endianness) })
+    override fun encode(obj: Collection<E>): EncodingScope<E> =
+        encode(obj, computed(Int::class.java) { IntEncoder(endianness) })
 
     override fun encode(obj: Collection<E>, sizeEncoder: Encoder<Int>): EncodingScope<E> =
         encode(obj, self.toCollection(sizeEncoder))
 
-    override fun encode(obj: E?): EncodingScope<E> = encode(obj, computed(::BooleanEncoder))
+    override fun encode(obj: E?): EncodingScope<E> =
+        encode(obj, computed(Boolean::class.java, ::BooleanEncoder))
 
     override fun encode(obj: E?, nullabilityEncoder: Encoder<Boolean>): EncodingScope<E> =
         encode(obj, self.toOptional(nullabilityEncoder))
 
-    private inline fun <reified T> encodeWithComputed(obj: T, crossinline block: () -> Encoder<T>): EncodingScope<E> {
+    private fun <T> encodeWithComputed(clazz: Class<T>, obj: T, block: () -> Encoder<T>): EncodingScope<E> {
         @Suppress("UNCHECKED_CAST")
-        val encoder = encoderMap.computeIfAbsent(T::class.java) { block() } as Encoder<T>
+        val encoder = encoderMap.computeIfAbsent(clazz) { block() } as Encoder<T>
         return encode(obj, encoder)
     }
 
     @Suppress("UNCHECKED_CAST")
-    private inline fun <reified T> computed(crossinline block: () -> Encoder<T>): Encoder<T> =
-        encoderMap.computeIfAbsent(T::class.java) { block() } as Encoder<T>
+    private fun <T> computed(clazz: Class<T>, block: () -> Encoder<T>): Encoder<T> =
+        encoderMap.computeIfAbsent(clazz) { block() } as Encoder<T>
 
 }
