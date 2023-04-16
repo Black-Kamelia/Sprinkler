@@ -76,32 +76,20 @@ internal class EncodingScopeImpl<E>(
     override fun encode(obj: Array<E>): EncodingScope<E> = encode(obj, computed { IntEncoder(endianness) })
 
     override fun encode(obj: Array<E>, sizeEncoder: Encoder<Int>): EncodingScope<E> =
-        encodeWithComputed<Array<*>>(obj) {
-            @Suppress("UNCHECKED_CAST")
-            self.toArray(sizeEncoder) as Encoder<Array<*>>
-        }
+        encode(obj, self.toArray(sizeEncoder))
 
     override fun encode(obj: Iterable<E>, endMarker: E): EncodingScope<E> =
-        encodeWithComputed<Iterable<*>>(obj) {
-            @Suppress("UNCHECKED_CAST")
-            self.toIterable(endMarker) as Encoder<Iterable<*>>
-        }
+        encode(obj, self.toIterable(endMarker))
 
     override fun encode(obj: Collection<E>): EncodingScope<E> = encode(obj, computed { IntEncoder(endianness) })
 
     override fun encode(obj: Collection<E>, sizeEncoder: Encoder<Int>): EncodingScope<E> =
-        encodeWithComputed<Collection<*>>(obj) {
-            @Suppress("UNCHECKED_CAST")
-            self.toCollection(sizeEncoder) as Encoder<Collection<*>>
-        }
+        encode(obj, self.toCollection(sizeEncoder))
 
     override fun encode(obj: E?): EncodingScope<E> = encode(obj, computed(::BooleanEncoder))
 
     override fun encode(obj: E?, nullabilityEncoder: Encoder<Boolean>): EncodingScope<E> =
-        encodeWithComputed<Any?>(obj) {
-            @Suppress("UNCHECKED_CAST")
-            self.toOptional(nullabilityEncoder) as Encoder<Any?>
-        }
+        encode(obj, self.toOptional(nullabilityEncoder))
 
     private inline fun <reified T> encodeWithComputed(obj: T, crossinline block: () -> Encoder<T>): EncodingScope<E> {
         @Suppress("UNCHECKED_CAST")

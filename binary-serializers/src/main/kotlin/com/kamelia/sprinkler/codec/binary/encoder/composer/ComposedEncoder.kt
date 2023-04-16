@@ -14,8 +14,8 @@ import java.nio.ByteOrder
  * - All primitive objects will be encoded with the default encoders present in the `BaseEncoders` file, and with the
  *  given [endianness].
  * - For [String] objects encoding, the [stringEncoder] parameter will be used.
- * - Each created encoder will be cached and reused for the same type.
- *
+ * - Each created encoder will be cached and reused for the same type (except for encoders composed with the
+ * [self][EncodingScope.self] property).
  *
  * **NOTE**: The [EncodingScope] used in the lambda [block] is not designed to be used outside the lambda. Any use of
  * the scope outside the lambda may lead to unexpected results and can change the behaviour of the scope encoding
