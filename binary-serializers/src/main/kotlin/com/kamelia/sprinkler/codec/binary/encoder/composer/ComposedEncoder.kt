@@ -16,6 +16,13 @@ import java.nio.ByteOrder
  * - For [String] objects encoding, the [stringEncoder] parameter will be used.
  * - Each created encoder will be cached and reused for the same type.
  *
+ *
+ * **NOTE**: The [EncodingScope] used in the lambda [block] is not designed to be used outside the lambda. Any use of
+ * the scope outside the lambda may lead to unexpected results and can change the behaviour of the scope encoding
+ * process.
+ *
+ * &nbsp;
+ *
  * @param endianness the endianness of the encoder (defaults to [ByteOrder.BIG_ENDIAN])
  * @param stringEncoder the encoder to use for [String] objects (defaults to the default [UTF8StringEncoder])
  * @param block the block that will encode the object
