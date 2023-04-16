@@ -7,7 +7,6 @@ import com.kamelia.sprinkler.codec.binary.encoder.FloatEncoder
 import com.kamelia.sprinkler.codec.binary.encoder.IntEncoder
 import com.kamelia.sprinkler.codec.binary.encoder.LongEncoder
 import com.kamelia.sprinkler.codec.binary.encoder.ShortEncoder
-import com.kamelia.sprinkler.codec.binary.encoder.UTF8StringEncoder
 import com.kamelia.sprinkler.codec.binary.encoder.core.Encoder
 import com.kamelia.sprinkler.codec.binary.encoder.core.EncoderOutput
 import com.kamelia.sprinkler.codec.binary.encoder.toArray
@@ -15,6 +14,7 @@ import com.kamelia.sprinkler.codec.binary.encoder.toCollection
 import com.kamelia.sprinkler.codec.binary.encoder.toIterable
 import com.kamelia.sprinkler.codec.binary.encoder.toOptional
 import com.zwendo.restrikt.annotation.PackagePrivate
+import java.nio.ByteOrder
 
 
 @PackagePrivate
@@ -22,10 +22,10 @@ internal class EncodingScopeImpl<E>(
     private val output: EncoderOutput,
     private val globalStack: ArrayList<() -> Unit>,
     private val recursionQueue: ArrayDeque<() -> Unit>,
+    private val encoderMap: HashMap<Class<*>, Encoder<*>>,
+    private val endianness: ByteOrder,
     inner: Encoder<E>,
 ) : EncodingScope<E> {
-
-    private val encoderMap = HashMap<Class<*>, Encoder<*>>()
 
     private var selfQueue = ArrayList<() -> Unit>()
 
@@ -57,21 +57,23 @@ internal class EncodingScopeImpl<E>(
 
     override fun encode(obj: Byte): EncodingScope<E> = encodeWithComputed(obj, ::ByteEncoder)
 
-    override fun encode(obj: Short): EncodingScope<E> = encodeWithComputed(obj, ::ShortEncoder)
+    override fun encode(obj: Short): EncodingScope<E> = encodeWithComputed(obj) { ShortEncoder(endianness) }
 
-    override fun encode(obj: Int): EncodingScope<E> = encodeWithComputed(obj, ::IntEncoder)
+    override fun encode(obj: Int): EncodingScope<E> = encodeWithComputed(obj) { IntEncoder(endianness) }
 
-    override fun encode(obj: Long): EncodingScope<E> = encodeWithComputed(obj, ::LongEncoder)
+    override fun encode(obj: Long): EncodingScope<E> = encodeWithComputed(obj) { LongEncoder(endianness) }
 
-    override fun encode(obj: Float): EncodingScope<E> = encodeWithComputed(obj, ::FloatEncoder)
+    override fun encode(obj: Float): EncodingScope<E> = encodeWithComputed(obj) { FloatEncoder(endianness) }
 
-    override fun encode(obj: Double): EncodingScope<E> = encodeWithComputed(obj, ::DoubleEncoder)
+    override fun encode(obj: Double): EncodingScope<E> = encodeWithComputed(obj) { DoubleEncoder(endianness) }
 
     override fun encode(obj: Boolean): EncodingScope<E> = encodeWithComputed(obj, ::BooleanEncoder)
 
-    override fun encode(obj: String): EncodingScope<E> = encodeWithComputed(obj, ::UTF8StringEncoder)
+    override fun encode(obj: String): EncodingScope<E> = encodeWithComputed(obj) {
+        throw AssertionError("A String encoder should always be present")
+    }
 
-    override fun encode(obj: Array<E>): EncodingScope<E> = encode(obj, computed(::IntEncoder))
+    override fun encode(obj: Array<E>): EncodingScope<E> = encode(obj, computed { IntEncoder(endianness) })
 
     override fun encode(obj: Array<E>, sizeEncoder: Encoder<Int>): EncodingScope<E> =
         encodeWithComputed<Array<*>>(obj) {
@@ -85,7 +87,7 @@ internal class EncodingScopeImpl<E>(
             self.toIterable(endMarker) as Encoder<Iterable<*>>
         }
 
-    override fun encode(obj: Collection<E>): EncodingScope<E> = encode(obj, computed(::IntEncoder))
+    override fun encode(obj: Collection<E>): EncodingScope<E> = encode(obj, computed { IntEncoder(endianness) })
 
     override fun encode(obj: Collection<E>, sizeEncoder: Encoder<Int>): EncodingScope<E> =
         encodeWithComputed<Collection<*>>(obj) {
