@@ -36,7 +36,7 @@ fun <T> composedEncoder(
     stringEncoder: Encoder<String> = UTF8StringEncoder(),
     block: EncodingScope<T>.(T) -> Unit,
 ): Encoder<T> = Encoder { obj, output ->
-    lateinit var encoder: Encoder<T>
+    var encoder: Encoder<T>? = null
     var top = true
 
     val recursionQueue = ArrayDeque<() -> Unit>()
@@ -47,13 +47,13 @@ fun <T> composedEncoder(
 
     encoder = Encoder(fun(t: T, o: EncoderOutput) {
         // base case
-        val scope = EncodingScopeImpl(o, globalStack, recursionQueue, encodersCache, endianness, encoder)
+        val scope = EncodingScopeImpl(o, globalStack, recursionQueue, encodersCache, endianness, encoder!!)
         scope.block(t)
 
         if (!top) return // true only for the first call in the recursion stack
         top = false
 
-        while (recursionQueue.isNotEmpty() || globalStack.isNotEmpty()) { // while there are encodings to be done
+        while (recursionQueue.isNotEmpty()) { // while there are encodings to be done
             // while there are recursive encodings (we must loop because new recursive encodings may be added when a
             // lambda is executed).
             while (recursionQueue.isNotEmpty()) {
