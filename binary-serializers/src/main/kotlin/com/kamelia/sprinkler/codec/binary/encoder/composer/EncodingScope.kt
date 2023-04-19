@@ -210,16 +210,6 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
     fun encode(obj: Collection<E>): EncodingScope<E>
 
     /**
-     * Encodes recursively an [Iterable] of type [E]. The end of the iterable is encoded using the given [endMarker],
-     * which is encoded using the [self] encoder of the scope.
-     *
-     * @param obj the iterable to encode
-     * @param endMarker the marker used to indicate the end of the iterable
-     * @return the current scope
-     */
-    fun encode(obj: Iterable<E>, endMarker: E): EncodingScope<E>
-
-    /**
      * Encodes recursively an [Array] of type [E]. The size of the array is encoded using the given [sizeEncoder],
      * which encodes an [Int] indicating the size of the array.
      *
