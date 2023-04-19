@@ -21,6 +21,7 @@ val props = Properties().apply { load(file("gradle.properties").reader()) }
 
 fun String.base64Decode() = String(Base64.getDecoder().decode(this))
 
+val restriktVersion: String by System.getProperties()
 allprojects {
     apply(plugin = "java")
     apply(plugin = "kotlin")
@@ -39,6 +40,7 @@ allprojects {
     dependencies {
         val junitVersion: String by project
 
+        implementation("com.zwendo:restrikt-annotation:$restriktVersion")
         testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
         testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
         testImplementation("org.junit.jupiter", "junit-jupiter-params", junitVersion)
@@ -160,10 +162,9 @@ fun TaskContainerScope.setupKotlinCompilation(block: org.jetbrains.kotlin.gradle
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T> Project.findProp(name: String): T {
     val strProp = findProperty(name) as? String
-    return when (T::class.java) {
-        Boolean::class.javaPrimitiveType -> strProp?.toBoolean() as T
-        Boolean::class.javaObjectType -> strProp?.toBoolean() as T
-        Int::class.java -> strProp?.toInt() as T
+    return when (T::class) {
+        Boolean::class -> strProp?.toBoolean() as T
+        Int::class -> strProp?.toInt() as T
         else -> strProp as T
     }
 }
