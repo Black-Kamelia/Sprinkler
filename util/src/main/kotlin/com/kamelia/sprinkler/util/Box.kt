@@ -82,7 +82,25 @@ interface Box<T> {
          * @return a box that can be filled only once
          */
         @JvmStatic
-        fun <T> singleWrite(): Mutable<T> = SingleWriteBox()
+        fun <T> singleWrite(): Mutable<T> = object : Mutable<T> {
+
+            private var _value: T? = null
+
+            @get:Suppress("UNCHECKED_CAST")
+            override val value: T
+                get() = _value as T ?: throw IllegalStateException("Box not filled")
+
+            override var isFilled: Boolean = false
+                private set
+
+            override fun fill(value: T): Boolean {
+                if (isFilled) return false
+                _value = value
+                isFilled = true
+                return true
+            }
+
+        }
 
         /**
          * Creates a box that can be filled multiple times. Any previous value will be overwritten.
@@ -91,7 +109,24 @@ interface Box<T> {
          * @return a box that can be filled multiple times
          */
         @JvmStatic
-        fun <T> rewritable(): Mutable<T> = RewritableBox()
+        fun <T> rewritable(): Mutable<T> = object : Mutable<T> {
+
+            private var _value: T? = null
+
+            @get:Suppress("UNCHECKED_CAST")
+            override val value: T
+                get() = _value as T ?: throw IllegalStateException("Box not filled")
+
+            override var isFilled: Boolean = false
+                private set
+
+            override fun fill(value: T): Boolean {
+                _value = value
+                isFilled = true
+                return true
+            }
+
+        }
 
         /**
          * Creates a box that can be filled multiple times. Any previous value will be overwritten.
@@ -101,7 +136,7 @@ interface Box<T> {
          * @return a box that can be filled multiple times
          */
         @JvmStatic
-        fun <T> rewritable(initial: T): Mutable<T> = RewritableBox(initial)
+        fun <T> rewritable(initial: T): Mutable<T> = rewritable<T>().apply { fill(initial) }
 
         /**
          * Creates a box prefilled with the given value. The box will always return the same value.
@@ -110,7 +145,15 @@ interface Box<T> {
          * @param value the value to fill the box with
          */
         @JvmStatic
-        fun <T> prefilled(value: T): Box<T> = PrefilledBox(value)
+        fun <T> prefilled(value: T): Box<T> = object : Box<T> {
+
+            override val value: T
+                get() = value
+
+            override val isFilled: Boolean
+                get() = true
+
+        }
 
         /**
          * Creates a new [EmptyBox].
@@ -136,64 +179,3 @@ private object EmptyBox : Box<Nothing> {
 
 }
 
-private class SingleWriteBox<T> : Box.Mutable<T> {
-
-    private var valueField: T? = null
-
-    override var isFilled: Boolean = false
-        private set
-
-    override val value: T
-        get() {
-            check(isFilled) { "Box is not filled." }
-            @Suppress("UNCHECKED_CAST")
-            return valueField as T
-        }
-
-    override fun fill(value: T): Boolean {
-        if (isFilled) return false
-        valueField = value
-        isFilled = true
-        return true
-    }
-
-}
-
-private class RewritableBox<T> : Box.Mutable<T> {
-
-    constructor() {
-        valueField = null
-        isFilled = false
-    }
-
-    constructor(initial: T) {
-        valueField = initial
-        isFilled = true
-    }
-
-    private var valueField: T?
-
-    override var isFilled: Boolean
-        private set
-
-    override val value: T
-        get() {
-            check(isFilled) { "Box is not filled." }
-            @Suppress("UNCHECKED_CAST")
-            return valueField as T
-        }
-
-    override fun fill(value: T): Boolean {
-        valueField = value
-        isFilled = true
-        return true
-    }
-
-}
-
-private class PrefilledBox<T>(override val value: T) : Box<T> {
-
-    override val isFilled: Boolean
-        get() = true
-
-}
