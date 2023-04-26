@@ -45,6 +45,20 @@ class BoxTest {
     }
 
     @Test
+    fun `rewritable box with initial value test`() {
+        val expected = 1
+        val box = Box.rewritable(expected)
+
+        assertTrue(box.isFilled)
+        assertEquals(expected, box.value)
+
+        val expected2 = 5
+        assertTrue(box.fill(expected2))
+        assertTrue(box.isFilled)
+        assertEquals(expected2, box.value)
+    }
+
+    @Test
     fun `prefilled box test`() {
         val expected = 1
         val box = Box.prefilled(expected)
