@@ -47,16 +47,7 @@ object ExtendedCollectors {
      * @return a [collector][Collector] that creates an [int array][IntArray] from elements
      */
     @JvmStatic
-    fun toIntArray(): Collector<Int, *, IntArray> = Collector.of(
-        { mutableListOf<Int>() },
-        { list, t -> list.add(t) },
-        { list1, list2 -> list1.apply { addAll(list2) } },
-        { list ->
-            val array = IntArray(list.size)
-            list.forEachIndexed { index, t -> array[index] = t }
-            array
-        }
-    )
+    fun toIntArray(): Collector<Int, *, IntArray> = toPrimitiveArray(::IntArray, IntArray::set)
 
     /**
      * Returns a [collector][Collector] that collects elements to a [long array][LongArray].
@@ -64,16 +55,7 @@ object ExtendedCollectors {
      * @return a [collector][Collector] that creates a [long array][LongArray] from elements
      */
     @JvmStatic
-    fun toLongArray(): Collector<Long, *, LongArray> = Collector.of(
-        { mutableListOf<Long>() },
-        { list, t -> list.add(t) },
-        { list1, list2 -> list1.apply { addAll(list2) } },
-        { list ->
-            val array = LongArray(list.size)
-            list.forEachIndexed { index, t -> array[index] = t }
-            array
-        }
-    )
+    fun toLongArray(): Collector<Long, *, LongArray> = toPrimitiveArray(::LongArray, LongArray::set)
 
     /**
      * Returns a [collector][Collector] that collects elements to a [double array][DoubleArray].
@@ -81,16 +63,7 @@ object ExtendedCollectors {
      * @return a [collector][Collector] that creates a [double array][DoubleArray] from elements
      */
     @JvmStatic
-    fun toDoubleArray(): Collector<Double, *, DoubleArray> = Collector.of(
-        { mutableListOf<Double>() },
-        { list, t -> list.add(t) },
-        { list1, list2 -> list1.apply { addAll(list2) } },
-        { list ->
-            val array = DoubleArray(list.size)
-            list.forEachIndexed { index, t -> array[index] = t }
-            array
-        }
-    )
+    fun toDoubleArray(): Collector<Double, *, DoubleArray> = toPrimitiveArray(::DoubleArray, DoubleArray::set)
 
     /**
      * Returns a [collector][Collector] that collects elements to a [float array][FloatArray].
@@ -98,16 +71,7 @@ object ExtendedCollectors {
      * @return a [collector][Collector] that creates a [float array][FloatArray] from elements
      */
     @JvmStatic
-    fun toFloatArray(): Collector<Float, *, FloatArray> = Collector.of(
-        { mutableListOf<Float>() },
-        { list, t -> list.add(t) },
-        { list1, list2 -> list1.apply { addAll(list2) } },
-        { list ->
-            val array = FloatArray(list.size)
-            list.forEachIndexed { index, t -> array[index] = t }
-            array
-        }
-    )
+    fun toFloatArray(): Collector<Float, *, FloatArray> =  toPrimitiveArray(::FloatArray, FloatArray::set)
 
     /**
      * Returns a [collector][Collector] that collects elements to a [short array][ShortArray].
@@ -115,16 +79,7 @@ object ExtendedCollectors {
      * @return a [collector][Collector] that creates a [short array][ShortArray] from elements
      */
     @JvmStatic
-    fun toShortArray(): Collector<Short, *, ShortArray> = Collector.of(
-        { mutableListOf<Short>() },
-        { list, t -> list.add(t) },
-        { list1, list2 -> list1.apply { addAll(list2) } },
-        { list ->
-            val array = ShortArray(list.size)
-            list.forEachIndexed { index, t -> array[index] = t }
-            array
-        }
-    )
+    fun toShortArray(): Collector<Short, *, ShortArray> = toPrimitiveArray(::ShortArray, ShortArray::set)
 
     /**
      * Returns a [collector][Collector] that collects elements to a [byte array][ByteArray].
@@ -132,14 +87,35 @@ object ExtendedCollectors {
      * @return a [collector][Collector] that creates a [byte array][ByteArray] from elements
      */
     @JvmStatic
-    fun toByteArray(): Collector<Byte, *, ByteArray> = Collector.of(
-        { mutableListOf<Byte>() },
+    fun toByteArray(): Collector<Byte, *, ByteArray> = toPrimitiveArray(::ByteArray, ByteArray::set)
+
+    /**
+     * Returns a [collector][Collector] that collects elements to a [char array][CharArray].
+     *
+     * @return a [collector][Collector] that creates a [char array][CharArray] from elements
+     */
+    @JvmStatic
+    fun toCharArray(): Collector<Char, *, CharArray> = toPrimitiveArray(::CharArray, CharArray::set)
+
+    /**
+     * Returns a [collector][Collector] that collects elements to a [boolean array][BooleanArray].
+     *
+     * @return a [collector][Collector] that creates a [boolean array][BooleanArray] from elements
+     */
+    @JvmStatic
+    fun toBooleanArray(): Collector<Boolean, *, BooleanArray> = toPrimitiveArray(::BooleanArray, BooleanArray::set)
+
+    private fun <T, R> toPrimitiveArray(
+        arrayFactory: (Int) -> R,
+        arrayAccumulator: R.(Int, T) -> Unit
+    ): Collector<T, *, R> = Collector.of(
+        { mutableListOf<T>() },
         { list, t -> list.add(t) },
         { list1, list2 -> list1.apply { addAll(list2) } },
         { list ->
-            val array = ByteArray(list.size)
-            list.forEachIndexed { index, t -> array[index] = t }
-            array
+            val r = arrayFactory(list.size)
+            list.forEachIndexed { index, t -> r.arrayAccumulator(index, t) }
+            r
         }
     )
 

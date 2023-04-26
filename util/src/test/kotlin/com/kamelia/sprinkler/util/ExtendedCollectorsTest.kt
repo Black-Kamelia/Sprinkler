@@ -77,6 +77,22 @@ class ExtendedCollectorsTest {
     }
 
     @Test
+    fun `toCharArray works correctly`() {
+        val collector = ExtendedCollectors.toCharArray()
+        val expected = charArrayOf('a', 'b', 'c')
+        val actual = listOf('a', 'b', 'c').stream().collect(collector)
+        assertEquals(expected.toList(), actual.toList())
+    }
+
+    @Test
+    fun `toBooleanArray works correctly`() {
+        val collector = ExtendedCollectors.toBooleanArray()
+        val expected = booleanArrayOf(true, false, true)
+        val actual = listOf(true, false, true).stream().collect(collector)
+        assertEquals(expected.toList(), actual.toList())
+    }
+
+    @Test
     @Suppress("UNCHECKED_CAST")
     fun `toMap combiner works correctly`() {
         val collector = ExtendedCollectors.toMap<String, Int>()
@@ -252,6 +268,50 @@ class ExtendedCollectorsTest {
         val accumulator = collector.accumulator() as BiConsumer<MutableList<Double>, Double>
         val combiner = collector.combiner() as BiFunction<MutableList<Double>, MutableList<Double>, List<Double>>
         val finisher = collector.finisher() as Function<MutableList<Double>, DoubleArray>
+
+        val a = supplier.get()
+        val b = supplier.get()
+        l1.forEach { accumulator.accept(a, it) }
+        l2.forEach { accumulator.accept(b, it) }
+
+        combiner.apply(a, b)
+        val actual = finisher.apply(a)
+        assertEquals(expected.toList(), actual.toList())
+    }
+
+    @Test
+    fun `toCharArray combiner works correctly`() {
+        val collector = ExtendedCollectors.toCharArray()
+        val expected = charArrayOf('1', '2', '3')
+        val l1 = listOf('1', '2')
+        val l2 = listOf('3')
+
+        val supplier = collector.supplier() as Supplier<MutableList<Char>>
+        val accumulator = collector.accumulator() as BiConsumer<MutableList<Char>, Char>
+        val combiner = collector.combiner() as BiFunction<MutableList<Char>, MutableList<Char>, List<Char>>
+        val finisher = collector.finisher() as Function<MutableList<Char>, CharArray>
+
+        val a = supplier.get()
+        val b = supplier.get()
+        l1.forEach { accumulator.accept(a, it) }
+        l2.forEach { accumulator.accept(b, it) }
+
+        combiner.apply(a, b)
+        val actual = finisher.apply(a)
+        assertEquals(expected.toList(), actual.toList())
+    }
+
+    @Test
+    fun `toBooleanArray combiner works correctly`() {
+        val collector = ExtendedCollectors.toBooleanArray()
+        val expected = booleanArrayOf(true, false, true)
+        val l1 = listOf(true, false)
+        val l2 = listOf(true)
+
+        val supplier = collector.supplier() as Supplier<MutableList<Boolean>>
+        val accumulator = collector.accumulator() as BiConsumer<MutableList<Boolean>, Boolean>
+        val combiner = collector.combiner() as BiFunction<MutableList<Boolean>, MutableList<Boolean>, List<Boolean>>
+        val finisher = collector.finisher() as Function<MutableList<Boolean>, BooleanArray>
 
         val a = supplier.get()
         val b = supplier.get()

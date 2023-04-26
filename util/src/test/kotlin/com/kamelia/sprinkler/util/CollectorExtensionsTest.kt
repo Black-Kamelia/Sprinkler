@@ -53,8 +53,8 @@ class CollectorExtensionsTest {
         assertEquals(expected1 + expected2, result)
     }
 
-    private fun toListCollector(vararg characteristics: Characteristics) = Collector.of(
-        { mutableListOf() },
+    private fun toListCollector(vararg characteristics: Characteristics) = Collector.of<Int?, MutableCollection<Int>?, List<Int>?>(
+        ::mutableListOf,
         { c: MutableCollection<Int>, i: Int -> c += i },
         { c1: MutableCollection<Int>, c2: MutableCollection<Int> -> c1.apply { c1 += c2 } },
         MutableCollection<Int>::toList,
