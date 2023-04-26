@@ -1,4 +1,6 @@
 @file:Suppress("NOTHING_TO_INLINE")
+@file:HideFromJava
+
 package com.kamelia.sprinkler.util
 
 import com.zwendo.restrikt.annotation.HideFromJava
@@ -11,7 +13,6 @@ import java.util.stream.Collector
  * @return an instance of the collection type
  * @param C the type of the collection
  */
-@HideFromJava
 inline fun <C> Collector<*, C, *>.supply(): C = supplier().get()
 
 /**
@@ -21,7 +22,6 @@ inline fun <C> Collector<*, C, *>.supply(): C = supplier().get()
  * @param T the type of the element to accumulate
  * @param C the type of the collection
  */
-@HideFromJava
 inline fun <T, C> Collector<T, C, *>.accumulate(c: C, e: T): Unit = accumulator().accept(c, e)
 
 /**
@@ -32,7 +32,6 @@ inline fun <T, C> Collector<T, C, *>.accumulate(c: C, e: T): Unit = accumulator(
  * @param R the type of the result
  * @return the result of the finisher
  */
-@HideFromJava
 inline fun <C, R> Collector<*, C, R>.finish(c: C): R = finisher().apply(c)
 
 /**
@@ -40,7 +39,6 @@ inline fun <C, R> Collector<*, C, R>.finish(c: C): R = finisher().apply(c)
  *
  * @receiver the collector to get the characteristics from
  */
-@HideFromJava
 inline val Collector<*, *, *>.characteristics: Set<Collector.Characteristics>
     get() = characteristics()
 
@@ -50,6 +48,5 @@ inline val Collector<*, *, *>.characteristics: Set<Collector.Characteristics>
  * @receiver the collector to get the combiner from
  * @param C the type of the collection
  */
-@HideFromJava
 inline fun <C> Collector<*, C, *>.combine(c1: C, c2: C): C = combiner().apply(c1, c2)
 

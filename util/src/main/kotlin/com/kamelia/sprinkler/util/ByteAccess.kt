@@ -1,5 +1,6 @@
 @file:JvmName("ByteAccess")
 @file:Suppress("NOTHING_TO_INLINE")
+
 package com.kamelia.sprinkler.util
 
 /**
