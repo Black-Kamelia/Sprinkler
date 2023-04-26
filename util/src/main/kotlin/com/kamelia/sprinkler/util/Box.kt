@@ -36,9 +36,6 @@ import com.zwendo.restrikt.annotation.HideFromJava
  *
  * @param T the type of the value
  * @see Box.Mutable
- * @see Box.SingleWriteBox
- * @see Box.RewritableBox
- * @see Box.PrefilledBox
  */
 interface Box<T> {
 
