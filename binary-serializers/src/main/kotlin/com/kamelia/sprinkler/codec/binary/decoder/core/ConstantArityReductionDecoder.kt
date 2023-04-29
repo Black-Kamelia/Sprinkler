@@ -65,15 +65,18 @@ class ConstantArityReductionDecoder<T, C, R>(
             }
         }
 
-        this.collection = null
-        index = 0
+        selfReset()
         return Decoder.State.Done(collector.finish(collection))
     }
 
     override fun reset() {
+        selfReset()
+        elementDecoder.reset()
+    }
+
+    private fun selfReset() {
         collection = null
         index = 0
-        elementDecoder.reset()
     }
 
 }

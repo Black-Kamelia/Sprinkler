@@ -71,11 +71,9 @@ class MarkerEndedReductionDecoder<T, C, R> @JvmOverloads constructor(
                     if (shouldStop(element)) {
                         if (keepLast) {
                             collector.accumulate(collection, element)
-                            index++
                         }
 
-                        index = 0
-                        this.collection = null
+                        selfReset()
                         return Decoder.State.Done(collector.finish(collection))
                     } else {
                         collector.accumulate(collection, element)
@@ -88,9 +86,13 @@ class MarkerEndedReductionDecoder<T, C, R> @JvmOverloads constructor(
     }
 
     override fun reset() {
+        selfReset()
+        elementDecoder.reset()
+    }
+
+    private fun selfReset() {
         collection = null
         index = 0
-        elementDecoder.reset()
     }
 
 }

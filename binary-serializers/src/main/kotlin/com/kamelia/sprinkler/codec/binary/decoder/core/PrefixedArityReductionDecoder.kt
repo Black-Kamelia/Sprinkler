@@ -79,18 +79,20 @@ class PrefixedArityReductionDecoder<T, C, R>(
             }
         }
 
-        size = -1
-        index = 0
-        this.collection = null
+        selfReset()
         return Decoder.State.Done(collector.finish(collection))
     }
 
     override fun reset() {
+        selfReset()
+        elementDecoder.reset()
+        sizeDecoder.reset()
+    }
+
+    private fun selfReset() {
         collection = null
         size = -1
         index = 0
-        elementDecoder.reset()
-        sizeDecoder.reset()
     }
 
 }

@@ -44,13 +44,17 @@ class MarkerEndedItemDecoder<E>(
         }
 
         val result = (accumulator?: ByteArray(0)).converter(index) // can be null only if content is empty
-        index = 0
+        reset()
         return Decoder.State.Done(result)
     }
 
     override fun reset() {
-        index = 0
+        softReset()
         accumulator = null
+    }
+
+    private fun softReset() {
+        index = 0
         buffer = null
     }
 

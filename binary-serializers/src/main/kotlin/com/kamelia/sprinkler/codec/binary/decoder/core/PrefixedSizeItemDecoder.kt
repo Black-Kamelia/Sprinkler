@@ -61,8 +61,7 @@ class PrefixedSizeItemDecoder<E>(
 
         return if (index == bytesToRead) {
             val finalSize = bytesToRead
-            index = 0
-            bytesToRead = -1
+            softReset()
             Decoder.State.Done(array.converter(finalSize))
         } else {
             Decoder.State.Processing(
@@ -72,7 +71,11 @@ class PrefixedSizeItemDecoder<E>(
     }
 
     override fun reset() {
+        softReset()
         array = null
+    }
+
+    private fun softReset() {
         index = 0
         bytesToRead = -1
     }
