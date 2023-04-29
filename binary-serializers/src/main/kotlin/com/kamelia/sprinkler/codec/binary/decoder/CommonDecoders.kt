@@ -3,7 +3,6 @@
 
 package com.kamelia.sprinkler.codec.binary.decoder
 
-import com.kamelia.sprinkler.codec.binary.decoder.composer.composedDecoder
 import com.kamelia.sprinkler.codec.binary.decoder.core.Decoder
 import java.time.Instant
 import java.time.LocalDate
@@ -230,8 +229,9 @@ fun ZoneIdDecoder(stringDecoder: Decoder<String> = UTF8StringDecoder()): Decoder
 fun ZonedDateTimeDecoder(
     instantDecoder: Decoder<Instant> = InstantDecoder(),
     zoneIdDecoder: Decoder<ZoneId> = ZoneIdDecoder(),
-): Decoder<ZonedDateTime> = composedDecoder {
-    beginWith(instantDecoder)
-        .then(zoneIdDecoder)
-        .reduce(ZonedDateTime::ofInstant)
+): Decoder<ZonedDateTime> {
+    var instant: Instant? = null
+    return instantDecoder
+        .mapTo { instant = it; zoneIdDecoder }
+        .mapResult { ZonedDateTime.ofInstant(instant, it) }
 }
