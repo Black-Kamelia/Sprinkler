@@ -40,7 +40,7 @@ import java.util.stream.Collectors
  * @param T the type of the result of the decoder
  * @param R the type of the result of the returned decoder
  */
-inline fun <T, R> Decoder<T>.mapTo(crossinline mapper: (T) -> Decoder<R>): Decoder<R> = object : Decoder<R> {
+fun <T, R> Decoder<T>.mapTo(mapper: (T) -> Decoder<R>): Decoder<R> = object : Decoder<R> {
     private var nextReader: Decoder<R>? = null
 
     override fun decode(input: DecoderInput): Decoder.State<R> = if (nextReader == null) {
@@ -86,7 +86,7 @@ inline fun <T, R> Decoder<T>.mapTo(crossinline mapper: (T) -> Decoder<R>): Decod
  * @param T the type of the result of the decoder
  * @param R the type of the result of the returned decoder
  */
-inline fun <T, R> Decoder<T>.mapResult(crossinline mapper: (T) -> R): Decoder<R> = object : Decoder<R> {
+fun <T, R> Decoder<T>.mapResult(mapper: (T) -> R): Decoder<R> = object : Decoder<R> {
 
     override fun decode(input: DecoderInput): Decoder.State<R> = this@mapResult.decode(input).mapResult(mapper)
 
@@ -132,7 +132,7 @@ inline fun <T, R> Decoder<T>.mapResult(crossinline mapper: (T) -> R): Decoder<R>
  * @param T the type of the result of the decoder
  * @param R the type of the result of the returned decoder
  */
-inline fun <T, R> Decoder<T>.mapState(crossinline mapper: (T) -> Decoder.State<R>): Decoder<R> = object : Decoder<R> {
+fun <T, R> Decoder<T>.mapState(mapper: (T) -> Decoder.State<R>): Decoder<R> = object : Decoder<R> {
 
     override fun decode(input: DecoderInput): Decoder.State<R> = this@mapState.decode(input).mapState(mapper)
 
