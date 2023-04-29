@@ -21,6 +21,9 @@ import java.nio.ByteOrder
  * the scope outside the lambda may lead to unexpected results and can change the behaviour of the scope encoding
  * process.
  *
+ * **NOTE**: The returned encoder is not thread-safe. Unexpected behaviours may occur if the internal cache of the
+ * decoder is modified concurrently.
+ *
  * &nbsp;
  *
  * @param endianness the endianness of the encoder (defaults to [ByteOrder.BIG_ENDIAN])
@@ -35,39 +38,42 @@ fun <T> composedEncoder(
     endianness: ByteOrder = ByteOrder.BIG_ENDIAN,
     stringEncoder: Encoder<String> = UTF8StringEncoder(),
     block: EncodingScope<T>.(T) -> Unit,
-): Encoder<T> = Encoder { obj, output ->
-    var encoder: Encoder<T>? = null
-    var top = true
-
-    val recursionQueue = ArrayDeque<() -> Unit>()
-    val globalStack = ArrayList<() -> Unit>()
+): Encoder<T> {
     val encodersCache = HashMap<Class<*>, Encoder<*>>().apply {
         put(String::class.java, stringEncoder)
     }
 
-    encoder = Encoder(fun(t: T, o: EncoderOutput) {
-        // base case
-        val scope = EncodingScopeImpl(o, globalStack, recursionQueue, encodersCache, endianness, encoder!!)
-        scope.block(t)
+    return Encoder { obj, output ->
+        var encoder: Encoder<T>? = null
+        var top = true
 
-        if (!top) return // true only for the first call in the recursion stack
-        top = false
+        val recursionQueue = ArrayDeque<() -> Unit>()
+        val globalStack = ArrayList<() -> Unit>()
 
-        while (recursionQueue.isNotEmpty()) { // while there are encodings to be done
-            // while there are recursive encodings (we must loop because new recursive encodings may be added when a
-            // lambda is executed).
-            while (recursionQueue.isNotEmpty()) {
-                recursionQueue.removeFirst()()
+        encoder = Encoder(fun(t: T, o: EncoderOutput) {
+            // base case
+            val scope = EncodingScopeImpl(o, globalStack, recursionQueue, encodersCache, endianness, encoder!!)
+            scope.block(t)
+
+            if (!top) return // true only for the first call in the recursion stack
+            top = false
+
+            while (recursionQueue.isNotEmpty()) { // while there are encodings to be done
+                // while there are recursive encodings (we must loop because new recursive encodings may be added when a
+                // lambda is executed).
+                while (recursionQueue.isNotEmpty()) {
+                    recursionQueue.removeFirst()()
+                }
+
+                // while there are non-recursive encodings (we must loop because new encoding may be added when a lambda is
+                // executed). We must also check that the recursion queue is empty because we want to execute all recursive
+                // as soon as a new one is added.
+                while (recursionQueue.isEmpty() && globalStack.isNotEmpty()) {
+                    globalStack.removeLast()()
+                }
             }
+        })
 
-            // while there are non-recursive encodings (we must loop because new encoding may be added when a lambda is
-            // executed). We must also check that the recursion queue is empty because we want to execute all recursive
-            // as soon as a new one is added.
-            while (recursionQueue.isEmpty() && globalStack.isNotEmpty()) {
-                globalStack.removeLast()()
-            }
-        }
-    })
-
-    encoder.encode(obj, output)
+        encoder.encode(obj, output)
+    }
 }
