@@ -31,13 +31,13 @@ class MarkerEndedItemDecoder<E>(
 
         input.read(buffer, endMarker.size - buffer.size) // fill buffer
         if (buffer.size < endMarker.size) { // not enough data to fill buffer
-            return Decoder.State.Processing(MISSING_BYTES_MESSAGE)
+            return Decoder.State.Processing
         }
 
         while (!bufferContentIsEndMarker()) {
             val byte = input.read()
             if (byte == -1) {
-                return Decoder.State.Processing(MISSING_BYTES_MESSAGE)
+                return Decoder.State.Processing
             }
             addToArray(buffer.removeFirst())
             buffer.addLast(byte.toByte())
@@ -78,11 +78,5 @@ class MarkerEndedItemDecoder<E>(
     }
 
     private inline fun replaceArray(factory: () -> ByteArray): ByteArray = factory().also { accumulator = it }
-
-    private companion object {
-
-        const val MISSING_BYTES_MESSAGE = "End marker still not found"
-
-    }
 
 }

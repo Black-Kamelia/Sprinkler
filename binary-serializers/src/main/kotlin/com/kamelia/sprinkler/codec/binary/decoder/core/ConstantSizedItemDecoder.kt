@@ -29,9 +29,7 @@ class ConstantSizedItemDecoder<E>(
         return if (index == array.size) {
             Decoder.State.Done(array.converter()).also { reset() }
         } else {
-            Decoder.State.Processing(
-                "(${ConstantSizedItemDecoder::class.simpleName}) $index / ${array.size} bytes read."
-            )
+            Decoder.State.Processing
         }
     }
 

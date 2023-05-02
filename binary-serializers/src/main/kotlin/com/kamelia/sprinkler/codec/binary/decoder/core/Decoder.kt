@@ -127,26 +127,21 @@ interface Decoder<out T> {
 
             override fun toString(): String {
                 val v = if (lazyField.isInitialized()) {
-                    value.toString()
+                    lazyField.value.toString()
                 } else {
                     "not initialized"
                 }
-                return "Done($v))"
+                return "Done($v)"
             }
 
         }
 
         /**
-         * State returned when the decoding process has not been completed yet. More bytes are needed. The reason why
-         * the missing bytes can be accessed via the [reason] property.
-         *
-         * @constructor Creates a new [Processing] state with the given [reason].
-         * @param reason the reason why more bytes are needed
-         * @property reason The reason why more bytes are needed.
+         * State returned when the decoding process has not been completed yet. More bytes are needed.
          */
-        class Processing @JvmOverloads constructor(val reason: String = "Missing bytes") : State<Nothing>() {
+        object Processing : State<Nothing>() {
 
-            override fun toString(): String = "Processing($reason)"
+            override fun toString(): String = "Processing"
 
         }
 
@@ -167,7 +162,7 @@ interface Decoder<out T> {
              */
             constructor(message: String) : this(IllegalStateException(message))
 
-            override fun toString(): String = "Error($error)"
+            override fun toString(): String = "Error(${error.message})"
 
         }
 
@@ -228,7 +223,7 @@ interface Decoder<out T> {
          */
         fun get(): T = when (this) {
             is Done -> value
-            is Processing -> throw MissingBytesException(reason)
+            is Processing -> throw MissingBytesException()
             is Error -> throw error
         }
 

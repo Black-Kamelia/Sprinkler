@@ -8,7 +8,6 @@ import com.kamelia.sprinkler.codec.binary.decoder.core.DecoderInput
 import com.kamelia.sprinkler.codec.binary.encoder.composer.composedEncoder
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.nio.ByteOrder
-import java.util.stream.Collectors
 
 /**
  *
@@ -49,7 +48,7 @@ private class ComposedDecoderImpl<E>(
                 elements.popRecursion() // else, we pop the recursion layer
                 elements.addToRecursion(result) // and add the result to the previous layer
             } catch (_: ProcessingMarker) { // bytes are missing
-                return Decoder.State.Processing(scope.processingReason)
+                return Decoder.State.Processing
             } catch (_: RecursionMarker) { // recursion
                 elements.recurse()
             } catch (e: Exception) { // an error occurred
@@ -74,7 +73,7 @@ data class Person(
     val children: List<Person>,
 )
 
-fun main() {
+fun personTest() {
     val encoder = composedEncoder<Person> {
         encode(it.name)
         encode(it.age)
@@ -84,13 +83,13 @@ fun main() {
         encode(it.children)
     }
 
-    val decoder = composedDecoder<Person> {
+    val decoder = composedDecoder {
         val name = string()
         val age = int()
         val height = float()
         val weight = float()
         val isMarried = boolean()
-        val children = selfCollection(Collectors.toList())
+        val children = selfList()
 
         Person(name, age, height, weight, isMarried, children)
     }
@@ -117,3 +116,19 @@ internal fun <T> Any?.tryCast(): T = this as? T
         between two calls of the block. Calls in the scope must be consistent for the same object between two calls.
             """.trimIndent()
     )
+
+fun main() {
+//    personTest()
+    val d = composedDecoder {
+        skip(3)
+        byte()
+    }
+
+    val input = byteArrayOf(1, 2)
+    val input2 = byteArrayOf(3, 4)
+
+    val state = d.decode(input)
+    println(state)
+    val state2 = d.decode(input2)
+    println(state2)
+}

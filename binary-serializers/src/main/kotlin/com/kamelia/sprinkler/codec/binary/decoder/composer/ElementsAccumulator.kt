@@ -25,7 +25,18 @@ internal class ElementsAccumulator {
 
     operator fun get(index: Int): Any? {
         val actualIndex = currentLayer.start + index
+        require(actualIndex < list.size) {
+            "Index $actualIndex ($index + ${currentLayer.start}) is out of bounds for size ${list.size}"
+        }
         return list[actualIndex]
+    }
+
+    operator fun set(index: Int, element: Any?) {
+        val actualIndex = currentLayer.start + index
+        require(actualIndex < list.size) {
+            "Index $actualIndex ($index + ${currentLayer.start}) is out of bounds for size ${list.size}"
+        }
+        list[actualIndex] = element
     }
 
     fun hasRecursionElement(): Boolean = recursionElements.isNotEmpty()

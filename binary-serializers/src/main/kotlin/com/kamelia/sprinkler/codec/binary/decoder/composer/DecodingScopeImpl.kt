@@ -25,13 +25,10 @@ internal class DecodingScopeImpl<E>(
 
     private var currentIndex = 0
 
-    lateinit var processingReason: String
-        private set
-
     private lateinit var selfStateless: Decoder<E>
     private lateinit var selfStateful: Decoder<E>
 
-    override fun self(usedInScope: Boolean): Decoder<E> = if (usedInScope) {
+    override fun self(usedDirectlyInScope: Boolean): Decoder<E> = if (usedDirectlyInScope) {
         if (!::selfStateless.isInitialized) {
             selfStateless = SelfDecoder(accumulator, false)
         }
@@ -54,10 +51,7 @@ internal class DecodingScopeImpl<E>(
         when (val value = decoder.decode(input)) {
             is Decoder.State.Done -> value.value.also(accumulator::add)
             is Decoder.State.Error -> throw value.error
-            is Decoder.State.Processing -> {
-                processingReason = "Near $decoder: ${value.reason}"
-                throw ProcessingMarker
-            }
+            is Decoder.State.Processing -> throw ProcessingMarker
         }
     }
 
@@ -66,6 +60,29 @@ internal class DecodingScopeImpl<E>(
     } else { // decode
         currentIndex++
         block().also(accumulator::add)
+    }
+
+    override fun skip(count: Long) {
+        require(count >= 0) { "Count must be positive, but was $count" }
+        val toSkip: Long? = if (currentIndex < accumulator.size) {
+            accumulator[currentIndex].tryCast()
+        } else {
+            accumulator.add(count)
+            count
+        }
+        when (toSkip) {
+            null -> currentIndex++
+            0L -> accumulator[currentIndex++] = null
+            else -> {
+                val leftToSkip = toSkip - input.skip(toSkip)
+                if (leftToSkip > 0) {
+                    accumulator[currentIndex++] = leftToSkip
+                    throw ProcessingMarker
+                } else {
+                    accumulator[currentIndex++] = null
+                }
+            }
+        }
     }
 
     @JvmName("decodeByte")
@@ -119,7 +136,7 @@ internal class DecodingScopeImpl<E>(
 
     @JvmName("decodeSelfCollection")
     @Suppress("INAPPLICABLE_JVM_NAME")
-    override fun <R : Collection<E>> selfCollection(collector: Collector<E, *, R>): R {
+    override fun <R> selfCollection(collector: Collector<E, *, R>): R {
         val decoder = oncePerObject { self().toCollection(collector) }
         return decode(decoder)
     }

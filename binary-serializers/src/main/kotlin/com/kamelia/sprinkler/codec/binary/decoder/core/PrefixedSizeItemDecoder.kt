@@ -64,9 +64,7 @@ class PrefixedSizeItemDecoder<E>(
             softReset()
             Decoder.State.Done(array.converter(finalSize))
         } else {
-            Decoder.State.Processing(
-                "(${PrefixedSizeItemDecoder::class.simpleName}) $index / $bytesToRead bytes read."
-            )
+            Decoder.State.Processing
         }
     }
 
