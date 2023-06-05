@@ -9,51 +9,40 @@ import com.kamelia.sprinkler.codec.binary.decoder.LongDecoder
 import com.kamelia.sprinkler.codec.binary.decoder.ShortDecoder
 import com.kamelia.sprinkler.codec.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.codec.binary.decoder.core.DecoderInput
-import com.kamelia.sprinkler.codec.binary.decoder.toCollection
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.nio.ByteOrder
 import java.util.stream.Collector
 
 @PackagePrivate
+@Suppress("INAPPLICABLE_JVM_NAME")
 internal class DecodingScopeImpl<E>(
-    private val input: DecoderInput,
     private val accumulator: ElementsAccumulator,
     private val cache: HashMap<Class<*>, Decoder<*>>,
     private val endianness: ByteOrder,
-    private var reset: Boolean,
 ) : DecodingScope<E> {
 
-    private var currentIndex = 0
+    var input: DecoderInput = DecoderInput.EMPTY_INPUT
+    private val constantCache = HashMap<Any, Any?>()
 
-    private lateinit var selfStateless: Decoder<E>
-    private lateinit var selfStateful: Decoder<E>
+    var currentIndex = 0
 
-    override fun self(usedDirectlyInScope: Boolean): Decoder<E> = if (usedDirectlyInScope) {
-        if (!::selfStateless.isInitialized) {
-            selfStateless = SelfDecoder(accumulator, false)
+    override val self: Decoder<E> = SelfDecoder()
+
+    override fun <T> decode(decoder: Decoder<T>): T {
+        return if (currentIndex < accumulator.size) { // already decoded
+            accumulator[currentIndex++].tryCast()
+        } else { // decode
+            currentIndex++
+            when (val value = decoder.decode(input)) {
+                is Decoder.State.Done -> value.value.also(accumulator::add)
+                is Decoder.State.Error -> throw value.error
+                is Decoder.State.Processing -> throw ProcessingMarker
+            }
         }
-        selfStateless
-    } else {
-        if (!::selfStateful.isInitialized) {
-            selfStateful = SelfDecoder(accumulator, true)
-        }
-        selfStateful
     }
 
-    override fun <T> decode(decoder: Decoder<T>): T = if (currentIndex < accumulator.size) { // already decoded
-        accumulator[currentIndex++].tryCast()
-    } else { // decode
-        currentIndex++
-        if (reset) {
-            reset = false
-            decoder.reset()
-        }
-        when (val value = decoder.decode(input)) {
-            is Decoder.State.Done -> value.value.also(accumulator::add)
-            is Decoder.State.Error -> throw value.error
-            is Decoder.State.Processing -> throw ProcessingMarker
-        }
-    }
+    override fun <T> once(key: Any, block: () -> T): T = constantCache.computeIfAbsent(key) { block() }.tryCast()
+
 
     override fun <T> oncePerObject(block: () -> T): T = if (currentIndex < accumulator.size) { // already decoded
         accumulator[currentIndex++].tryCast()
@@ -67,12 +56,11 @@ internal class DecodingScopeImpl<E>(
         val toSkip: Long? = if (currentIndex < accumulator.size) {
             accumulator[currentIndex].tryCast()
         } else {
-            accumulator.add(count)
-            count
+            count.also(accumulator::add)
         }
         when (toSkip) {
-            null -> currentIndex++
-            0L -> accumulator[currentIndex++] = null
+            null -> currentIndex++ // bytes already skipped
+            0L -> accumulator[currentIndex++] = null // method has been called with count = 0
             else -> {
                 val leftToSkip = toSkip - input.skip(toSkip)
                 if (leftToSkip > 0) {
@@ -86,60 +74,43 @@ internal class DecodingScopeImpl<E>(
     }
 
     @JvmName("decodeByte")
-    @Suppress("INAPPLICABLE_JVM_NAME")
     override fun byte(): Byte = decodeWithComputed(::ByteDecoder)
 
     @JvmName("decodeByte")
-    @Suppress("INAPPLICABLE_JVM_NAME")
     override fun short(): Short = decodeWithComputed { ShortDecoder(endianness) }
 
     @JvmName("decodeByte")
-    @Suppress("INAPPLICABLE_JVM_NAME")
     override fun int(): Int = decodeWithComputed { IntDecoder(endianness) }
 
     @JvmName("decodeByte")
-    @Suppress("INAPPLICABLE_JVM_NAME")
     override fun long(): Long = decodeWithComputed { LongDecoder(endianness) }
 
     @JvmName("decodeByte")
-    @Suppress("INAPPLICABLE_JVM_NAME")
     override fun float(): Float = decodeWithComputed { FloatDecoder(endianness) }
 
     @JvmName("decodeByte")
-    @Suppress("INAPPLICABLE_JVM_NAME")
     override fun double(): Double = decodeWithComputed { DoubleDecoder(endianness) }
 
     @JvmName("decodeByte")
-    @Suppress("INAPPLICABLE_JVM_NAME")
     override fun boolean(): Boolean = decodeWithComputed(::BooleanDecoder)
 
     @JvmName("decodeString")
-    @Suppress("INAPPLICABLE_JVM_NAME")
     override fun string(): String = decodeWithComputed {
         throw AssertionError("A String decoder should always be present")
     }
 
     @JvmName("decodeSelfOrNull")
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    override fun selfOrNull(nullabilityDecoder: Decoder<Boolean>): E? {
-        val isPresent = decode(nullabilityDecoder)
-        return if (isPresent) {
-            decode(self())
-        } else {
-            null
-        }
-    }
-
-    @JvmName("decodeSelfOrNull")
-    @Suppress("INAPPLICABLE_JVM_NAME")
     override fun selfOrNull(): E? = selfOrNull(computed(::BooleanDecoder))
 
+    override fun <R> selfCollectionOrNull(collector: Collector<E, *, R>): R? =
+        selfCollectionOrNull(collector, computed { IntDecoder(endianness) }, computed(::BooleanDecoder))
+
+    override fun <R> selfCollectionOrNull(collector: Collector<E, *, R>, sizeDecoder: Decoder<Int>): R? =
+        selfCollectionOrNull(collector, sizeDecoder, computed(::BooleanDecoder))
+
     @JvmName("decodeSelfCollection")
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    override fun <R> selfCollection(collector: Collector<E, *, R>): R {
-        val decoder = oncePerObject { self().toCollection(collector) }
-        return decode(decoder)
-    }
+    override fun <R> selfCollection(collector: Collector<E, *, R>): R =
+        selfCollection(collector, computed { IntDecoder(endianness) })
 
     @Suppress("UNCHECKED_CAST")
     private inline fun <reified T> decodeWithComputed(noinline block: () -> Decoder<T>): T {
@@ -151,17 +122,16 @@ internal class DecodingScopeImpl<E>(
     private inline fun <reified T> computed(noinline block: () -> Decoder<T>): Decoder<T> =
         cache.computeIfAbsent(T::class.java) { block() } as Decoder<T>
 
-    private class SelfDecoder<E>(
-        private val accumulator: ElementsAccumulator,
-        private var keepProgress: Boolean,
-    ) : Decoder<E> {
+    private inner class SelfDecoder : Decoder<E> {
 
-        override fun decode(input: DecoderInput): Decoder.State<E> =
-            if (keepProgress && accumulator.hasRecursionElement()) {
-                Decoder.State.Done(accumulator.getFromRecursion().tryCast<E>())
-            } else {
-                throw RecursionMarker // always throw
-            }
+        override fun decode(input: DecoderInput): Decoder.State<E> = if (accumulator.hasRecursionElement()) {
+            val element = accumulator.getFromRecursion()
+            accumulator.add(element)
+            currentIndex++
+            Decoder.State.Done(element.tryCast<E>())
+        } else {
+            throw RecursionMarker
+        }
 
         override fun reset() = Unit
 

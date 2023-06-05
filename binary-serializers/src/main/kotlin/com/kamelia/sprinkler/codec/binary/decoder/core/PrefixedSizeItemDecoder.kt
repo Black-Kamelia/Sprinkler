@@ -46,7 +46,7 @@ class PrefixedSizeItemDecoder<E>(
         }
 
         val array = array
-        if (array == null || bytesToRead > (array.size)) { // allocate new array if needed
+        if (array == null || bytesToRead > array.size) { // allocate new array if needed
             this.array = ByteArray(bytesToRead)
         }
 

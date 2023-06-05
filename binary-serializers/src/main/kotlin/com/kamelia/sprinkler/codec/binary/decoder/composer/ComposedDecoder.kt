@@ -1,19 +1,33 @@
-@file:JvmName("ComposedDecoder")
+@file:JvmName("ComposedDecoderFactory")
 
 package com.kamelia.sprinkler.codec.binary.decoder.composer
 
 import com.kamelia.sprinkler.codec.binary.decoder.UTF8StringDecoder
 import com.kamelia.sprinkler.codec.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.codec.binary.decoder.core.DecoderInput
-import com.kamelia.sprinkler.codec.binary.encoder.composer.composedEncoder
-import com.zwendo.restrikt.annotation.PackagePrivate
 import java.nio.ByteOrder
 
 /**
+ * Creates a new encoder of type [T] using the given lambda [block]. The [block] parameter is a lambda accepting an
+ * object of type [T] and a [DecodingScope]. The given [DecodingScope] will have the following properties:
  *
+ * - All primitive objects will be decoded with the default decoders present in the `BaseDecoders` file, and with the
+ * given [endianness].
+ * - For [String] objects decoding, the [stringDecoder] parameter will be used.
+ * - Each created decoder will be cached and reused for the same type (except for decoders composed with the
+ * [self][DecodingScope.self] property).
+ *
+ * **NOTE**: The [DecodingScope] used in the lambda [block] is not designed to be used outside the lambda. Any use of
+ * the scope outside the lambda may lead to unexpected results and can change the behaviour of the scope decoding
+ * process.
+ *
+ * @param endianness the endianness of the decoder (defaults to [ByteOrder.BIG_ENDIAN])
+ * @param stringDecoder the decoder to use for [String] objects (defaults to the default [UTF8StringDecoder])
+ * @param block the block that will decode the object
+ * @return the created decoder of type [T]
+ * @see DecodingScope
  */
 @JvmOverloads
-@JvmName("create")
 fun <T> composedDecoder(
     endianness: ByteOrder = ByteOrder.BIG_ENDIAN,
     stringDecoder: Decoder<String> = UTF8StringDecoder(),
@@ -26,22 +40,22 @@ fun <T> composedDecoder(
 }
 
 private class ComposedDecoderImpl<E>(
-    private val endianness: ByteOrder,
+    endianness: ByteOrder,
     private val cache: HashMap<Class<*>, Decoder<*>>,
     private val block: DecodingScope<E>.() -> E,
 ) : Decoder<E> {
 
     private var elements = ElementsAccumulator()
-
-    private var resetOnNextCall = false
+    private val scope = DecodingScopeImpl<E>(elements, cache, endianness)
 
     override fun decode(input: DecoderInput): Decoder.State<E> {
+        scope.input = input
         while (true) {
-            val scope = DecodingScopeImpl<E>(input, elements, cache, endianness, resetOnNextCall)
-            resetOnNextCall = false
+            scope.currentIndex = 0
             try {
                 val result = scope.block()
                 if (elements.isLastLayer) { // there is no recursion layer, we are done
+                    elements = ElementsAccumulator()
                     return Decoder.State.Done(result)
                 }
 
@@ -59,76 +73,7 @@ private class ComposedDecoderImpl<E>(
 
     override fun reset() {
         elements = ElementsAccumulator()
-        resetOnNextCall = true
+        cache.values.forEach(Decoder<*>::reset)
     }
 
-}
-
-data class Person(
-    val name: String,
-    val age: Int,
-    val height: Float,
-    val weight: Float,
-    val isMarried: Boolean,
-    val children: List<Person>,
-)
-
-fun personTest() {
-    val encoder = composedEncoder<Person> {
-        encode(it.name)
-        encode(it.age)
-        encode(it.height)
-        encode(it.weight)
-        encode(it.isMarried)
-        encode(it.children)
-    }
-
-    val decoder = composedDecoder {
-        val name = string()
-        val age = int()
-        val height = float()
-        val weight = float()
-        val isMarried = boolean()
-        val children = selfList()
-
-        Person(name, age, height, weight, isMarried, children)
-    }
-
-    val jack = Person("Jack", 12, 1.5f, 40f, false, emptyList())
-    val john = Person("John", 42, 1.8f, 80f, true, listOf(jack))
-
-    val encoded = encoder.encode(john)
-    val part1 = encoded.sliceArray(0 until 18)
-    val part2 = encoded.sliceArray(18 until encoded.size)
-
-    decoder.decode(part1)
-    val decoded = decoder.decode(part2)
-    println(decoded)
-}
-
-@PackagePrivate
-@Suppress("UNCHECKED_CAST")
-internal fun <T> Any?.tryCast(): T = this as? T
-    ?: throw IllegalStateException(
-        """
-        Error while trying to cast $this. 
-        This error may have been caused because different calls have been made in the the scope for the same object,
-        between two calls of the block. Calls in the scope must be consistent for the same object between two calls.
-            """.trimIndent()
-    )
-
-fun main() {
-//    personTest()
-    val d = composedDecoder {
-        skip(3)
-        byte()
-    }
-
-    val input = byteArrayOf(1, 2)
-    val input2 = byteArrayOf(3, 4)
-
-    val state = d.decode(input)
-    println(state)
-    val state2 = d.decode(input2)
-    println(state2)
 }

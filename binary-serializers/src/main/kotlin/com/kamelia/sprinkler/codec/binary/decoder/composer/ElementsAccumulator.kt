@@ -41,7 +41,7 @@ internal class ElementsAccumulator {
 
     fun hasRecursionElement(): Boolean = recursionElements.isNotEmpty()
 
-    fun getFromRecursion(): Any? = recursionElements.removeFirstOrNull()
+    fun getFromRecursion(): Any? = recursionElements.removeFirst()
 
     fun recurse() {
         currentLayer = Layer(list.size, currentLayer)
@@ -66,5 +66,6 @@ internal class ElementsAccumulator {
 
     }
 
-    override fun toString(): String = "ElementsAccumulator(list=$list, currentLayer=$currentLayer)"
+    override fun toString(): String = "ElementsAccumulator(list=$list, recursionElements=$recursionElements, currentLayer=$currentLayer)"
+
 }

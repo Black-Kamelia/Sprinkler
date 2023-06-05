@@ -1,4 +1,4 @@
-@file:JvmName("ComposedEncoder")
+@file:JvmName("ComposedEncoderFactory")
 
 package com.kamelia.sprinkler.codec.binary.encoder.composer
 
@@ -33,7 +33,6 @@ import java.nio.ByteOrder
  * @see EncodingScope
  */
 @JvmOverloads
-@JvmName("create")
 fun <T> composedEncoder(
     endianness: ByteOrder = ByteOrder.BIG_ENDIAN,
     stringEncoder: Encoder<String> = UTF8StringEncoder(),

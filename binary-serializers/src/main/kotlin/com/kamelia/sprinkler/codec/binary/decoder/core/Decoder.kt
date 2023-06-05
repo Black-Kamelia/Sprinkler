@@ -218,7 +218,7 @@ interface Decoder<out T> {
          * Returns the decoded value if this [State] is a [Done] state, otherwise throws an exception.
          *
          * @return the decoded value if this [State] is a [Done] state
-         * @throws MissingBytesException if this [State] is a [Processing] state
+         * @throws MissingBytesException if this [State] is the [Processing] state
          * @throws Throwable if this [State] is an [Error] state, the exception that caused the failure
          */
         fun get(): T = when (this) {
@@ -282,6 +282,18 @@ interface Decoder<out T> {
         fun ifDone(block: (T) -> Unit): State<T> = apply {
             if (this is Done) {
                 block(value)
+            }
+        }
+
+        /**
+         * Executes the given [block] function if this [State] is an [Error] state.
+         *
+         * @param block the function to execute if this [State] is an [Error] state
+         * @return this [State]
+         */
+        fun ifError(block: (Throwable) -> Unit): State<T> = apply {
+            if (this is Error) {
+                block(error)
             }
         }
 

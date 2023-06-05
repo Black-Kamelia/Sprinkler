@@ -17,6 +17,7 @@ import java.nio.ByteOrder
 
 
 @PackagePrivate
+@Suppress("INAPPLICABLE_JVM_NAME")
 internal class EncodingScopeImpl<E>(
     private val output: EncoderOutput,
     private val globalStack: ArrayList<() -> Unit>,
@@ -30,6 +31,7 @@ internal class EncodingScopeImpl<E>(
 
     private var recurse = false
 
+    @get:JvmName("self")
     override val self: Encoder<E> = Encoder { obj, output ->
         recursionQueue.add { inner.encode(obj, output) } // add to recursion queue
 
@@ -45,7 +47,6 @@ internal class EncodingScopeImpl<E>(
     }
 
     @JvmName("encodeWith")
-    @Suppress("INAPPLICABLE_JVM_NAME")
     override fun <T> encode(obj: T, encoder: Encoder<T>): EncodingScope<E> = apply {
         if (recurse) {
             selfQueue += { encoder.encode(obj, output) }

@@ -34,7 +34,8 @@ import com.kamelia.sprinkler.util.jvmlambda.KotlinDslAdapter
  *
  * As shown above, the interface provides several methods to encode the most common types. It therefore allows to
  * encode an object in a more concise way than the lambda syntax of [Encoder]. Moreover, it allows to encode recursively
- * an object in an iterative way, meaning that the stack is not used. This allows to encode very deep recursive objects.
+ * an object in an iterative way, meaning that the stack is not overloaded. This allows to encode very deep recursive
+ * objects.
  *
  * &nbsp;
  *
@@ -66,13 +67,14 @@ import com.kamelia.sprinkler.util.jvmlambda.KotlinDslAdapter
  * The interface aims to be as flexible as possible. In this regard, it provides a method to encode an object using a
  * custom encoder, which accepts any type of object and an encoder of the same type.
  *
- * Moreover, for recursive encoding, the interfaces owns a [self] property that returns the encoder of the current
- * scope. This property can be used to encode recursively the object in a more flexible way, in case the other methods are not enough.
+ * Moreover, for recursive encoding, the interface provides a [self] property that returns the encoder of the current
+ * scope. This property can be used to encode recursively an object in a more flexible way, in case the other methods
+ * are not enough.
  *
  * &nbsp;
  *
  * As stated previously, the interface, through its shorthand methods, allows to encode the most common types, by using
- * default encoders. These default encoders are not fixed by the interface and therefore depends on the implementation.
+ * default encoders. These default encoders are not fixed by the interface and therefore depend on the implementation.
  *
  * &nbsp;
  *
@@ -80,6 +82,7 @@ import com.kamelia.sprinkler.util.jvmlambda.KotlinDslAdapter
  * @see Encoder
  * @see composedEncoder
  */
+@Suppress("INAPPLICABLE_JVM_NAME")
 sealed interface EncodingScope<E> : KotlinDslAdapter {
 
     /**
@@ -92,6 +95,7 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
      * **NOTE**: The returned encoder should only be used in the current scope. Any use of this encoder outside the
      * current scope may lead to unexpected results and can change the behaviour of the scope itself.
      */
+    @get:JvmName("self")
     val self: Encoder<E>
 
     /**
@@ -103,7 +107,6 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
      * @param T the type of the object to encode
      */
     @JvmName("encodeWith")
-    @Suppress("INAPPLICABLE_JVM_NAME")
     fun <T> encode(obj: T, encoder: Encoder<T>): EncodingScope<E>
 
     /**
@@ -172,8 +175,8 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
 
     /**
      * Encodes recursively a nullable object of type [E]. The nullability of the object is encoded using the given
-     * [nullabilityEncoder], which encodes a [Boolean] indicating whether the object is null or not (`true` if the
-     * object is null, `false` otherwise).
+     * [nullabilityEncoder], which encodes a [Boolean] indicating whether the object is present or not (`true` if
+     * present, `false` otherwise).
      *
      * @param obj the object to encode
      * @param nullabilityEncoder the encoder used to encode the nullability of the object
