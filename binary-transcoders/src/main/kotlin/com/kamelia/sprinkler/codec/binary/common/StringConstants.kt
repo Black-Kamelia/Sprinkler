@@ -1,5 +1,5 @@
 @file:JvmName("StringConstants")
-package com.kamelia.sprinkler.codec.binary.core
+package com.kamelia.sprinkler.codec.binary.common
 
 /**
  * The default [String] end marker used for the [ascii][Charsets.US_ASCII].
