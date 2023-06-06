@@ -1,12 +1,7 @@
 package com.kamelia.sprinkler.codec.binary.decoder.composer
 
-import com.kamelia.sprinkler.codec.binary.decoder.ByteDecoder
 import com.kamelia.sprinkler.codec.binary.decoder.IntDecoder
-import com.kamelia.sprinkler.codec.binary.decoder.LongDecoder
-import com.kamelia.sprinkler.codec.binary.decoder.ShortDecoder
-import com.kamelia.sprinkler.codec.binary.decoder.UTF8StringDecoder
 import com.kamelia.sprinkler.codec.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.codec.binary.decoder.core.NothingDecoder
 import com.kamelia.sprinkler.codec.binary.decoder.toList
 import com.kamelia.sprinkler.codec.binary.decoder.toOptional
 import com.kamelia.sprinkler.codec.binary.decoder.util.assertDoneAndGet
@@ -20,10 +15,11 @@ class DecoderComposerBasicTest {
 
     @Test
     fun `compose simple object using then and reduce`() {
-        val decoder = composedDecoder<Person> {
-            beginWith(UTF8StringDecoder())
-                .then(IntDecoder())
-                .reduce(DecoderComposerBasicTest::Person)
+        val decoder = composedDecoder {
+            val name = string()
+            val age = int()
+
+            Person(name, age)
         }
 
         val name = "John"
@@ -44,11 +40,11 @@ class DecoderComposerBasicTest {
 
     @Test
     fun `compose simple object using then reduce and skip`() {
-        val decoder = composedDecoder<Person> {
-            beginWith(UTF8StringDecoder())
-                .skip(4)
-                .then(IntDecoder())
-                .reduce(DecoderComposerBasicTest::Person)
+        val decoder = composedDecoder {
+            val name = string()
+            skip(4)
+            val age = int()
+            Person(name, age)
         }
 
         val name = "John"
@@ -70,10 +66,10 @@ class DecoderComposerBasicTest {
 
     @Test
     fun `compose with missing bytes`() {
-        val decoder = composedDecoder<Pair<Byte, Byte>> {
-            beginWith(ByteDecoder())
-                .then(ByteDecoder())
-                .reduce(::Pair)
+        val decoder = composedDecoder {
+            val first = byte()
+            val second = byte()
+            first to second
         }
 
         val data = byteArrayOf(2)
@@ -82,28 +78,17 @@ class DecoderComposerBasicTest {
     }
 
     @Test
-    fun `one step composition directly returns the base decoder`() {
-        val byteDecoder = ByteDecoder()
-        val decoder = composedDecoder<Byte> {
-            beginWith(byteDecoder)
-        }
-
-        assertEquals(byteDecoder, decoder)
-    }
-
-    @Test
     fun `compose with simple map`() {
         val decoder = composedDecoder<Number> {
-            beginWith(ByteDecoder())
-                .map<Number> {
-                    when (it.toInt()) {
-                        1 -> ByteDecoder()
-                        2 -> ShortDecoder()
-                        4 -> IntDecoder()
-                        8 -> LongDecoder()
-                        else -> NothingDecoder("Unexpected value: $it")
-                    }
-                }
+            val opcode = byte()
+            val number = when (opcode.toInt()) {
+                1 -> byte()
+                2 -> short()
+                4 -> int()
+                8 -> long()
+                else -> errorState(Decoder.State.Error("Invalid opcode"))
+            }
+            number
         }.toList(3)
 
         val data = byteArrayOf(1, 2, 2, 0, 5, 4, 0, 0, 0, 17)
@@ -113,11 +98,14 @@ class DecoderComposerBasicTest {
 
     @Test
     fun `decode several times with the same decoder`() {
-        val decoder = composedDecoder<Triple<Byte, Int?, String>> {
-            beginWith(ByteDecoder())
-                .then(IntDecoder().toOptional())
-                .then(UTF8StringDecoder())
-                .reduce(::Triple)
+        val decoder = composedDecoder {
+            val optionalInt by once { IntDecoder().toOptional() }
+
+            val first = byte()
+            val second = decode(optionalInt)
+            val third = string()
+
+            Triple(first, second, third)
         }
 
         val byte = 19.toByte()
@@ -130,6 +118,12 @@ class DecoderComposerBasicTest {
             size.byte(3), size.byte(2), size.byte(1), size.byte(0),
             *stringArray
         )
+
+        val expected = Triple(byte, null, string)
+        repeat(5) {
+            val result = decoder.decode(data).assertDoneAndGet()
+            assertEquals(expected, result)
+        }
     }
 
 }

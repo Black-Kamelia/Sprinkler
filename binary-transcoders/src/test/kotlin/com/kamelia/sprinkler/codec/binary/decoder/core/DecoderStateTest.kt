@@ -47,7 +47,7 @@ class DecoderStateTest {
 
     @Test
     fun `mapEmptyState works correctly`() {
-        val processing = Decoder.State.Processing()
+        val processing = Decoder.State.Processing
         val state = processing.mapEmptyState<String>()
         assertInstanceOf(Decoder.State.Processing::class.java, state)
 
@@ -62,7 +62,7 @@ class DecoderStateTest {
     fun `isDone and state#isNotDone work correctly`() {
         val done = Decoder.State.Done("hello")
         val error = Decoder.State.Error("an error occurred")
-        val notDone = Decoder.State.Processing()
+        val notDone = Decoder.State.Processing
 
         assert(done.isDone())
         assert(!done.isNotDone())
@@ -77,7 +77,7 @@ class DecoderStateTest {
         val value = "hello"
         val done = Decoder.State.Done(value)
         val error = Decoder.State.Error(IllegalStateException())
-        val processing = Decoder.State.Processing()
+        val processing = Decoder.State.Processing
 
         assertEquals(value, done.get())
         assertThrows<IllegalStateException> {
@@ -93,7 +93,7 @@ class DecoderStateTest {
         val value = "hello"
         val done = Decoder.State.Done(value)
         val error = Decoder.State.Error(IllegalStateException())
-        val processing = Decoder.State.Processing()
+        val processing = Decoder.State.Processing
 
         assertEquals(value, done.getOrNull())
         assertNull(error.getOrNull())
@@ -105,7 +105,7 @@ class DecoderStateTest {
         val value = "hello"
         val done = Decoder.State.Done(value)
         val error = Decoder.State.Error("aaaaa")
-        val processing = Decoder.State.Processing()
+        val processing = Decoder.State.Processing
 
         assertEquals(value, done.getOrThrow { IllegalStateException() })
         assertThrows<IllegalStateException> {
@@ -123,7 +123,7 @@ class DecoderStateTest {
         val value = "hello"
         val done = Decoder.State.Done(value)
         val error: Decoder.State<String> = Decoder.State.Error(IllegalStateException())
-        val processing: Decoder.State<String> = Decoder.State.Processing()
+        val processing: Decoder.State<String> = Decoder.State.Processing
 
         val world = "world"
         val foo = "foo"
@@ -137,7 +137,7 @@ class DecoderStateTest {
         val value = "hello"
         val done = Decoder.State.Done(value)
         val error: Decoder.State<String> = Decoder.State.Error(IllegalStateException())
-        val processing: Decoder.State<String> = Decoder.State.Processing()
+        val processing: Decoder.State<String> = Decoder.State.Processing
 
         val world = "world"
         assertEquals(value, done.getOrElse(world))
@@ -150,7 +150,7 @@ class DecoderStateTest {
         val value = "hello"
         val done = Decoder.State.Done(value)
         val error = Decoder.State.Error(IllegalStateException())
-        val processing = Decoder.State.Processing()
+        val processing = Decoder.State.Processing
 
         val set = mutableSetOf<Int>()
         done.ifDone { set.add(1) }
@@ -163,16 +163,14 @@ class DecoderStateTest {
     @Test
     fun `toString contains informations about state`() {
         val doneValue = 5
-        val errorValue = IllegalStateException("error message")
-        val processingReason = "in progress"
+        val message = "error message"
+        val errorValue = IllegalStateException(message)
 
         val done = Decoder.State.Done(doneValue)
         val error = Decoder.State.Error(errorValue)
-        val processing = Decoder.State.Processing(processingReason)
 
         assertTrue(doneValue.toString() in done.toString())
-        assertTrue(errorValue.toString() in error.toString())
-        assertTrue(processingReason in processing.toString())
+        assertTrue(message in error.toString())
     }
 
     @Test

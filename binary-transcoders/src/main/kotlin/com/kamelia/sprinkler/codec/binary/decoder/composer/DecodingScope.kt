@@ -145,6 +145,13 @@ sealed interface DecodingScope<E> {
     fun skip(count: Long)
 
     /**
+     * Stops the decoding process and returns the given error state [state].
+     *
+     * @param state the error state to return
+     */
+    fun errorState(state: Decoder.State.Error): Nothing
+
+    /**
      * Decodes a byte using the default byte decoder of the scope.
      *
      * @return the decoded byte

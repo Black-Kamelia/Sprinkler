@@ -16,12 +16,16 @@ import java.util.stream.Collector
 @PackagePrivate
 @Suppress("INAPPLICABLE_JVM_NAME")
 internal class DecodingScopeImpl<E>(
-    private val accumulator: ElementsAccumulator,
+    private val accumulatorProvider: () -> ElementsAccumulator,
     private val cache: HashMap<Class<*>, Decoder<*>>,
     private val endianness: ByteOrder,
 ) : DecodingScope<E> {
 
     var input: DecoderInput = DecoderInput.EMPTY_INPUT
+
+    private val accumulator: ElementsAccumulator
+        get() = accumulatorProvider()
+
     private val constantCache = HashMap<Any, Any?>()
 
     var currentIndex = 0
@@ -73,8 +77,10 @@ internal class DecodingScopeImpl<E>(
         }
     }
 
+    override fun errorState(state: Decoder.State.Error): Nothing = throw ErrorStateHolder(state)
+
     @JvmName("decodeByte")
-    override fun byte(): Byte = decodeWithComputed(::ByteDecoder)
+    override fun byte(): Byte = decodeWithComputed { ByteDecoder() }
 
     @JvmName("decodeByte")
     override fun short(): Short = decodeWithComputed { ShortDecoder(endianness) }
@@ -92,7 +98,7 @@ internal class DecodingScopeImpl<E>(
     override fun double(): Double = decodeWithComputed { DoubleDecoder(endianness) }
 
     @JvmName("decodeByte")
-    override fun boolean(): Boolean = decodeWithComputed(::BooleanDecoder)
+    override fun boolean(): Boolean = decodeWithComputed { BooleanDecoder() }
 
     @JvmName("decodeString")
     override fun string(): String = decodeWithComputed {
@@ -100,13 +106,15 @@ internal class DecodingScopeImpl<E>(
     }
 
     @JvmName("decodeSelfOrNull")
-    override fun selfOrNull(): E? = selfOrNull(computed(::BooleanDecoder))
+    override fun selfOrNull(): E? {
+        return selfOrNull(computed { BooleanDecoder() })
+    }
 
     override fun <R> selfCollectionOrNull(collector: Collector<E, *, R>): R? =
-        selfCollectionOrNull(collector, computed { IntDecoder(endianness) }, computed(::BooleanDecoder))
+        selfCollectionOrNull(collector, computed { IntDecoder(endianness) }, computed { BooleanDecoder() })
 
     override fun <R> selfCollectionOrNull(collector: Collector<E, *, R>, sizeDecoder: Decoder<Int>): R? =
-        selfCollectionOrNull(collector, sizeDecoder, computed(::BooleanDecoder))
+        selfCollectionOrNull(collector, sizeDecoder, computed { BooleanDecoder() })
 
     @JvmName("decodeSelfCollection")
     override fun <R> selfCollection(collector: Collector<E, *, R>): R =

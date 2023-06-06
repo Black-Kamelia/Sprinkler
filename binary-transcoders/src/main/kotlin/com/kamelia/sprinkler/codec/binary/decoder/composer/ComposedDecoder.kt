@@ -46,7 +46,7 @@ private class ComposedDecoderImpl<E>(
 ) : Decoder<E> {
 
     private var elements = ElementsAccumulator()
-    private val scope = DecodingScopeImpl<E>(elements, cache, endianness)
+    private val scope = DecodingScopeImpl<E>(::elements, cache, endianness)
 
     override fun decode(input: DecoderInput): Decoder.State<E> {
         scope.input = input
@@ -65,8 +65,8 @@ private class ComposedDecoderImpl<E>(
                 return Decoder.State.Processing
             } catch (_: RecursionMarker) { // recursion
                 elements.recurse()
-            } catch (e: Exception) { // an error occurred
-                return Decoder.State.Error(e)
+            } catch (e: ErrorStateHolder) { // an error state should be returned
+                return e.errorState
             }
         }
     }
