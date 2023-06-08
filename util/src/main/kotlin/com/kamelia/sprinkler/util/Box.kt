@@ -20,7 +20,7 @@ import com.zwendo.restrikt.annotation.HideFromJava
  * }
  *
  * fun main() {
- *    val box = Box.SingleWriteBox<Int>()
+ *    val box = Box.singleWrite<Int>()
  *    val foo = Foo(box)
  *
  *    runCatching {
@@ -29,7 +29,6 @@ import com.zwendo.restrikt.annotation.HideFromJava
  *
  *    box.fill(1)
  *    println(foo.i) // Prints 1
- *
  * }
  *
  * ```
