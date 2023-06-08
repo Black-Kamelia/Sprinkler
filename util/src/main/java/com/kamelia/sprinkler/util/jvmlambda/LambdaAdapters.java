@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 public final class LambdaAdapters {
 
     /**
-     * Adapter fo a {@link Runnable} to a {@link Function0} that returns {@link Unit}.
+     * Adapter for a {@link Runnable} to a {@link Function0} that returns {@link Unit}.
      *
      * @param lambda the lambda to wrap
      * @return the wrapped lambda
@@ -26,7 +26,7 @@ public final class LambdaAdapters {
     }
 
     /**
-     * Adapter fo a {@link Consumer} to a {@link Function1} that returns {@link Unit}.
+     * Adapter for a {@link Consumer} to a {@link Function1} that returns {@link Unit}.
      *
      * @param lambda the lambda to wrap
      * @param <T>    the type of the argument
@@ -38,7 +38,7 @@ public final class LambdaAdapters {
     }
 
     /**
-     * Adapter fo a {@link BiConsumer} to a {@link Function2} that returns {@link Unit}.
+     * Adapter for a {@link BiConsumer} to a {@link Function2} that returns {@link Unit}.
      *
      * @param lambda the lambda to wrap
      * @param <T1>   the type of the first argument
