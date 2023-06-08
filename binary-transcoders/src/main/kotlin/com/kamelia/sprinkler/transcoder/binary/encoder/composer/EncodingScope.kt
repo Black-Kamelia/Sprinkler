@@ -9,7 +9,7 @@ import com.kamelia.sprinkler.util.jvmlambda.KotlinDslAdapter
  *
  * &nbsp;
  *
- * In the following example, both syntaxes are equivalent:
+ * In the following example, both syntax are equivalent:
  *
  * &nbsp;
  *
