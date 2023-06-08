@@ -62,10 +62,11 @@ internal class ElementsAccumulator {
         val previous: Layer?,
     ) {
 
-            override fun toString(): String = "Layer(start=$start, previous=$previous)"
+        override fun toString(): String = "Layer(start=$start, previous=$previous)"
 
     }
 
-    override fun toString(): String = "ElementsAccumulator(list=$list, recursionElements=$recursionElements, currentLayer=$currentLayer)"
+    override fun toString(): String =
+        "ElementsAccumulator(list=$list, recursionElements=$recursionElements, currentLayer=$currentLayer)"
 
 }
