@@ -109,8 +109,8 @@ object ExtendedCollectors {
         arrayFactory: (Int) -> R,
         arrayAccumulator: R.(Int, T) -> Unit
     ): Collector<T, *, R> = Collector.of(
-        { mutableListOf<T>() },
-        { list, t -> list.add(t) },
+        ::mutableListOf,
+        MutableList<T>::add,
         { list1, list2 -> list1.apply { addAll(list2) } },
         { list ->
             val r = arrayFactory(list.size)
