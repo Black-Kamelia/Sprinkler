@@ -8,7 +8,7 @@ import com.kamelia.sprinkler.transcoder.binary.decoder.core.DecoderInput
 import java.nio.ByteOrder
 
 /**
- * Creates a new encoder of type [T] using the given lambda [block]. The [block] parameter is a lambda accepting an
+ * Creates a new encoder of type [T] using the given function [block]. The [block] parameter is a lambda accepting an
  * object of type [T] and a [DecodingScope]. The given [DecodingScope] will have the following properties:
  *
  * - All primitive objects will be decoded with the default decoders present in the `BaseDecoders` file, and with the

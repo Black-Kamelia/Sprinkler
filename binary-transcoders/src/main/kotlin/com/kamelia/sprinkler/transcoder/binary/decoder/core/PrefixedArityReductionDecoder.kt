@@ -21,9 +21,9 @@ import java.util.stream.Collector
  * ```kotlin
  * fun decode(byteDecoder: Decoder<Byte>) {
  *     val decoder = PrefixedArityReductionDecoder(
- *         Collectors.toList(),
- *         byteDecoder,
- *         byteDecoder
+ *         collector = Collectors.toList(),
+ *         elementDecoder = byteDecoder,
+ *         sizeDecoder = byteDecoder
  *     )
  *     val input = byteArrayOf(2, 5, 3)
  *     val result = decoder.decode(input).get()

@@ -43,7 +43,7 @@ class MarkerEndedItemDecoder<E>(
             buffer.addLast(byte.toByte())
         }
 
-        val result = (accumulator?: ByteArray(0)).converter(index) // can be null only if content is empty
+        val result = (accumulator ?: ByteArray(0)).converter(index) // can be null only if content is empty
         reset()
         return Decoder.State.Done(result)
     }

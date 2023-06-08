@@ -8,7 +8,7 @@ import com.kamelia.sprinkler.transcoder.binary.encoder.core.EncoderOutput
 import java.nio.ByteOrder
 
 /**
- * Creates a new encoder of type [T] using the given lambda [block]. The [block] parameter is a lambda accepting an
+ * Creates a new encoder of type [T] using the given function [block]. The [block] parameter is a lambda accepting an
  * object of type [T] and an [EncodingScope]. The given [EncodingScope] will have the following properties:
  *
  * - All primitive objects will be encoded with the default encoders present in the `BaseEncoders` file, and with the
@@ -49,12 +49,12 @@ fun <T> composedEncoder(
         val recursionQueue = ArrayDeque<() -> Unit>()
         val globalStack = ArrayList<() -> Unit>()
 
-        encoder = Encoder(fun(t: T, o: EncoderOutput) {
+        encoder = Encoder self@{ t: T, o: EncoderOutput ->
             // base case
             val scope = EncodingScopeImpl(o, globalStack, recursionQueue, encodersCache, endianness, encoder!!)
             scope.block(t)
 
-            if (!top) return // true only for the first call in the recursion stack
+            if (!top) return@self // true only for the first call in the recursion stack
             top = false
 
             while (recursionQueue.isNotEmpty()) { // while there are encodings to be done
@@ -71,7 +71,7 @@ fun <T> composedEncoder(
                     globalStack.removeLast()()
                 }
             }
-        })
+        }
 
         encoder.encode(obj, output)
     }

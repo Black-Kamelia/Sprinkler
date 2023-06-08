@@ -9,8 +9,7 @@ import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
  * input object [R] to an object of type [T] using the given [mapper] function, and then delegate the encoding to the
  * original encoder.
  *
- * Here is an example of how to use this function:
- *
+ * Here is an example of how to use  *
  * ```
  * val longEncoder = LongEncoder()
  * val instantEncoder: Encoder<Instant> = longEncoder.withMappedInput(Instant::toEpochMilli)
@@ -25,7 +24,7 @@ import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
  * @return an encoder that encodes an object [R]
  */
 fun <T, R> Encoder<T>.withMappedInput(mapper: (R) -> T): Encoder<R> =
-    Encoder { obj, output -> this@withMappedInput.encode(mapper(obj), output) }
+    Encoder { obj, output -> encode(mapper(obj), output) }
 
 /**
  * Creates an encoder that encodes an [Iterable] of objects of type [T]. The created encoder will encode each object
@@ -38,8 +37,8 @@ fun <T, R> Encoder<T>.withMappedInput(mapper: (R) -> T): Encoder<R> =
  */
 fun <T> Encoder<T>.toIterable(endMarker: T): Encoder<Iterable<T>> =
     Encoder { obj, output ->
-        obj.forEach { this@toIterable.encode(it, output) }
-        this@toIterable.encode(endMarker, output)
+        obj.forEach { encode(it, output) }
+        encode(endMarker, output)
     }
 
 /**
@@ -56,7 +55,7 @@ fun <T> Encoder<T>.toIterable(endMarker: T): Encoder<Iterable<T>> =
 fun <T> Encoder<T>.toCollection(sizeEncoder: Encoder<Int> = IntEncoder()): Encoder<Collection<T>> =
     Encoder { obj, output ->
         sizeEncoder.encode(obj.size, output)
-        obj.forEach { this@toCollection.encode(it, output) }
+        obj.forEach { encode(it, output) }
     }
 
 /**
@@ -71,7 +70,7 @@ fun <T> Encoder<T>.toCollection(sizeEncoder: Encoder<Int> = IntEncoder()): Encod
 fun <K, V> Encoder<Pair<K, V>>.toMap(sizeEncoder: Encoder<Int> = IntEncoder()): Encoder<Map<K, V>> =
     Encoder { obj, output ->
         sizeEncoder.encode(obj.size, output)
-        obj.forEach { (key, value) -> this@toMap.encode(key to value, output) }
+        obj.forEach { (key, value) -> encode(key to value, output) }
     }
 
 /**
@@ -86,9 +85,9 @@ fun <K, V> Encoder<Pair<K, V>>.toMap(sizeEncoder: Encoder<Int> = IntEncoder()): 
 fun <K, V> Encoder<Pair<K, V>>.toMap(endMarker: Pair<K, V>): Encoder<Map<K, V>> =
     Encoder { obj, output ->
         obj.forEach { (key, value) ->
-            this@toMap.encode(key to value, output)
+            encode(key to value, output)
         }
-        this@toMap.encode(endMarker, output)
+        encode(endMarker, output)
     }
 
 /**
@@ -105,7 +104,7 @@ fun <K, V> Encoder<K>.toMap(valueEncoder: Encoder<V>, sizeEncoder: Encoder<Int> 
     Encoder { obj, output ->
         sizeEncoder.encode(obj.size, output)
         obj.forEach { (key, value) ->
-            this@toMap.encode(key, output)
+            encode(key, output)
             valueEncoder.encode(value, output)
         }
     }
@@ -123,10 +122,10 @@ fun <K, V> Encoder<K>.toMap(valueEncoder: Encoder<V>, sizeEncoder: Encoder<Int> 
 fun <K, V> Encoder<K>.toMap(valueEncoder: Encoder<V>, endMarker: Pair<K, V>): Encoder<Map<K, V>> =
     Encoder { obj, output ->
         obj.forEach { (key, value) ->
-            this@toMap.encode(key, output)
+            encode(key, output)
             valueEncoder.encode(value, output)
         }
-        this@toMap.encode(endMarker.first, output)
+        encode(endMarker.first, output)
         valueEncoder.encode(endMarker.second, output)
     }
 
@@ -142,7 +141,7 @@ fun <K, V> Encoder<K>.toMap(valueEncoder: Encoder<V>, endMarker: Pair<K, V>): En
 fun <T> Encoder<T>.toArray(sizeEncoder: Encoder<Int> = IntEncoder()): Encoder<Array<T>> =
     Encoder { obj, output ->
         sizeEncoder.encode(obj.size, output)
-        obj.forEach { this@toArray.encode(it, output) }
+        obj.forEach { encode(it, output) }
     }
 
 /**
@@ -156,8 +155,8 @@ fun <T> Encoder<T>.toArray(sizeEncoder: Encoder<Int> = IntEncoder()): Encoder<Ar
  */
 fun <T> Encoder<T>.toArray(endMarker: T): Encoder<Array<T>> =
     Encoder { obj, output ->
-        obj.forEach { this@toArray.encode(it, output) }
-        this@toArray.encode(endMarker, output)
+        obj.forEach { encode(it, output) }
+        encode(endMarker, output)
     }
 
 /**
@@ -177,5 +176,5 @@ fun <T : Any> Encoder<T>.toOptional(nullabilityEncoder: Encoder<Boolean> = Boole
             return@Encoder
         }
         nullabilityEncoder.encode(true, output)
-        this@toOptional.encode(obj, output)
+        encode(obj, output)
     }

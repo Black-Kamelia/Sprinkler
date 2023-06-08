@@ -7,9 +7,9 @@ import java.util.*
  * Abstraction allowing [Encoders][Encoder] to write bytes. This interface provides methods for writing bytes in various
  * ways, including writing a single byte, writing a [ByteArray], writing an [Iterable] of bytes, etc.
  *
- * To implement this interface, [write] is the only method must be implemented. All other methods are implemented in
- * terms of this method, meaning that this interface is actually a functional interface and can be implemented as a
- * lambda, as shown below:
+ * [write] is the only method that must be implemented. All other methods are default implemented depending on this
+ * method, meaning that this interface is actually a functional interface and can be implemented as a lambda, as shown
+ * below:
  *
  * &nbsp;
  *

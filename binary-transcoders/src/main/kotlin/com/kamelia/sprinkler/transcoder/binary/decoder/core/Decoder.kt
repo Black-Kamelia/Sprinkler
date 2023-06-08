@@ -26,15 +26,15 @@ import java.nio.ByteBuffer
  *
  * - [State.Done] - the decoding process is complete and the decoded object can be accessed via the
  * [value][State.Done.value] property.
- * - [State.Processing] - the decoding process is not complete and more bytes are needed. The [reason][State.Processing.reason]
- * property can be used to know why more bytes are needed.
+ * - [State.Processing] - the decoding process is not complete and more bytes are needed.
  * - [State.Error] - the decoding process has failed and the [error][State.Error.error] property can be used to access
  * the exception that caused the failure.
  *
  * The internal state of the decoder is automatically reset when a [State.Done] object is returned.
- * However, this reset may be partial. For example, a decoder accumulating bytes in an internal buffer will clear the contents of the
- * buffer but the reference will remain the same, meaning that the decoder might contain a reference to a buffer with a
- * large capacity even if it is not needed anymore. This is behavior done to avoid unnecessary allocations.
+ * However, this reset may be partial. For example, a decoder accumulating bytes in an internal buffer will clear the
+ * contents of the buffer but the reference will remain the same, meaning that the decoder might contain a reference to
+ * a buffer with a large capacity even if it is not needed anymore. This behavior effectively avoids unnecessary
+ * allocations.
  *
  * To completely reset the decoder, the [reset] method can be called. It can be called at any time, even if the decoder
  * is not in a [State.Done] state (e.g. an error occurred and the decoder must be reset).

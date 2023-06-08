@@ -10,9 +10,9 @@ import kotlin.math.min
  * bytes in various ways, including reading a single byte, reading bytes into a [ByteArray], reading bytes into a
  * [MutableCollection], etc.
  *
- * To implement this interface, [read] is the only method that must be implemented. All other methods are implemented in
- * terms of this method, meaning that this interface is actually a functional interface and can be implemented as a
- * lambda, as shown below:
+ * [read] is the only method that must be implemented. All other methods are default implemented depending on this
+ * method, meaning that this interface is actually a functional interface and can be implemented as a lambda, as shown
+ * below:
  *
  * &nbsp;
  *

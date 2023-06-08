@@ -8,7 +8,8 @@ import java.util.stream.Collectors
 
 /**
  * Represents a scope in which an object can be decoded. This interface is used to compose decoders. It can be used to
- * create a decoders in a more concise way than overriding the [Decoder] interface.
+ * create a decoders in a more concise way (compared to overriding the [Decoder] interface) and in a sequential manner (
+ * the call order is meaningful).
  *
  *
  * In the following example, both syntaxes are almost equivalent:
@@ -19,7 +20,7 @@ import java.util.stream.Collectors
  * // the scope syntax allows to create a decoder in a more concise way
  * val personDecoder = composedDecoder<Person> {
  *     val name = string()
- *     val age = int()
+ *     val age = int() // int must be called after string to work
  *     Person(name, age)
  * }
  *

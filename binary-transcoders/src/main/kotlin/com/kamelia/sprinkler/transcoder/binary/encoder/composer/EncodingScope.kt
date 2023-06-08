@@ -25,7 +25,6 @@ import com.kamelia.sprinkler.util.jvmlambda.KotlinDslAdapter
  * }
  *
  * // are strictly equivalent to
- *
  * val encoder2 = composedEncoder<Person> {
  *     encode(it.name)
  *     encode(it.age)
@@ -57,7 +56,7 @@ import com.kamelia.sprinkler.util.jvmlambda.KotlinDslAdapter
  *     encoder.encode(obj.next, output) // encode the next node
  * }
  *
- * // can be replaced by
+ * // can be replaced with
  * val encoder2 = composedEncoder<Node> {
  *     encode(it.value)
  *     encode(it.next)
@@ -69,12 +68,12 @@ import com.kamelia.sprinkler.util.jvmlambda.KotlinDslAdapter
  *
  * Moreover, for recursive encoding, the interface provides a [self] property that returns the encoder of the current
  * scope. This property can be used to encode recursively an object in a more flexible way, in case the other methods
- * are not enough.
+ * are not sufficient.
  *
  * &nbsp;
  *
  * As stated previously, the interface, through its shorthand methods, allows to encode the most common types, by using
- * default encoders. These default encoders are not fixed by the interface and therefore depend on the implementation.
+ * default encoders. These default encoders are not defined by the interface and therefore depend on the implementation.
  *
  * &nbsp;
  *

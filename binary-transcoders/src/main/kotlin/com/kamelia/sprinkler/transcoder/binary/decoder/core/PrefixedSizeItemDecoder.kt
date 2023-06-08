@@ -1,7 +1,7 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
 /**
- * A [Decoder] that decode an object with a variable size. The number of bytes to read are prefixed to the actual bytes
+ * A [Decoder] that decodes an object with a variable size. The number of bytes to read are prefixed to the actual bytes
  * of the object. This size is decoded by a [sizeDecoder] and then the n bytes are accumulated internally. Once all
  * bytes have been collected, the [converter] function is used to convert these bytes to the decoded object.
  *
