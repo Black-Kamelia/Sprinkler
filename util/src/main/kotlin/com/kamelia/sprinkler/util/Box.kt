@@ -83,9 +83,8 @@ interface Box<T> {
 
             private var _value: T? = null
 
-            @get:Suppress("UNCHECKED_CAST")
             override val value: T
-                get() = _value as T ?: throw IllegalStateException("Box not filled")
+                get() = _value ?: throw IllegalStateException("Box not filled")
 
             override var isFilled: Boolean = false
                 private set
@@ -110,9 +109,8 @@ interface Box<T> {
 
             private var _value: T? = null
 
-            @get:Suppress("UNCHECKED_CAST")
             override val value: T
-                get() = _value as T ?: throw IllegalStateException("Box not filled")
+                get() = _value ?: throw IllegalStateException("Box not filled")
 
             override var isFilled: Boolean = false
                 private set
