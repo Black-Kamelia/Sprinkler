@@ -12,7 +12,7 @@ import java.util.stream.Collectors
  * the call order is meaningful).
  *
  *
- * In the following example, both syntaxes are almost equivalent:
+ * In the following example, both syntax are almost equivalent:
  *
  * ```
  * class Person(val name: String, val age: Int)
