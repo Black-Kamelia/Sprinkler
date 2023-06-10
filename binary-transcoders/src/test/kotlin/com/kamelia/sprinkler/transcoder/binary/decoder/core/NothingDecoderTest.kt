@@ -24,6 +24,15 @@ class NothingDecoderTest {
     }
 
     @Test
+    fun `returns error on decode using given throwable`() {
+        val exception = RuntimeException()
+        val decoder = NothingDecoder(exception)
+        val result = decoder.decode(byteArrayOf())
+        assertInstanceOf(Decoder.State.Error::class.java, result)
+        assertEquals(exception, (result as Decoder.State.Error).error)
+    }
+
+    @Test
     fun `reset doesn't throw`() {
         val decoder = NothingDecoder()
         assertDoesNotThrow {

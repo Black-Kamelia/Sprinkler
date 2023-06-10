@@ -6,7 +6,7 @@ import java.nio.file.Path
 import kotlin.io.path.outputStream
 
 /**
- * Represents an object that can convert an object of type [T] to bytes.
+ * Represents an object that can serialize an object of type [T] to bytes.
  *
  * An encoder is stateless and encodes in a single operation, it can be instantiated once and reused multiple times to
  * encode different objects.

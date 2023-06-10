@@ -9,9 +9,7 @@ import com.kamelia.sprinkler.transcoder.binary.encoder.LongEncoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.ShortEncoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.core.EncoderOutput
-import com.kamelia.sprinkler.transcoder.binary.encoder.toArray
-import com.kamelia.sprinkler.transcoder.binary.encoder.toCollection
-import com.kamelia.sprinkler.transcoder.binary.encoder.toOptional
+import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.nio.ByteOrder
 
@@ -73,32 +71,26 @@ internal class EncodingScopeImpl<E>(
         throw AssertionError("A String encoder should always be present")
     }
 
-    override fun encode(obj: Array<E>): EncodingScope<E> = encode(obj, computed { IntEncoder(endianness) })
-
-    override fun encode(obj: Array<E>, sizeEncoder: Encoder<Int>): EncodingScope<E> =
-        encodeWithComputed<Array<*>>(obj) {
-            @Suppress("UNCHECKED_CAST")
-            self.toArray(sizeEncoder) as Encoder<Array<*>>
-        }
-
-    override fun encode(obj: Collection<E>): EncodingScope<E> = encode(obj, computed { IntEncoder(endianness) })
-
-    override fun encode(obj: Collection<E>, sizeEncoder: Encoder<Int>): EncodingScope<E> =
-        encode(obj, self.toCollection(sizeEncoder))
-
-    override fun encode(obj: E?): EncodingScope<E> = encode(obj, computed { BooleanEncoder() })
-
-    override fun encode(obj: E?, nullabilityEncoder: Encoder<Boolean>): EncodingScope<E> =
-        encode(obj, self.toOptional(nullabilityEncoder))
-
-    private inline fun <reified T> encodeWithComputed(obj: T, noinline block: () -> Encoder<T>): EncodingScope<E> {
-        @Suppress("UNCHECKED_CAST")
-        val encoder = encoderMap.computeIfAbsent(T::class.java) { block() } as Encoder<T>
-        return encode(obj, encoder)
+    override fun encode(obj: Array<E>): EncodingScope<E> = apply {
+        encode(obj.size)
+        obj.forEach { encode(it, self) }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    private inline fun <reified T> computed(noinline block: () -> Encoder<T>): Encoder<T> =
-        encoderMap.computeIfAbsent(T::class.java) { block() } as Encoder<T>
+    override fun encode(obj: Collection<E>): EncodingScope<E> = apply {
+        encode(obj.size)
+        obj.forEach { encode(it, self) }
+    }
+
+    override fun encode(obj: E?): EncodingScope<E> = apply {
+        encode(obj != null)
+        if (obj != null) {
+            encode(obj, self)
+        }
+    }
+
+    private inline fun <reified T> encodeWithComputed(obj: T, noinline block: () -> Encoder<T>): EncodingScope<E> {
+        val encoder = encoderMap.computeIfAbsent(T::class.java) { block() }.unsafeCast<Encoder<T>>()
+        return encode(obj, encoder)
+    }
 
 }

@@ -4,11 +4,12 @@ import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Done
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Error
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Processing
+import com.kamelia.sprinkler.util.unsafeCast
 import java.io.InputStream
 import java.nio.ByteBuffer
 
 /**
- * Represents an object that can convert a stream of bytes into an object of type [T]. A decoder is stateful and can
+ * Represents an object that can deserialize a stream of bytes into an object of type [T]. A decoder is stateful and can
  * therefore decode an object in multiple steps.
  *
  * Here is quick example of how to use a decoder:
@@ -200,8 +201,7 @@ interface Decoder<out T> {
         fun <R> mapEmptyState(): State<R> = if (this is Done) {
             throw IllegalStateException("Cannot map change type of Done state ($this).")
         } else {
-            @Suppress("UNCHECKED_CAST")
-            this as State<R>
+            unsafeCast()
         }
 
         /**

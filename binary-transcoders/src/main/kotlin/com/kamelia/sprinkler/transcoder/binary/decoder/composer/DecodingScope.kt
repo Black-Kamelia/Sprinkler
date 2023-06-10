@@ -1,8 +1,8 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.toCollection
 import com.kamelia.sprinkler.util.ExtendedCollectors
+import com.kamelia.sprinkler.util.unsafeCast
 import java.util.stream.Collector
 import java.util.stream.Collectors
 
@@ -190,25 +190,8 @@ sealed interface DecodingScope<E> {
     fun string(): String
 
     /**
-     * Recursively decodes a nullable object of type [E] using the default nullability decoder of the scope, which
-     * decodes a boolean indicating whether the object is present or not (`true` if present, `false` otherwise).
-     *
-     * @param nullabilityDecoder the decoder used to decode the nullability of the object
-     * @return the decoded object, or `null` if the object is not present
-     */
-    @JvmName("decodeSelfOrNull")
-    fun selfOrNull(nullabilityDecoder: Decoder<Boolean>): E? {
-        val isPresent = decode(nullabilityDecoder)
-        return if (isPresent) {
-            decode(self)
-        } else {
-            null
-        }
-    }
-
-    /**
-     * Recursively decodes an object of type [E]. The nullability of the object is decoded using the default boolean
-     * decoder of the scope.
+     * Recursively decodes a nullable object of type [E]. The representation of the nullability depends on the
+     * implementation of the scope.
      *
      * @return the decoded object, or `null` if the object is not present
      */
@@ -216,23 +199,8 @@ sealed interface DecodingScope<E> {
     fun selfOrNull(): E?
 
     /**
-     * Recursively decodes a collection of objects of type [E] using the given [collector] and the given [sizeDecoder].
-     * The [sizeDecoder] is used to decode the size of the collection which is prepended to the collection itself.
-     *
-     * @param collector the collector used to collect the decoded objects
-     * @param sizeDecoder the decoder used to decode the size of the collection
-     * @param R the type of the collection
-     * @return the decoded collection
-     */
-    @JvmName("decodeSelfCollection")
-    fun <R> selfCollection(collector: Collector<E, *, R>, sizeDecoder: Decoder<Int>): R {
-        val decoder = oncePerObject { self.toCollection(collector, sizeDecoder) }
-        return decode(decoder)
-    }
-
-    /**
-     * Recursively decodes a collection of objects of type [E] using the given [collector] and the default int decoder
-     * of the scope. The size of the collection is prepended to the collection itself.
+     * Recursively decodes a collection of objects of type [E] using the given [collector]. The assumed representation
+     * of the collection depends on the implementation of the scope.
      *
      * @param collector the collector used to collect the decoded objects
      * @param R the type of the collection
@@ -242,18 +210,8 @@ sealed interface DecodingScope<E> {
     fun <R> selfCollection(collector: Collector<E, *, R>): R
 
     /**
-     * Recursively decodes a list of objects of type [E] using the given [sizeDecoder]. The [sizeDecoder] is used to
-     * decode the size of the list which is prepended to the list itself.
-     *
-     * @param sizeDecoder the decoder used to decode the size of the list
-     * @return the decoded list
-     */
-    @JvmName("decodeSelfList")
-    fun selfList(sizeDecoder: Decoder<Int>): List<E> = selfCollection(toList(), sizeDecoder)
-
-    /**
-     * Recursively decodes a list of objects of type [E] using the default int decoder of the scope. The size of the
-     * list is prepended to the list itself.
+     * Recursively decodes a list of objects of type [E]. The assumed representation of the list depends on the
+     * implementation of the scope.
      *
      * @return the decoded list
      */
@@ -261,18 +219,8 @@ sealed interface DecodingScope<E> {
     fun selfList(): List<E> = selfCollection(toList())
 
     /**
-     * Recursively decodes a set of objects of type [E] using the given [sizeDecoder]. The [sizeDecoder] is used to
-     * decode the size of the set which is prepended to the set itself.
-     *
-     * @param sizeDecoder the decoder used to decode the size of the set
-     * @return the decoded set
-     */
-    @JvmName("decodeSelfSet")
-    fun selfSet(sizeDecoder: Decoder<Int>): Set<E> = selfCollection(toSet(), sizeDecoder)
-
-    /**
-     * Recursively decodes a set of objects of type [E] using the default int decoder of the scope. The size of the
-     * set is prepended to the set itself.
+     * Recursively decodes a set of objects of type [E]. The assumed representation of the set depends on the
+     * implementation of the scope.
      *
      * @return the decoded set
      */
@@ -280,25 +228,9 @@ sealed interface DecodingScope<E> {
     fun selfSet(): Set<E> = selfCollection(toSet())
 
     /**
-     * Recursively decodes an array of objects of type [E] using the given [factory] and the given [sizeDecoder]. The
-     * [sizeDecoder] is used to decode the size of the array which is prepended to the array itself. The [factory] is
-     * used to create the array.
-     *
-     * Usually, the [::arrayOfNulls][arrayOfNulls] function is used to create the array.
-     *
-     * @param factory the factory used to create the array
-     * @param sizeDecoder the decoder used to decode the size of the array
-     * @return the decoded array
-     */
-    @JvmName("decodeSelfArray")
-    fun selfArray(factory: (Int) -> Array<E?>, sizeDecoder: Decoder<Int>): Array<E> =
-        selfCollection(ExtendedCollectors.toArray(factory), sizeDecoder)
-
-    /**
-     * Recursively decodes an array of objects of type [E] using the given [factory] and the default int decoder of the
-     * scope. The size of the array is prepended to the array itself. The [factory] is used to create the array.
-     *
-     * Usually, the [::arrayOfNulls][arrayOfNulls] function is used to create the array.
+     * Recursively decodes an array of objects of type [E]. The assumed representation of the array depends on the
+     * implementation of the scope. The [factory] is necessary to create the array. Usually, the
+     * [::arrayOfNulls][arrayOfNulls] function is used to create the array.
      *
      * @param factory the factory used to create the array
      * @return the decoded array
@@ -307,49 +239,8 @@ sealed interface DecodingScope<E> {
     fun selfArray(factory: (Int) -> Array<E?>): Array<E> = selfCollection(ExtendedCollectors.toArray(factory))
 
     /**
-     * Recursively decodes a nullable collection of objects of type [E] using the given [collector], the given
-     * [sizeDecoder] and the given [nullabilityDecoder]. The [sizeDecoder] is used to decode the size of the collection
-     * which is prepended to the collection itself. The [nullabilityDecoder] is used to decode the nullability of the
-     * collection, which is prepended to the size of the collection.
-     *
-     * @param collector the collector used to collect the decoded objects
-     * @param sizeDecoder the decoder used to decode the size of the collection
-     * @param nullabilityDecoder the decoder used to decode the nullability of the collection
-     * @param R the type of the collection
-     * @return the decoded collection, or `null` if the collection is not present
-     */
-    @JvmName("decodeSelfCollectionOrNull")
-    fun <R> selfCollectionOrNull(
-        collector: Collector<E, *, R>,
-        sizeDecoder: Decoder<Int>,
-        nullabilityDecoder: Decoder<Boolean>,
-    ): R? {
-        val isPresent = decode(nullabilityDecoder)
-        return if (isPresent) {
-            selfCollection(collector, sizeDecoder)
-        } else {
-            null
-        }
-    }
-
-    /**
-     * Recursively decodes a nullable collection of objects of type [E] using the given [collector], the given
-     * [sizeDecoder] and the default boolean decoder of the scope. The [sizeDecoder] is used to decode the size of the
-     * collection which is prepended to the collection itself. The nullability of the collection is prepended to
-     * the size of the collection.
-     *
-     * @param collector the collector used to collect the decoded objects
-     * @param sizeDecoder the decoder used to decode the size of the collection
-     * @param R the type of the collection
-     * @return the decoded collection, or `null` if the collection is not present
-     */
-    @JvmName("decodeSelfCollectionOrNull")
-    fun <R> selfCollectionOrNull(collector: Collector<E, *, R>, sizeDecoder: Decoder<Int>): R?
-
-    /**
-     * Recursively decodes a nullable collection of objects of type [E] using the given [collector] and the default
-     * int and boolean decoders of the scope. The size of the collection is prepended to the collection itself. The
-     * nullability of the collection is prepended to the size of the collection.
+     * Recursively decodes a nullable collection of objects of type [E]. The assumed representation of the collection
+     * depends on the implementation of the scope.
      *
      * @param collector the collector used to collect the decoded objects
      * @param R the type of the collection
@@ -359,34 +250,8 @@ sealed interface DecodingScope<E> {
     fun <R> selfCollectionOrNull(collector: Collector<E, *, R>): R?
 
     /**
-     * Recursively decodes a nullable list of objects of type [E] using the given [sizeDecoder] and the given
-     * [nullabilityDecoder]. The [sizeDecoder] is used to decode the size of the list which is prepended to the list
-     * itself. The [nullabilityDecoder] is used to decode the nullability of the list, which is prepended to the size
-     * of the list.
-     *
-     * @param sizeDecoder the decoder used to decode the size of the list
-     * @param nullabilityDecoder the decoder used to decode the nullability of the list
-     * @return the decoded list, or `null` if the list is not present
-     */
-    @JvmName("decodeSelfListOrNull")
-    fun selfListOrNull(sizeDecoder: Decoder<Int>, nullabilityDecoder: Decoder<Boolean>): List<E>? =
-        selfCollectionOrNull(toList(), sizeDecoder, nullabilityDecoder)
-
-    /**
-     * Recursively decodes a nullable list of objects of type [E] using the given [sizeDecoder] and the default
-     * boolean decoder of the scope. The size of the list is prepended to the list itself. The nullability of the list
-     * is prepended to the size of the list.
-     *
-     * @param sizeDecoder the decoder used to decode the size of the list
-     * @return the decoded list, or `null` if the list is not present
-     */
-    @JvmName("decodeSelfListOrNull")
-    fun selfListOrNull(sizeDecoder: Decoder<Int>): List<E>? = selfCollectionOrNull(toList(), sizeDecoder)
-
-    /**
-     * Recursively decodes a nullable list of objects of type [E] using the default int and boolean decoders of the
-     * scope. The size of the list is prepended to the list itself. The nullability of the list is prepended to the
-     * size of the list.
+     * Recursively decodes a nullable list of objects of type [E]. The assumed representation of the list depends on
+     * the implementation of the scope.
      *
      * @return the decoded list, or `null` if the list is not present
      */
@@ -394,34 +259,8 @@ sealed interface DecodingScope<E> {
     fun selfListOrNull(): List<E>? = selfCollectionOrNull(toList())
 
     /**
-     * Recursively decodes a nullable set of objects of type [E] using the given [sizeDecoder] and the given
-     * [nullabilityDecoder]. The [sizeDecoder] is used to decode the size of the set which is prepended to the set
-     * itself. The [nullabilityDecoder] is used to decode the nullability of the set, which is prepended to the size
-     * of the set.
-     *
-     * @param sizeDecoder the decoder used to decode the size of the set
-     * @param nullabilityDecoder the decoder used to decode the nullability of the set
-     * @return the decoded set, or `null` if the set is not present
-     */
-    @JvmName("decodeSelfSetOrNull")
-    fun selfSetOrNull(sizeDecoder: Decoder<Int>, nullabilityDecoder: Decoder<Boolean>): Set<E>? =
-        selfCollectionOrNull(toSet(), sizeDecoder, nullabilityDecoder)
-
-    /**
-     * Recursively decodes a nullable set of objects of type [E] using the given [sizeDecoder] and the default
-     * boolean decoder of the scope. The size of the set is prepended to the set itself. The nullability of the set is
-     * prepended to the size of the set.
-     *
-     * @param sizeDecoder the decoder used to decode the size of the set
-     * @return the decoded set, or `null` if the set is not present
-     */
-    @JvmName("decodeSelfSetOrNull")
-    fun selfSetOrNull(sizeDecoder: Decoder<Int>): Set<E>? = selfCollectionOrNull(toSet(), sizeDecoder)
-
-    /**
-     * Recursively decodes a nullable set of objects of type [E] using the default int and boolean decoders of the
-     * scope. The size of the set is prepended to the set itself. The nullability of the set is prepended to the size
-     * of the set.
+     * Recursively decodes a nullable set of objects of type [E]. The assumed representation of the set depends on
+     * the implementation of the scope.
      *
      * @return the decoded set, or `null` if the set is not present
      */
@@ -429,40 +268,9 @@ sealed interface DecodingScope<E> {
     fun selfSetOrNull(): Set<E>? = selfCollectionOrNull(toSet())
 
     /**
-     * Recursively decodes a nullable array of objects of type [E] using the given [factory], the given [sizeDecoder]
-     * and the given [nullabilityDecoder]. The [factory] is used to create the array. The [sizeDecoder] is used to
-     * decode the size of the array which is prepended to the array itself. The [nullabilityDecoder] is used to decode
-     * the nullability of the array, which is prepended to the size of the array.
-     *
-     * @param factory the factory used to create the array
-     * @param sizeDecoder the decoder used to decode the size of the array
-     * @param nullabilityDecoder the decoder used to decode the nullability of the array
-     * @return the decoded array, or `null` if the array is not present
-     */
-    @JvmName("decodeSelfArrayOrNull")
-    fun selfArrayOrNull(
-        factory: (Int) -> Array<E?>,
-        sizeDecoder: Decoder<Int>,
-        nullabilityDecoder: Decoder<Boolean>,
-    ): Array<E>? = selfCollectionOrNull(ExtendedCollectors.toArray(factory), sizeDecoder, nullabilityDecoder)
-
-    /**
-     * Recursively decodes a nullable array of objects of type [E] using the given [factory], the given [sizeDecoder]
-     * and the default boolean decoder of the scope. The [factory] is used to create the array. The size of the array
-     * is prepended to the array itself. The nullability of the array is prepended to the size of the array.
-     *
-     * @param factory the factory used to create the array
-     * @param sizeDecoder the decoder used to decode the size of the array
-     * @return the decoded array, or `null` if the array is not present
-     */
-    @JvmName("decodeSelfArrayOrNull")
-    fun selfArrayOrNull(factory: (Int) -> Array<E?>, sizeDecoder: Decoder<Int>): Array<E>? =
-        selfCollectionOrNull(ExtendedCollectors.toArray(factory), sizeDecoder)
-
-    /**
-     * Recursively decodes a nullable array of objects of type [E] using the given [factory], the default int and
-     * boolean decoders of the scope. The [factory] is used to create the array. The size of the array is prepended to
-     * the array itself. The nullability of the array is prepended to the size of the array.
+     * Recursively decodes a nullable array of objects of type [E]. The assumed representation of the array depends on
+     * the implementation of the scope. The [factory] is necessary to create the array. Usually, the
+     * [::arrayOfNulls][arrayOfNulls] function is used to create the array.
      *
      * @param factory the factory used to create the array
      * @return the decoded array, or `null` if the array is not present
@@ -477,8 +285,6 @@ private val toList = Collectors.toList<Any>()
 
 private val toSet = Collectors.toSet<Any>()
 
-@Suppress("UNCHECKED_CAST")
-private fun <T> toList(): Collector<T, *, List<T>> = toList as Collector<T, Any, List<T>>
+private fun <T> toList(): Collector<T, *, List<T>> = toList.unsafeCast()
 
-@Suppress("UNCHECKED_CAST")
-private fun <T> toSet(): Collector<T, *, Set<T>> = toSet as Collector<T, Any, Set<T>>
+private fun <T> toSet(): Collector<T, *, Set<T>> = toSet.unsafeCast()

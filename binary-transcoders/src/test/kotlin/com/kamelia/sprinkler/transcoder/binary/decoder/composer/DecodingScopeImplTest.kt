@@ -1,18 +1,45 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 
+import com.kamelia.sprinkler.transcoder.binary.decoder.IntDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.ShortDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.NothingDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.util.assertDoneAndGet
 import com.kamelia.sprinkler.util.byte
 import java.nio.ByteOrder
+import java.util.stream.Collectors
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
-class DecoderComposerBasicTest {
+class DecodingScopeImplTest {
+
+    @Test
+    fun `inconsistent shorthand calls in scope between decode calls can cause errors`() {
+        var called = false
+        val decoder = composedDecoder {
+            if (!called) {
+                called = true
+                byte()
+            } else {
+                val s = string()
+                println(s)
+            }
+            byte()
+        }
+
+        val bytes1 = byteArrayOf(1)
+        val bytes2 = byteArrayOf(1, 5)
+        val result1 = decoder.decode(bytes1)
+        assertEquals(Decoder.State.Processing, result1)
+
+        assertThrows<IllegalStateException> {
+            decoder.decode(bytes2)
+        }
+    }
 
     @Test
     fun `scope byte shorthand works correctly`() {
@@ -132,6 +159,57 @@ class DecoderComposerBasicTest {
     }
 
     @Test
+    fun `skip works correctly with 0`() {
+        val decoder = composedDecoder {
+            skip(0)
+            byte()
+        }
+        val bytes = byteArrayOf(4, 1)
+        val result = decoder.decode(bytes).assertDoneAndGet()
+        assertEquals(4, result)
+    }
+
+    @Test
+    fun `skip throws on negative value`() {
+        val decoder = composedDecoder {
+            skip(-1)
+        }
+        assertThrows<IllegalArgumentException> {
+            decoder.decode(byteArrayOf())
+        }
+    }
+
+    @Test
+    fun `skip does not skip several times the count`() {
+        val decoder = composedDecoder {
+            skip(1)
+            byte()
+        }
+        val bytes1 = byteArrayOf(1)
+        val bytes2 = byteArrayOf(5)
+        val result1 = decoder.decode(bytes1)
+        assertEquals(Decoder.State.Processing, result1)
+
+        val result2 = decoder.decode(bytes2).assertDoneAndGet()
+        assertEquals(5, result2)
+    }
+
+    @Test
+    fun `skip keeps track of the bytes left to skip`() {
+        val decoder = composedDecoder {
+            skip(2)
+            byte()
+        }
+        val bytes1 = byteArrayOf(1)
+        val bytes2 = byteArrayOf(3, 5)
+        val result1 = decoder.decode(bytes1)
+        assertEquals(Decoder.State.Processing, result1)
+
+        val result2 = decoder.decode(bytes2).assertDoneAndGet()
+        assertEquals(5, result2)
+    }
+
+    @Test
     fun `decode in several times works correctly`() {
         val decoder = composedDecoder {
             short()
@@ -200,10 +278,10 @@ class DecoderComposerBasicTest {
     data class Person1(val age: Byte, val children: List<Person1>)
 
     @Test
-    fun `selfList works correctly with recursion`() {
-        val decoder = composedDecoder {
+    fun `selfCollection works correctly with recursion`() {
+        val decoder = composedDecoder<Person1> {
             val age = byte()
-            val children = selfList()
+            val children = selfCollection(Collectors.toList())
             Person1(age, children)
         }
         val fatherAge = 34.toByte()
@@ -216,5 +294,59 @@ class DecoderComposerBasicTest {
         assertEquals(child1Age, result.children[0].age)
         assertEquals(child2Age, result.children[1].age)
     }
+
+    @Test
+    fun `selfCollection works correctly without recursion`() {
+        val decoder = composedDecoder<Person1> {
+            val age = byte()
+            val children = selfCollection(Collectors.toList())
+            Person1(age, children)
+        }
+        val fatherAge = 34.toByte()
+        val bytes = byteArrayOf(fatherAge, 0, 0, 0, 0)
+        val result = decoder.decode(bytes).assertDoneAndGet()
+        assertEquals(fatherAge, result.age)
+        assertEquals(0, result.children.size)
+    }
+
+    data class Person2(val age: Byte, val children: List<Person2>?)
+
+    @Test
+    fun `selfCollectionOrNull works correctly with recursion`() {
+        val intDecoder = IntDecoder()
+        val decoder = composedDecoder<Person2> {
+            val age = byte()
+            val children = selfCollectionOrNull(Collectors.toList())
+            Person2(age, children)
+        }
+        val fatherAge = 34.toByte()
+        val child1Age = 8.toByte()
+        val child2Age = 3.toByte()
+        val bytes = byteArrayOf(fatherAge, 1, 0, 0, 0, 2, child1Age, 1, 0, 0, 0, 0, child2Age, 0)
+        val result = decoder.decode(bytes).assertDoneAndGet()
+        assertEquals(fatherAge, result.age)
+        assertNotNull(result.children)
+        assertEquals(2, result.children!!.size)
+        assertEquals(child1Age, result.children[0].age)
+        assertEquals(child2Age, result.children[1].age)
+        assertNotNull(result.children[0].children)
+        assertNull(result.children[1].children)
+    }
+
+    @Test
+    fun `selfCollectionOrNull works correctly without recursion`() {
+        val decoder = composedDecoder<Person2> {
+            val age = byte()
+            val children = selfCollectionOrNull(Collectors.toList())
+            Person2(age, children)
+        }
+        val fatherAge = 34.toByte()
+        val bytes = byteArrayOf(fatherAge, 0)
+        val result = decoder.decode(bytes).assertDoneAndGet()
+        assertEquals(fatherAge, result.age)
+        assertNull(result.children)
+    }
+
+
 
 }

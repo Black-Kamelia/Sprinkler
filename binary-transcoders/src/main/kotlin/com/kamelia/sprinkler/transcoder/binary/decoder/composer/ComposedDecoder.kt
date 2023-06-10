@@ -16,6 +16,14 @@ import java.nio.ByteOrder
  * - For [String] objects decoding, the [stringDecoder] parameter will be used.
  * - Each created decoder will be cached and reused for the same type (except for decoders composed with the
  * [self][DecodingScope.self] property).
+ * - Nullable objects decoding will be decoded assuming that the object is prefixed with a [Boolean] (represented as a
+ * single byte) that indicates if the object is present or not (`true` if present, `false` if not).
+ * - All collection decoding will be decoded assuming that the collection is prefixed with its size represented by an
+ * [Int].
+ * - All nullable collections decoding will be decoded assuming that the collection is prefixed with a [Boolean] that
+ * indicates if the collection is present or not (`true` if present, `false` if not). Then, if the collection is
+ * present, the size of the collection will be decoded as an [Int]. Finally, if the collection is present and its size
+ * is greater than 0, the elements of the collection will be decoded.
  *
  * **NOTE**: The [DecodingScope] used in the lambda [block] is not designed to be used outside the lambda. Any use of
  * the scope outside the lambda may lead to unexpected results and can change the behaviour of the scope decoding
