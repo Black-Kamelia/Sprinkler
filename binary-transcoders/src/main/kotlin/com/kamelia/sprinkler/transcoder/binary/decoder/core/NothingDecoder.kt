@@ -7,7 +7,7 @@ package com.kamelia.sprinkler.transcoder.binary.decoder.core
  * @param error the [Throwable] to return in [Decoder.State.Error]
  */
 class NothingDecoder(
-    private val errorProvider: () -> Throwable,
+    private val errorProvider: () -> Throwable = { IllegalStateException("NothingDecoder always fails.") },
 ) : Decoder<Nothing> {
 
     /**
