@@ -9,6 +9,7 @@ import com.kamelia.sprinkler.transcoder.binary.decoder.LongDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.ShortDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.DecoderInput
+import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.nio.ByteOrder
 import java.util.stream.Collector
@@ -32,7 +33,7 @@ internal class DecodingScopeImpl<E>(
 
     override fun <T> decode(decoder: Decoder<T>): T {
         return if (currentIndex < accumulator.size) { // already decoded
-            accumulator[currentIndex++].tryCast()
+            accumulator[currentIndex++].unsafeCast()
         } else { // decode
             currentIndex++
             when (val value = decoder.decode(input)) {
@@ -45,7 +46,7 @@ internal class DecodingScopeImpl<E>(
 
 
     override fun <T> oncePerObject(block: () -> T): T = if (currentIndex < accumulator.size) { // already decoded
-        accumulator[currentIndex++].tryCast()
+        accumulator[currentIndex++].unsafeCast()
     } else { // decode
         currentIndex++
         block().also(accumulator::add)
@@ -54,7 +55,7 @@ internal class DecodingScopeImpl<E>(
     override fun skip(count: Long) {
         require(count >= 0) { "Count must be positive, but was $count" }
         val toSkip: Long? = if (currentIndex < accumulator.size) {
-            accumulator[currentIndex].tryCast()
+            accumulator[currentIndex].unsafeCast()
         } else {
             count.also(accumulator::add)
         }
@@ -97,7 +98,7 @@ internal class DecodingScopeImpl<E>(
     override fun boolean(): Boolean = decodeWithComputed { BooleanDecoder() }
 
     @JvmName("decodeString")
-    override fun string(): String = decodeWithComputed {
+    override fun string(): String = decodeWithComputed<String> {
         throw AssertionError("A String decoder should always be present")
     }
 
@@ -117,7 +118,7 @@ internal class DecodingScopeImpl<E>(
     @Suppress("UNCHECKED_CAST")
     private inline fun <reified T> decodeWithComputed(noinline block: () -> Decoder<T>): T {
         val decoder = cache.computeIfAbsent(T::class.java) { block() } as Decoder<T>
-        return decode(decoder)
+        return decode(decoder) as? T ?: throw IllegalStateException(CAST_ERROR_MESSAGE)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -129,7 +130,7 @@ internal class DecodingScopeImpl<E>(
         override fun decode(input: DecoderInput): Decoder.State<E> = if (accumulator.hasRecursionElement()) {
             val element = accumulator.getFromRecursion()
             currentIndex++
-            Decoder.State.Done(element.tryCast<E>())
+            Decoder.State.Done(element.unsafeCast<E>())
         } else {
             throw RecursionMarker
         }
@@ -138,18 +139,17 @@ internal class DecodingScopeImpl<E>(
 
     }
 
-    internal fun reset() {
-        self.reset()
-    }
+    internal fun reset() = self.reset()
 
-    @Suppress("UNCHECKED_CAST")
-    private fun <T> Any?.tryCast(): T = this as? T
-        ?: throw IllegalStateException(
-            """
+    private companion object {
+
+        @JvmField
+        val CAST_ERROR_MESSAGE = """
         Error while trying to cast $this.
         This error may have been caused because different calls have been made in the the scope for the same object,
         between two calls of the block. Calls in the scope must be consistent for the same object between two calls.
             """.trimIndent()
-        )
+
+    }
 
 }
