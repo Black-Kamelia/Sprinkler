@@ -8,6 +8,3 @@ package com.kamelia.sprinkler.util
  */
 @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
 inline fun <T> Any?.unsafeCast(): T = this as T
-
-
-
