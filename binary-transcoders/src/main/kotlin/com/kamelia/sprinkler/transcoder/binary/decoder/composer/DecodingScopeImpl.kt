@@ -128,7 +128,6 @@ internal class DecodingScopeImpl<E>(
 
         override fun decode(input: DecoderInput): Decoder.State<E> = if (accumulator.hasRecursionElement()) {
             val element = accumulator.getFromRecursion()
-            accumulator.add(element)
             currentIndex++
             Decoder.State.Done(element.tryCast<E>())
         } else {
