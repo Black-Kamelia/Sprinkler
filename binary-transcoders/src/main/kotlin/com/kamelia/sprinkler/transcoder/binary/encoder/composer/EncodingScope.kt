@@ -173,8 +173,8 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
     fun encode(obj: String): EncodingScope<E>
 
     /**
-     * Encodes recursively a nullable object of type [E]. The nullability of the object is encoded using the default
-     * boolean encoder of the scope.
+     * Encodes recursively a nullable object of type [E]. The assumed representation of the nullability depends
+     * on the implementation of the scope.
      *
      * @param obj the object to encode
      * @return the current scope
@@ -182,8 +182,8 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
     fun encode(obj: E?): EncodingScope<E>
 
     /**
-     * Encodes recursively a [Collection] of type [E]. The size of the collection is encoded using the default int
-     * encoder of the scope.
+     * Encodes recursively a [Collection] of type [E]. The assumed representation of the collection depends on the
+     * implementation of the scope.
      *
      * @param obj the collection to encode
      * @return the current scope
@@ -191,8 +191,8 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
     fun encode(obj: Collection<E>): EncodingScope<E>
 
     /**
-     * Encodes recursively an [Array] of type [E]. The size of the array is encoded using the default int encoder of
-     * the scope.
+     * Encodes recursively an [Array] of type [E]. The assumed representation of the array depends on the
+     * implementation of the scope.
      *
      * @param obj the array to encode
      * @return the current scope

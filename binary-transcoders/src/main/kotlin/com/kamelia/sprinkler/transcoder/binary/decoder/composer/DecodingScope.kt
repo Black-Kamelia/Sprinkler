@@ -190,7 +190,8 @@ sealed interface DecodingScope<E> {
     fun string(): String
 
     /**
-     * Recursively decodes a nullable object of type [E].
+     * Recursively decodes a nullable object of type [E]. The representation of the nullability depends on the
+     * implementation of the scope.
      *
      * @return the decoded object, or `null` if the object is not present
      */
