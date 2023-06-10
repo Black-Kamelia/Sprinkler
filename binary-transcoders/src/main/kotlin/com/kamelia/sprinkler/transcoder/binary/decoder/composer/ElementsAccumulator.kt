@@ -24,6 +24,7 @@ internal class ElementsAccumulator {
     }
 
     operator fun get(index: Int): Any? {
+        require(index >= 0) { "Index $index is negative" }
         val actualIndex = currentLayer.start + index
         require(actualIndex < list.size) {
             "Index $actualIndex ($index + ${currentLayer.start}) is out of bounds for size ${list.size}"
@@ -32,6 +33,7 @@ internal class ElementsAccumulator {
     }
 
     operator fun set(index: Int, element: Any?) {
+        require(index >= 0) { "Index $index is negative" }
         val actualIndex = currentLayer.start + index
         require(actualIndex < list.size) {
             "Index $actualIndex ($index + ${currentLayer.start}) is out of bounds for size ${list.size}"
@@ -60,13 +62,6 @@ internal class ElementsAccumulator {
         val start: Int,
         @JvmField
         val previous: Layer?,
-    ) {
-
-        override fun toString(): String = "Layer(start=$start, previous=$previous)"
-
-    }
-
-    override fun toString(): String =
-        "ElementsAccumulator(list=$list, recursionElements=$recursionElements, currentLayer=$currentLayer)"
+    )
 
 }
