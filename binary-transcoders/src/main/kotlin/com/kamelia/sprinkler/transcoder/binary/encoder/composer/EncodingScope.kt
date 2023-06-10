@@ -173,17 +173,6 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
     fun encode(obj: String): EncodingScope<E>
 
     /**
-     * Encodes recursively a nullable object of type [E]. The nullability of the object is encoded using the given
-     * [nullabilityEncoder], which encodes a [Boolean] indicating whether the object is present or not (`true` if
-     * present, `false` otherwise).
-     *
-     * @param obj the object to encode
-     * @param nullabilityEncoder the encoder used to encode the nullability of the object
-     * @return the current scope
-     */
-    fun encode(obj: E?, nullabilityEncoder: Encoder<Boolean>): EncodingScope<E>
-
-    /**
      * Encodes recursively a nullable object of type [E]. The nullability of the object is encoded using the default
      * boolean encoder of the scope.
      *
@@ -193,16 +182,6 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
     fun encode(obj: E?): EncodingScope<E>
 
     /**
-     * Encodes recursively a [Collection] of type [E]. The size of the collection is encoded using the given
-     * [sizeEncoder], which encodes an [Int] indicating the size of the collection.
-     *
-     * @param obj the collection to encode
-     * @param sizeEncoder the encoder used to encode the size of the collection
-     * @return the current scope
-     */
-    fun encode(obj: Collection<E>, sizeEncoder: Encoder<Int>): EncodingScope<E>
-
-    /**
      * Encodes recursively a [Collection] of type [E]. The size of the collection is encoded using the default int
      * encoder of the scope.
      *
@@ -210,16 +189,6 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
      * @return the current scope
      */
     fun encode(obj: Collection<E>): EncodingScope<E>
-
-    /**
-     * Encodes recursively an [Array] of type [E]. The size of the array is encoded using the given [sizeEncoder],
-     * which encodes an [Int] indicating the size of the array.
-     *
-     * @param obj the array to encode
-     * @param sizeEncoder the encoder used to encode the size of the array
-     * @return the current scope
-     */
-    fun encode(obj: Array<E>, sizeEncoder: Encoder<Int>): EncodingScope<E>
 
     /**
      * Encodes recursively an [Array] of type [E]. The size of the array is encoded using the default int encoder of
