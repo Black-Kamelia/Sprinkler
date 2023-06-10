@@ -14,10 +14,10 @@ import java.nio.ByteOrder
  * - All primitive objects will be decoded with the default decoders present in the `BaseDecoders` file, and with the
  * given [endianness].
  * - For [String] objects decoding, the [stringDecoder] parameter will be used.
- * - Nullable objects decoding will be decoded assuming that the object is prefixed with a [Boolean] (represented as a
- * single byte) that indicates if the object is present or not (`true` if present, `false` if not).
  * - Each created decoder will be cached and reused for the same type (except for decoders composed with the
  * [self][DecodingScope.self] property).
+ * - Nullable objects decoding will be decoded assuming that the object is prefixed with a [Boolean] (represented as a
+ * single byte) that indicates if the object is present or not (`true` if present, `false` if not).
  * - All collection decoding will be decoded assuming that the collection is prefixed with its size represented by an
  * [Int].
  * - All nullable collections decoding will be decoded assuming that the collection is prefixed with a [Boolean] that
