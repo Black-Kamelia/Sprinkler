@@ -8,7 +8,7 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 
 /**
- * Represents an object that can convert a stream of bytes into an object of type [T]. A decoder is stateful and can
+ * Represents an object that can deserialize a stream of bytes into an object of type [T]. A decoder is stateful and can
  * therefore decode an object in multiple steps.
  *
  * Here is quick example of how to use a decoder:
