@@ -316,7 +316,7 @@ class DecodingScopeImplTest {
         val intDecoder = IntDecoder()
         val decoder = composedDecoder<Person2> {
             val age = byte()
-            val children = selfCollectionOrNull(Collectors.toList(), intDecoder)
+            val children = selfCollectionOrNull(Collectors.toList())
             Person2(age, children)
         }
         val fatherAge = 34.toByte()

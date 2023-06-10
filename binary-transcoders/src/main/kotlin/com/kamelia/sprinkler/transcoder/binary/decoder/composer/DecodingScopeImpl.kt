@@ -9,6 +9,7 @@ import com.kamelia.sprinkler.transcoder.binary.decoder.LongDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.ShortDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.DecoderInput
+import com.kamelia.sprinkler.transcoder.binary.decoder.toCollection
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.nio.ByteOrder
@@ -102,18 +103,31 @@ internal class DecodingScopeImpl<E>(
         throw AssertionError("A String decoder should always be present")
     }
 
-    @JvmName("decodeSelfOrNull")
-    override fun selfOrNull(): E? = selfOrNull(computed { BooleanDecoder() })
+    override fun selfOrNull(): E? {
+        val isPresent = decode(computed { BooleanDecoder() })
+        return if (isPresent) {
+            decode(self)
+        } else {
+            null
+        }
+    }
 
-    override fun <R> selfCollectionOrNull(collector: Collector<E, *, R>): R? =
-        selfCollectionOrNull(collector, computed { IntDecoder(endianness) }, computed { BooleanDecoder() })
-
-    override fun <R> selfCollectionOrNull(collector: Collector<E, *, R>, sizeDecoder: Decoder<Int>): R? =
-        selfCollectionOrNull(collector, sizeDecoder, computed { BooleanDecoder() })
+    override fun <R> selfCollectionOrNull(collector: Collector<E, *, R>): R? {
+        val isPresent = decode(computed { BooleanDecoder() })
+        return if (isPresent) {
+            selfCollection(collector)
+        } else {
+            null
+        }
+    }
 
     @JvmName("decodeSelfCollection")
-    override fun <R> selfCollection(collector: Collector<E, *, R>): R =
-        selfCollection(collector, computed { IntDecoder(endianness) })
+    override fun <R> selfCollection(collector: Collector<E, *, R>): R {
+        val decoder = oncePerObject {
+            self.toCollection(collector, computed { IntDecoder(ByteOrder.BIG_ENDIAN) })
+        }
+        return decode(decoder)
+    }
 
     @Suppress("UNCHECKED_CAST")
     private inline fun <reified T> decodeWithComputed(noinline block: () -> Decoder<T>): T {
