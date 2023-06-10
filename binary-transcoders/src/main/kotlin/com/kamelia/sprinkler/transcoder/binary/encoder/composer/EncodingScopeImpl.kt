@@ -9,6 +9,7 @@ import com.kamelia.sprinkler.transcoder.binary.encoder.LongEncoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.ShortEncoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.core.EncoderOutput
+import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.nio.ByteOrder
 
@@ -88,8 +89,7 @@ internal class EncodingScopeImpl<E>(
     }
 
     private inline fun <reified T> encodeWithComputed(obj: T, noinline block: () -> Encoder<T>): EncodingScope<E> {
-        @Suppress("UNCHECKED_CAST")
-        val encoder = encoderMap.computeIfAbsent(T::class.java) { block() } as Encoder<T>
+        val encoder = encoderMap.computeIfAbsent(T::class.java) { block() }.unsafeCast<Encoder<T>>()
         return encode(obj, encoder)
     }
 

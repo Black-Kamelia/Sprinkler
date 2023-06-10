@@ -129,15 +129,13 @@ internal class DecodingScopeImpl<E>(
         return decode(decoder)
     }
 
-    @Suppress("UNCHECKED_CAST")
     private inline fun <reified T> decodeWithComputed(noinline block: () -> Decoder<T>): T {
-        val decoder = cache.computeIfAbsent(T::class.java) { block() } as Decoder<T>
+        val decoder = cache.computeIfAbsent(T::class.java) { block() }.unsafeCast<Decoder<T>>()
         return decode(decoder) as? T ?: throw IllegalStateException(CAST_ERROR_MESSAGE)
     }
 
-    @Suppress("UNCHECKED_CAST")
     private inline fun <reified T> computed(noinline block: () -> Decoder<T>): Decoder<T> =
-        cache.computeIfAbsent(T::class.java) { block() } as Decoder<T>
+        cache.computeIfAbsent(T::class.java) { block() }.unsafeCast()
 
     private inner class SelfDecoder : Decoder<E> {
 

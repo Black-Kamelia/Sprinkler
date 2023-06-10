@@ -2,6 +2,7 @@ package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.util.ExtendedCollectors
+import com.kamelia.sprinkler.util.unsafeCast
 import java.util.stream.Collector
 import java.util.stream.Collectors
 
@@ -283,8 +284,6 @@ private val toList = Collectors.toList<Any>()
 
 private val toSet = Collectors.toSet<Any>()
 
-@Suppress("UNCHECKED_CAST")
-private fun <T> toList(): Collector<T, *, List<T>> = toList as Collector<T, Any, List<T>>
+private fun <T> toList(): Collector<T, *, List<T>> = toList.unsafeCast()
 
-@Suppress("UNCHECKED_CAST")
-private fun <T> toSet(): Collector<T, *, Set<T>> = toSet as Collector<T, Any, Set<T>>
+private fun <T> toSet(): Collector<T, *, Set<T>> = toSet.unsafeCast()

@@ -4,6 +4,7 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder
 
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
+import com.kamelia.sprinkler.util.unsafeCast
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -51,7 +52,7 @@ fun <T, U> PairDecoder(firstDecoder: Decoder<T>, secondDecoder: Decoder<U>): Dec
     var f: T? = null
     return firstDecoder
         .mapTo { f = it; secondDecoder }
-        .mapResult { (@Suppress("UNCHECKED_CAST") (f as T)) to it }
+        .mapResult { f.unsafeCast<T>() to it }
 }
 
 /**
