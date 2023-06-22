@@ -192,7 +192,7 @@ writes to a `ByteArray` to return it.
 
 Basically, the `EncoderOutput` is an adapter that serves to map the behavior of an object to that of something similar
 to an `OutputStream`. It is used to output the encoded data, and is passed to the `Encoder` when encoding. Indeed,
-say we want to output the encoded to *stdout*, here's an example of how we would do it:
+say we want to output the encoded data to *stdout*, here's an example of how we could do it:
 
 ```kt
 val stdoutEncoderOutput = EncoderOutput { byte -> print(byte) }
