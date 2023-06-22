@@ -160,8 +160,7 @@ From this, there are default implementations to write to either a `ByteArray`, a
 `Path`. You can also implement your own `EncoderOutput` to write to something else (see [EncoderOutput](#encoderoutput)).
 
 As stated before, an Encoder's implementation should be stateless, and deterministic. This means that it should always
-output the same data for the same input, and that it should not have any side effects (or at least limit them in a
-predictable manner).
+output the same data for the same input.
 
 Here is a simple example of an encoder
 
@@ -213,7 +212,7 @@ UTF8StringEncoder().encode("Hello, World!", stdoutEncoderOutput) // prints the U
 It is to be noted that the `Encoder::encode` function actually acts as if the given `EncoderOutput` writes to a
 `ByteArray` by default, if you do not provide one.
 
-There are also several helpers `encode` method which take in an `OutputStream`, a `File`, or a `java.nio.Path` 
+There are also several helper `encode` methods which take in an `OutputStream`, a `File`, or a `java.nio.Path` 
 as an argument, and automatically create an `EncoderOutput` for you behind the scenes.
 
 ```kt
