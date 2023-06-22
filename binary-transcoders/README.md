@@ -362,7 +362,13 @@ Here is a complex example of creation of several encoders using only encoder com
 
 ```kt
 class Location(val coords: Pair<Double, Double>, val name: String)
-class Person(val name: String, val age: Int, val children: List<Person>, val location: Location?)
+class Person(
+  val name: String, 
+  val age: Int, 
+  val children: List<Person> = emptyList(), 
+  val godParent: Person? = null, 
+  val location: Location? = null,
+)
 
 val doubleEncoder = DoubleEncoder()
 val coordsEncoder = PairEncoder(doubleEncoder, doubleEncoder)
@@ -375,17 +381,19 @@ val personEncoder = composedEncoder<Person> {
     encode(it.name)
     encode(it.age)
     encode(it.children) // recursive encoding
+    encode(it.godParent) // recursive encoding
     encode(it.location, optionalLocationEncoder)
 }
 
 val person = Person(
-    "John",
-    42,
-    listOf(
-        Person("Jane", 12, emptyList(), null),
-        Person("Jack", 8, emptyList(), null)
+    name = "John",
+    age = 42,
+    children = listOf(
+        Person(name = "Jane", age = 12, godParent = Person(name = "Alice", age = 35)),
+        Person(name = "Jack", age = 8)
     ),
-    Location(Pair(42.0, 42.0), "Paris")
+    godParent = Person(name = "Jamesus", age = 2023),
+    location = Location(coords = Pair(42.0, 42.0), name = "Paris")
 )
 
 val encodedPerson = personEncoder.encode(person)
@@ -401,7 +409,7 @@ val encodedPerson = personEncoder.encode(person)
 example which matches the encoder composer example
 ```kt
 class Location(val coords: Pair<Double, Double>, val name: String)
-class Person(val name: String, val age: Int, val children: List<Person>, val location: Location?)
+class Person(val name: String, val age: Int, val children: List<Person>, val godParent: Person?, val location: Location?)
 
 val doubleDecoder = DoubleDecoder()
 val coordsDecoder = PairDecoder(doubleDecoder, doubleDecoder)
@@ -415,7 +423,8 @@ val personDecoder = composedDecoder {
     val name = string()
     val age = int()
     val children = selfList()
+    val godParent = selfOrNull()
     val location = decode(optionalLocationDecoder)
-    Person(name, age, children, location)
+    Person(name, age, children, godParent, location)
 }
 ```
