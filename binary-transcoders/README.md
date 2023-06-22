@@ -21,6 +21,8 @@
       - [Encoder::withMappedInput](#encoderwithmappedinput)
       - [Iterables](#iterables)
       - [Nullable](#nullable)
+  - [Encoder Composition](#encoder-composition)
+- [Decoders](#decoder)
       
     
     
@@ -394,7 +396,7 @@ val encodedPerson = personEncoder.encode(person)
 
 
 
-## Decoder
+## Decoders
 
 example which matches the encoder composer example
 ```kt
