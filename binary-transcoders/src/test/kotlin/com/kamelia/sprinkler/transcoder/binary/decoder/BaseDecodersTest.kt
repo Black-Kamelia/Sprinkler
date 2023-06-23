@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder
 
 import com.kamelia.sprinkler.transcoder.binary.common.ASCII_NULL
+import com.kamelia.sprinkler.transcoder.binary.common.LATIN1_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.UTF16_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.UTF8_NULL
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
@@ -277,6 +278,38 @@ class BaseDecodersTest {
 
         val value = "Hello World"
         val bytes = value.toByteArray(Charsets.US_ASCII)
+        val size = bytes.size
+        val data = byteArrayOf(size.byte(3), size.byte(2), size.byte(1), size.byte(0)) + bytes
+
+        val result = decoder.decode(data).assertDoneAndGet()
+        assertEquals(value, result)
+    }
+
+    @Test
+    fun `latin1 string decoder em works correctly`() {
+        val decoder = Latin1StringDecoderEM()
+
+        val value = "Hello World"
+        val bytes = value.toByteArray(Charsets.ISO_8859_1)
+        val data = bytes + LATIN1_NULL
+
+        val result = decoder.decode(data).assertDoneAndGet()
+        assertEquals(value, result)
+    }
+
+    @Test
+    fun `latin1 string decoder throws on invalid endmarker`() {
+        assertThrows<IllegalArgumentException> {
+            Latin1StringDecoderEM(byteArrayOf())
+        }
+    }
+
+    @Test
+    fun `latin1 string decoder prefixed works correctly`() {
+        val decoder = Latin1StringDecoder()
+
+        val value = "Hello World"
+        val bytes = value.toByteArray(Charsets.ISO_8859_1)
         val size = bytes.size
         val data = byteArrayOf(size.byte(3), size.byte(2), size.byte(1), size.byte(0)) + bytes
 

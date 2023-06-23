@@ -21,3 +21,10 @@ val UTF8_NULL: ByteArray
 @get:JvmName("utf16Null")
 val UTF16_NULL: ByteArray
     get() = ByteArray(2)
+
+/**
+ * The default [String] end marker used for the [UTF-8][Charsets.ISO_8859_1].
+ */
+@get:JvmName("latin1Null")
+val LATIN1_NULL: ByteArray
+    get() = ASCII_NULL

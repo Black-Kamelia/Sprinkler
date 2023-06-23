@@ -4,6 +4,7 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder
 
 import com.kamelia.sprinkler.transcoder.binary.common.ASCII_NULL
+import com.kamelia.sprinkler.transcoder.binary.common.LATIN1_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.UTF16_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.UTF8_NULL
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.ConstantSizedItemDecoder
@@ -179,6 +180,34 @@ fun ASCIIStringDecoder(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Str
 @JvmOverloads
 fun ASCIIStringDecoderEM(endMarker: ByteArray = ASCII_NULL): Decoder<String> =
     StringDecoder(Charsets.US_ASCII, endMarker)
+
+/**
+ * Creates a [Decoder] that reads a [String] from the input.
+ *
+ * The string is encoded using the [ascii][Charsets.ISO_8859_1] charset, and is prefixed with the number of bytes in the
+ * string. The size of the string is decoded using the [sizeDecoder] parameter.
+ *
+ * @param sizeDecoder the [Decoder] used to decode the size of the string (defaults to the default [IntDecoder])
+ * @return a [Decoder] that reads a [String] from the input
+ */
+@JvmOverloads
+fun Latin1StringDecoder(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<String> =
+    StringDecoder(Charsets.ISO_8859_1, sizeDecoder)
+
+/**
+ * Creates a [Decoder] that reads a [String] from the input.
+ *
+ * The string is encoded using the [ascii][Charsets.ISO_8859_1] charset, and is terminated by a predefined sequence of bytes
+ * represented by the [endMarker] parameter.
+ *
+ * @param endMarker the sequence of bytes that marks the end of the string (defaults to [ASCII_NULL])
+ * @return a [Decoder] that reads a [String] from the input
+ * @throws IllegalArgumentException if the [endMarker] is empty
+ */
+@JvmOverloads
+fun Latin1StringDecoderEM(endMarker: ByteArray = LATIN1_NULL): Decoder<String> =
+    StringDecoder(Charsets.ISO_8859_1, endMarker)
+
 
 /**
  * Creates a [Decoder] that reads a [String] from the input.
