@@ -2,6 +2,7 @@
 
 package com.kamelia.sprinkler.transcoder.binary.encoder
 
+import com.kamelia.sprinkler.transcoder.binary.decoder.Latin1StringDecoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
 
 /**
@@ -178,3 +179,15 @@ fun <T : Any> Encoder<T>.toOptional(nullabilityEncoder: Encoder<Boolean> = Boole
         nullabilityEncoder.encode(true, output)
         encode(obj, output)
     }
+
+/**
+ * Creates a new encoder that encodes a pair of [T]s and [U]s from two encoders.
+ *
+ * @receiver the encoder encoding the first element of the pair
+ * @param other the encoder encoding the second element of the pair
+ * @return an encoder encoding a pair of [T]s and [U]s
+ * @param T the type of the first element of the pair
+ * @param U the type of the second element of the pair
+ * @see PairEncoder
+ */
+infix fun <T, U> Encoder<T>.and(other: Encoder<U>): Encoder<Pair<T, U>> = PairEncoder(this, other)
