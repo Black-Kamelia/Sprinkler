@@ -9,6 +9,7 @@ import com.kamelia.sprinkler.transcoder.binary.encoder.LongEncoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.ShortEncoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.UTF8StringEncoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
+import com.kamelia.sprinkler.transcoder.binary.encoder.core.EncoderOutput
 import java.nio.ByteOrder
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
@@ -170,7 +171,7 @@ class ComposedEncoderTest {
     @Test
     fun `test impossible case for coverage`() {
         val impl = EncodingScopeImpl<Any>(
-            { },
+            EncoderOutput.Companion.from { },
             ArrayList(),
             ArrayDeque(),
             HashMap(),

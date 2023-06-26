@@ -31,36 +31,50 @@ interface EncoderOutput {
 
     fun flush()
 
+    fun writeBits(byte: Int, start: Int, length: Int) {
+        Objects.checkFromIndexSize(start, length, 8)
+        repeat(length) {
+            writeBit(byte.bit(7 - start - it))
+        }
+    }
+
+    fun writeBits(byte: Int, length: Int) = writeBits(byte, 0, length)
+
+    fun writeBits(byte: Byte, start: Int, length: Int) = writeBits(byte.toInt(), start, length)
+
+    fun writeBits(byte: Byte, length: Int) = writeBits(byte.toInt(), 0, length)
+
     fun writeBits(byteArray: ByteArray, start: Int, length: Int) {
+        Objects.checkFromIndexSize(start, length, byteArray.size * 8)
         val actualStart = start / 8
-        val actualLength = length / 8
-        Objects.checkFromIndexSize(actualStart, actualLength, byteArray.size)
 
         // write the partial byte at the start
-        val startOffset = start shr 3
-        if (startOffset > 0) {
-            val previousByte = byteArray[actualStart - 1]
-            val bitIndexStart = 8 - startOffset
-            repeat(startOffset) {
-                writeBit(previousByte.bit(bitIndexStart + it) == 1)
-            }
+        val prefixPart = start - 8 * actualStart // start % 8
+        val hasPrefix = prefixPart > 0
+        if (hasPrefix) {
+            writeBits(byteArray[actualStart], prefixPart, 8 - prefixPart)
         }
 
+        val prefixOffset = if (hasPrefix) 1 else 0
         // write the full bytes
-        repeat(actualStart - actualLength) {
-            write(byteArray[it + actualStart])
+        val bitLeft = length - if (hasPrefix) (8 - prefixPart) else 0
+        val iterations = bitLeft / 8
+        if (iterations > 0) {
+            repeat(iterations) {
+                write(byteArray[actualStart + it + prefixOffset])
+            }
         }
 
         // write the partial byte at the end
-        val lengthOffset = length shr 3
-        if (lengthOffset > 0) {
-            val nextByte = byteArray[actualStart + actualLength]
-            repeat(lengthOffset) {
-                writeBit(nextByte.bit(it) == 1)
-            }
+        val suffixPartSize = bitLeft - 8 * iterations
+        if (suffixPartSize > 0) {
+            writeBits(byteArray[actualStart + iterations + prefixOffset], 0, suffixPartSize)
         }
-
     }
+
+    fun writeBits(bytes: ByteArray, start: Int) = writeBits(bytes, start, bytes.size * 8 - start)
+
+    fun writeBits(bytes: ByteArray) = writeBits(bytes, 0, bytes.size * 8)
 
     /**
      * Writes a single byte to the output.
@@ -69,7 +83,7 @@ interface EncoderOutput {
      */
     fun write(byte: Byte) {
         repeat(8) { index ->
-            writeBit(byte.bit(7 - index) == 1)
+            writeBit(byte.bit(7 - index))
         }
     }
 
@@ -136,6 +150,7 @@ interface EncoderOutput {
             }
 
             override fun flush() {
+                if (currentBitIndex == 0) return
                 output.write(currentByte.toInt())
                 currentByte = 0.toByte()
                 currentBitIndex = 0
@@ -162,6 +177,13 @@ interface EncoderOutput {
 
         }
 
+        fun from(writeByte: (Int) -> Unit): EncoderOutput {
+            val obj = object : OutputStream() {
+                override fun write(b: Int) = writeByte(b)
+            }
+            return from(obj)
+        }
+
     }
 
 }
@@ -172,14 +194,22 @@ object DummyOutput : EncoderOutput {
     private var currentBitIndex = 0
 
     override fun writeBit(bit: Int) {
+        currentByte = currentByte or (bit shl 7 - currentBitIndex).toByte()
+        currentBitIndex++
         if (currentBitIndex == 8) {
             flush()
         }
-        currentByte = currentByte or (bit shl 7 - currentBitIndex).toByte()
-        currentBitIndex++
+    }
+
+
+    override fun write(byte: Byte) {
+        repeat(8) { index ->
+            writeBit(byte.bit(7 - index))
+        }
     }
 
     override fun flush() {
+        if (currentBitIndex == 0) return
         repeat(8) {
             if (it == 4) {
                 print("_")
@@ -194,10 +224,13 @@ object DummyOutput : EncoderOutput {
 }
 
 fun main() {
-    val output = DummyOutput
-    output.writeBit(true)
-    output.writeBit(false)
-    output.writeBit(true)
-    output.write(1)
-    output.flush()
+    val o = DummyOutput
+    val array = byteArrayOf(0b0000_0001, 0b0101_1101.toByte(), 0b1110_0000.toByte())
+    //                                ^    ____ __|_    __^
+    // 0000_0001 0000_0001 1000_0000
+    //         ^
+    o.writeBits(array, 15, 3)
+    o.flush()
+    // 1000_0000
+    // 1100_0000
 }
