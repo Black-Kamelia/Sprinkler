@@ -1,7 +1,9 @@
 package com.kamelia.sprinkler.transcoder.binary.encoder.core
 
+import com.kamelia.sprinkler.util.bit
 import java.io.OutputStream
 import java.util.*
+import kotlin.experimental.or
 
 /**
  * Abstraction allowing [Encoders][Encoder] to write bytes. This interface provides methods for writing bytes in various
@@ -19,14 +21,57 @@ import java.util.*
  *
  * @see Encoder
  */
-fun interface EncoderOutput {
+interface EncoderOutput {
+
+    fun writeBit(bit: Int)
+
+    fun writeBit(bit: Byte) = writeBit(bit.toInt())
+
+    fun writeBit(bit: Boolean) = writeBit(if (bit) 1 else 0)
+
+    fun flush()
+
+    fun writeBits(byteArray: ByteArray, start: Int, length: Int) {
+        val actualStart = start / 8
+        val actualLength = length / 8
+        Objects.checkFromIndexSize(actualStart, actualLength, byteArray.size)
+
+        // write the partial byte at the start
+        val startOffset = start shr 3
+        if (startOffset > 0) {
+            val previousByte = byteArray[actualStart - 1]
+            val bitIndexStart = 8 - startOffset
+            repeat(startOffset) {
+                writeBit(previousByte.bit(bitIndexStart + it) == 1)
+            }
+        }
+
+        // write the full bytes
+        repeat(actualStart - actualLength) {
+            write(byteArray[it + actualStart])
+        }
+
+        // write the partial byte at the end
+        val lengthOffset = length shr 3
+        if (lengthOffset > 0) {
+            val nextByte = byteArray[actualStart + actualLength]
+            repeat(lengthOffset) {
+                writeBit(nextByte.bit(it) == 1)
+            }
+        }
+
+    }
 
     /**
      * Writes a single byte to the output.
      *
      * @param byte the byte to write
      */
-    fun write(byte: Byte)
+    fun write(byte: Byte) {
+        repeat(8) { index ->
+            writeBit(byte.bit(7 - index) == 1)
+        }
+    }
 
     /**
      * Writes bytes from the given [ByteArray] to the output. The [start] and [length] parameters specify the range of
@@ -81,7 +126,34 @@ fun interface EncoderOutput {
         @JvmStatic
         fun from(output: OutputStream): EncoderOutput = object : EncoderOutput {
 
-            override fun write(byte: Byte): Unit = output.write(byte.toInt())
+            private var currentByte = 0.toByte()
+            private var currentBitIndex = 0
+
+            override fun writeBit(bit: Int) {
+                currentByte = currentByte or (bit shl 8 - currentBitIndex).toByte()
+                currentBitIndex++
+                tryFlush()
+            }
+
+            override fun flush() {
+                output.write(currentByte.toInt())
+                currentByte = 0.toByte()
+                currentBitIndex = 0
+            }
+
+            override fun write(byte: Byte) {
+                if (currentBitIndex == 0) {
+                    output.write(byte.toInt())
+                    return
+                }
+                super.write(byte)
+            }
+
+            private fun tryFlush() {
+                if (currentBitIndex == 8) {
+                    flush()
+                }
+            }
 
             override fun write(bytes: ByteArray, start: Int, length: Int) {
                 Objects.checkFromIndexSize(start, length, bytes.size)
@@ -92,4 +164,40 @@ fun interface EncoderOutput {
 
     }
 
+}
+
+object DummyOutput : EncoderOutput {
+
+    private var currentByte = 0.toByte()
+    private var currentBitIndex = 0
+
+    override fun writeBit(bit: Int) {
+        if (currentBitIndex == 8) {
+            flush()
+        }
+        currentByte = currentByte or (bit shl 7 - currentBitIndex).toByte()
+        currentBitIndex++
+    }
+
+    override fun flush() {
+        repeat(8) {
+            if (it == 4) {
+                print("_")
+            }
+            print(currentByte.bit(7 - it))
+        }
+        println()
+        currentByte = 0.toByte()
+        currentBitIndex = 0
+    }
+
+}
+
+fun main() {
+    val output = DummyOutput
+    output.writeBit(true)
+    output.writeBit(false)
+    output.writeBit(true)
+    output.write(1)
+    output.flush()
 }

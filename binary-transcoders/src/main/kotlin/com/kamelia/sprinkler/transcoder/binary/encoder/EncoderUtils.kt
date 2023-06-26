@@ -9,7 +9,7 @@ import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
  * input object [R] to an object of type [T] using the given [mapper] function, and then delegate the encoding to the
  * original encoder.
  *
- * Here is an example of how to use  *
+ * Here is an example of how to use this function:
  * ```
  * val longEncoder = LongEncoder()
  * val instantEncoder: Encoder<Instant> = longEncoder.withMappedInput(Instant::toEpochMilli)
