@@ -151,7 +151,7 @@ fun interface DecoderInput {
          * @param inner the [InputStream] to read from
          * @return a [DecoderInput] that reads from the given [InputStream]
          */
-        fun from(inner: InputStream): DecoderInput = DecoderInput(inner::read)
+        fun from(inner: InputStream): DecoderInput = TODO("change this")//DecoderInput(inner::read)
 
         /**
          * Creates a [DecoderInput] from the given [ByteBuffer]. All changes to the [ByteBuffer] will be reflected
