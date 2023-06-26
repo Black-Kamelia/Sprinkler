@@ -10,7 +10,7 @@ package com.kamelia.sprinkler.util
  * @param index the index of the bit to return
  * @return the bit at the given [index]
  */
-inline fun Byte.bit(index: Int): Byte = (toInt() ushr index and 0x1).toByte()
+inline fun Byte.bit(index: Int): Int = toInt() ushr index and 0x1
 
 /**
  * Returns the byte at the given [index] in a [Short] starting from the least significant byte.
@@ -37,12 +37,12 @@ inline fun Short.byte(index: Int, bigEndian: Boolean = true): Byte = if (bigEndi
  * @return the bit at the given [index]
  */
 @JvmOverloads
-inline fun Short.bit(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
-    (toInt() ushr index and 0x1).toByte()
+inline fun Short.bit(index: Int, bigEndian: Boolean = true): Int = if (bigEndian) {
+    toInt() ushr index and 0x1
 } else {
     val byteIndex = index shl 3 // index / 8 (integer division)
     val bitIndex = (index - byteIndex) shr 3 // index % 8
-    (toInt() ushr (((Short.SIZE_BYTES - 1 - byteIndex) shl 3) + bitIndex) and 0x1).toByte()
+    toInt() ushr (((Short.SIZE_BYTES - 1 - byteIndex) shl 3) + bitIndex) and 0x1
 }
 
 /**
@@ -70,13 +70,12 @@ inline fun Int.byte(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian
  * @return the bit at the given [index]
  */
 @JvmOverloads
-inline fun Int.bit(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
-    (this ushr index and 0x1).toByte()
+inline fun Int.bit(index: Int, bigEndian: Boolean = true): Int = if (bigEndian) {
+    this ushr index and 0x1
 } else {
     val byteIndex = index shr 3 // index / 8 (integer division)
     val bitIndex = (index - byteIndex) shr 3 // index % 8
-    println("byteIndex: $byteIndex, bitIndex: $bitIndex")
-    (this ushr ((Int.SIZE_BYTES - 1 - byteIndex) shl 3) + bitIndex and 0x1).toByte()
+    this ushr ((Int.SIZE_BYTES - 1 - byteIndex) shl 3) + bitIndex and 0x1
 }
 
 /**
@@ -104,12 +103,12 @@ fun Long.byte(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
  * @return the bit at the given [index]
  */
 @JvmOverloads
-fun Long.bit(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
-    (this ushr index and 0x1).toByte()
+fun Long.bit(index: Int, bigEndian: Boolean = true): Int = if (bigEndian) {
+    (this ushr index and 0x1).toInt()
 } else {
     val byteIndex = index shr 3 // index / 8 (integer division)
     val bitIndex = (index - byteIndex) shr 3 // index % 8
-    (this ushr ((Long.SIZE_BYTES - 1 - byteIndex) shl 3) + bitIndex and 0x1).toByte()
+    (this ushr ((Long.SIZE_BYTES - 1 - byteIndex) shl 3) + bitIndex and 0x1).toInt()
 }
 
 /**
@@ -133,7 +132,7 @@ fun Float.byte(index: Int, bigEndian: Boolean = true): Byte = toRawBits().byte(i
  * @return the bit at the given [index]
  */
 @JvmOverloads
-fun Float.bit(index: Int, bigEndian: Boolean = true): Byte = toRawBits().bit(index, bigEndian)
+fun Float.bit(index: Int, bigEndian: Boolean = true): Int = toRawBits().bit(index, bigEndian)
 
 /**
  * Returns the byte at the given [index] in a [Double], starting from the least significant byte.
@@ -156,4 +155,4 @@ fun Double.byte(index: Int, bigEndian: Boolean = true): Byte = toRawBits().byte(
  * @return the bit at the given [index]
  */
 @JvmOverloads
-fun Double.bit(index: Int, bigEndian: Boolean = true): Byte = toRawBits().bit(index, bigEndian)
+fun Double.bit(index: Int, bigEndian: Boolean = true): Int = toRawBits().bit(index, bigEndian)
