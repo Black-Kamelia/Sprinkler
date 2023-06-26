@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
+import com.kamelia.sprinkler.util.bit
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.*
@@ -25,12 +26,28 @@ import kotlin.math.min
  */
 fun interface DecoderInput {
 
+    fun readBit(): Int
+
     /**
      * Reads a single byte from the source. Returns -1 if there are no more bytes to read.
      *
      * @return the byte read, or -1 if there are no more bytes to read
      */
-    fun read(): Int
+    fun read(): Int {
+        var byte = 0
+        repeat(8) {
+            val result = readBit()
+            if (result == -1) { // end of stream
+                return if (it == 0) { // no bits read
+                    -1
+                } else { // some bits read
+                    byte
+                }
+            }
+            byte = byte or (result shl (7 - it))
+        }
+        return byte
+    }
 
     /**
      * Reads bytes from the source into the given [ByteArray] and returns the number of bytes read. The [start] and
@@ -149,6 +166,9 @@ fun interface DecoderInput {
          * @return a [DecoderInput] that reads from the given [ByteBuffer]
          */
         fun from(inner: ByteBuffer): DecoderInput = object : DecoderInput {
+            override fun readBit(): Int {
+                TODO("Not yet implemented")
+            }
 
             override fun read(): Int {
                 inner.flip()
@@ -183,12 +203,34 @@ fun interface DecoderInput {
          * @return a [DecoderInput] that reads from the given [ByteArray]
          */
         fun from(inner: ByteArray): DecoderInput = object : DecoderInput {
+
+            private var buffer = 0
+            private var bitLeft = 0
             private var index = 0
 
-            override fun read(): Int = if (index < inner.size) {
-                inner[index++].toInt() and 0xFF
+
+            override fun readBit(): Int {
+                if (bitLeft == 0) {
+                    val next = readFromArray()
+                    if (next == -1) return -1
+                    buffer = next
+                    bitLeft = 8
+                }
+                return buffer.bit(--bitLeft)
+            }
+
+            override fun read(): Int = if (bitLeft == 0) {
+                readFromArray()
             } else {
-                -1
+                super.read()
+            }
+
+            private fun readFromArray(): Int {
+                return if (index < inner.size) {
+                    inner[index++].toInt() and 0xFF
+                } else {
+                    -1
+                }
             }
 
             override fun skip(n: Long): Long {
@@ -202,3 +244,10 @@ fun interface DecoderInput {
 
 }
 
+fun main() {
+    val input = DecoderInput.from(byteArrayOf(0b0000_0011.toByte(), 0b0000_0001.toByte()))
+    println(input.read())
+    repeat(8) {
+        println(input.readBit())
+    }
+}
