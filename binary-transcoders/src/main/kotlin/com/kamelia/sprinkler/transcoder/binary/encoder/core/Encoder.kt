@@ -48,7 +48,7 @@ fun interface Encoder<in T> {
      */
     fun encode(obj: T): ByteArray {
         val output = ArrayList<Byte>()
-        encode(obj, output::add)
+        //encode(obj, output::add)
         return output.toByteArray()
     }
 
