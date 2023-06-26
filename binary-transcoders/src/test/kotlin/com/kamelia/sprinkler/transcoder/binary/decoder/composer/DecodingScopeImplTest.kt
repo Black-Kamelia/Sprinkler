@@ -1,6 +1,5 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 
-import com.kamelia.sprinkler.transcoder.binary.decoder.IntDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.ShortDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.NothingDecoder
@@ -313,7 +312,6 @@ class DecodingScopeImplTest {
 
     @Test
     fun `selfCollectionOrNull works correctly with recursion`() {
-        val intDecoder = IntDecoder()
         val decoder = composedDecoder<Person2> {
             val age = byte()
             val children = selfCollectionOrNull(Collectors.toList())
