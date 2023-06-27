@@ -34,7 +34,8 @@ interface EncoderOutput {
     fun writeBits(byte: Int, start: Int, length: Int) {
         Objects.checkFromIndexSize(start, length, 8)
         repeat(length) {
-            writeBit(byte.bit(7 - start - it))
+            val bit = byte.bit(7 - start - it)
+            writeBit(bit)
         }
     }
 
@@ -60,9 +61,10 @@ interface EncoderOutput {
         val bitLeft = length - if (hasPrefix) (8 - prefixPart) else 0
         val iterations = bitLeft / 8
         if (iterations > 0) {
-            repeat(iterations) {
-                write(byteArray[actualStart + it + prefixOffset])
-            }
+            write(byteArray, actualStart + prefixOffset, iterations)
+//            repeat(iterations) {
+//                write(byteArray[actualStart + it + prefixOffset])
+//            }
         }
 
         // write the partial byte at the end
@@ -144,7 +146,8 @@ interface EncoderOutput {
             private var currentBitIndex = 0
 
             override fun writeBit(bit: Int) {
-                currentByte = currentByte or (bit shl 8 - currentBitIndex).toByte()
+                println("WRITE BIT $bit")
+                currentByte = currentByte or (bit shl 7 - currentBitIndex).toByte()
                 currentBitIndex++
                 tryFlush()
             }

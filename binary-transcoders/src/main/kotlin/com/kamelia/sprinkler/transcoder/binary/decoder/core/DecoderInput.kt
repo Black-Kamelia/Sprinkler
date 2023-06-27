@@ -1,9 +1,13 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
+import com.kamelia.sprinkler.transcoder.binary.encoder.composer.composedEncoder
+import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
 import com.kamelia.sprinkler.util.bit
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.*
+import kotlin.math.ceil
+import kotlin.math.log2
 import kotlin.math.min
 
 /**
@@ -27,6 +31,36 @@ import kotlin.math.min
 fun interface DecoderInput {
 
     fun readBit(): Int
+
+    fun readBits(byte: Int, start: Int, length: Int): Int {
+        Objects.checkFromIndexSize(start, length, 8)
+        var result = 0
+        repeat(length) {
+            val bit = readBit()
+            result = result or (bit shl (7 - start - it))
+        }
+        return result
+    }
+
+    fun readBits(byte: Int, length: Int) = readBits(byte, 0, length)
+
+    fun readBits(byte: Byte, start: Int, length: Int) = readBits(byte.toInt(), start, length)
+
+    fun readBits(bytes: ByteArray, start: Int, length: Int): Int {
+        Objects.checkFromIndexSize(start, length, bytes.size * 8)
+        val actualStart = start / 8
+
+        // read the partial byte at the start
+        val prefixPart = start - 8 * actualStart // start % 8
+        val hasPrefix = prefixPart > 0
+        if (hasPrefix) {
+            val byte = readBits(prefixPart, prefixPart, 8 - prefixPart)
+            bytes[actualStart] = byte.toByte()
+        }
+
+        val prefixOffset = if (hasPrefix) 1 else 0
+        val bitLeft = length - prefixPart
+    }
 
     /**
      * Reads a single byte from the source. Returns -1 if there are no more bytes to read.
@@ -244,10 +278,123 @@ fun interface DecoderInput {
 
 }
 
-fun main() {
-    val input = DecoderInput.from(byteArrayOf(0b0000_0011.toByte(), 0b0000_0001.toByte()))
-    println(input.read())
-    repeat(8) {
-        println(input.readBit())
+sealed interface Node {
+
+    val id: Int
+
+    val idSize: Int
+
+    val nodeGroup: List<Node>
+
+    interface Leaf : Node {
+
+        val isBlack: Boolean
+
     }
+
+    interface InnerNode : Node {
+
+        val nw: Node
+
+        val ne: Node
+
+        val sw: Node
+
+        val se: Node
+
+    }
+
 }
+
+
+class CompressedPictureNodeFactory {
+
+    private var currentId = 0
+
+    private val idCurrentSize: Int
+        get() = ceil(log2(currentId.toDouble())).toInt()
+
+    private val nodesSet = ArrayList<Node>()
+
+    val nodes: List<Node>
+        get() = nodesSet.toList()
+
+    fun leaf(isBlack: Boolean): Node.Leaf = object : Node.Leaf {
+        override val idSize: Int
+            get() = idCurrentSize
+        override val nodeGroup: List<Node>
+            get() = nodes
+        override val id = currentId++
+        override val isBlack = isBlack
+        override fun toString(): String = "Leaf(id=$id, isBlack=$isBlack)"
+    }.also(nodesSet::add)
+
+    fun innerNode(nw: Node, ne: Node, sw: Node, se: Node): Node.InnerNode = object : Node.InnerNode {
+        override val idSize: Int
+            get() = idCurrentSize
+        override val nodeGroup: List<Node>
+            get() = nodes
+        override val id = currentId++
+        override val nw = nw
+        override val ne = ne
+        override val sw = sw
+        override val se = se
+
+        override fun toString(): String = "InnerNode(id=$id)"
+    }.also(nodesSet::add)
+
+}
+
+fun main() {
+    val factory = CompressedPictureNodeFactory()
+    val black = factory.leaf(true)
+    val white = factory.leaf(false)
+    val inner1 = factory.innerNode(black, white, white, black)
+    val inner2 = factory.innerNode(inner1, inner1, inner1, inner1)
+    val root = factory.innerNode(inner2, inner2, inner2, inner2)
+
+    val bitBooleanEncoder = Encoder<Boolean> { b, o -> o.writeBit(b) }
+    val nodeIdEncoder = Encoder<Node> { n, o ->
+        val start = 8 - n.idSize
+        o.writeBits(n.id, start, n.idSize)
+    }
+    val nodeEncoder = composedEncoder<Node> {
+        encode(it.idSize.toByte())
+        it.nodeGroup.forEach { node ->
+            println("encoding node $node")
+            encode(node, nodeIdEncoder)
+            when (node) {
+                is Node.Leaf -> {
+                    encode(true, bitBooleanEncoder)
+                    encode(node.isBlack, bitBooleanEncoder)
+                }
+                is Node.InnerNode -> {
+                    encode(false, bitBooleanEncoder)
+                    encode(node.nw, nodeIdEncoder)
+                    encode(node.ne, nodeIdEncoder)
+                    encode(node.se, nodeIdEncoder)
+                    encode(node.sw, nodeIdEncoder)
+                }
+            }
+        }
+    }
+
+    val encoded = nodeEncoder.encode(root)
+    println(black.idSize)
+    encoded.forEach {
+        repeat(8) { i ->
+            print(it.bit(7 - i))
+        }
+        print("_")
+    }
+    println()
+}
+/*
+00000011
+000 1 1
+001 1 0
+010 0 000 001 000 001
+011 0 010 010 010 010
+100 0 011 011 011 011
+000000
+*/
