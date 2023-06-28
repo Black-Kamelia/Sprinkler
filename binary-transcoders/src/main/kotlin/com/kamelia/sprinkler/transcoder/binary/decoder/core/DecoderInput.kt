@@ -47,7 +47,32 @@ interface DecoderInput {
      */
     fun readBits(bytes: ByteArray, start: Int, length: Int): Int {
         Objects.checkFromIndexSize(start, length, bytes.size * 8)
-        TODO()
+        val actualStart = start / 8
+        var readBits = 0
+
+        val prefixOffset = start and 7
+        if (prefixOffset != 0) {
+            val read = innerReadBits(bytes, actualStart, prefixOffset, min(8 - prefixOffset, length))
+            if (read == -1) return 0
+            readBits += read
+        }
+
+        val fullBytes = (length - start) / 8
+        val fullBytesStart = if (prefixOffset == 0) actualStart else actualStart + 1
+        val fullBytesRead = read(bytes, fullBytesStart, fullBytes)
+        if (fullBytesRead == -1) return readBits
+        readBits += fullBytesRead * 8
+        if (fullBytesRead < fullBytes) return readBits
+
+        val suffixOffset = (length - readBits) and 7
+        if (suffixOffset != 0) {
+            val lastIndex = (start + length) / 8
+            val read = innerReadBits(bytes, lastIndex, 0, suffixOffset)
+            if (read == -1) return readBits
+            readBits += read
+        }
+
+        return readBits
     }
 
     /**
@@ -142,8 +167,13 @@ interface DecoderInput {
         /**
          * An empty [DecoderInput] that always returns -1.
          */
-        @JvmField
-        val EMPTY_INPUT = TODO() as DecoderInput
+        @JvmStatic
+        fun nullInput(): DecoderInput = object : DecoderInput {
+            override fun readBit(): Int = -1
+            override fun read(): Int = -1
+            override fun readBits(bytes: ByteArray, start: Int, length: Int): Int = -1
+            override fun read(bytes: ByteArray, start: Int, length: Int): Int = -1
+        }
 
         /**
          * Creates a [DecoderInput] from the given [InputStream]. All changes to the [InputStream] will be reflected
@@ -152,7 +182,10 @@ interface DecoderInput {
          * @param inner the [InputStream] to read from
          * @return a [DecoderInput] that reads from the given [InputStream]
          */
-        fun from(inner: InputStream): DecoderInput = TODO("change this")//DecoderInput(inner::read)
+        @JvmStatic
+        fun from(inner: InputStream): DecoderInput = object : AbstractDecoderInput() {
+            override fun readByte(): Int = inner.read()
+        }
 
         /**
          * Creates a [DecoderInput] from the given [ByteBuffer]. All changes to the [ByteBuffer] will be reflected
@@ -166,21 +199,8 @@ interface DecoderInput {
          * @param inner the [ByteBuffer] to read from
          * @return a [DecoderInput] that reads from the given [ByteBuffer]
          */
-        fun from(inner: ByteBuffer): DecoderInput = object : DecoderInput {
-            override fun readBit(): Int {
-                TODO("Not yet implemented")
-            }
-
-            override fun read(): Int {
-                inner.flip()
-                val byte = if (inner.hasRemaining()) {
-                    inner.get().toInt() and 0xFF
-                } else {
-                    -1
-                }
-                inner.compact()
-                return byte
-            }
+        @JvmStatic
+        fun from(inner: ByteBuffer): DecoderInput = object : AbstractDecoderInput() {
 
             override fun read(bytes: ByteArray, start: Int, length: Int): Int {
                 Objects.checkFromIndexSize(start, length, bytes.size)
@@ -193,6 +213,17 @@ interface DecoderInput {
                 return actualLength
             }
 
+            override fun readByte(): Int {
+                inner.flip()
+                val byte = if (inner.hasRemaining()) {
+                    inner.get().toInt() and 0xFF
+                } else {
+                    -1
+                }
+                inner.compact()
+                return byte
+            }
+
         }
 
         /**
@@ -203,35 +234,15 @@ interface DecoderInput {
          * @param inner the [ByteArray] to read from
          * @return a [DecoderInput] that reads from the given [ByteArray]
          */
-        fun from(inner: ByteArray): DecoderInput = object : DecoderInput {
+        @JvmStatic
+        fun from(inner: ByteArray): DecoderInput = object : AbstractDecoderInput() {
 
-            private var buffer = 0
-            private var bitLeft = 0
             private var index = 0
 
-
-            override fun readBit(): Int {
-                if (bitLeft == 0) {
-                    val next = readFromArray()
-                    if (next == -1) return -1
-                    buffer = next
-                    bitLeft = 8
-                }
-                return buffer.bit(--bitLeft)
-            }
-
-            override fun read(): Int = if (bitLeft == 0) {
-                readFromArray()
+            override fun readByte(): Int = if (index < inner.size) {
+                inner[index++].toInt() and 0xFF
             } else {
-                super.read()
-            }
-
-            private fun readFromArray(): Int {
-                return if (index < inner.size) {
-                    inner[index++].toInt() and 0xFF
-                } else {
-                    -1
-                }
+                -1
             }
 
             override fun skip(n: Long): Long {
@@ -239,8 +250,71 @@ interface DecoderInput {
                 index = min(index + n.toInt(), inner.size)
                 return index - oldIndex.toLong()
             }
+
+        }
+
+        @JvmStatic
+        fun from(readByte: () -> Int): DecoderInput = object : AbstractDecoderInput() {
+            override fun readByte(): Int = readByte()
+        }
+
+        private fun DecoderInput.innerReadBits(bytes: ByteArray, index: Int, bitIndex: Int, length: Int): Int {
+            var result = 0
+            var readBits = 0
+            for (it in 0 until length) {
+                val bit = readBit()
+                if (bit == -1) break
+                readBits++
+                result = result or (bit shl 7 - bitIndex - it)
+            }
+            bytes[index] = (bytes[index].toInt() or result).toByte()
+            return readBits
         }
 
     }
+
+}
+
+private abstract class AbstractDecoderInput : DecoderInput {
+
+    // the bits in the buffer are simply shifted to the left when reading
+    // the reading is always done starting from the 15th bit (where 0 is the lsb)
+    protected var buffer = 0 // 2 bytes buffer
+        private set
+    protected var bitLeft = 0 // number of bits left in the buffer [0-15]
+        private set
+
+    final override fun readBit(): Int {
+        if (bitLeft == 0 && !refillBuffer()) return -1
+        val result = (buffer ushr 15) and 1
+        buffer = buffer shl 1
+        bitLeft--
+        return result
+    }
+
+    final override fun read(): Int = if (bitLeft == 0) {
+        readByte()
+    } else {
+        if (bitLeft < 8 && !refillBuffer()) {
+            -1
+        } else {
+            // read 8 bits from the buffer
+            val result = ((buffer and 0xFF00) ushr 8) and 0xFF
+            buffer = buffer shl 8
+            bitLeft -= 8
+            result
+        }
+    }
+
+    private fun refillBuffer(): Boolean {
+        val nextByte = readByte()
+        if (nextByte == -1) return false
+        val shiftNextByte = nextByte shl (16 - bitLeft - 8)
+        buffer = buffer or shiftNextByte
+        bitLeft += 8
+        return true
+    }
+
+    protected abstract fun readByte(): Int
 
 }
