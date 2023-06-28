@@ -2,6 +2,7 @@ package com.kamelia.sprinkler.transcoder.binary.encoder.core
 
 import com.kamelia.sprinkler.util.bit
 import java.io.OutputStream
+import java.lang.Integer.min
 import java.util.*
 import kotlin.experimental.or
 
@@ -49,28 +50,19 @@ interface EncoderOutput {
         val actualStart = start / 8
 
         // write the partial byte at the start
-        val prefixPart = start - 8 * actualStart // start % 8
-        val hasPrefix = prefixPart > 0
-        if (hasPrefix) {
-            writeBits(byteArray[actualStart], prefixPart, 8 - prefixPart)
-        }
+        val prefixOffset = start and 7
+        val writtenFromPrefix = min(8 - prefixOffset, length)
+        writeBits(byteArray[actualStart], prefixOffset, writtenFromPrefix)
 
-        val prefixOffset = if (hasPrefix) 1 else 0
         // write the full bytes
-        val bitLeft = length - if (hasPrefix) (8 - prefixPart) else 0
-        val iterations = bitLeft / 8
-        if (iterations > 0) {
-            write(byteArray, actualStart + prefixOffset, iterations)
-//            repeat(iterations) {
-//                write(byteArray[actualStart + it + prefixOffset])
-//            }
-        }
+        val fullBytes = (length - prefixOffset) / 8
+        val fullBytesStart = if (prefixOffset == 0) actualStart else actualStart + 1
+        write(byteArray, fullBytesStart, fullBytes)
 
         // write the partial byte at the end
-        val suffixPartSize = bitLeft - 8 * iterations
-        if (suffixPartSize > 0) {
-            writeBits(byteArray[actualStart + iterations + prefixOffset], 0, suffixPartSize)
-        }
+        val suffixOffset = (length - writtenFromPrefix - fullBytes * 8) and 7
+        val lastIndex = (start + length) / 8
+        writeBits(byteArray[lastIndex], 0, suffixOffset)
     }
 
     fun writeBits(bytes: ByteArray, start: Int) = writeBits(bytes, start, bytes.size * 8 - start)

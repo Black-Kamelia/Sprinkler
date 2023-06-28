@@ -49,15 +49,7 @@ fun interface Encoder<in T> {
      */
     fun encode(obj: T): ByteArray {
         val list = ArrayList<Byte>()
-        val output = EncoderOutput.from {
-            print("WRITE BYTE ")
-            repeat(8) { i ->
-                if (i == 4) print("_")
-                print(it.bit(7 - i))
-            }
-            println()
-            list.add(it.toByte())
-        }
+        val output = EncoderOutput.from { list.add(it.toByte()) }
         encode(obj, output)
         output.flush()
         return list.toByteArray()

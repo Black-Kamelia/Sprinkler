@@ -1,6 +1,5 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
-import com.kamelia.sprinkler.util.bit
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.*
@@ -51,11 +50,9 @@ interface DecoderInput {
         var readBits = 0
 
         val prefixOffset = start and 7
-        if (prefixOffset != 0) {
-            val read = innerReadBits(bytes, actualStart, prefixOffset, min(8 - prefixOffset, length))
-            if (read == -1) return 0
-            readBits += read
-        }
+        val readPre = innerReadBits(bytes, actualStart, prefixOffset, min(8 - prefixOffset, length))
+        if (readPre == -1) return 0
+        readBits += readPre
 
         val fullBytes = (length - start) / 8
         val fullBytesStart = if (prefixOffset == 0) actualStart else actualStart + 1
@@ -65,12 +62,10 @@ interface DecoderInput {
         if (fullBytesRead < fullBytes) return readBits
 
         val suffixOffset = (length - readBits) and 7
-        if (suffixOffset != 0) {
-            val lastIndex = (start + length) / 8
-            val read = innerReadBits(bytes, lastIndex, 0, suffixOffset)
-            if (read == -1) return readBits
-            readBits += read
-        }
+        val lastIndex = (start + length) / 8
+        val readPost = innerReadBits(bytes, lastIndex, 0, suffixOffset)
+        if (readPost == -1) return readBits
+        readBits += readPost
 
         return readBits
     }
