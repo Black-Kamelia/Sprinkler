@@ -82,8 +82,8 @@ interface EncoderOutput {
      * @param byte the byte to write
      */
     fun write(byte: Byte) {
-        repeat(8) { index ->
-            writeBit(byte.bit(7 - index))
+        repeat(8) {
+            writeBit(byte.bit(7 - it))
         }
     }
 
