@@ -24,7 +24,7 @@ import kotlin.math.min
  *
  * @see Decoder
  */
-fun interface DecoderInput {
+interface DecoderInput {
 
     fun readBit(): Int
 
@@ -33,20 +33,21 @@ fun interface DecoderInput {
      *
      * @return the byte read, or -1 if there are no more bytes to read
      */
-    fun read(): Int {
-        var byte = 0
-        repeat(8) {
-            val result = readBit()
-            if (result == -1) { // end of stream
-                return if (it == 0) { // no bits read
-                    -1
-                } else { // some bits read
-                    byte
-                }
-            }
-            byte = byte or (result shl (7 - it))
-        }
-        return byte
+    fun read(): Int
+
+    /**
+     * Reads [length] bits from the source and writes them to the given [bytes] byte array. The bits are written
+     * starting at the [start] bit index in the [bytes] array. Returns the number of bits actually read.
+     *
+     * @param bytes the byte array to write the bits to
+     * @param start the start bit index in the [bytes] array
+     * @param length the number of bits to read
+     * @return the number of bits actually read
+     * @throws IndexOutOfBoundsException if [start] < 0 or [length] < 0 or [start] + [length] > [ByteArray.size] * 8
+     */
+    fun readBits(bytes: ByteArray, start: Int, length: Int): Int {
+        Objects.checkFromIndexSize(start, length, bytes.size * 8)
+        TODO()
     }
 
     /**
@@ -142,7 +143,7 @@ fun interface DecoderInput {
          * An empty [DecoderInput] that always returns -1.
          */
         @JvmField
-        val EMPTY_INPUT = DecoderInput { -1 }
+        val EMPTY_INPUT = TODO() as DecoderInput
 
         /**
          * Creates a [DecoderInput] from the given [InputStream]. All changes to the [InputStream] will be reflected
@@ -242,12 +243,4 @@ fun interface DecoderInput {
 
     }
 
-}
-
-fun main() {
-    val input = DecoderInput.from(byteArrayOf(0b0000_0011.toByte(), 0b0000_0001.toByte()))
-    println(input.read())
-    repeat(8) {
-        println(input.readBit())
-    }
 }
