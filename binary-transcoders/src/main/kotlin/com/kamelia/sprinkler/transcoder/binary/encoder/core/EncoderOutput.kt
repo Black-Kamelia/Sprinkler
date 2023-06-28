@@ -132,6 +132,15 @@ interface EncoderOutput {
 
     companion object {
 
+        @JvmStatic
+        fun nullOutput(): EncoderOutput = object : EncoderOutput {
+            override fun writeBit(bit: Int) = Unit
+            override fun write(byte: Byte) = Unit
+            override fun writeBits(byte: Byte, start: Int, length: Int) = Unit
+            override fun write(bytes: ByteArray, start: Int, length: Int) = Unit
+            override fun flush() = Unit
+        }
+
         /**
          * Creates an [EncoderOutput] that writes to the given [OutputStream].
          *
@@ -178,6 +187,13 @@ interface EncoderOutput {
 
         }
 
+        /**
+         * Creates an [EncoderOutput] that writes to the given [writeByte] function.
+         *
+         * @param writeByte the function to write bytes to
+         * @return the [EncoderOutput] that writes to the given [writeByte] function
+         */
+        @JvmStatic
         fun from(writeByte: (Int) -> Unit): EncoderOutput {
             val obj = object : OutputStream() {
                 override fun write(b: Int) = writeByte(b)
