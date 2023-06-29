@@ -36,6 +36,14 @@ class ComposedEncoderTest {
 
     class RecurseWithCollection(val value: Byte, val collection: Collection<RecurseWithCollection>)
 
+    sealed interface CustomNode {
+
+        class Leaf(val value: Byte) : CustomNode
+
+        class Branch(val left: CustomNode, val right: CustomNode) : CustomNode
+
+    }
+
     @Test
     fun `basic composed encoder works correctly`() {
         val numbers = BasicTypes(1, 2, 3, 4, 5.0f, 6.0, false, "Hello World!")
@@ -165,6 +173,40 @@ class ComposedEncoderTest {
             2, 0, 0, 0, 0,
             3, 0, 0, 0, 0,
         )
+        assertArrayEquals(expected, array)
+    }
+
+    @Test
+    fun `encoding using encodeSelf works correctly`() {
+        val encoder = composedEncoder<CustomNode> {
+            if (it is CustomNode.Leaf) {
+                encode(1.toByte())
+                encode(it.value)
+            } else if (it is CustomNode.Branch) {
+                encode(0.toByte())
+                encode(it.left)
+                encode(it.right)
+            }
+        }
+
+        val node = CustomNode.Branch(
+            CustomNode.Leaf(1),
+            CustomNode.Branch(
+                CustomNode.Leaf(2),
+                CustomNode.Leaf(3)
+            )
+        )
+
+        val array = encoder.encode(node)
+
+        val expected = byteArrayOf(
+            0,
+              1, 1,
+              0,
+                1, 2,
+                1, 3,
+        )
+
         assertArrayEquals(expected, array)
     }
 
