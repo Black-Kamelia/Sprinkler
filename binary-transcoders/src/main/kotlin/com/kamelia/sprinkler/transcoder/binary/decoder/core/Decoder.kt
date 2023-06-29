@@ -199,7 +199,7 @@ interface Decoder<out T> {
          * @throws IllegalStateException if this [State] is a [Done] state
          */
         fun <R> mapEmptyState(): State<R> = if (this is Done) {
-            throw IllegalStateException("Cannot map change type of Done state ($this).")
+            throw IllegalStateException("Cannot change type of Done state ($this).")
         } else {
             unsafeCast()
         }
