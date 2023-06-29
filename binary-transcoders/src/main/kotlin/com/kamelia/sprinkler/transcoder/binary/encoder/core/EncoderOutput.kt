@@ -24,14 +24,47 @@ import kotlin.experimental.or
  */
 interface EncoderOutput {
 
+    /**
+     * Writes a single bit to the output. Only the least significant bit of the given [Int] is written, and all other
+     * bits are ignored.
+     *
+     * @param bit the bit to write
+     */
     fun writeBit(bit: Int)
 
-    fun writeBit(bit: Byte) = writeBit(bit.toInt())
-
-    fun writeBit(bit: Boolean) = writeBit(if (bit) 1 else 0)
-
+    /**
+     * Flushes the output, to force any buffered bytes to be written. This method is useful when the writing of byte is
+     * finished but the last byte is not full and therefore has not been written yet.
+     *
+     * All the padding bits appended to the last byte are set to `0`.
+     */
     fun flush()
 
+    /**
+     * Writes a single bit to the output. Only the least significant bit of the given [Byte] is written, and all other
+     * bits are ignored.
+     *
+     * @param bit the bit to write
+     */
+    fun writeBit(bit: Byte) = writeBit(bit.toInt())
+
+    /**
+     * Writes a single bit to the output. If the given [Boolean] is `true`, then a `1` is written. Otherwise, a `0` is
+     * written.
+     *
+     * @param bit the bit to write
+     */
+    fun writeBit(bit: Boolean) = writeBit(if (bit) 1 else 0)
+
+    /**
+     * Write up to 8 bits from the given [Int] to the output. The [start] and [length] parameters specify the range of
+     * bits in the [Int] to write. The [start] parameter is inclusive, and the [length] parameter is exclusive.
+     *
+     * @param byte the [Int] to write
+     * @param start the inclusive start index in the [Int] to write
+     * @param length the exclusive end index in the [Int] to write
+     * @throws IndexOutOfBoundsException if [start] < 0 or [length] < 0 or [start] + [length] > 8
+     */
     fun writeBits(byte: Int, start: Int, length: Int) {
         Objects.checkFromIndexSize(start, length, 8)
         repeat(length) {
@@ -39,46 +72,84 @@ interface EncoderOutput {
         }
     }
 
+    /**
+     * Write up to 8 bits from the given [Int] to the output. The [length] parameter specifies the number of bits to
+     * write, starting from the most significant bit. The [length] parameter must be between 0 and 8, inclusive.
+     *
+     * @param byte the [Int] to write
+     * @param length the number of bits to write
+     * @throws IndexOutOfBoundsException if [length] < 0 or [length] > 8
+     */
     fun writeBits(byte: Int, length: Int) = writeBits(byte, 0, length)
 
+    /**
+     * Write up to 8 bits from the given [Byte] to the output. The [start] and [length] parameters specify the range of
+     * bits in the [Byte] to write. The [start] parameter is inclusive, and the [length] parameter is exclusive.
+     *
+     * @param byte the [Byte] to write
+     * @param start the inclusive start index in the [Byte] to write
+     * @param length the exclusive end index in the [Byte] to write
+     * @throws IndexOutOfBoundsException if [start] < 0 or [length] < 0 or [start] + [length] > 8
+     */
     fun writeBits(byte: Byte, start: Int, length: Int) = writeBits(byte.toInt(), start, length)
 
+    /**
+     * Write up to 8 bits from the given [Byte] to the output. The [length] parameter specifies the number of bits to
+     * write, starting from the most significant bit. The [length] parameter must be between 0 and 8, inclusive.
+     *
+     * @param byte the [Byte] to write
+     * @param length the number of bits to write
+     * @throws IndexOutOfBoundsException if [length] < 0 or [length] > 8
+     */
     fun writeBits(byte: Byte, length: Int) = writeBits(byte.toInt(), 0, length)
 
-    fun writeBits(byteArray: ByteArray, start: Int, length: Int) {
-        Objects.checkFromIndexSize(start, length, byteArray.size * 8)
+    /**
+     * Write several bits from the given [ByteArray] to the output. The [start] and [length] parameters specify the
+     * range of bits in the [ByteArray] to write. The [start] parameter is inclusive, and the [length] parameter is
+     * exclusive.
+     *
+     * @param bytes the [ByteArray] to write
+     * @param start the inclusive start index in the [ByteArray] to write
+     * @param length the exclusive end index in the [ByteArray] to write
+     * @throws IndexOutOfBoundsException if [start] < 0 or [length] < 0 or [start] + [length] > [bytes].size * 8
+     */
+    fun writeBits(bytes: ByteArray, start: Int, length: Int) {
+        Objects.checkFromIndexSize(start, length, bytes.size * 8)
         val actualStart = start / 8
 
         // write the partial byte at the start
         val prefixOffset = start and 7
         val writtenFromPrefix = min(8 - prefixOffset, length)
-        writeBits(byteArray[actualStart], prefixOffset, writtenFromPrefix)
+        writeBits(bytes[actualStart], prefixOffset, writtenFromPrefix)
 
         // write the full bytes
         val fullBytes = (length - prefixOffset) / 8
         val fullBytesStart = if (prefixOffset == 0) actualStart else actualStart + 1
-        write(byteArray, fullBytesStart, fullBytes)
+        write(bytes, fullBytesStart, fullBytes)
 
         // write the partial byte at the end
         val suffixOffset = (length - writtenFromPrefix - fullBytes * 8) and 7
         val lastIndex = (start + length) / 8
-        writeBits(byteArray[lastIndex], 0, suffixOffset)
+        writeBits(bytes[lastIndex], 0, suffixOffset)
     }
 
-    fun writeBits(bytes: ByteArray, start: Int) = writeBits(bytes, start, bytes.size * 8 - start)
-
-    fun writeBits(bytes: ByteArray) = writeBits(bytes, 0, bytes.size * 8)
+    /**
+     * Write several bits from the given [ByteArray] to the output. The [length] parameter specifies the number of bits
+     * to write, starting from the most significant bit. The [length] parameter must be between 0 and the number of bits
+     * in the [ByteArray], inclusive.
+     *
+     * @param bytes the [ByteArray] to write
+     * @param length the number of bits to write
+     * @throws IndexOutOfBoundsException if [length] < 0 or [length] > [bytes].size * 8
+     */
+    fun writeBits(bytes: ByteArray, length: Int) = writeBits(bytes, 0, length)
 
     /**
      * Writes a single byte to the output.
      *
      * @param byte the byte to write
      */
-    fun write(byte: Byte) {
-        repeat(8) {
-            writeBit(byte.bit(7 - it))
-        }
-    }
+    fun write(byte: Byte): Unit = writeBits(byte, 0, 8)
 
     /**
      * Writes bytes from the given [ByteArray] to the output. The [start] and [length] parameters specify the range of
@@ -124,6 +195,11 @@ interface EncoderOutput {
 
     companion object {
 
+        /**
+         * Creates an [EncoderOutput] that does nothing.
+         *
+         * @return the [EncoderOutput] that does nothing
+         */
         @JvmStatic
         fun nullOutput(): EncoderOutput = object : EncoderOutput {
             override fun writeBit(bit: Int) = Unit

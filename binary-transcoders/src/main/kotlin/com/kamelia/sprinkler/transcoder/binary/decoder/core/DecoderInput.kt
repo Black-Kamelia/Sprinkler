@@ -25,12 +25,17 @@ import kotlin.math.min
  */
 interface DecoderInput {
 
+    /**
+     * Reads a single bit from the source. Returns -1 if there are no more bits to read.
+     *
+     * @return the bit read, or -1 if there are no more bits to read
+     */
     fun readBit(): Int
 
     /**
-     * Reads a single byte from the source. Returns -1 if there are no more bytes to read.
+     * Reads a full byte from the source. Returns -1 if there is less than 1 byte left to read.
      *
-     * @return the byte read, or -1 if there are no more bytes to read
+     * @return the byte read, or -1 if there is less than 1 byte left to read
      */
     fun read(): Int
 
@@ -160,7 +165,9 @@ interface DecoderInput {
     companion object {
 
         /**
-         * An empty [DecoderInput] that always returns -1.
+         * Creates a [DecoderInput] that always returns -1 when reading.
+         *
+         * @return a [DecoderInput] that always returns -1 when reading
          */
         @JvmStatic
         fun nullInput(): DecoderInput = object : DecoderInput {
@@ -256,26 +263,33 @@ interface DecoderInput {
 
         }
 
+        /**
+         * Creates a [DecoderInput] from the given function. The function will be called whenever a byte is read. The
+         * function should return -1 when there are no more bytes to read.
+         *
+         * @param readByte the function to call when a byte is read
+         * @return a [DecoderInput] that reads from the given function
+         */
         @JvmStatic
         fun from(readByte: () -> Int): DecoderInput = object : AbstractDecoderInput() {
             override fun readByte(): Int = readByte()
         }
 
-        private fun DecoderInput.innerReadBits(bytes: ByteArray, index: Int, bitIndex: Int, length: Int): Int {
-            var result = 0
-            var readBits = 0
-            for (it in 0 until length) {
-                val bit = readBit()
-                if (bit == -1) break
-                readBits++
-                result = result or (bit shl 7 - bitIndex - it)
-            }
-            bytes[index] = (bytes[index].toInt() or result).toByte()
-            return readBits
-        }
-
     }
 
+}
+
+private fun DecoderInput.innerReadBits(bytes: ByteArray, index: Int, bitIndex: Int, length: Int): Int {
+    var result = 0
+    var readBits = 0
+    for (it in 0 until length) {
+        val bit = readBit()
+        if (bit == -1) break
+        readBits++
+        result = result or (bit shl 7 - bitIndex - it)
+    }
+    bytes[index] = (bytes[index].toInt() or result).toByte()
+    return readBits
 }
 
 private abstract class AbstractDecoderInput : DecoderInput {
