@@ -7,17 +7,17 @@ import java.util.*
 import kotlin.experimental.or
 
 /**
- * Abstraction allowing [Encoders][Encoder] to write bytes. This interface provides methods for writing bytes in various
- * ways, including writing a single byte, writing a [ByteArray], writing an [Iterable] of bytes, etc.
+ * Abstraction allowing [Encoders][Encoder] to write bytes and bits. This interface provides methods for writing bytes
+ * and bits in various ways, including writing a single byte/bit, writing a [ByteArray], writing an [Iterable] of bytes,
+ * etc.
  *
- * [write] is the only method that must be implemented. All other methods are default implemented depending on this
- * method, meaning that this interface is actually a functional interface and can be implemented as a lambda, as shown
- * below:
+ * This interface provides a factory [EncoderOutput.from] to create an [EncoderOutput] by only providing a function that
+ * writes one byte, allowing to easily create an [EncoderOutput] from any kind of output, as shown in the example below:
  *
  * &nbsp;
  *
  * ```
- * val myOutput = EncoderOutput { byte -> println(byte) } // myOutput.write(byte) will print the byte
+ * val myOutput = EncoderOutput.from { byte -> println(byte) } // myOutput.write(byte) will print the byte
  * ```
  *
  * @see Encoder

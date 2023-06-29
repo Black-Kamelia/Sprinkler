@@ -6,19 +6,19 @@ import java.util.*
 import kotlin.math.min
 
 /**
- * Abstraction allowing [Decoders][Decoder] to read bytes from a source. This interface provides methods for reading
- * bytes in various ways, including reading a single byte, reading bytes into a [ByteArray], reading bytes into a
- * [MutableCollection], etc.
+ * Abstraction allowing [Decoders][Decoder] to read bytes and bits from a source. This interface provides methods for
+ * reading bytes and bits in various ways, including reading a single byte/bit, reading (from the source to write)
+ * bytes/bits into a [ByteArray], reading bytes into a [MutableCollection], etc.
  *
- * [read] is the only method that must be implemented. All other methods are default implemented depending on this
- * method, meaning that this interface is actually a functional interface and can be implemented as a lambda, as shown
- * below:
+ * This interface provides a factory [DecoderInput.from] to create a [DecoderInput] by only providing a function that
+ * reads the next byte from the source, allowing to easily create a [DecoderInput] from any king of input, as shown in
+ * the example below:
  *
  * &nbsp;
  *
  * ```
  * var byte = 0.toByte()
- * val myInput = DecoderInput { byte++ } // myInput.read() will return 0, 1, 2, 3, ...
+ * val myInput = DecoderInput.from { byte++ } // myInput.read() will return 0, 1, 2, 3, ...
  * ```
  *
  * @see Decoder
