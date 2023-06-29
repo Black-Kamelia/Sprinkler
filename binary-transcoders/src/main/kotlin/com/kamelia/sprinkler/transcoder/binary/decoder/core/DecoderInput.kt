@@ -197,8 +197,16 @@ interface DecoderInput {
         @JvmStatic
         fun from(inner: ByteBuffer): DecoderInput = object : AbstractDecoderInput() {
 
+            override fun readBits(bytes: ByteArray, start: Int, length: Int): Int {
+                inner.flip()
+                val result = super.readBits(bytes, start, length)
+                inner.compact()
+                return result
+            }
+
             override fun read(bytes: ByteArray, start: Int, length: Int): Int {
                 Objects.checkFromIndexSize(start, length, bytes.size)
+                if (bitLeft != 0) return readBits(bytes, start, length * 8)
                 if (inner.position() == 0) return 0
                 inner.flip()
 
