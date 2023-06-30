@@ -2,9 +2,9 @@ package com.kamelia.sprinkler.transcoder.binary.encoder.core
 
 import com.kamelia.sprinkler.util.bit
 import java.io.OutputStream
-import java.lang.Integer.min
 import java.util.*
 import kotlin.experimental.or
+import kotlin.math.min
 
 /**
  * Abstraction allowing [Encoders][Encoder] to write bytes and bits. This interface provides methods for writing bytes
@@ -119,12 +119,13 @@ interface EncoderOutput {
 
         // write the partial byte at the start
         val prefixOffset = start and 7
-        val writtenFromPrefix = min(8 - prefixOffset, length)
+        val hasPrefix = prefixOffset > 0
+        val writtenFromPrefix = if (hasPrefix) min(8 - prefixOffset, length) else 0
         writeBits(bytes[actualStart], prefixOffset, writtenFromPrefix)
 
         // write the full bytes
-        val fullBytes = (length - prefixOffset) / 8
-        val fullBytesStart = if (prefixOffset == 0) actualStart else actualStart + 1
+        val fullBytes = (length - writtenFromPrefix) / 8
+        val fullBytesStart = if (hasPrefix) actualStart + 1 else actualStart
         write(bytes, fullBytesStart, fullBytes)
 
         // write the partial byte at the end
@@ -149,7 +150,14 @@ interface EncoderOutput {
      *
      * @param byte the byte to write
      */
-    fun write(byte: Byte): Unit = writeBits(byte, 0, 8)
+    fun write(byte: Int): Unit = writeBits(byte, 0, 8)
+
+    /**
+     * Writes a single byte to the output.
+     *
+     * @param byte the byte to write
+     */
+    fun write(byte: Byte): Unit = write(byte.toInt())
 
     /**
      * Writes bytes from the given [ByteArray] to the output. The [start] and [length] parameters specify the range of
@@ -203,9 +211,19 @@ interface EncoderOutput {
         @JvmStatic
         fun nullOutput(): EncoderOutput = object : EncoderOutput {
             override fun writeBit(bit: Int) = Unit
-            override fun write(byte: Byte) = Unit
-            override fun writeBits(byte: Byte, start: Int, length: Int) = Unit
-            override fun write(bytes: ByteArray, start: Int, length: Int) = Unit
+            override fun write(byte: Int) = Unit
+            override fun writeBits(byte: Int, start: Int, length: Int) {
+                Objects.checkFromIndexSize(start, length, 8)
+            }
+
+            override fun writeBits(bytes: ByteArray, start: Int, length: Int) {
+                Objects.checkFromIndexSize(start, length, bytes.size * 8)
+            }
+
+            override fun write(bytes: ByteArray, start: Int, length: Int) {
+                Objects.checkFromIndexSize(start, length, bytes.size)
+            }
+
             override fun flush() = Unit
         }
 
@@ -224,6 +242,7 @@ interface EncoderOutput {
             override fun writeBit(bit: Int) {
                 currentByte = currentByte or (bit shl 7 - currentBitIndex).toByte()
                 currentBitIndex++
+
                 tryFlush()
             }
 
@@ -234,13 +253,12 @@ interface EncoderOutput {
                 currentBitIndex = 0
             }
 
-            override fun write(byte: Byte) {
+            override fun write(byte: Int) =
                 if (currentBitIndex == 0) {
-                    output.write(byte.toInt())
-                    return
+                    output.write(byte)
+                } else {
+                    super.write(byte)
                 }
-                super.write(byte)
-            }
 
             private fun tryFlush() {
                 if (currentBitIndex == 8) {
@@ -248,10 +266,12 @@ interface EncoderOutput {
                 }
             }
 
-            override fun write(bytes: ByteArray, start: Int, length: Int) {
-                Objects.checkFromIndexSize(start, length, bytes.size)
-                output.write(bytes, start, length)
-            }
+            override fun write(bytes: ByteArray, start: Int, length: Int) =
+                if (currentBitIndex == 0) {
+                    output.write(bytes, start, length)
+                } else {
+                    super.write(bytes, start, length)
+                }
 
         }
 
