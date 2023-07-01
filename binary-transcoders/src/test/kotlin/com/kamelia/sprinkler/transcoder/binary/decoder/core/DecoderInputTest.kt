@@ -4,8 +4,11 @@ import java.io.ByteArrayInputStream
 import java.nio.ByteBuffer
 import java.util.stream.Stream
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Named
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 
 class DecoderInputTest {
@@ -74,20 +77,19 @@ class DecoderInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
-    fun `read to collection stops when collection size has reached max int`(factory: (ByteArray) -> DecoderInput) {
+    fun `read to collection stops when collection add returns false`(factory: (ByteArray) -> DecoderInput) {
         val b1 = 3.toByte()
 
-        var isMaxValue = false
+        var returnFalse = false
         val inner = ArrayList<Byte>()
         val dummyList: MutableList<Byte> = object : MutableList<Byte> by inner {
-            override val size: Int
-                get() = if (isMaxValue) Int.MAX_VALUE else inner.size
+            override fun add(element: Byte): Boolean = if (returnFalse) false else inner.add(element)
         }
 
-        val input = factory(byteArrayOf(b1))
-        assertEquals(1, input.read(dummyList))
+        val input = factory(byteArrayOf(b1, b1, b1))
+        assertEquals(1, input.read(dummyList, 1))
         assertEquals(listOf(b1), dummyList)
-        isMaxValue = true
+        returnFalse = true
         assertEquals(0, input.read(dummyList))
     }
 
@@ -104,13 +106,62 @@ class DecoderInputTest {
         assertEquals(-1, input.read().toByte())
     }
 
+    @Test
+    fun `nullInput works correctly`() {
+        val input = DecoderInput.nullInput()
+        assertEquals(-1, input.read().toByte())
+        assertEquals(-1, input.readBit().toByte())
+        assertEquals(0, input.read(ByteArray(1), 0, 1))
+        assertEquals(0, input.readBits(ByteArray(1), 0, 1))
+        assertEquals(0, input.read(mutableListOf()))
+        assertEquals(0, input.skip(1))
+        assertThrows<IndexOutOfBoundsException> { input.read(ByteArray(1), -1, 1) }
+        assertThrows<IndexOutOfBoundsException> { input.read(ByteArray(1), 2, 0) }
+        assertThrows<IndexOutOfBoundsException> { input.read(ByteArray(1), 0, 2) }
+        assertThrows<IndexOutOfBoundsException> { input.read(ByteArray(1), 0, -1) }
+        assertThrows<IndexOutOfBoundsException> { input.readBits(ByteArray(1), -1, 1) }
+        assertThrows<IndexOutOfBoundsException> { input.readBits(ByteArray(1), 9, 0) }
+        assertThrows<IndexOutOfBoundsException> { input.readBits(ByteArray(1), 0, 9) }
+        assertThrows<IndexOutOfBoundsException> { input.readBits(ByteArray(1), 0, -1) }
+    }
+
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
+    fun `read bit works correctly`(factory: (ByteArray) -> DecoderInput) {
+        val input = factory(byteArrayOf(0b1010_1111.toByte()))
+        assertEquals(1, input.readBit())
+        assertEquals(0, input.readBit())
+        assertEquals(1, input.readBit())
+        assertEquals(0, input.readBit())
+        assertEquals(1, input.readBit())
+        assertEquals(1, input.readBit())
+        assertEquals(1, input.readBit())
+        assertEquals(1, input.readBit())
+        assertEquals(-1, input.readBit())
+    }
+
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
+    fun `read byte after read but works correctly`(factory: (ByteArray) -> DecoderInput) {
+        val input = factory(byteArrayOf(0b0111_1110.toByte(), 0b1000_0000.toByte()))
+        assertEquals(0, input.readBit())
+        assertEquals(0b1111_1101, input.read())
+    }
+
+
     private companion object {
 
         @JvmStatic
-        fun decoderDataInputImplementations(): Stream<(ByteArray) -> DecoderInput> = Stream.of(
-            DecoderInput.Companion::from,
-            { DecoderInput.from(ByteArrayInputStream(it)) },
-            { DecoderInput.from(ByteBuffer.wrap(it).apply { position(limit()) }) },
+        fun decoderDataInputImplementations(): Stream<Arguments> = Stream.of(
+            Arguments.of(Named.of<(ByteArray) -> DecoderInput>("ByteArray", DecoderInput.Companion::from)),
+            Arguments.of(Named.of<(ByteArray) -> DecoderInput>("InputStream") { DecoderInput.from(ByteArrayInputStream(it)) }),
+            Arguments.of(Named.of<(ByteArray) -> DecoderInput>("ByteBuffer") {
+                DecoderInput.from(ByteBuffer.wrap(it).apply { position(limit()) })
+            }),
+            Arguments.of(Named.of<(ByteArray) -> DecoderInput>("CustomLambda") {
+                var index = 0
+                DecoderInput.from { if (index < it.size) (it[index++].toInt() and 0xFF) else -1 }
+            }),
         )
 
     }
