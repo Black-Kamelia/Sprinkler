@@ -173,8 +173,14 @@ interface DecoderInput {
         fun nullInput(): DecoderInput = object : DecoderInput {
             override fun readBit(): Int = -1
             override fun read(): Int = -1
-            override fun readBits(bytes: ByteArray, start: Int, length: Int): Int = -1
-            override fun read(bytes: ByteArray, start: Int, length: Int): Int = -1
+            override fun readBits(bytes: ByteArray, start: Int, length: Int): Int {
+                Objects.checkFromIndexSize(start, length, bytes.size * 8)
+                return -1
+            }
+            override fun read(bytes: ByteArray, start: Int, length: Int): Int {
+                Objects.checkFromIndexSize(start, length, bytes.size)
+                return -1
+            }
         }
 
         /**
