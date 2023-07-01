@@ -88,15 +88,12 @@ interface DecoderInput {
      */
     fun read(bytes: ByteArray, start: Int, length: Int): Int {
         Objects.checkFromIndexSize(start, length, bytes.size)
-        var index = start
-        val end = start + length
-        while (index < end) {
+        for (i in start until start + length) {
             val read = read()
-            if (read == -1) break
-            bytes[index] = read.toByte()
-            index++
+            if (read == -1) return i - start
+            bytes[i] = read.toByte()
         }
-        return index - start
+        return length
     }
 
     /**
@@ -127,14 +124,14 @@ interface DecoderInput {
      * @param length the maximum number of bytes to read
      */
     fun read(bytes: MutableCollection<Byte>, length: Int): Int {
-        var count = 0
-        while (count < length && bytes.size < Int.MAX_VALUE) {
-            val read = read()
-            if (read == -1) break
-            bytes += read.toByte()
-            count++
+        var read = 0
+        for (i in 0 until length) {
+            val readByte = read()
+            if (readByte == -1) break
+            if (!bytes.add(readByte.toByte())) break
+            read++
         }
-        return count
+        return read
     }
 
     /**
@@ -154,9 +151,8 @@ interface DecoderInput {
      */
     fun skip(n: Long): Long {
         var skipped = 0L
-        while (skipped < n) {
-            val read = read()
-            if (read == -1) break
+        for (i in 0 until n) {
+            if (read() == -1) break
             skipped++
         }
         return skipped
@@ -177,6 +173,7 @@ interface DecoderInput {
                 Objects.checkFromIndexSize(start, length, bytes.size * 8)
                 return -1
             }
+
             override fun read(bytes: ByteArray, start: Int, length: Int): Int {
                 Objects.checkFromIndexSize(start, length, bytes.size)
                 return -1
@@ -210,23 +207,32 @@ interface DecoderInput {
         @JvmStatic
         fun from(inner: ByteBuffer): DecoderInput = object : AbstractDecoderInput() {
 
-            override fun readBits(bytes: ByteArray, start: Int, length: Int): Int {
-                inner.flip()
-                val result = super.readBits(bytes, start, length)
-                inner.compact()
-                return result
-            }
+            private var isInWriteMode = true
 
             override fun read(bytes: ByteArray, start: Int, length: Int): Int {
                 Objects.checkFromIndexSize(start, length, bytes.size)
-                if (bitLeft != 0) return readBits(bytes, start, length * 8)
-                if (inner.position() == 0) return 0
-                inner.flip()
+                if (length == 0 || inner.position() == 0) return 0
 
-                val actualLength = min(length, inner.remaining())
-                inner.get(bytes, start, actualLength)
-                inner.compact()
-                return actualLength
+                val wasInWriteMode = isInWriteMode
+                if (wasInWriteMode) {
+                    inner.flip()
+                    isInWriteMode = false
+                }
+
+                val read = if (bitLeft != 0) {
+                    readBits(bytes, start * 8, length * 8)
+                } else {
+                    val actualLength = min(length, inner.remaining())
+                    inner.get(bytes, start, actualLength)
+                    actualLength
+                }
+
+                if (wasInWriteMode) {
+                    inner.compact()
+                    isInWriteMode = true
+                }
+
+                return read
             }
 
             override fun readByte(): Int {

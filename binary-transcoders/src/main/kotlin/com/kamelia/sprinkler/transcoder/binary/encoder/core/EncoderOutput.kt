@@ -170,9 +170,7 @@ interface EncoderOutput {
      */
     fun write(bytes: ByteArray, start: Int, length: Int) {
         Objects.checkFromIndexSize(start, length, bytes.size)
-        val lastIndex = start + length
-
-        for (index in start until lastIndex) {
+        for (index in start until start + length) {
             write(bytes[index])
         }
     }
