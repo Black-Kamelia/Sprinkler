@@ -308,8 +308,7 @@ private abstract class AbstractDecoderInput : DecoderInput {
 
     // the bits in the buffer are simply shifted to the left when reading
     // the reading is always done starting from the 15th bit (where 0 is the lsb)
-    protected var buffer = 0 // 2 bytes buffer
-        private set
+    private var buffer = 0 // 2 bytes buffer
     protected var bitLeft = 0 // number of bits left in the buffer [0-15]
         private set
 
