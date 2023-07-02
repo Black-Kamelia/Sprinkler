@@ -181,6 +181,9 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
      */
     fun encode(obj: E?): EncodingScope<E>
 
+    @JvmName("encodeSelf")
+    fun encode(obj: E): EncodingScope<E> = encode(obj, self)
+
     /**
      * Encodes recursively a [Collection] of type [E]. The assumed representation of the collection depends on the
      * implementation of the scope.

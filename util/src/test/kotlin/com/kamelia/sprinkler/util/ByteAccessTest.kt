@@ -9,7 +9,7 @@ class ByteAccessTest {
     fun `can read a bit from a byte`() {
         val byte = 0x11.toByte()
         val bit = byte.bit(0)
-        assertEquals(0x1.toByte(), bit)
+        assertEquals(0x1, bit)
     }
 
     @Test
@@ -30,14 +30,14 @@ class ByteAccessTest {
     fun `can read a bit from a short`() {
         val short = 0x1234.toShort()
         val bit = short.bit(0)
-        assertEquals(0x0.toByte(), bit)
+        assertEquals(0x0, bit)
     }
 
     @Test
     fun `can read a bit from a short in little-endian order`() {
         val short = 0x0100.toShort()
         val bit = short.bit(0, false)
-        assertEquals(0x1.toByte(), bit)
+        assertEquals(0x1, bit)
     }
 
     @Test
@@ -58,14 +58,14 @@ class ByteAccessTest {
     fun `can read a bit from an int`() {
         val int = 2
         val bit = int.bit(0)
-        assertEquals(0x0.toByte(), bit)
+        assertEquals(0x0, bit)
     }
 
     @Test
     fun `can read a bit from an int in little-endian order`() {
         val int = 0x00010000
         val bit = int.bit(8, false)
-        assertEquals(0x1.toByte(), bit)
+        assertEquals(0x1, bit)
     }
 
     @Test
@@ -86,14 +86,14 @@ class ByteAccessTest {
     fun `can read a bit from a long`() {
         val long = 0x1234567890ABCDEF
         val bit = long.bit(0)
-        assertEquals(0x1.toByte(), bit)
+        assertEquals(0x1, bit)
     }
 
     @Test
     fun `can read a bit from a long in little-endian order`() {
         val long = 0x0001000000000000
         val bit = long.bit(8, false)
-        assertEquals(0x1.toByte(), bit)
+        assertEquals(0x1, bit)
     }
 
     @Test
@@ -114,14 +114,14 @@ class ByteAccessTest {
     fun `can read a bit from a float`() {
         val float = 0x12345678.toFloat()
         val bit = float.bit(0)
-        assertEquals(0x0.toByte(), bit)
+        assertEquals(0x0, bit)
     }
 
     @Test
     fun `can read a bit from a float in little-endian order`() {
         val float = Float.fromBits(0x00010000)
         val bit = float.bit(8, false)
-        assertEquals(0x1.toByte(), bit)
+        assertEquals(0x1, bit)
     }
 
     @Test
@@ -142,14 +142,14 @@ class ByteAccessTest {
     fun `can read a bit from a double`() {
         val double = Double.fromBits(0x1234567890ABCDEF)
         val bit = double.bit(0)
-        assertEquals(0x1.toByte(), bit)
+        assertEquals(0x1, bit)
     }
 
     @Test
     fun `can read a bit from a double in little-endian order`() {
         val double = Double.fromBits(0x0001000000000000)
         val bit = double.bit(8, false)
-        assertEquals(0x1.toByte(), bit)
+        assertEquals(0x1, bit)
     }
 
 }

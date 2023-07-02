@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 
-import com.kamelia.sprinkler.transcoder.binary.decoder.BooleanDecoder
+import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.util.assertDoneAndGet
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -125,7 +125,6 @@ class DecodingScopeTest {
 
     @Test
     fun `selfListOrNull works correctly with recursion of size 0`() {
-        val recursionDecoder = BooleanDecoder()
         val decoder = composedDecoder {
             val age = byte()
             val children = selfListOrNull()
@@ -219,6 +218,29 @@ class DecodingScopeTest {
         val result = decoder.decode(bytes).assertDoneAndGet()
         assertEquals(34, result.age)
         assertEquals(0, result.children?.size)
+    }
+
+    sealed interface Node {
+
+        data class Leaf(val value: Byte) : Node
+
+        data class Branch(val left: Node, val right: Node) : Node
+
+    }
+
+    @Test
+    fun `self() works correctly`() {
+        val decoder = composedDecoder {
+            when (val kind = byte()) {
+                1.toByte() -> Node.Leaf(byte())
+                0.toByte() -> Node.Branch(self(), self())
+                else -> errorState(Decoder.State.Error("Unknown kind: $kind"))
+            }
+        }
+        val bytes = byteArrayOf(0, 1, 3, 0, 1, 1, 1, 5)
+        val expected = Node.Branch(Node.Leaf(3), Node.Branch(Node.Leaf(1), Node.Leaf(5)))
+        val result = decoder.decode(bytes).assertDoneAndGet()
+        assertEquals(expected, result)
     }
 
 }

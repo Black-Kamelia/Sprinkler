@@ -12,7 +12,7 @@ import java.util.stream.Collectors
  * the call order is meaningful).
  *
  *
- * In the following example, both syntaxes are almost equivalent:
+ * In the following example, both syntax are almost equivalent:
  *
  * ```
  * class Person(val name: String, val age: Int)
@@ -188,6 +188,14 @@ sealed interface DecodingScope<E> {
      */
     @JvmName("decodeString")
     fun string(): String
+
+    /**
+     * Recursively decodes an object of type [E].
+     *
+     * @return the decoded object
+     */
+    @JvmName("decodeSelf")
+    fun self(): E = decode(self)
 
     /**
      * Recursively decodes a nullable object of type [E]. The representation of the nullability depends on the

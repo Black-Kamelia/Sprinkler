@@ -9,6 +9,7 @@ import com.kamelia.sprinkler.transcoder.binary.encoder.LongEncoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.ShortEncoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.UTF8StringEncoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
+import com.kamelia.sprinkler.transcoder.binary.encoder.core.EncoderOutput
 import java.nio.ByteOrder
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
@@ -34,6 +35,14 @@ class ComposedEncoderTest {
     class RecurseWithArray(val value: Byte, val array: Array<RecurseWithArray>)
 
     class RecurseWithCollection(val value: Byte, val collection: Collection<RecurseWithCollection>)
+
+    sealed interface CustomNode {
+
+        class Leaf(val value: Byte) : CustomNode
+
+        class Branch(val left: CustomNode, val right: CustomNode) : CustomNode
+
+    }
 
     @Test
     fun `basic composed encoder works correctly`() {
@@ -168,9 +177,43 @@ class ComposedEncoderTest {
     }
 
     @Test
+    fun `encoding using encodeSelf works correctly`() {
+        val encoder = composedEncoder<CustomNode> {
+            if (it is CustomNode.Leaf) {
+                encode(1.toByte())
+                encode(it.value)
+            } else if (it is CustomNode.Branch) {
+                encode(0.toByte())
+                encode(it.left)
+                encode(it.right)
+            }
+        }
+
+        val node = CustomNode.Branch(
+            CustomNode.Leaf(1),
+            CustomNode.Branch(
+                CustomNode.Leaf(2),
+                CustomNode.Leaf(3)
+            )
+        )
+
+        val array = encoder.encode(node)
+
+        val expected = byteArrayOf(
+            0,
+              1, 1,
+              0,
+                1, 2,
+                1, 3,
+        )
+
+        assertArrayEquals(expected, array)
+    }
+
+    @Test
     fun `test impossible case for coverage`() {
         val impl = EncodingScopeImpl<Any>(
-            { },
+            EncoderOutput.Companion.from { },
             ArrayList(),
             ArrayDeque(),
             HashMap(),

@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.transcoder.binary.encoder.core
 
+import com.kamelia.sprinkler.util.bit
 import java.io.File
 import java.io.OutputStream
 import java.nio.file.Path
@@ -47,9 +48,11 @@ fun interface Encoder<in T> {
      * @return the encoded bytes
      */
     fun encode(obj: T): ByteArray {
-        val output = ArrayList<Byte>()
-        encode(obj, output::add)
-        return output.toByteArray()
+        val list = ArrayList<Byte>()
+        val output = EncoderOutput.from { list.add(it.toByte()) }
+        encode(obj, output)
+        output.flush()
+        return list.toByteArray()
     }
 
     /**

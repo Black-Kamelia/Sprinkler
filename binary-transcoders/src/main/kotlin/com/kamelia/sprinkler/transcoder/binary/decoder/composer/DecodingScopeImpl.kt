@@ -23,7 +23,7 @@ internal class DecodingScopeImpl<E>(
     private val endianness: ByteOrder,
 ) : DecodingScope<E> {
 
-    var input: DecoderInput = DecoderInput.EMPTY_INPUT
+    var input: DecoderInput = DecoderInput.nullInput()
 
     private val accumulator: ElementsAccumulator
         get() = accumulatorProvider()
