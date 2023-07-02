@@ -55,22 +55,27 @@ interface DecoderInput {
         var readBits = 0
 
         val prefixOffset = start and 7
-        val readPre = innerReadBits(bytes, actualStart, prefixOffset, min(8 - prefixOffset, length))
-        if (readPre == -1) return 0
+        val readFromPrefix = if (prefixOffset > 0) min(8 - prefixOffset, length) else 0
+        val readPre = innerReadBits(bytes, actualStart, prefixOffset, readFromPrefix)
         readBits += readPre
+        if (readPre < readFromPrefix) return readBits
 
-        val fullBytes = (length - start) / 8
+        val fullBytes = (length - readFromPrefix) / 8
         val fullBytesStart = if (prefixOffset == 0) actualStart else actualStart + 1
         val fullBytesRead = read(bytes, fullBytesStart, fullBytes)
-        if (fullBytesRead == -1) return readBits
         readBits += fullBytesRead * 8
-        if (fullBytesRead < fullBytes) return readBits
+        if (fullBytesRead < fullBytes) { // less than 1 byte left to read, we still try to read the remaining bits
+            // there is at most 7 bits left to read
+            val bitsRead = innerReadBits(bytes, fullBytesStart + fullBytesRead, 0, 7)
+            readBits += bitsRead
+            return readBits
+        }
 
         val suffixOffset = (length - readBits) and 7
         val lastIndex = (start + length) / 8
         val readPost = innerReadBits(bytes, lastIndex, 0, suffixOffset)
-        if (readPost == -1) return readBits
         readBits += readPost
+        if (readPost < suffixOffset) return readBits
 
         return readBits
     }
@@ -213,36 +218,35 @@ interface DecoderInput {
                 Objects.checkFromIndexSize(start, length, bytes.size)
                 if (length == 0 || inner.position() == 0) return 0
 
-                val wasInWriteMode = isInWriteMode
-                if (wasInWriteMode) {
-                    inner.flip()
-                    isInWriteMode = false
-                }
+                inner.flip()
+                isInWriteMode = false
 
                 val read = if (bitLeft != 0) {
-                    readBits(bytes, start * 8, length * 8)
+                    super.read(bytes, start, length)
                 } else {
                     val actualLength = min(length, inner.remaining())
                     inner.get(bytes, start, actualLength)
                     actualLength
                 }
 
-                if (wasInWriteMode) {
-                    inner.compact()
-                    isInWriteMode = true
-                }
+                inner.compact()
+                isInWriteMode = true
 
                 return read
             }
 
             override fun readByte(): Int {
-                inner.flip()
+                if (isInWriteMode) {
+                    inner.flip()
+                }
                 val byte = if (inner.hasRemaining()) {
                     inner.get().toInt() and 0xFF
                 } else {
                     -1
                 }
-                inner.compact()
+                if (isInWriteMode) {
+                    inner.compact()
+                }
                 return byte
             }
 
@@ -292,15 +296,21 @@ interface DecoderInput {
 }
 
 private fun DecoderInput.innerReadBits(bytes: ByteArray, index: Int, bitIndex: Int, length: Int): Int {
+    if (length == 0) return 0
     var result = 0
     var readBits = 0
     for (it in 0 until length) {
         val bit = readBit()
-        if (bit == -1) break
+        if (bit == -1) {
+            if (it == 0) return 0
+            break
+        }
         readBits++
         result = result or (bit shl 7 - bitIndex - it)
     }
-    bytes[index] = (bytes[index].toInt() or result).toByte()
+    val mask = (0xFF shl 8 - bitIndex) // mask where all the bits before bitIndex are 1
+    val old = bytes[index].toInt() and mask // remove all the bits after bitIndex
+    bytes[index] = (old or result).toByte()
     return readBits
 }
 
@@ -323,7 +333,7 @@ private abstract class AbstractDecoderInput : DecoderInput {
     final override fun read(): Int = if (bitLeft == 0) {
         readByte()
     } else {
-        if (bitLeft < 8 && !refillBuffer()) {
+        if (!refillBuffer()) {
             -1
         } else {
             // read 8 bits from the buffer
