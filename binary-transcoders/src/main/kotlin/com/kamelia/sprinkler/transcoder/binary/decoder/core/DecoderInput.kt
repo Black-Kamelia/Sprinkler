@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
+import com.kamelia.sprinkler.transcoder.binary.common.BitOrder
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.*
@@ -186,20 +187,27 @@ interface DecoderInput {
         }
 
         /**
-         * Creates a [DecoderInput] from the given [InputStream]. All changes to the [InputStream] will be reflected
-         * in the [DecoderInput] and vice versa.
+         * Creates a [DecoderInput] from the given [InputStream]. The [order] parameter specifies the order in which
+         * bits are read from the [InputStream].
+         *
+         * All changes to the [InputStream] will be reflected in the [DecoderInput] and vice versa.
          *
          * @param inner the [InputStream] to read from
+         * @param order the [BitOrder] to use when reading bits
          * @return a [DecoderInput] that reads from the given [InputStream]
          */
         @JvmStatic
-        fun from(inner: InputStream): DecoderInput = object : AbstractDecoderInput() {
-            override fun readByte(): Int = inner.read()
-        }
+        @JvmOverloads
+        fun from(inner: InputStream, order: BitOrder = BitOrder.MSB_FIRST): DecoderInput =
+            object : AbstractDecoderInput() {
+                override fun readByte(): Int = inner.read()
+            }
 
         /**
-         * Creates a [DecoderInput] from the given [ByteBuffer]. All changes to the [ByteBuffer] will be reflected
-         * in the [DecoderInput] and vice versa.
+         * Creates a [DecoderInput] from the given [ByteBuffer]. The [order] parameter specifies the order in which
+         * bits are read from the [ByteBuffer].
+         *
+         * All changes to the [ByteBuffer] will be reflected in the [DecoderInput] and vice versa.
          *
          * All reading methods will expect the [ByteBuffer] to be in write mode before the method is called and will
          * leave it in write mode after the method is called. This means that the [ByteBuffer] will be flipped before
@@ -207,89 +215,103 @@ interface DecoderInput {
          * having to flip it back and forth.
          *
          * @param inner the [ByteBuffer] to read from
+         * @param order the [BitOrder] to use when reading bits
          * @return a [DecoderInput] that reads from the given [ByteBuffer]
          */
         @JvmStatic
-        fun from(inner: ByteBuffer): DecoderInput = object : AbstractDecoderInput() {
+        @JvmOverloads
+        fun from(inner: ByteBuffer, order: BitOrder = BitOrder.MSB_FIRST): DecoderInput =
+            object : AbstractDecoderInput() {
 
-            private var isInWriteMode = true
+                private var isInWriteMode = true
 
-            override fun read(bytes: ByteArray, start: Int, length: Int): Int {
-                Objects.checkFromIndexSize(start, length, bytes.size)
-                if (length == 0 || inner.position() == 0) return 0
+                override fun read(bytes: ByteArray, start: Int, length: Int): Int {
+                    Objects.checkFromIndexSize(start, length, bytes.size)
+                    if (length == 0 || inner.position() == 0) return 0
 
-                inner.flip()
-                isInWriteMode = false
-
-                val read = if (bitLeft != 0) {
-                    super.read(bytes, start, length)
-                } else {
-                    val actualLength = min(length, inner.remaining())
-                    inner.get(bytes, start, actualLength)
-                    actualLength
-                }
-
-                inner.compact()
-                isInWriteMode = true
-
-                return read
-            }
-
-            override fun readByte(): Int {
-                if (isInWriteMode) {
                     inner.flip()
-                }
-                val byte = if (inner.hasRemaining()) {
-                    inner.get().toInt() and 0xFF
-                } else {
-                    -1
-                }
-                if (isInWriteMode) {
-                    inner.compact()
-                }
-                return byte
-            }
+                    isInWriteMode = false
 
-        }
+                    val read = if (bitLeft != 0) {
+                        super.read(bytes, start, length)
+                    } else {
+                        val actualLength = min(length, inner.remaining())
+                        inner.get(bytes, start, actualLength)
+                        actualLength
+                    }
+
+                    inner.compact()
+                    isInWriteMode = true
+
+                    return read
+                }
+
+                override fun readByte(): Int {
+                    if (isInWriteMode) {
+                        inner.flip()
+                    }
+                    val byte = if (inner.hasRemaining()) {
+                        inner.get().toInt() and 0xFF
+                    } else {
+                        -1
+                    }
+                    if (isInWriteMode) {
+                        inner.compact()
+                    }
+                    return byte
+                }
+
+            }
 
         /**
-         * Creates a [DecoderInput] from the given [ByteArray]. The [ByteArray] will not be modified by the returned
-         * [DecoderInput]. However, the [ByteArray] will not be copied, so any changes to the [ByteArray] will be
-         * reflected in the [DecoderInput].
+         * Creates a [DecoderInput] from the given [ByteArray]. The [order] parameter specifies the order in which
+         * bits are read from the [ByteArray].
+         *
+         * The [ByteArray] will not be modified by the returned [DecoderInput]. However, the [ByteArray] will not be
+         * copied, so any changes to the [ByteArray] will be reflected in the [DecoderInput].
          *
          * @param inner the [ByteArray] to read from
+         * @param order the [BitOrder] to use when reading bits
          * @return a [DecoderInput] that reads from the given [ByteArray]
          */
         @JvmStatic
-        fun from(inner: ByteArray): DecoderInput = object : AbstractDecoderInput() {
+        @JvmOverloads
+        fun from(inner: ByteArray, order: BitOrder = BitOrder.MSB_FIRST): DecoderInput =
+            object : AbstractDecoderInput() {
 
-            private var index = 0
+                private var index = 0
 
-            override fun readByte(): Int = if (index < inner.size) {
-                inner[index++].toInt() and 0xFF
-            } else {
-                -1
+                override fun readByte(): Int = if (index < inner.size) {
+                    inner[index++].toInt() and 0xFF
+                } else {
+                    -1
+                }
+
+                override fun skip(n: Long): Long {
+                    val oldIndex = index
+                    index = min(index + n.toInt(), inner.size)
+                    return index - oldIndex.toLong()
+                }
+
             }
-
-            override fun skip(n: Long): Long {
-                val oldIndex = index
-                index = min(index + n.toInt(), inner.size)
-                return index - oldIndex.toLong()
-            }
-
-        }
 
         /**
-         * Creates a [DecoderInput] from the given function. The function will be called whenever a byte is read. The
+         * Creates a [DecoderInput] from the given function. The [order] parameter specifies the order in which bits
+         * are read from the function.
+         *
+         * The function will be called whenever a byte is read. The
          * function should return -1 when there are no more bytes to read.
          *
+         * @param order the [BitOrder] to use when reading bits
          * @param readByte the function to call when a byte is read
          * @return a [DecoderInput] that reads from the given function
          */
         @JvmStatic
-        fun from(readByte: () -> Int): DecoderInput = object : AbstractDecoderInput() {
-            override fun readByte(): Int = readByte()
-        }
+        @JvmOverloads
+        fun from(order: BitOrder = BitOrder.MSB_FIRST, readByte: () -> Int): DecoderInput =
+            object : AbstractDecoderInput() {
+                override fun readByte(): Int = readByte()
+            }
 
     }
 

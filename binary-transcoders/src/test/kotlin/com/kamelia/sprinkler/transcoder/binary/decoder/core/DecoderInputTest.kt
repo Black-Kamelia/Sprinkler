@@ -206,7 +206,7 @@ class DecoderInputTest {
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
     fun `read bits from byte array FB returns less than length when there isn't enough bytes to read`(
-        factory: (ByteArray) -> DecoderInput
+        factory: (ByteArray) -> DecoderInput,
     ) {
         val input = factory(byteArrayOf(1))
         val receiver = byteArrayOf(3)
@@ -228,7 +228,7 @@ class DecoderInputTest {
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
     fun `read bits from byte array PP returns 0 when there isn't enough bits to read`(
-        factory: (ByteArray) -> DecoderInput
+        factory: (ByteArray) -> DecoderInput,
     ) {
         val input = factory(byteArrayOf())
         val receiver = byteArrayOf(3)
@@ -239,7 +239,7 @@ class DecoderInputTest {
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
     fun `read bits from byte array PP returns less than length when there isn't enough bytes to read`(
-        factory: (ByteArray) -> DecoderInput
+        factory: (ByteArray) -> DecoderInput,
     ) {
         val input = factory(byteArrayOf(0b1011_0111.toByte()))
         val receiver = byteArrayOf(3)
@@ -281,7 +281,7 @@ class DecoderInputTest {
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
     fun `read bits from byte array SP returns less than length when there isn't enough bytes to read`(
-        factory: (ByteArray) -> DecoderInput
+        factory: (ByteArray) -> DecoderInput,
     ) {
         val input = factory(byteArrayOf(0b1011_0111.toByte()))
         val receiver = byteArrayOf(3)
@@ -312,11 +312,42 @@ class DecoderInputTest {
         assertEquals(0b0010_0000.toByte(), receiver[2])
     }
 
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
+    fun `read bits from byte array works for PP and FB and start lt 8`(factory: (ByteArray) -> DecoderInput) {
+        val input = factory(byteArrayOf(0b0100_1111.toByte(), 0b0100_1111.toByte()))
+        val receiver = byteArrayOf(0b1001_0110.toByte(), 0)
+        assertEquals(10, input.readBits(receiver, 6, 10))
+        assertEquals(0b1001_0101.toByte(), receiver[0])
+        assertEquals(0b0011_1101.toByte(), receiver[1])
+    }
+
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
+    fun `read bits from byte array works for PP and FB and start gt 8`(factory: (ByteArray) -> DecoderInput) {
+        val input = factory(byteArrayOf(0b0100_1111.toByte(), 0b0100_1111.toByte()))
+        val receiver = byteArrayOf(0xFF.toByte(), 0b1001_0110.toByte(), 0)
+        assertEquals(10, input.readBits(receiver, 14, 10))
+        assertEquals(0xFF.toByte(), receiver[0])
+        assertEquals(0b1001_0101.toByte(), receiver[1])
+        assertEquals(0b0011_1101.toByte(), receiver[2])
+    }
+
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
+    fun `read bits from byte array works for PP and SP and FB and start == 0`(factory: (ByteArray) -> DecoderInput) {
+        val input = factory(byteArrayOf(0b0100_1111.toByte(), 0b0100_1111.toByte()))
+        val receiver = byteArrayOf(0xFF.toByte(), 0b1001_0110.toByte())
+        assertEquals(10, input.readBits(receiver, 0, 10))
+        assertEquals(0b0100_1111.toByte(), receiver[0])
+        assertEquals(0b0101_0110.toByte(), receiver[1])
+    }
+
     private companion object {
 
         @JvmStatic
         fun decoderDataInputImplementations(): Stream<Arguments> = Stream.of(
-            Arguments.of(Named.of<(ByteArray) -> DecoderInput>("ByteArray", DecoderInput.Companion::from)),
+            Arguments.of(Named.of<(ByteArray) -> DecoderInput>("ByteArray") { DecoderInput.Companion.from(it) }),
             Arguments.of(Named.of<(ByteArray) -> DecoderInput>("InputStream") {
                 DecoderInput.from(ByteArrayInputStream(it))
             }),
