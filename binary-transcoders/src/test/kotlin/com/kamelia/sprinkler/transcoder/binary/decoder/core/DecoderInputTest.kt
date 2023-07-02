@@ -209,7 +209,7 @@ class DecoderInputTest {
         factory: (ByteArray) -> DecoderInput,
     ) {
         val input = factory(byteArrayOf(1))
-        val receiver = byteArrayOf(3)
+        val receiver = byteArrayOf(0)
         assertEquals(0, input.readBit())
         assertEquals(7, input.readBits(receiver, 0, 8))
         assertEquals(2, receiver[0])
@@ -242,7 +242,7 @@ class DecoderInputTest {
         factory: (ByteArray) -> DecoderInput,
     ) {
         val input = factory(byteArrayOf(0b1011_0111.toByte()))
-        val receiver = byteArrayOf(3)
+        val receiver = byteArrayOf(0)
         assertEquals(1, input.readBit())
         assertEquals(0, input.readBit())
         assertEquals(6, input.readBits(receiver, 1, 7))
@@ -284,7 +284,7 @@ class DecoderInputTest {
         factory: (ByteArray) -> DecoderInput,
     ) {
         val input = factory(byteArrayOf(0b1011_0111.toByte()))
-        val receiver = byteArrayOf(3)
+        val receiver = byteArrayOf(0)
         assertEquals(1, input.readBit())
         assertEquals(0, input.readBit())
         assertEquals(6, input.readBits(receiver, 0, 7))

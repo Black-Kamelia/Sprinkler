@@ -330,8 +330,10 @@ private fun DecoderInput.innerReadBits(bytes: ByteArray, index: Int, bitIndex: I
         readBits++
         result = result or (bit shl 7 - bitIndex - it)
     }
-    val mask = (0xFF shl 8 - bitIndex) // mask where all the bits before bitIndex are 1
-    val old = bytes[index].toInt() and mask // remove all the bits after bitIndex
+    val maskPre = (0xFF shl 8 - bitIndex) // mask where all the bits before bitIndex are 1
+    val maskPost = (0xFF ushr bitIndex + readBits) // mask where all the bits after bitIndex + length are 1
+    val mask = maskPre or maskPost
+    val old = bytes[index].toInt() and mask
     bytes[index] = (old or result).toByte()
     return readBits
 }
