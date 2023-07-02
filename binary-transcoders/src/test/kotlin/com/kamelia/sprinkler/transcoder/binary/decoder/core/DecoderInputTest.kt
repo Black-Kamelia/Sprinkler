@@ -335,12 +335,34 @@ class DecoderInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
-    fun `read bits from byte array works for PP and SP and FB and start == 0`(factory: (ByteArray) -> DecoderInput) {
+    fun `read bits from byte array works for SP and FB and start == 0`(factory: (ByteArray) -> DecoderInput) {
         val input = factory(byteArrayOf(0b0100_1111.toByte(), 0b0100_1111.toByte()))
         val receiver = byteArrayOf(0xFF.toByte(), 0b1001_0110.toByte())
         assertEquals(10, input.readBits(receiver, 0, 10))
         assertEquals(0b0100_1111.toByte(), receiver[0])
         assertEquals(0b0101_0110.toByte(), receiver[1])
+    }
+
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
+    fun `read bits from byte array works for SP and FB and start gt 0`(factory: (ByteArray) -> DecoderInput) {
+        val input = factory(byteArrayOf(0b0100_1111.toByte(), 0b0100_1111.toByte()))
+        val receiver = byteArrayOf(0xFF.toByte(), 0xFF.toByte(), 0b1001_0110.toByte())
+        assertEquals(10, input.readBits(receiver, 8, 10))
+        assertEquals(0xFF.toByte(), receiver[0])
+        assertEquals(0b0100_1111.toByte(), receiver[1])
+        assertEquals(0b0101_0110.toByte(), receiver[2])
+    }
+
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
+    fun `read bits from byte array works for PP FB and SP and start gt 0`(factory: (ByteArray) -> DecoderInput) {
+        val input = factory(byteArrayOf(0b0100_1111.toByte(), 0b0100_1111.toByte()))
+        val receiver = ByteArray(3)
+        assertEquals(13, input.readBits(receiver, 6, 13))
+        assertEquals(0b0000_0001.toByte(), receiver[0])
+        assertEquals(0b0011_1101.toByte(), receiver[1])
+        assertEquals(0b0010_0000.toByte(), receiver[2])
     }
 
     private companion object {
