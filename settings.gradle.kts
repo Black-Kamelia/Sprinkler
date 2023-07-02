@@ -10,4 +10,5 @@ include(
     "readonly-collections",
     "binary-transcoders",
     "util",
+    "benchmarks",
 )
