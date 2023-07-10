@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.transcoder.binary.encoder.core
 
+import com.kamelia.sprinkler.transcoder.binary.common.BitOrder
 import com.kamelia.sprinkler.util.bit
 import java.io.OutputStream
 import java.util.*
@@ -226,13 +227,16 @@ interface EncoderOutput {
         }
 
         /**
-         * Creates an [EncoderOutput] that writes to the given [OutputStream].
+         * Creates an [EncoderOutput] that writes to the given [OutputStream]. The [order] parameter specifies the order
+         * in which bits are written to the [OutputStream].
          *
          * @param output the [OutputStream] to write to
+         * @param order the [BitOrder] to use
          * @return the [EncoderOutput] that writes to the given [OutputStream]
          */
         @JvmStatic
-        fun from(output: OutputStream): EncoderOutput = object : EncoderOutput {
+        @JvmOverloads
+        fun from(output: OutputStream, order: BitOrder = BitOrder.MSB_FIRST): EncoderOutput = object : EncoderOutput {
 
             private var currentByte = 0.toByte()
             private var currentBitIndex = 0
@@ -274,17 +278,20 @@ interface EncoderOutput {
         }
 
         /**
-         * Creates an [EncoderOutput] that writes to the given [writeByte] function.
+         * Creates an [EncoderOutput] that writes to the given [writeByte] function. The [order] parameter specifies
+         * the order in which bits are written to the [writeByte] function.
          *
+         * @param order the [BitOrder] to use
          * @param writeByte the function to write bytes to
          * @return the [EncoderOutput] that writes to the given [writeByte] function
          */
         @JvmStatic
-        fun from(writeByte: (Int) -> Unit): EncoderOutput {
+        @JvmOverloads
+        fun from(order: BitOrder = BitOrder.MSB_FIRST, writeByte: (Int) -> Unit): EncoderOutput {
             val obj = object : OutputStream() {
                 override fun write(b: Int) = writeByte(b)
             }
-            return from(obj)
+            return from(obj, order)
         }
 
     }
