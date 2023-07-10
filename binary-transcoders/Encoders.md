@@ -209,7 +209,7 @@ Enum encoders are used to encode enum variants. They are very simple, and come i
 
 #### NoOp Encoder
 
-It's an encoder which... does nothing ! It is useful to swallow some data when encoding it.
+It's an encoder which does nothing. It is useful to swallow some data when encoding it.
 
 ### Common Encoders
 
