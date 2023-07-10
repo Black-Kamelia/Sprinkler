@@ -2,7 +2,6 @@
 
 package com.kamelia.sprinkler.transcoder.binary.encoder
 
-import com.kamelia.sprinkler.transcoder.binary.decoder.Latin1StringDecoder
 import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
 
 /**

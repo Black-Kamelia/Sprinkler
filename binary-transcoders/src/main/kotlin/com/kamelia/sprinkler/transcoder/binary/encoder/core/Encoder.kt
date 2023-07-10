@@ -1,6 +1,5 @@
 package com.kamelia.sprinkler.transcoder.binary.encoder.core
 
-import com.kamelia.sprinkler.util.bit
 import java.io.File
 import java.io.OutputStream
 import java.nio.file.Path
