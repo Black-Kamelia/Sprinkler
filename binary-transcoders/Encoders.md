@@ -116,7 +116,7 @@ In fact, the `from` function above is an overload of a function which takes in a
 You can now use this `stdoutEncoderOutput` to output the encoded data to *stdout*.
 
 ```kt
-UTF8StringEncoder().encode("Hello, World!", stdoutEncoderOutput) // prints the UTF-8 encoded bytes of "Hello, World!"
+UTF8StringEncoder().encode("Hello, World!", stdoutEncoderOutput) // prints the UTF-8 encoded bytes of "Hello, World!", prefixed with the size of the string
 ```
 
 As stated before, the `Encoder::encode` function actually acts as if the given `EncoderOutput` writes to a
