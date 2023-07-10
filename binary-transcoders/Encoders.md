@@ -103,7 +103,7 @@ However, often, one needs quite a bit more than just these two methods to output
 Indeed, say we want to output the encoded data to *stdout*, here's an example of how we could do it:
 
 ```kt
-val stdoutEncoderOutput: EncoderOutut<Byte> = EncoderOutput.from { byte -> print(byte) } // write byte implementation
+val stdoutEncoderOutput: EncoderOutput = EncoderOutput.from { byte -> print(byte) } // write byte implementation
 
 stdoutEncoderOutput.write(42) // prints 42
 stdoutEncoderOutput.write(byteArrayOf(1, 2, 3)) // prints 1, 2 and 3
