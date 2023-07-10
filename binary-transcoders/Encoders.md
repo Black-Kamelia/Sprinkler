@@ -288,7 +288,25 @@ type).
 
 ### EncodingScope Interface
 
-TODO
+To manipulate the composition API, one must use the `EncodingScope` interface, which is a receiver interface, and is
+provided via the `composedEncoder` top level factory function. One should not implement this interface directly, but
+rather use provided implementations of it.
+
+The `EncodingScope<E>` interface provides the following methods:
+- `<T>encode(obj: T, encoder: Encoder<T>)` which encodes the given object using the given encoder.
+- `encode(obj: Byte)`, `encode(obj: Short)`, `encode(obj: Int)`, `encode(obj: Long)`, `encode(obj: Float)`,
+  `encode(obj: Double)`, and `encode(obj: Boolean)`, which encode the given object using the appropriate primitive 
+  encoder (the encoder is automatically provided).
+- Recursive encoding functions, which recursively encodes an object of the same type as the scope, that is to say, 
+  the type of the encoder to create in the end:
+  - `encode(obj: E?)` which recursively encodes itself or null (null is the recursion end marker).
+  - `encode(obj: Collection<E>)` and `encode(obj: Array<E>)` which recursively encodes a collection or array of itself.
+
+The recursive magic happens because the `EncodingScope` is aware of the resulting encoder even before it is built. 
+This mocked encoder is provided through the `self` property.
+
+> **NOTE**: The `self` encoder should only be used in the current scope. Any use of this encoder outside the current 
+> scope may lead to unexpected results and can change the behaviour of the scope itself.
 
 ### Scope Usage
 
@@ -303,7 +321,7 @@ Here is a simple example of creation of a composed encoder:
 ```kt
 class Person(val name: String, val age: Int)
 
-val personEncoder: Encoder<Person> = composed<Person> {
+val personEncoder: Encoder<Person> = composedEncoder<Person> {
     encode(it.name)
     if (it.age < 0) { // conditional encoding
         encode(0)
@@ -336,8 +354,8 @@ val optionalLocationEncoder: Encoder<Location?> = locationEncoder.toOptional()
 val personEncoder: Encoder<Person> = composedEncoder<Person> {
     encode(it.name)
     encode(it.age)
-    encode(it.children) // recursive encoding
-    encode(it.godParent) // recursive encoding
+    encode(it.children) // recursively encode a collection of itself
+    encode(it.godParent) // recursively encode itself, or null
     encode(it.location, optionalLocationEncoder)
 }
 
