@@ -75,6 +75,15 @@ val encoded: ByteArray = myEncoder.encode(myBytePair)
 Here, we can see that, by default, if no `EncoderOutput` is given, the encoder will create an `EncoderOutput` that
 writes to a `ByteArray` and returns it. We will see in the next section how to use a custom `EncoderOutput`.
 
+> **WARNING**
+> ```kt
+> fun myEncoder(file: File): Encoder<MyBytePair> = Encoder<MyBytePair> { obj, _ ->
+>     file.writeBytes(byteArrayOf(obj.first, obj.second))
+> }
+> ```
+> Here, we are writing to something that is NOT the provided output. This is highly unadvised, and should NEVER be done.
+> If done anyway, the behavior of the encoder becomes completely undefined.
+
 ### EncoderOutput
 
 Basically, the `EncoderOutput` is an abstraction that serves to map the behavior of an object to that of something similar
