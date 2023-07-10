@@ -34,9 +34,9 @@ will be written as `Encoder`. The same goes for all classes in the package `com.
 
 The two main bricks of this API are the `Encoder` and `EncoderOutput` interfaces.
 
-Both are functional interfaces, and are used to define the behavior of the encoder and how to output the encoded data,
-respectively. While they have several methods, one only *need* to implement only one in each of them, because the others
-have default implementations depending on it.
+They are used to define the behavior of the encoder and how to output the encoded data,
+respectively. While they have several methods, only a few need to actually be implemented in each of them, because the
+others have default implementations depending on them.
 
 ### Encoder
 
@@ -78,17 +78,31 @@ writes to a `ByteArray` and returns it. We will see in the next section how to u
 ### EncoderOutput
 
 Basically, the `EncoderOutput` is an abstraction that serves to map the behavior of an object to that of something similar
-to an `OutputStream`. It is used to output the encoded data, and is passed to the `Encoder` when encoding. Indeed,
-say we want to output the encoded data to *stdout*, here's an example of how we could do it:
+to an `OutputStream`. It is used to output the encoded data, and is passed to the `Encoder` when encoding. 
+
+The methods that need to be implemented are `writeBit(bit: Int)` and `flush()`. 
+
+The `writeBit` method writes a single bit to the output. Only the least significant bit of the given `Int` is written,
+and all other bits are ignored. The `flush` method flushes the output, to force any buffered bytes to be written. 
+This method is useful when the writing of byte is finished but the last byte is not full and therefore has not been 
+written yet. All the padding bits appended to the last byte are set to `0`.
+
+However, often, one needs quite a bit more than just these two methods to output the encoded data in an efficient way
+(writing whole bytes, or event groups of bytes). To that effect, there are several sensible factories to create
+`EncoderOutput`s.
+
+Indeed, say we want to output the encoded data to *stdout*, here's an example of how we could do it:
 
 ```kt
-val stdoutEncoderOutput: Encoder<Byte> = EncoderOutput { byte -> print(byte) }
+val stdoutEncoderOutput: EncoderOutut<Byte> = EncoderOutput.from { byte -> print(byte) } // write byte implementation
 
 stdoutEncoderOutput.write(42) // prints 42
 stdoutEncoderOutput.write(byteArrayOf(1, 2, 3)) // prints 1, 2 and 3
 ```
 
 (Obviously, this is not the most efficient way to do it, but it is just an example.)
+
+In fact, the `from` function above is an overload of a function which takes in an `OutputStream` as an argument.
 
 You can now use this `stdoutEncoderOutput` to output the encoded data to *stdout*.
 
