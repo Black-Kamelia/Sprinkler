@@ -310,31 +310,68 @@ type).
 
 ### EncodingScope Interface
 
-To manipulate the composition API, one must use the `EncodingScope` interface, which is a receiver interface, and is
-provided via the `composedEncoder` top level factory function. One should not implement this interface directly, but
-rather use provided implementations of it.
+The composition API takes shape through the `EncodingScope` interface. This interface simplifies the encoding of an 
+object by representing it as the encoding of its different components or properties. It also allows encoding objects 
+with a recursive structure, that is to say, an object which contains a reference to its own type, nullable or not, 
+or even in a collection. For example, a linked list node is a recursive data structure.
 
-The `EncodingScope<E>` interface provides the following methods:
-- `<T>encode(obj: T, encoder: Encoder<T>)` which encodes the given object using the given encoder.
-- `encode(obj: Byte)`, `encode(obj: Short)`, `encode(obj: Int)`, `encode(obj: Long)`, `encode(obj: Float)`,
-  `encode(obj: Double)`, and `encode(obj: Boolean)`, which encode the given object using the appropriate primitive 
-  encoder (the encoder is automatically provided).
-- Recursive encoding functions, which recursively encodes an object of the same type as the scope, that is to say, 
-  the type of the encoder to create in the end:
-  - `encode(obj: E?)` which recursively encodes itself or null (null is the recursion end marker).
-  - `encode(obj: Collection<E>)` and `encode(obj: Array<E>)` which recursively encodes a collection or array of itself.
+To encode an object using an `EncodingScope`, the interface has an `encode(obj: E, encoder: Encoder<E>)` method. 
+This method is the main entry point for encoding and is the foundation of the interface as a whole. It enables the
+encoding of any type of object, provided an appropriate encoder is provided for that purpose.
 
-The recursive magic happens because the `EncodingScope` is aware of the resulting encoder even before it is built. 
-This mocked encoder is provided through the `self` property.
+However, the main advantage of the `EncodingScope` does not lie in this method but rather in the overloads provided by 
+the interface. These overloads allow encoding of basic types (`Int`, `Long`, `String`, etc.). The benefit is that the 
+way these objects are encoded is determined by the scope itself, in particular, by its implementation.
 
-> **NOTE**: The `self` encoder should only be used in the current scope. Any use of this encoder outside the current 
-> scope may lead to unexpected results and can change the behaviour of the scope itself.
+It is thus possible, using the `composedEncoder` method (which creates an encoder from an `EncodingScope` and will be
+presented in the next section in more details), to write the following code 
+(note that the scope is passed as the receiver object):
+
+```kt
+class Person(val name: String, val age: Int)
+
+val encoder: Encoder<Person> = composedEncoder<Person> { obj: Person -> // this: EncodingScope<Person>
+    encode(obj.name) // EncodingScope.encode(String)
+    encode(obj.age)  // EncodingScope.encode(Int)
+}
+```
+
+As explained earlier, the interface also allows the encoding of recursive structures. This functionality is 
+achieved using the encoder accessible through the `self` property, which is a special encoder that can encode an 
+object of the same type as the scope to which it belongs, by repeating the same calls as those made on the scope.
+
+Thus, it is possible to recursively encode a linked list as follows:
+
+```kt
+class Node(val value: Int, val next: Node?)
+
+val encoder: Encoder<Node> = composedEncoder<Node> { obj: Node -> // this: EncodingScope<Node>
+    encode(obj.value) // EncodingScope.encode(Int)
+    if (obj.next != null) {
+        encode(true) // to indicate that the next node is not null
+        encode(obj.next, self) // EncodingScope.encode(Int) // EncodingScope.self
+    } else {
+        encode(false) // to indicate that the next node is null
+    }
+}
+```
+
+Similarly to the interface's overloads for encoding basic types, it also provides overloads to encode common recursive 
+cases, such as:
+- `encode(E?)` for encoding optional recursion
+- `encode(Collection<E>)` for encoding recursion represented by a collection
+- `encode(Array<E>)` for encoding recursion represented by an array
+- `encode(E)` for encoding direct recursion ; this method needs to be used within a conditional block to avoid infinite 
+  recursion.
+
+> **NOTE**: The self encoder is not implemented as a "typical" encoder and must be used with caution. 
+> Any usage that does not adhere to the instructions provided in the documentation may result in unexpected behavior.
 
 ### Scope Usage
 
 The `composedEncoder` top level factory function which uses the aforementioned `EncodingScope` as its receiver, 
 and is used to create a composed encoder, and takes a lambda as an argument, which receives the object it will have to 
-encode, and all of its properties. The user of the API only has to tell the composed encoder which properties to encoder
+encode, and all of its properties. The user of the API only has to tell the composed encoder which properties to encode
 sequentially (and potentially conditionally but deterministic way), with which encoder. To help clarity, one does not
 need to provide an explicit encoder for primitive types, strings, or when recursively encoding.
 
