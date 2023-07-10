@@ -96,6 +96,14 @@ and all other bits are ignored. The `flush` method flushes the output, to force 
 This method is useful when the writing of byte is finished but the last byte is not full and therefore has not been 
 written yet. All the padding bits appended to the last byte are set to `0`.
 
+```kt
+val output: EncoderOutput = EncoderOutput.from { byte -> print(byte) }
+output.writeBit(1)
+output.writeBit(0)
+output.writeBit(1)
+output.flush() // should print the byte 1010_0000
+```
+
 However, often, one needs quite a bit more than just these two methods to output the encoded data in an efficient way
 (writing whole bytes, or event groups of bytes). To that effect, there are several sensible factories to create
 `EncoderOutput`s.
@@ -132,6 +140,9 @@ encoder.encode("Hello, World!", File("hello.txt"))
 encoder.encode("Hello, World!", Path.of("hello.txt"))
 ```
 
+Note that there is a third factory to create an `EncoderOutput`, which is `EncoderOutput::nullOutput`. It returns an
+`EncoderOutput` which never writes to anything. It is a no-op, and is useful for testing purposes, for example.
+
 ## Provided Encoders
 
 This library provides a lot of essential "atomic" encoders, which are used to encode most of the basic types, and some
@@ -139,10 +150,12 @@ more complex but common ones, as well as factories to create them easily.
 
 ### Base Encoders
 
-#### Primitive Encoders
-
 Base encoders are the most basic encoders, and encode all the primitive types, as well as enum variants, and even `String`s
 to a chosen encoding.
+
+#### Primitive Encoders
+
+The most common types one will be encoding are the JVM primitive types.
 
 Indeed, the provided factories primitive encoders are :
 - `ByteEncoder`
