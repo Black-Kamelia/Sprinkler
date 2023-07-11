@@ -269,14 +269,14 @@ By opposition, `toCollection` transforms an encoder of `T` to an encoder of `Col
 
 ```kt
 val intEncoder: Encoder<Int> = IntEncoder()
-val intIterableEncoder: Encoder<Collection<Int>> = intEncoder.toCollection()
+val intCollectionEncoder: Encoder<Collection<Int>> = intEncoder.toCollection()
 ```
 
 `toArray` comes in the two variations, and transforms an encoder of `T` to an encoder of `Array<T>`.
 
 ```kt
 val intEncoder: Encoder<Int> = IntEncoder()
-val intIterableEncoder: Encoder<Array<Int>> = intEncoder.toArray()
+val intArrayEncoder: Encoder<Array<Int>> = intEncoder.toArray()
 ```
 
 Similarly, `toMap` also comes in the two variations, and transforms an encoder of `Pair<T, U>` to an encoder of 
