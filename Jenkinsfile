@@ -52,15 +52,7 @@ pipeline {
             post {
                 always {
                     junit checksName: 'Tests', allowEmptyResults: true, testResults: '**/build/test-results/test/TEST-*.xml'
-                    recordCoverage
-                        sourceDirectories: [
-                            [path: 'readonly-collections/src/main/java'],
-                            [path: 'util/src/main/kotlin'],
-                            [path: 'util/src/main/java'],
-                            [path: 'readonly-collections/src/main/kotlin']
-                        ], tools: [
-                            [pattern: '**/build/reports/kover/xml/*.xml']
-                        ]
+                    recordCoverage sourceDirectories: [[path: 'readonly-collections/src/main/java'], [path: 'util/src/main/kotlin'], [path: 'util/src/main/java'], [path: 'readonly-collections/src/main/kotlin']], tools: [[pattern: '**/build/reports/kover/xml/*.xml']]
                 }
             }
         }
