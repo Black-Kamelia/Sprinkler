@@ -25,7 +25,9 @@ same vein as projects such as ***kotlinx***, that is mainly used in **[Black Kam
 
 *Click the name of a module to go to its documentation.*
 
-- ***[ReadOnly Collections](readonly-collections/README.md)***: cast-safe read-only collections for Kotlin
+- ***[ReadOnly Collections](readonly-collections/README.md)***: Cast-safe read-only collections for Kotlin
+- ***[Binary Transcoders](binary-transcoders/README.md)***: Composable binary encoders and decoders builders
+- ***[Utils](util/README.md)***: Various utilities for Kotlin (and Java+Kotlin)
 
 ## Integration
 
@@ -35,6 +37,8 @@ same vein as projects such as ***kotlinx***, that is mainly used in **[Black Kam
 The available modules are:
 
 - `readonly-collections` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia/sprinkler-readonly-collections.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.black-kamelia%22%20AND%20a:%22sprinkler-readonly-collections%22)
+- `binary-transcoders` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia/sprinkler-binary-transcoders.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.black-kamelia%22%20AND%20a:%22sprinkler-binary-transcoders%22)
+- `util` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia/sprinkler-util.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.black-kamelia%22%20AND%20a:%22sprinkler-util%22)
 
 ### Maven
 
@@ -84,4 +88,4 @@ dependencies {
 
 ## License
 
-[Apache-2.0 license, Copyright 2022 Black Kamelia](LICENSE)
+[MIT License](LICENSE)
