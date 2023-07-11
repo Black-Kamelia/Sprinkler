@@ -1,13 +1,16 @@
 pipeline {
-    agent {
-        docker {
-            image 'gradle:7.5.0-jdk17'
-            reuseNode true
-        }
+    agent any
+    options {
+        timestamps()
+        ansiColor('xterm')
+        timeout(time: 15, unit: 'MINUTES')
+    }
+    tools {
+        gradle 'gradle-7.5.0'
     }
 
     stages {
-        stage('Build') {
+        stage('Precondition') {
             steps {
                 script {
                     def branch = env.CHANGE_BRANCH
@@ -17,24 +20,47 @@ pipeline {
                         error 'Only develop branch can be merged into master'
                     }
                 }
-                sh 'gradle build -x test'
+            }
+        }
+        stage('Build') {
+            parallel {
+                stage('Util') {
+                    steps {
+                        sh 'gradle util:assemble'
+                    }
+                }
+                stage('Readonly Collections') {
+                    steps {
+                        sh 'gradle readonly-collections:assemble'
+                    }
+                }
             }
         }
         stage('Test') {
-            steps {
-                sh 'gradle test -PenableRestrikt=false'
+            parallel {
+                stage('Util') {
+                    steps {
+                        sh 'gradle util:test -PenableRestrikt=false'
+                    }
+                }
+                stage('Readonly Collections') {
+                    steps {
+                        sh 'gradle readonly-collections:test -PenableRestrikt=false'
+                    }
+                }
             }
             post {
                 always {
                     junit checksName: 'Tests', allowEmptyResults: true, testResults: '**/build/test-results/test/TEST-*.xml'
-                    publishCoverage adapters: [jacocoAdapter(mergeToOneReport: true, path: '**/build/reports/kover/xml/*.xml')],
+                    recordCoverage
                         sourceDirectories: [
-                            [path: 'readonly-collections/src/main/kotlin'],
                             [path: 'readonly-collections/src/main/java'],
                             [path: 'util/src/main/kotlin'],
-                            [path: 'util/src/main/java']
-                        ],
-                        sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+                            [path: 'util/src/main/java'],
+                            [path: 'readonly-collections/src/main/kotlin']
+                        ], tools: [
+                            [pattern: '**/build/reports/kover/xml/*.xml']
+                        ]
                 }
             }
         }
