@@ -1,4 +1,4 @@
-@file:JvmName("ComposedDecoderFactory")
+@file:JvmName("ComposedDecoderFactories")
 
 package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 
