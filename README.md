@@ -5,9 +5,9 @@
 
 <h3><i>A non-intrusive set of extensions sprinkled over the Kotlin standard library.</i></h3>
 
-![Jenkins](https://shields.black-kamelia.com/jenkins/build?jobUrl=https%3A%2F%2Fci.black-kamelia.com%2Fjob%2FSprinkler%2Fjob%2FSprinkler%2Fjob%2Fmaster%2F&style=for-the-badge)
-![Jenkins tests](https://shields.black-kamelia.com/jenkins/tests?jobUrl=https%3A%2F%2Fci.black-kamelia.com%2Fjob%2FSprinkler%2Fjob%2FSprinkler%2Fjob%2Fmaster%2F&style=for-the-badge)
-![Jenkins Coverage](https://shields.black-kamelia.com/jenkins/coverage/apiv4?jobUrl=https%3A%2F%2Fci.black-kamelia.com%2Fjob%2FSprinkler%2Fjob%2FSprinkler%2Fjob%2Fmaster%2F&style=for-the-badge)
+![Jenkins](https://shields.io/jenkins/build?jobUrl=https%3A%2F%2Fci.black-kamelia.com%2Fjob%2FSprinkler%2Fjob%2FSprinkler%2Fjob%2Fmaster%2F&style=for-the-badge)
+![Jenkins tests](https://shields.io/jenkins/tests?jobUrl=https%3A%2F%2Fci.black-kamelia.com%2Fjob%2FSprinkler%2Fjob%2FSprinkler%2Fjob%2Fmaster%2F&style=for-the-badge)
+![Jenkins Coverage](https://shields.io/jenkins/coverage/apiv4?jobUrl=https%3A%2F%2Fci.black-kamelia.com%2Fjob%2FSprinkler%2Fjob%2FSprinkler%2Fjob%2Fmaster%2F&style=for-the-badge)
 
 </div>
 
