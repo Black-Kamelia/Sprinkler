@@ -26,12 +26,12 @@ pipeline {
             parallel {
                 stage('Util') {
                     steps {
-                        sh 'gradle util:assemble'
+                        sh 'gradle --parallel util:assemble'
                     }
                 }
                 stage('Readonly Collections') {
                     steps {
-                        sh 'gradle readonly-collections:assemble'
+                        sh 'gradle --parallel readonly-collections:assemble'
                     }
                 }
             }
@@ -40,12 +40,12 @@ pipeline {
             parallel {
                 stage('Util') {
                     steps {
-                        sh 'gradle util:test -PenableRestrikt=false'
+                        sh 'gradle --parallel util:test -PenableRestrikt=false'
                     }
                 }
                 stage('Readonly Collections') {
                     steps {
-                        sh 'gradle readonly-collections:test -PenableRestrikt=false'
+                        sh 'gradle --parallel readonly-collections:test -PenableRestrikt=false'
                     }
                 }
             }
