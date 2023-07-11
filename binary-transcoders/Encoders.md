@@ -29,6 +29,8 @@ will be written as `Encoder`. The same goes for all classes in the package `com.
 - [Encoder Composition](#encoder-composition)
   - [EncodingScope Interface](#encodingscope-interface)
   - [Scope Usage](#scope-usage)
+    - [Examples](#examples)
+- [Complete Example](#complete-example)
 
 ## Main Interfaces
 
@@ -369,26 +371,68 @@ cases, such as:
 
 ### Scope Usage
 
-The `composedEncoder` top level factory function which uses the aforementioned `EncodingScope` as its receiver, 
-and is used to create a composed encoder, and takes a lambda as an argument, which receives the object it will have to 
-encode, and all of its properties. The user of the API only has to tell the composed encoder which properties to encode
-sequentially (and potentially conditionally but deterministic way), with which encoder. To help clarity, one does not
-need to provide an explicit encoder for primitive types, strings, or when recursively encoding.
+As of now, the `EncodingScope` interface is used through the `composedEncoder` top level function. This function allows
+one to declare and define a sequence of instructions to apply to the `EncodingScope` 
+(the order of the scope's method calls is significant and determines the order of writes to the `EncoderOutput`),
+in order to encode an object of the given type.
 
-Here is a simple example of creation of a composed encoder:
+The scope provided to the user and on which encoding method calls can be made is an implementation using overloads
+based on the basic encoders of the library (which encode the basic types mentioned previously: 
+`Int`, `Long`, `String`, etc.)
+
+Note that it is also possible to specify the endianness of the number `Encoder`s for the entire scope, as shown below:
 
 ```kt
 class Person(val name: String, val age: Int)
 
-val personEncoder: Encoder<Person> = composedEncoder<Person> {
-    encode(it.name)
-    if (it.age < 0) { // conditional encoding
-        encode(0)
-    } else {
-        encode(it.age)
+val encoder: Encoder<Person> = composedEncoder<Person>(
+  ByteOrder.LITTLE_ORDER // Int, Long, Float and Double will be encoded in little order
+) { obj: Person -> // this: EncodingScope<Person>
+    encode(obj.name)
+    encode(obj.age) // encoded in little endian
+}
+```
+
+#### Examples
+
+This section shows some examples of the use of the `composedEncoder` function.
+
+- Conditional encoding: saving alive enemies only, in a video game
+```kt
+class Enemy(val name: String, var hp: Int, var isAlive: Boolean)
+
+val enemyEncoder: Encoder<Enemy> = composedEncoder<Enemy> { obj: Enemy -> // this: EncodingScope<Enemy>
+    if (!obj.isAlive) return@composedEncoder // skip encoding if the enemy is dead
+    encode(obj.name)
+    encode(obj.hp)
+}
+```
+
+- Recursive encoding: serializing a binary tree
+```kt
+sealed interface Node {
+    val value: Int
+
+    class Inner(override val value: Int, val left: Node, val right: Node)
+    class Leaf(override val value: Int)
+}
+
+val encoder: Encoder<Node> = composedEncoder<Node> { obj: Node -> // this: EncodingScope<Node>
+    when (obj) {
+        is Leaf -> {
+            encode(true) // true <=> the node is a leaf
+            encode(obj.value)
+        }
+        is Inner -> {
+            encode(false) // false <=> the node is an inner node
+            encode(obj.left) // recursive encoding of the left child
+            encode(obj.right) // recursive encoding of the right child
+        }
     }
 }
 ```
+
+## Complete Example
 
 Here is a more complex example of creation of several encoders using only encoder composition, the provided factories,
 and recursive encoding:
@@ -396,21 +440,30 @@ and recursive encoding:
 ```kt
 class Location(val coords: Pair<Double, Double>, val name: String)
 class Person(
-  val name: String, 
-  val age: Int, 
-  val children: List<Person> = emptyList(), 
-  val godParent: Person? = null, 
-  val location: Location? = null,
+    val name: String, 
+    val age: Int, 
+    val children: List<Person> = emptyList(), 
+    val godParent: Person? = null, 
+    val location: Location? = null,
 )
 
+// simple encoder
 val doubleEncoder: Encoder<Double> = DoubleEncoder()
+
+// aggregate encoders
 val coordsEncoder: Encoder<Pair<Double, Double>> = doubleEncoder and doubleEncoder // `and` is an infix shorthand for PairEncoder
-val locationEncoder: Encoder<Location> = composedEncoder<Location> {
+
+// simply composed encoder
+val locationEncoder: Encoder<Location> = composedEncoder<Location> { // this: EncodingScope<Location>
     encode(it.coords, coordsEncoder)
     encode(it.name)
 }
+
+// mapped encoder
 val optionalLocationEncoder: Encoder<Location?> = locationEncoder.toOptional()
-val personEncoder: Encoder<Person> = composedEncoder<Person> {
+
+// complex recursive encoder
+val personEncoder: Encoder<Person> = composedEncoder<Person> { // this: EncodingScope<Person>
     encode(it.name)
     encode(it.age)
     encode(it.children) // recursively encode a collection of itself
@@ -418,7 +471,7 @@ val personEncoder: Encoder<Person> = composedEncoder<Person> {
     encode(it.location, optionalLocationEncoder)
 }
 
-val person = Person(
+val person: Person = Person(
     name = "John",
     age = 42,
     children = listOf(
