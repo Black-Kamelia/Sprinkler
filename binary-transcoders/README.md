@@ -9,7 +9,6 @@
 - [Encoders](#encoders)
 - [Decoders](#decoders)
 
-
 ## Intentions
 
 The purpose of this module is to allow the user to serialize and deserialize data in a binary format. 
