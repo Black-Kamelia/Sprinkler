@@ -31,22 +31,21 @@ same vein as projects such as ***kotlinx***, that is mainly used in **[Black Kam
 
 ## Integration
 
-*Do replace `{latest-version}` with the latest version available on maven-central*
-*and {module} with the module you want*
+*Do replace `{module}` with the module you want and `{latest-version}` with the latest version available on maven-central*
 
 The available modules are:
 
-- `readonly-collections` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia/sprinkler-readonly-collections.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.black-kamelia%22%20AND%20a:%22sprinkler-readonly-collections%22)
-- `binary-transcoders` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia/sprinkler-binary-transcoders.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.black-kamelia%22%20AND%20a:%22sprinkler-binary-transcoders%22)
-- `util` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia/sprinkler-util.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.black-kamelia%22%20AND%20a:%22sprinkler-util%22)
+- `readonly-collections` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/readonly-collections.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.black-kamelia.sprinkler%22%20AND%20a:%22readonly-collections%22)
+- `binary-transcoders` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/binary-transcoders.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.black-kamelia.sprinkler%22%20AND%20a:%22binary-transcoders%22)
+- `util` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/util.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.black-kamelia.sprinkler%22%20AND%20a:%22util%22)
 
 ### Maven
 
 ```XML
 <dependencies>
   <dependency>
-    <groupId>com.black-kamelia</groupId>
-    <artifactId>sprinkler-{module}</artifactId>
+    <groupId>com.black-kamelia.sprinkler</groupId>
+    <artifactId>{module}</artifactId>
     <version>{latest-version}</version>
   </dependency>
 </dependencies>
@@ -64,7 +63,7 @@ repositories {
 }
 
 dependencies {
-  implementation("com.black-kamelia:sprinkler-{module}:{latest-version}")
+  implementation("com.black-kamelia.sprinkler:{module}:{latest-version}")
 }
 ```
 </p>
@@ -80,7 +79,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'com.black-kamelia:sprinkler-{module}:{latest-version}'
+  implementation 'com.black-kamelia.sprinkler:{module}:{latest-version}'
 }
 ```
 </p>
