@@ -230,6 +230,9 @@ interface EncoderOutput {
          * Creates an [EncoderOutput] that writes to the given [OutputStream]. The [order] parameter specifies the order
          * in which bits are written to the [OutputStream].
          *
+         * **NOTE**: The [flush] method of this implementation will also call the [flush] method of the given underlying
+         * [OutputStream].
+         *
          * @param output the [OutputStream] to write to
          * @param order the [BitOrder] to use
          * @return the [EncoderOutput] that writes to the given [OutputStream]
@@ -249,8 +252,12 @@ interface EncoderOutput {
             }
 
             override fun flush() {
-                if (currentBitIndex == 0) return
+                if (currentBitIndex == 0) {
+                    output.flush()
+                    return
+                }
                 output.write(currentByte.toInt())
+                output.flush()
                 currentByte = 0.toByte()
                 currentBitIndex = 0
             }

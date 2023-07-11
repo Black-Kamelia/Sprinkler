@@ -1,4 +1,4 @@
-@file:JvmName("ComposedEncoderFactory")
+@file:JvmName("ComposedEncoderFactories")
 
 package com.kamelia.sprinkler.transcoder.binary.encoder.composer
 
@@ -27,7 +27,8 @@ import java.nio.ByteOrder
  *
  * **NOTE**: The [EncodingScope] used in the lambda [block] is not designed to be used outside the lambda. Any use of
  * the scope outside the lambda may lead to unexpected results and can change the behaviour of the scope encoding
- * process.
+ * process. The scope is designed to be used only inside the lambda. In the same way, the encoder returned by the
+ * [self][EncodingScope.self] property should also only be used inside the lambda.
  *
  * **NOTE**: The returned encoder is not thread-safe. Unexpected behaviours may occur if the internal cache of the
  * decoder is modified concurrently.

@@ -106,15 +106,14 @@ allprojects {
 
     publishing {
         publications {
-            val artifactName = "$rootProjectName-$projectName"
-            create<MavenPublication>("maven-$artifactName") {
-                groupId = findProp("projectGroup")
-                artifactId = artifactName
+            create<MavenPublication>("maven-$projectName") {
+                groupId = findProp<String>("projectGroup") + ".sprinkler"
+                artifactId = projectName
                 version = projectVersion
                 from(components["java"])
 
                 pom {
-                    name.set(artifactName)
+                    name.set(projectName)
                     description.set("Sprinkler@${projectName} | Black Kamelia")
                     url.set("https://github.com/Black-Kamelia/Sprinkler")
 

@@ -80,12 +80,13 @@ sealed interface DecodingScope<E> {
     /**
      * Gets the decoder of the scope.
      *
-     * Useful to decode recursively an object.
+     * Useful to recursively decode an object.
      *
      * &nbsp;
      *
-     * **NOTE:** The returned decoder should only be used in the current scope. Any use of this decoder outside the
-     * current scope may lead to unexpected results and can change the behaviour of the scope itself.
+     * **NOTE:** The returned decoder should only be used with caution. It should be used according to the usage
+     * indicated in the documentation of the implementation of the interface. Any misuse of the decoder can lead to
+     * unexpected behavior.
      */
     @get:JvmName("self")
     val self: Decoder<E>

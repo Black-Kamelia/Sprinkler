@@ -1,4 +1,4 @@
-@file:JvmName("ComposedDecoderFactory")
+@file:JvmName("ComposedDecoderFactories")
 
 package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 
@@ -27,7 +27,8 @@ import java.nio.ByteOrder
  *
  * **NOTE**: The [DecodingScope] used in the lambda [block] is not designed to be used outside the lambda. Any use of
  * the scope outside the lambda may lead to unexpected results and can change the behaviour of the scope decoding
- * process.
+ * process. In the same way, the decoder returned by the [self][DecodingScope.self] property should also only be used
+ * inside the lambda.
  *
  * @param endianness the endianness of the decoder (defaults to [ByteOrder.BIG_ENDIAN])
  * @param stringDecoder the decoder to use for [String] objects (defaults to the default [UTF8StringDecoder])

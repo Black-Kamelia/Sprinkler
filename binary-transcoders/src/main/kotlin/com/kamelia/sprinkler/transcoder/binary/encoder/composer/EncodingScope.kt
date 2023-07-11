@@ -87,12 +87,13 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
     /**
      * Gets the encoder of the current scope.
      *
-     * Useful to encode recursively an object.
+     * Useful to recursively encode an object.
      *
      * &nbsp;
      *
-     * **NOTE**: The returned encoder should only be used in the current scope. Any use of this encoder outside the
-     * current scope may lead to unexpected results and can change the behaviour of the scope itself.
+     * **NOTE**: The returned encoder should be used with caution. It should be used according to the usage indicated
+     * in the documentation of the implementation of the interface. Any misuse of the encoder can lead to unexpected
+     * behavior.
      */
     @get:JvmName("self")
     val self: Encoder<E>
@@ -173,7 +174,7 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
     fun encode(obj: String): EncodingScope<E>
 
     /**
-     * Encodes recursively a nullable object of type [E]. The assumed representation of the nullability depends
+     * Recursively encodes a nullable object of type [E]. The assumed representation of the nullability depends
      * on the implementation of the scope.
      *
      * @param obj the object to encode
@@ -181,11 +182,17 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
      */
     fun encode(obj: E?): EncodingScope<E>
 
+    /**
+     * Recursively encodes an object of type [E].
+     *
+     * @param obj the object to encode
+     * @return the current scope
+     */
     @JvmName("encodeSelf")
     fun encode(obj: E): EncodingScope<E> = encode(obj, self)
 
     /**
-     * Encodes recursively a [Collection] of type [E]. The assumed representation of the collection depends on the
+     * Recursively encodes a [Collection] of type [E]. The assumed representation of the collection depends on the
      * implementation of the scope.
      *
      * @param obj the collection to encode
@@ -194,7 +201,7 @@ sealed interface EncodingScope<E> : KotlinDslAdapter {
     fun encode(obj: Collection<E>): EncodingScope<E>
 
     /**
-     * Encodes recursively an [Array] of type [E]. The assumed representation of the array depends on the
+     * Recursively encodes an [Array] of type [E]. The assumed representation of the array depends on the
      * implementation of the scope.
      *
      * @param obj the array to encode
