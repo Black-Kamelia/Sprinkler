@@ -11,4 +11,5 @@ include(
     "binary-transcoders",
     "util",
     "benchmarks",
+    "benchmarks:binary-transcoders",
 )
