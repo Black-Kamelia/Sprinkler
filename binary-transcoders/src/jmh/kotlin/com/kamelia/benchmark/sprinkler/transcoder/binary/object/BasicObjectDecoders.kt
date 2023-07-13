@@ -1,4 +1,4 @@
-package com.kamelia.benchmark.sprinkler.transcorder.binary.`object`
+package com.kamelia.benchmark.sprinkler.transcoder.binary.`object`
 
 import com.kamelia.sprinkler.transcoder.binary.decoder.IntDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.UTF8StringDecoder
@@ -45,6 +45,8 @@ class BasicPersonDecoder : Decoder<BasicPerson> {
 
 fun basicPersonDecoder(): Decoder<BasicPerson> = composedDecoder {
     val name = string()
+    println("name = $name")
     val age = int()
+    println("age = $age")
     BasicPerson(name, age)
 }
