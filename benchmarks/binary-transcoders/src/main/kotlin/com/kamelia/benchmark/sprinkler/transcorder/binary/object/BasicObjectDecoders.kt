@@ -1,4 +1,4 @@
-package com.kamelia.benchmark.sprinkler.transcorder.binary
+package com.kamelia.benchmark.sprinkler.transcorder.binary.`object`
 
 import com.kamelia.sprinkler.transcoder.binary.decoder.IntDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.UTF8StringDecoder
@@ -21,25 +21,17 @@ class BasicPersonDecoder : Decoder<BasicPerson> {
     private val intDecoder = IntDecoder()
 
     override fun decode(input: DecoderInput): Decoder.State<BasicPerson> {
-        while (true) {
-            if (name == null) {
-                val state = stringDecoder.decode(input)
-                if (state.isDone()) {
-                    name = state.get()
-                } else {
-                    return state.mapEmptyState()
-                }
-            }
-            if (age == null) {
-                val state = intDecoder.decode(input)
-                if (state.isDone()) {
-                    age = state.get()
-                } else {
-                    return state.mapEmptyState()
-                }
-            }
-            return Decoder.State.Done(BasicPerson(name!!, age!!))
+        if (name == null) {
+            val state = stringDecoder.decode(input)
+            if (state.isNotDone()) return state.mapEmptyState()
+            name = state.get()
         }
+        if (age == null) {
+            val state = intDecoder.decode(input)
+            if (state.isNotDone()) return state.mapEmptyState()
+            age = state.get()
+        }
+        return Decoder.State.Done(BasicPerson(name!!, age!!))
     }
 
     override fun reset() {
