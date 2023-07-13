@@ -109,3 +109,51 @@ closeableScope(someCloseable, someOtherCloseable) { // will autoclose these at t
 > - If the actual closing of one of the resources throws an exception, it will be added as a suppressed exception to the
 >   original one.
 > - The original exception will be rethrown.
+
+## Box delegate
+
+There are situations where one might want to inject a value into a class, but the value is not available at the time of
+the class' instantiation. The idea is similar to the `Lazy` delegate, or `lateinit` properties, but should work in the
+case where said value needs to be injected in several places, in which case it is not possible to use `lateinit` without
+losing a lot of control and encapsulation.
+
+The `Box<T>` delegate is a property delegate that allows to do just that.
+
+It is an interface with several methods and properties:
+- the `value` property of type `T`. Trying to get it before it is set will throw an `IllegalStateException`.
+- the `isFilled` property of type `Boolean`. It is `false` before the value is set, and `true` after.
+- the `getValue` method which allows one to use a `Box` as a property delegate. Trying to read the delegated property
+  before the value is set will throw an `IllegalStateException`.
+
+Moreover, it has sub-interface `Box.Mutable<T>` which adds a `fill` method that allows to set the inner value of the 
+box, and returns whether it was empty or not, or in other words, if the fill was successful or not (`true` if it was,
+`false` if it wasn't).
+
+One may want to implement them, but the real goal is to use the provided factories:
+- `Box.empty<T>()` returns an empty box. It is not mutable, and cannot ever be filled.
+- `Box.prefilled(value: T)` returns a box that is already filled with the given value. It is not mutable and will always
+  be filled.
+- `Box.singleWrite<T>()` returns a mutable box that can be filled once, and only once. Trying to fill it a second time
+  will do nothing and yield `false`.
+- `Box.rewritable<T>()` return a mutable box that can be filled multiple times and starts empty. The `fill` method will 
+  always return `true`.
+- `Box.rewritable(value: T)` returns a mutable box that can be filled multiple times and starts filled with the given
+  value. The `fill` method will always return `true`.
+
+Here is a simple example:
+
+```kt
+class Foo(intBox: Box<Int>) {
+    val i by intBox
+}
+
+fun main() {
+   val box = Box.singleWrite<Int>()
+   val foo = Foo(box)
+   runCatching {
+     println(foo.i) // Throws an exception
+   }
+   box.fill(1)
+   println(foo.i) // Prints 1
+}
+```

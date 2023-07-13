@@ -36,7 +36,7 @@ import com.zwendo.restrikt.annotation.HideFromJava
  * @param T the type of the value
  * @see Box.Mutable
  */
-interface Box<T> {
+interface Box<out T> {
 
     /**
      * The value contained in the box.
@@ -156,8 +156,7 @@ interface Box<T> {
          * @return a new [EmptyBox]
          */
         @JvmStatic
-        @Suppress("UNCHECKED_CAST")
-        fun <T> empty(): Box<T> = EmptyBox as Box<T>
+        fun <T> empty(): Box<T> = EmptyBox
 
     }
 
