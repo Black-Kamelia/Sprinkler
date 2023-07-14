@@ -65,17 +65,17 @@ internal class ElementsAccumulator {
         currentLayer = previous
     }
 
+    fun reset() {
+        list = ArrayList()
+        _recursionElements = null
+        currentLayer = DEFAULT_LAYER
+    }
+
     class Layer(
         @JvmField
         val start: Int,
         @JvmField
         val previous: Layer?,
     )
-
-    fun reset() {
-        list = ArrayList()
-        _recursionElements = null
-        currentLayer = DEFAULT_LAYER
-    }
 
 }

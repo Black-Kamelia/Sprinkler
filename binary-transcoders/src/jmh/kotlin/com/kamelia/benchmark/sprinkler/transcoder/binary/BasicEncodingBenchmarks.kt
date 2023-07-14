@@ -11,13 +11,13 @@ import org.openjdk.jmh.annotations.State
 open class BasicEncodingBenchmarks {
 
     @Benchmark
-    fun handmadeEncoderEncoding(state: BasicPersonEncodingState): ByteArray {
-        return state.handmade.encode(state.person)
+    fun handmadeEncoderEncoding(state: BasicPersonEncodingState) {
+        state.handmade.encode(state.person)
     }
 
     @Benchmark
-    fun compositionEncoderEncoding(state: BasicPersonEncodingState): ByteArray {
-        return state.composition.encode(state.person)
+    fun compositionEncoderEncoding(state: BasicPersonEncodingState) {
+        state.composition.encode(state.person)
     }
 
 }
