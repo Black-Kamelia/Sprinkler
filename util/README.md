@@ -4,6 +4,8 @@
 
 - [Intentions](#intentions)
 - [CloseableScope](#closeablescope)
+- [Box Delegate](#box-delegate)
+- [Collector Utilities](#collector-utilities)
 
 ## Intentions
 
@@ -110,7 +112,7 @@ closeableScope(someCloseable, someOtherCloseable) { // will autoclose these at t
 >   original one.
 > - The original exception will be rethrown.
 
-## Box delegate
+## Box Delegate
 
 There are situations where one might want to inject a value into a class, but the value is not available at the time of
 the class' instantiation. The idea is similar to the `Lazy` delegate, or `lateinit` properties, but should work in the
@@ -157,3 +159,30 @@ fun main() {
    println(foo.i) // Prints 1
 }
 ```
+
+## Collector Utilities
+
+Sprinkler-util brings a few utilities to simplify the creation of Java `Collector`s, and their usage which is sometimes
+a bit clunky.
+
+## Collector Shorthands
+
+Calling the different functional interfaces composing a `Collector` is often redundant : you obtain the element thanks
+to a getter, and then call the interface's method with the arguments. Sprinkler-util provides a few shorthands to
+simplify this. They are all extension functions on `Collector` and are all inlined.
+
+- `supply` is a shorthand method for `Collector::supplier::get`
+- `accumulate` is a shorthand method for `Collector::accumulator::accept`
+- `combine` is a shorthand method for `Collector::combiner::apply`
+- `finish` is a shorthand method for `Collector::finisher::apply`
+- `characteristics` is a shorthand property for `Collector::characteristics`
+
+## Collector factories
+
+Java's standard library is missing a few very common `Collector` factories. To that effect, those are provided by
+the `ExtendedCollectors` class.
+
+- `ExtendedCollectors.toMap` returns a collector that collects elements to a map from pairs of keys and values.
+- `ExtendedCollectors.toArray` returns a collector that collects elements to an array.
+- `to[Primitive]Array` returns a collector that collects elements to a primitive array, where `[Primitive]` is the
+  wanted primitive (e.g. `toIntArray`, `toDoubleArray`).
