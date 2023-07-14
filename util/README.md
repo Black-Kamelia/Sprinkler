@@ -6,6 +6,8 @@
 - [CloseableScope](#closeablescope)
 - [Box Delegate](#box-delegate)
 - [Collector Utilities](#collector-utilities)
+  - [Collector Shorthands](#collector-shorthands)
+  - [Collector Factories](#collector-factories)
 
 ## Intentions
 
@@ -165,7 +167,7 @@ fun main() {
 Sprinkler-util brings a few utilities to simplify the creation of Java `Collector`s, and their usage which is sometimes
 a bit clunky.
 
-## Collector Shorthands
+### Collector Shorthands
 
 Calling the different functional interfaces composing a `Collector` is often redundant : you obtain the element thanks
 to a getter, and then call the interface's method with the arguments. Sprinkler-util provides a few shorthands to
@@ -177,7 +179,7 @@ simplify this. They are all extension functions on `Collector` and are all inlin
 - `finish` is a shorthand method for `Collector::finisher::apply`
 - `characteristics` is a shorthand property for `Collector::characteristics`
 
-## Collector factories
+### Collector Factories
 
 Java's standard library is missing a few very common `Collector` factories. To that effect, those are provided by
 the `ExtendedCollectors` class.
