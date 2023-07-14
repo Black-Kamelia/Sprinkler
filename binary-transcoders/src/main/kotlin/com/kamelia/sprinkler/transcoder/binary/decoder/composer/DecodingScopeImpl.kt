@@ -1,15 +1,8 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 
-import com.kamelia.sprinkler.transcoder.binary.decoder.BooleanDecoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.ByteDecoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.DoubleDecoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.FloatDecoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.IntDecoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.LongDecoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.ShortDecoder
+import com.kamelia.sprinkler.transcoder.binary.decoder.*
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.DecoderInput
-import com.kamelia.sprinkler.transcoder.binary.decoder.toCollection
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.nio.ByteOrder
@@ -32,8 +25,8 @@ internal class DecodingScopeImpl<E>(
 
     override val self: Decoder<E> = SelfDecoder()
 
-    override fun <T> decode(decoder: Decoder<T>): T {
-        return if (currentIndex < accumulator.size) { // already decoded
+    override fun <T> decode(decoder: Decoder<T>): T =
+        if (currentIndex < accumulator.size) { // already decoded
             accumulator[currentIndex++].unsafeCast()
         } else { // decode
             currentIndex++
@@ -43,7 +36,6 @@ internal class DecodingScopeImpl<E>(
                 is Decoder.State.Processing -> throw ProcessingMarker
             }
         }
-    }
 
 
     override fun <T> oncePerObject(block: () -> T): T = if (currentIndex < accumulator.size) { // already decoded
@@ -99,7 +91,7 @@ internal class DecodingScopeImpl<E>(
     override fun boolean(): Boolean = decodeWithComputed { BooleanDecoder() }
 
     @JvmName("decodeString")
-    override fun string(): String = decodeWithComputed<String> {
+    override fun string(): String = decodeWithComputed {
         throw AssertionError("A String decoder should always be present")
     }
 
@@ -150,8 +142,6 @@ internal class DecodingScopeImpl<E>(
         override fun reset() = Unit
 
     }
-
-    internal fun reset() = self.reset()
 
     private companion object {
 
