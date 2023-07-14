@@ -5,6 +5,7 @@ package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 import com.kamelia.sprinkler.transcoder.binary.decoder.UTF8StringDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.DecoderInput
+import com.zwendo.restrikt.annotation.PackagePrivate
 import java.nio.ByteOrder
 
 /**
@@ -53,7 +54,7 @@ private class ComposedDecoderImpl<E>(
     private val block: DecodingScope<E>.() -> E,
 ) : Decoder<E> {
 
-    private var elements = ElementsAccumulator()
+    private val elements = ElementsAccumulator()
     private val scope = DecodingScopeImpl<E>(::elements, cache, endianness)
 
     override fun decode(input: DecoderInput): Decoder.State<E> {
@@ -63,7 +64,7 @@ private class ComposedDecoderImpl<E>(
             try {
                 val result = scope.block()
                 if (elements.isLastLayer) { // there is no recursion layer, we are done
-                    elements = ElementsAccumulator()
+                    elements.reset()
                     return Decoder.State.Done(result)
                 }
 
@@ -80,9 +81,11 @@ private class ComposedDecoderImpl<E>(
     }
 
     override fun reset() {
-        elements = ElementsAccumulator()
+        elements.reset()
         cache.values.forEach(Decoder<*>::reset)
-        scope.reset()
     }
 
 }
+
+@PackagePrivate
+internal val DEFAULT_LAYER = ElementsAccumulator.Layer(0, null)
