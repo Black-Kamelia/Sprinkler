@@ -10,7 +10,7 @@ tasks {
     jmh {
         warmup.set("5s")
         timeOnIteration.set("5s")
-        timeUnit.set("s")
+        timeUnit.set("ms")
 
         warmupIterations.set(3)
         iterations.set(5)

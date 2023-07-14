@@ -5,6 +5,10 @@ import com.kamelia.sprinkler.transcoder.binary.decoder.UTF8StringDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.composer.composedDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.DecoderInput
+import com.kamelia.sprinkler.transcoder.binary.encoder.IntEncoder
+import com.kamelia.sprinkler.transcoder.binary.encoder.UTF8StringEncoder
+import com.kamelia.sprinkler.transcoder.binary.encoder.composer.composedEncoder
+import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
 
 
 data class BasicPerson(
@@ -45,8 +49,20 @@ class BasicPersonDecoder : Decoder<BasicPerson> {
 
 fun basicPersonDecoder(): Decoder<BasicPerson> = composedDecoder {
     val name = string()
-    println("name = $name")
     val age = int()
-    println("age = $age")
     BasicPerson(name, age)
+}
+
+fun BasicPersonEncoder(): Encoder<BasicPerson> {
+    val stringEncoder = UTF8StringEncoder()
+    val intEncoder = IntEncoder()
+    return Encoder { obj, output ->
+        stringEncoder.encode(obj.name, output)
+        intEncoder.encode(obj.age, output)
+    }
+}
+
+fun basicPersonEncoder(): Encoder<BasicPerson> = composedEncoder {
+    encode(it.name)
+    encode(it.age)
 }
