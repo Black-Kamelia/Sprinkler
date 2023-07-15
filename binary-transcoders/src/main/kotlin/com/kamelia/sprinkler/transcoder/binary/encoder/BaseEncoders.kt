@@ -29,13 +29,10 @@ fun ByteEncoder(): Encoder<Byte> =
  * @return an [Encoder] that writes a [Short] to the output
  */
 @JvmOverloads
-fun ShortEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Short> {
-    val isLittleEndian = endianness === ByteOrder.LITTLE_ENDIAN
-    return Encoder { obj, output ->
-        repeat(Short.SIZE_BYTES) {
-            val byte = obj.byte(it, isLittleEndian)
-            output.write(byte)
-        }
+fun ShortEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Short> = Encoder { obj, output ->
+    repeat(Short.SIZE_BYTES) {
+        val byte = obj.byte(it, endianness)
+        output.write(byte)
     }
 }
 
@@ -47,13 +44,10 @@ fun ShortEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Short> {
  * @return an [Encoder] that writes an [Int] to the output
  */
 @JvmOverloads
-fun IntEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Int> {
-    val isLittleEndian = endianness === ByteOrder.LITTLE_ENDIAN
-    return Encoder { obj, output ->
-        repeat(Int.SIZE_BYTES) {
-            val byte = obj.byte(it, isLittleEndian)
-            output.write(byte)
-        }
+fun IntEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Int> = Encoder { obj, output ->
+    repeat(Int.SIZE_BYTES) {
+        val byte = obj.byte(it, endianness)
+        output.write(byte)
     }
 }
 
@@ -65,13 +59,10 @@ fun IntEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Int> {
  * @return an [Encoder] that writes a [Long] to the output
  */
 @JvmOverloads
-fun LongEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Long> {
-    val isLittleEndian = endianness === ByteOrder.LITTLE_ENDIAN
-    return Encoder { obj, output ->
-        repeat(Long.SIZE_BYTES) {
-            val byte = obj.byte(it, isLittleEndian)
-            output.write(byte)
-        }
+fun LongEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Long> = Encoder { obj, output ->
+    repeat(Long.SIZE_BYTES) {
+        val byte = obj.byte(it, endianness)
+        output.write(byte)
     }
 }
 
@@ -83,14 +74,11 @@ fun LongEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Long> {
  * @return an [Encoder] that writes a [Float] to the output
  */
 @JvmOverloads
-fun FloatEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Float> {
-    val isLittleEndian = endianness === ByteOrder.LITTLE_ENDIAN
-    return Encoder { obj, output ->
-        val asInt = obj.toRawBits()
-        repeat(Float.SIZE_BYTES) {
-            val byte = asInt.byte(it, isLittleEndian)
-            output.write(byte)
-        }
+fun FloatEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Float> = Encoder { obj, output ->
+    val asInt = obj.toRawBits()
+    repeat(Float.SIZE_BYTES) {
+        val byte = asInt.byte(it, endianness)
+        output.write(byte)
     }
 }
 
@@ -102,14 +90,11 @@ fun FloatEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Float> {
  * @return an [Encoder] that writes a [Double] to the output
  */
 @JvmOverloads
-fun DoubleEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Double> {
-    val isLittleEndian = endianness === ByteOrder.LITTLE_ENDIAN
-    return Encoder { obj, output ->
-        val asLong = obj.toRawBits()
-        repeat(Double.SIZE_BYTES) {
-            val byte = asLong.byte(it, isLittleEndian)
-            output.write(byte)
-        }
+fun DoubleEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Double> = Encoder { obj, output ->
+    val asLong = obj.toRawBits()
+    repeat(Double.SIZE_BYTES) {
+        val byte = asLong.byte(it, endianness)
+        output.write(byte)
     }
 }
 

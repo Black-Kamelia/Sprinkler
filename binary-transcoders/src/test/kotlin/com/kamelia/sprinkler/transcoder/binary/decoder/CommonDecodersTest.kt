@@ -11,6 +11,7 @@ import java.time.ZonedDateTime
 import java.util.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.nio.ByteOrder
 
 class CommonDecodersTest {
 
@@ -258,9 +259,9 @@ class CommonDecodersTest {
         val size = array.size
         val data = ByteArray(Long.SIZE_BYTES * 2 + Int.SIZE_BYTES + array.size) {
             when (it) {
-                in 0..7 -> seconds.byte(it, false)
-                in 8..15 -> nanos.byte(it - 8, false)
-                in 16..19 -> size.byte(it - 16, false)
+                in 0..7 -> seconds.byte(it, ByteOrder.LITTLE_ENDIAN)
+                in 8..15 -> nanos.byte(it - 8, ByteOrder.LITTLE_ENDIAN)
+                in 16..19 -> size.byte(it - 16, ByteOrder.LITTLE_ENDIAN)
                 else -> array[it - 20]
             }
         }
