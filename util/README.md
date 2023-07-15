@@ -8,6 +8,9 @@
 - [Collector Utilities](#collector-utilities)
   - [Collector Shorthands](#collector-shorthands)
   - [Collector Factories](#collector-factories)
+- [Kotlin Lambda Adapters for Java](#kotlin-lambda-adapters-for-java)
+  - [KotlinDslAdapter](#kotlindsladapter)
+  - [LambdaAdapters](#lambdaadapters)
 
 ## Intentions
 
@@ -188,3 +191,86 @@ the `ExtendedCollectors` class.
 - `ExtendedCollectors.toArray` returns a collector that collects elements to an array.
 - `to[Primitive]Array` returns a collector that collects elements to a primitive array, where `[Primitive]` is the
   wanted primitive (e.g. `toIntArray`, `toDoubleArray`).
+
+## Kotlin Lambda Adapters for Java
+
+Kotlin's type system is very good, and the addition of the `Unit` type allows better type coherence in many cases.
+However, while in Java, one can very easily implement lambdas for Kotlin's function types for the most part, 
+if the function is supposed to return `Unit`, then the lambda will have to explicitly return the `Unit.INSTANCE`
+singleton, which is not convenient especially when the lambda is a one-liner, and when comparing it to Kotlin where it
+is the equivalent of return void.
+
+### KotlinDslAdapter
+
+One of the provided helpers is the `KotlinDslAdapter` interface. A library author simply needs to add it to another
+class or interface as a super-type to get its benefits, that is to say, a method which returns `Unit`. It is useful
+to easily adapt a Kotlin DSL to be easily used in Java.
+
+For example:
+```kt
+// Builder.kt
+class MyBuilder : KotlinDslAdapter {
+    fun withA(i: Int): MyBuilder {
+        // ...
+    }
+    // ...
+}
+
+fun dsl(block: MyBuilder.() -> Unit): MyObject {
+    // ...
+}
+```
+
+Can be used in Java like this:
+```java
+// Main.java
+class Main {
+  public static void main(String[] args) {
+    var result = BuilderKt.dsl(builder -> builder
+      .withA(5)
+      .finish()
+    );
+  }
+}
+```
+
+### LambdaAdapters
+
+The `LambdaAdapters` class provides a few static methods to adapt lambdas to Kotlin's function types. That is to say,
+they wrap the common Java functional interfaces which return `void` to Kotlin's function types which return `Unit`.
+
+```kt
+// Kotlin
+fun doSomething(block: () -> Unit) {
+    // ...
+}
+
+fun doSomethingElse(block: (Int) -> Unit) {
+    // ...
+}
+
+fun doSomethingElseAgain(block: (Int, String) -> Unit) {
+    // ...
+}
+```
+
+```java
+// Java
+import static com.kamelia.sprinkler.util.jvmlambda.LambdaAdapters.*; // static import the `a` (adapt) functions
+
+class Main {
+  public static void main(String[] args) {
+    doSomething(a(() -> {
+      // ...
+    }));
+    doSomethingElse(a((i) -> {
+      // ...
+    }));
+    doSomethingElseAgain(a((i, s) -> {
+      // ...
+    }));
+  }
+}
+```
+
+No need to explicitly return `Unit.INSTANCE` anymore.
