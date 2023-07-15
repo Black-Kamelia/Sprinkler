@@ -1,5 +1,6 @@
 plugins {
-    id("me.champeau.jmh") version "0.7.1"
+    val jmhPluginVersion: String by System.getProperties()
+    id("me.champeau.jmh") version jmhPluginVersion
 }
 
 dependencies {
