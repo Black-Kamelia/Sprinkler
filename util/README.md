@@ -11,6 +11,7 @@
 - [Kotlin Lambda Adapters for Java](#kotlin-lambda-adapters-for-java)
   - [KotlinDslAdapter](#kotlindsladapter)
   - [LambdaAdapters](#lambdaadapters)
+- [ByteArrayDecoding](#bytearraydecoding)
 
 ## Intentions
 
@@ -274,3 +275,20 @@ class Main {
 ```
 
 No need to explicitly return `Unit.INSTANCE` anymore.
+
+## ByteArrayDecoding
+
+This file provides a few extension functions to decode and read a `ByteArray`'s content in a similar way to that of
+a `ByteBuffer`'s.
+
+The extensions are:
+- `readByte` which requires a start index and returns the byte at that index.
+- `readShort` which requires a start index and returns the short from that index, and an optional endianness.
+- `readInt` which requires a start index and returns the int from that index, and an optional endianness.
+- `readLong` which requires a start index and returns the long from that index, and an optional endianness.
+- `readFloat` which requires a start index and returns the float from that index, and an optional endianness.
+- `readDouble` which requires a start index and returns the double from that index, and an optional endianness.
+- `readBoolean` which has the same behavior as `readByte` but returns `false` if the byte is 0, `true` otherwise.
+- `readString` which requires a length to read, an optional `Charset` (UTF-8 by default), and a start index and returns
+  the decoded string from that index.
+
