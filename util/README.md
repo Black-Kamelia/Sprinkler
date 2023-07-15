@@ -11,7 +11,9 @@
 - [Kotlin Lambda Adapters for Java](#kotlin-lambda-adapters-for-java)
   - [KotlinDslAdapter](#kotlindsladapter)
   - [LambdaAdapters](#lambdaadapters)
+  - [InvokeExtensions](#invokeextensions)
 - [ByteArrayDecoding](#bytearraydecoding)
+- [ByteAccess](#byteaccess)
 
 ## Intentions
 
@@ -276,6 +278,12 @@ class Main {
 
 No need to explicitly return `Unit.INSTANCE` anymore.
 
+### InvokeExtensions
+
+This file provides an `invoke` extension operator to **every single** Java functional interface from the standard library.
+
+For example, on a `Consumer<T>`, it allows to call `consumer(value)` instead of `consumer.accept(value)`.
+
 ## ByteArrayDecoding
 
 This file provides a few extension functions to decode and read a `ByteArray`'s content in a similar way to that of
@@ -292,3 +300,14 @@ The extensions are:
 - `readString` which requires a length to read, an optional `Charset` (UTF-8 by default), and a start index and returns
   the decoded string from that index.
 
+## ByteAccess
+
+Sometimes, we want to interpret a `Number` not as a number, but as a sequence of bytes. This is what the `ByteAccess`
+file allows. It provides a few extension functions to read bytes and bits from a `Number`.
+
+Except for `Byte`, every `Number` type has two new extension functions:
+- `bit(index: Int, bigEndian: Boolean = true): Int` which returns the bit at the given index, and an optional endianness.
+- `byte(index: Int, bigEndian: Boolean = true): Byte` which returns the byte at the given index, and an optional
+  boolean to signify if the `Number` should be interpreted as if it was written in big endian or not.
+
+Of course, `Byte` has only the `bit` function, since it is already a byte.
