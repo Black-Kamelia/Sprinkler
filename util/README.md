@@ -84,7 +84,7 @@ A scoped extension `AutoCloseable::usingSelf` is also provided for convenience w
 closeableScope { // this: CloseableScope
     val resource = File("someFile.txt")
         .inputStream().usingSelf() // will autoclose at the end of the scope
-        .buffered().usingSelf() // will autoclose at the end of the scope
+        .buffered()
     
     println(resource.readAllBytes())
 }
@@ -241,19 +241,15 @@ class Main {
 ### LambdaAdapters
 
 The `LambdaAdapters` class provides a few static methods to adapt lambdas to Kotlin's function types. That is to say,
-they wrap the common Java functional interfaces which return `void` to Kotlin's function types which return `Unit`.
+they adapt the common Java functional interfaces which return `void` to Kotlin's function types which return `Unit`.
+(`Runnable`, `Consumer`, `BiConsumer`)
+
+It is important to note that the lambda is not wrapped in a Kotlin function type, it is actually a subtype of both the 
+Kotlin function type **and** the corresponding Java functional interface.
 
 ```kt
 // Kotlin
-fun doSomething(block: () -> Unit) {
-    // ...
-}
-
-fun doSomethingElse(block: (Int) -> Unit) {
-    // ...
-}
-
-fun doSomethingElseAgain(block: (Int, String) -> Unit) {
+fun foo(block: (String) -> Unit) {
     // ...
 }
 ```
@@ -263,17 +259,16 @@ fun doSomethingElseAgain(block: (Int, String) -> Unit) {
 import static com.kamelia.sprinkler.util.jvmlambda.LambdaAdapters.*; // static import the `a` (adapt) functions
 
 class Main {
-  public static void main(String[] args) {
-    doSomething(a(() -> {
-      // ...
-    }));
-    doSomethingElse(a((i) -> {
-      // ...
-    }));
-    doSomethingElseAgain(a((i, s) -> {
-      // ...
-    }));
-  }
+    public static void main(String[] args) {
+        // you can write
+        foo(a(arg -> System.out.println(arg)));
+        
+        // instead of
+        foo(arg -> {
+            System.out.println(arg);
+            return Unit.INSTANCE;
+        });
+    }
 }
 ```
 
