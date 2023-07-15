@@ -6,7 +6,7 @@ import com.kamelia.benchmark.sprinkler.transcoder.binary.`object`.basicPersonDec
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import org.openjdk.jmh.annotations.*
 
-open class BasicCompositionBenchmarks {
+open class BasicDecodingBenchmarks {
 
     @Benchmark
     fun handmadeDecoderSingleStepDecoding(state: BasicPersonDecodingState) {
