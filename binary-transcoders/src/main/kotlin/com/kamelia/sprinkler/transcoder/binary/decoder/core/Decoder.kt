@@ -256,7 +256,7 @@ interface Decoder<out T> {
          * @return the decoded value if this [State] is a [Done] state, otherwise returns the value returned by the
          * given [default] factory
          */
-        fun getOrElse(default: () -> @UnsafeVariance T): T = when (this) {
+        inline fun getOrElse(default: () -> @UnsafeVariance T): T = when (this) {
             is Done -> value
             else -> default()
         }
@@ -268,7 +268,7 @@ interface Decoder<out T> {
          * @param throwable the factory to return the exception to throw if this [State] is not a [Done] state
          * @return the decoded value if this [State] is a [Done] state
          */
-        fun getOrThrow(throwable: () -> Throwable): T = when (this) {
+        inline fun getOrThrow(throwable: () -> Throwable): T = when (this) {
             is Done -> value
             else -> throw throwable()
         }
@@ -279,7 +279,7 @@ interface Decoder<out T> {
          * @param block the function to execute if this [State] is a [Done] state
          * @return this [State]
          */
-        fun ifDone(block: (T) -> Unit): State<T> = apply {
+        inline fun ifDone(block: (T) -> Unit): State<T> = apply {
             if (this is Done) {
                 block(value)
             }
@@ -291,7 +291,7 @@ interface Decoder<out T> {
          * @param block the function to execute if this [State] is an [Error] state
          * @return this [State]
          */
-        fun ifError(block: (Throwable) -> Unit): State<T> = apply {
+        inline fun ifError(block: (Throwable) -> Unit): State<T> = apply {
             if (this is Error) {
                 block(error)
             }

@@ -5,9 +5,17 @@ import com.zwendo.restrikt.annotation.PackagePrivate
 @PackagePrivate
 internal class ElementsAccumulator {
 
-    private val list = ArrayList<Any?>()
-    private val recursionElements = ArrayDeque<Any?>()
-    private var currentLayer = Layer(0, null)
+    private var list = ArrayList<Any?>()
+
+    private var _recursionElements: ArrayDeque<Any?>? = null
+
+    private val recursionElements: ArrayDeque<Any?>
+        get() {
+            if (_recursionElements == null) _recursionElements = ArrayDeque()
+            return _recursionElements!!
+        }
+
+    private var currentLayer = DEFAULT_LAYER
 
     val size: Int
         get() = list.size - currentLayer.start
@@ -57,7 +65,13 @@ internal class ElementsAccumulator {
         currentLayer = previous
     }
 
-    private class Layer(
+    fun reset() {
+        list = ArrayList()
+        _recursionElements = null
+        currentLayer = DEFAULT_LAYER
+    }
+
+    class Layer(
         @JvmField
         val start: Int,
         @JvmField

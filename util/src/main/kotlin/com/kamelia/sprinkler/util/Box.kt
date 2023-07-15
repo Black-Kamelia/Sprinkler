@@ -171,4 +171,3 @@ private object EmptyBox : Box<Nothing> {
         get() = false
 
 }
-
