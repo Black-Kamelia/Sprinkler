@@ -302,11 +302,12 @@ Sometimes, we want to interpret a `Number` not as a number, but as a sequence of
 file allows. It provides a few extension functions to read bytes and bits from a `Number`.
 
 Except for `Byte`, every `Number` type has two new extension functions:
-- `bit(index: Int, bigEndian: Boolean = true): Int` which returns the bit at the given index, and an optional endianness.
-- `byte(index: Int, bigEndian: Boolean = true): Byte` which returns the byte at the given index, and an optional
-  boolean to signify if the `Number` should be interpreted as if it was written in big endian or not.
+- `bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int` which returns the bit at the given index, and an optional endianness.
+- `byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte` which returns the byte at the given index, and an optional endianness.
 
-Of course, `Byte` has only the `bit` function, since it is already a byte.
+The `endianness` is used to signify if the `Number` should be interpreted as if it was written in big endian or not.
+
+Of course, `Byte` has only the `bit` function, which doesn't accept an `endianness`, since it is already a byte.
 
 ## unsafeCast
 
