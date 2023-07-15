@@ -3,6 +3,8 @@
 
 package com.kamelia.sprinkler.util
 
+import java.nio.ByteOrder
+
 /**
  * Returns the bit at the given [index] in a [Byte], starting from the least significant bit.
  *
@@ -17,11 +19,11 @@ inline fun Byte.bit(index: Int): Int = toInt() ushr index and 0x1
  *
  * @receiver the [Short] to access
  * @param index the index of the byte to return
- * @param bigEndian whether to access the byte in big-endian order
+ * @param endianness the endianness of the short (defaults to [ByteOrder.BIG_ENDIAN])
  * @return the byte at the given [index]
  */
 @JvmOverloads
-inline fun Short.byte(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
+inline fun Short.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte = if (endianness.isBigEndian) {
     (toInt() ushr (index shl 3) and 0xFF).toByte()
 } else {
     (toInt() ushr ((Short.SIZE_BYTES - 1 - index) shl 3) and 0xFF).toByte()
@@ -33,11 +35,11 @@ inline fun Short.byte(index: Int, bigEndian: Boolean = true): Byte = if (bigEndi
  *
  * @receiver the [Short] to access
  * @param index the index of the bit to return
- * @param bigEndian whether to access the bit in big-endian order
+ * @param endianness the endianness of the short (defaults to [ByteOrder.BIG_ENDIAN])
  * @return the bit at the given [index]
  */
 @JvmOverloads
-inline fun Short.bit(index: Int, bigEndian: Boolean = true): Int = if (bigEndian) {
+inline fun Short.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int = if (endianness.isBigEndian) {
     toInt() ushr index and 0x1
 } else {
     val byteIndex = index shl 3 // index / 8 (integer division)
@@ -50,11 +52,11 @@ inline fun Short.bit(index: Int, bigEndian: Boolean = true): Int = if (bigEndian
  *
  * @receiver the [Int] to access
  * @param index the index of the byte to return
- * @param bigEndian whether to access the byte in big-endian order
+ * @param endianness the endianness of the int (defaults to [ByteOrder.BIG_ENDIAN])
  * @return the byte at the given [index]
  */
 @JvmOverloads
-inline fun Int.byte(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
+inline fun Int.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte = if (endianness.isBigEndian) {
     (this ushr (index shl 3) and 0xFF).toByte()
 } else {
     (this ushr ((Int.SIZE_BYTES - 1 - index) shl 3) and 0xFF).toByte()
@@ -66,11 +68,11 @@ inline fun Int.byte(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian
  *
  * @receiver the [Int] to access
  * @param index the index of the bit to return
- * @param bigEndian whether to access the bit in big-endian order
+ * @param endianness the endianness of the int (defaults to [ByteOrder.BIG_ENDIAN])
  * @return the bit at the given [index]
  */
 @JvmOverloads
-inline fun Int.bit(index: Int, bigEndian: Boolean = true): Int = if (bigEndian) {
+inline fun Int.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int = if (endianness.isBigEndian) {
     this ushr index and 0x1
 } else {
     val byteIndex = index shr 3 // index / 8 (integer division)
@@ -83,11 +85,11 @@ inline fun Int.bit(index: Int, bigEndian: Boolean = true): Int = if (bigEndian) 
  *
  * @receiver the [Long] to access
  * @param index the index of the byte to return
- * @param bigEndian whether to access the byte in big-endian order
+ * @param endianness the endianness of the long (defaults to [ByteOrder.BIG_ENDIAN])
  * @return the byte at the given [index]
  */
 @JvmOverloads
-fun Long.byte(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
+inline fun Long.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte = if (endianness.isBigEndian) {
     (this ushr (index shl 3) and 0xFF).toByte()
 } else {
     (this ushr ((Long.SIZE_BYTES - 1 - index) shl 3) and 0xFF).toByte()
@@ -99,11 +101,11 @@ fun Long.byte(index: Int, bigEndian: Boolean = true): Byte = if (bigEndian) {
  *
  * @receiver the [Long] to access
  * @param index the index of the bit to return
- * @param bigEndian whether to access the bit in big-endian order
+ * @param endianness the endianness of the long (defaults to [ByteOrder.BIG_ENDIAN])
  * @return the bit at the given [index]
  */
 @JvmOverloads
-fun Long.bit(index: Int, bigEndian: Boolean = true): Int = if (bigEndian) {
+inline fun Long.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int = if (endianness.isBigEndian) {
     (this ushr index and 0x1).toInt()
 } else {
     val byteIndex = index shr 3 // index / 8 (integer division)
@@ -116,11 +118,12 @@ fun Long.bit(index: Int, bigEndian: Boolean = true): Int = if (bigEndian) {
  *
  * @receiver the [Float] to access
  * @param index the index of the byte to return
- * @param bigEndian whether to access the byte in big-endian order
+ * @param endianness the endianness of the float (defaults to [ByteOrder.BIG_ENDIAN])
  * @return the byte at the given [index]
  */
 @JvmOverloads
-fun Float.byte(index: Int, bigEndian: Boolean = true): Byte = toRawBits().byte(index, bigEndian)
+inline fun Float.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte =
+    toRawBits().byte(index, endianness)
 
 /**
  * Returns the bit at the given [index] in a [Float], starting from the least significant bit of the least significant
@@ -128,22 +131,23 @@ fun Float.byte(index: Int, bigEndian: Boolean = true): Byte = toRawBits().byte(i
  *
  * @receiver the [Float] to access
  * @param index the index of the bit to return
- * @param bigEndian whether to access the bit in big-endian order
+ * @param endianness the endianness of the float (defaults to [ByteOrder.BIG_ENDIAN])
  * @return the bit at the given [index]
  */
 @JvmOverloads
-fun Float.bit(index: Int, bigEndian: Boolean = true): Int = toRawBits().bit(index, bigEndian)
+inline fun Float.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int = toRawBits().bit(index, endianness)
 
 /**
  * Returns the byte at the given [index] in a [Double], starting from the least significant byte.
  *
  * @receiver the [Double] to access
- * @param index the index of the byte to return
- * @param bigEndian whether to access the byte in big-endian order
+ * @param index the index of the byte to return  endianness the endianness of the number (defaults to [ByteOrder.BIG_ENDIAN])
+ * @param endianness the endianness of the double (defaults to [ByteOrder.BIG_ENDIAN])
  * @return the byte at the given [index]
  */
 @JvmOverloads
-fun Double.byte(index: Int, bigEndian: Boolean = true): Byte = toRawBits().byte(index, bigEndian)
+inline fun Double.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte =
+    toRawBits().byte(index, endianness)
 
 /**
  * Returns the bit at the given [index] in a [Double], starting from the least significant bit of the least significant
@@ -151,8 +155,14 @@ fun Double.byte(index: Int, bigEndian: Boolean = true): Byte = toRawBits().byte(
  *
  * @receiver the [Double] to access
  * @param index the index of the bit to return
- * @param bigEndian whether to access the bit in big-endian order
+ * @param endianness the endianness of the double (defaults to [ByteOrder.BIG_ENDIAN])
  * @return the bit at the given [index]
  */
 @JvmOverloads
-fun Double.bit(index: Int, bigEndian: Boolean = true): Int = toRawBits().bit(index, bigEndian)
+inline fun Double.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int =
+    toRawBits().bit(index, endianness)
+
+
+@PublishedApi
+internal inline val ByteOrder.isBigEndian: Boolean
+    get() = ByteOrder.BIG_ENDIAN === this
