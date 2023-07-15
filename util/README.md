@@ -313,7 +313,7 @@ Except for `Byte`, every `Number` type has two new extension functions:
 
 Of course, `Byte` has only the `bit` function, since it is already a byte.
 
-### unsafeCast
+## unsafeCast
 
 A simple extension function on `Any?`:
 
