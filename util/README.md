@@ -14,6 +14,7 @@
   - [InvokeExtensions](#invokeextensions)
 - [ByteArrayDecoding](#bytearraydecoding)
 - [ByteAccess](#byteaccess)
+- [unsafeCast](#unsafecast)
 
 ## Intentions
 
@@ -311,3 +312,16 @@ Except for `Byte`, every `Number` type has two new extension functions:
   boolean to signify if the `Number` should be interpreted as if it was written in big endian or not.
 
 Of course, `Byte` has only the `bit` function, since it is already a byte.
+
+### unsafeCast
+
+A simple extension function on `Any?`:
+
+```kt
+@Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
+inline fun <T> Any?.unsafeCast(): T = this as T
+```
+
+It is useful when you know that a value is of a certain type, but the compiler doesn't, and you would need to add
+a `Suppress` annotation to avoid a warning. It's also useful when chaining operations. It is mostly a convenience function
+that should only be used in exceptional cases in library code.
