@@ -31,7 +31,7 @@ fun ByteEncoder(): Encoder<Byte> =
 @JvmOverloads
 fun ShortEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Short> = Encoder { obj, output ->
     repeat(Short.SIZE_BYTES) {
-        val byte = obj.byte(it, endianness)
+        val byte = obj.byte(Short.SIZE_BYTES - 1 - it, endianness)
         output.write(byte)
     }
 }
@@ -46,7 +46,7 @@ fun ShortEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Short> =
 @JvmOverloads
 fun IntEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Int> = Encoder { obj, output ->
     repeat(Int.SIZE_BYTES) {
-        val byte = obj.byte(it, endianness)
+        val byte = obj.byte(Int.SIZE_BYTES - 1 - it, endianness)
         output.write(byte)
     }
 }
@@ -61,7 +61,7 @@ fun IntEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Int> = Enc
 @JvmOverloads
 fun LongEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Long> = Encoder { obj, output ->
     repeat(Long.SIZE_BYTES) {
-        val byte = obj.byte(it, endianness)
+        val byte = obj.byte(Long.SIZE_BYTES - 1 - it, endianness)
         output.write(byte)
     }
 }
@@ -77,7 +77,7 @@ fun LongEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Long> = E
 fun FloatEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Float> = Encoder { obj, output ->
     val asInt = obj.toRawBits()
     repeat(Float.SIZE_BYTES) {
-        val byte = asInt.byte(it, endianness)
+        val byte = asInt.byte(Float.SIZE_BYTES - 1 - it, endianness)
         output.write(byte)
     }
 }
@@ -93,7 +93,7 @@ fun FloatEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Float> =
 fun DoubleEncoder(endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Encoder<Double> = Encoder { obj, output ->
     val asLong = obj.toRawBits()
     repeat(Double.SIZE_BYTES) {
-        val byte = asLong.byte(it, endianness)
+        val byte = asLong.byte(Double.SIZE_BYTES - 1 - it, endianness)
         output.write(byte)
     }
 }
