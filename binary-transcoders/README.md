@@ -18,9 +18,9 @@ The module is designed to permit the user to define the structure of the transco
 structured API. The user can define the structure of the transcoder using a builder pattern,
 and add new types of transcoders by implementing simple interfaces.
 
-## Quick Examples
+## Getting Started
 
-### Basic Usage
+Here is a very simple example of how to use the module:
 
 ```kt
 data class Person(val name: String, val age: Int) {
@@ -64,60 +64,14 @@ To finalize the decoder, we create and return a `Person` instance with the decod
 
 Note that because the decoder is stateful, we should create a new instance of the decoder each time we want to use it.
 
-### Recursive Structure
-
-```kt
-class Node(val value: Int, val children: List<Node>) {
-    
-    companion object {
-        val encoder = composedEncoder<Node> {
-            encode(it.value)
-            encode(it.children) // recursive encoding
-        }
-        
-        fun decoder() = composedDecoder<Node> {
-            val value = int()
-            val children = selfList() // recursive decoding
-            Node(value, children)
-        }
-    }
-}
-
-class Person(val name: String, val lover: Person?) {
-    
-    companion object {
-        val encoder = composedEncoder<Person> {
-            encode(it.name)
-            encode(it.lover) // recursive encoding
-        }
-        
-        fun decoder() = composedDecoder<Person> {
-            val name = string()
-            val lover = selfOrNull() // recursive decoding
-            Person(name, lover)
-        }
-    }
-}
-```
-
-It is also possible to transcode recursive structures, as shown in the example above. 
-Recursive encoding happens when the structure contains a reference to itself, be it
-as a collection of elements of its own type (like in the Node example above), as a collection of nullable elements
-of its own type, or as a nullable field of its own type (like in the Person example above).
-
-To perform recursive encoding, the API is seamless: the user simply has to call the `encode` function
-as usual, and the encoder will take care of the rest.
-
-Recursive decoding is a bit more complex because of predictability issues. In this case, the API provides
-several scoped functions. Two of these are `selfList` and `selfOrNull`, which are used to decode a list of elements
-of the same type as the one being decoded, and a nullable element of the same type as the one being decoded, 
-respectively.
+For more details on how to use the module, please refer to the following sections.
 
 ## Encoders
 
-See [Encoders.md](Encoders.md)
-
+Encoders are used to serialize data into a binary format. They are stateless, and can be reused multiple times. For
+a complete guide on how to use encoders, see [Encoders.md](Encoders.md).
 
 ## Decoders
 
-See [Decoders.md](Decoders.md)
+Decoders are used to deserialize data from a binary format. They are stateful, and should be created each time.
+For a complete guide on how to use decoders, see [Decoders.md](Decoders.md).
