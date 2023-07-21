@@ -3,9 +3,7 @@
 ## Summary
 
 - [Intentions](#intentions)
-- [Quick Examples](#quick-examples)
-  - [Basic Usage](#basic-usage)
-  - [Recursive Structure](#recursive-structure)
+- [Getting Started](#getting-started)
 - [Encoders](#encoders)
 - [Decoders](#decoders)
 
@@ -20,51 +18,52 @@ and add new types of transcoders by implementing simple interfaces.
 
 ## Getting Started
 
-Here is a very simple example of how to use the module:
+This module is a framework, in the sense that as long as one properly implement the provided interfaces,
+everything goes into place accordingly, and provide a simple API to the end user.
+
+Fortunately, the module also provides a few smart defaults and built-in transcoders.
+
+Here is how to encoder an integer into a byte array:
 
 ```kt
-data class Person(val name: String, val age: Int) {
-    
-    companion object {
-        val encoder = composedEncoder<Person> {
-            encode(it.name)
-            encode(it.age)
-        }
-        
-        fun decoder() = composedDecoder<Person> {
-            val name = string()
-            val age = int() 
-            Person(name, age)
-        }
-    }
-}
-
-fun main() {
-    val person = Person("John", 42)
-    val encoder = Person.encoder
-    val decoder = Person.decoder()
-    
-    val encodedPerson: ByteArray = encoder.encode(person)
-    val decodedPerson: Decoder.State<Person> = decoder.decode(encodedPerson)
-    
-    println(decodedPerson.get())
-}
+val encoder: Encoder<Int> = IntEncoder()
+val encoded: ByteArray = encoder.encode(5) // [0, 0, 0, 5]
 ```
 
-In this configuration, we define both an encoder and a decoder for the `Person` class.
-As you can see, both of them are created thanks to a simple DSL builder, in a sequential manner.
+The same goes for decoding:
 
-In the case of the encoder (which is stateless), we simply tell the builder to first encode the name,
-and then the age. Behind the scenes, the builder will also create primitive encoders 
-for the `String` and `Int` types automatically.
+```kt
+val decoder: Decoder<Int> = IntDecoder()
+val decoded: Int = decoder.decode(byteArrayOf(0, 0, 0, 5)).get() // 5
+```
 
-In the case of the decoder (which is stateful), we tell the builder to first decode a `String`,
-thanks to the scoped `string()` function, and then to decode an `Int`, thanks to the scoped `int()` function.
-To finalize the decoder, we create and return a `Person` instance with the decoded values.
+And you can combine them to create a transcoder
 
-Note that because the decoder is stateful, we should create a new instance of the decoder each time we want to use it.
+```kt
+val encoder: Encoder<Int> = IntEncoder()
+val decoder: Decoder<Int> = IntDecoder()
+val transcoder: Transcoder<Int> = Transcoder.create(encoder, decoder)
 
-For more details on how to use the module, please refer to the following sections.
+val encoded: ByteArray = transcoder.encode(5)
+val decoded: Int = transcoder.decode(encoded).get()
+```
+
+Moreover, one can easily create more complex transcoders using a composition API:
+
+```kt
+class IntPair(val first: Int, val second: Int)
+
+val pairEncoder: Encoder<IntPair> = composedEncoder<IntPair> { // it: IntPair
+  encode(it.first)
+  encode(it.second)
+}
+
+val pairDecoder: Decoder<IntPair> = composedDecoder<IntPair> {
+  val first: Int = int()
+  val second: Int = int()
+  IntPair(first, second)
+}
+```
 
 ## Encoders
 
@@ -75,3 +74,8 @@ a complete guide on how to use encoders, see [Encoders.md](Encoders.md).
 
 Decoders are used to deserialize data from a binary format. They are stateful, and should be created each time.
 For a complete guide on how to use decoders, see [Decoders.md](Decoders.md).
+
+## Transcoders
+
+Transcoders are, by definition, both encoders and decoders. They are stateful, and should be created each time.
+For a complete guide on how to use transcoders, see [Transcoders.md](Transcoders.md).
