@@ -63,10 +63,6 @@ allprojects {
         sign(publishing.publications)
     }
 
-    restrikt {
-        enabled = findProp("enableRestrikt") ?: false
-    }
-
     kover {
         excludeSourceSets {
             names("jmh")
