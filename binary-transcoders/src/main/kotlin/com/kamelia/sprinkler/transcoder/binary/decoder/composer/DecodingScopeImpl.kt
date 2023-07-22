@@ -5,6 +5,7 @@ import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.DecoderInput
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
+import java.lang.ClassCastException
 import java.nio.ByteOrder
 import java.util.stream.Collector
 
@@ -122,8 +123,13 @@ internal class DecodingScopeImpl<E>(
     }
 
     private inline fun <reified T> decodeWithComputed(noinline block: () -> Decoder<T>): T {
-        val decoder = cache.computeIfAbsent(T::class.java) { block() }.unsafeCast<Decoder<T>>()
-        return decode(decoder) as? T ?: throw IllegalStateException(CAST_ERROR_MESSAGE)
+        val decoder = cache.computeIfAbsent(T::class.java) { block() }
+        val result = decode(decoder)
+        return try {
+            result as T
+        } catch (e: ClassCastException) {
+            throw IllegalStateException(castErrorMessage(result, T::class.java))
+        }
     }
 
     private inline fun <reified T> computed(noinline block: () -> Decoder<T>): Decoder<T> =
@@ -140,17 +146,6 @@ internal class DecodingScopeImpl<E>(
         }
 
         override fun reset() = Unit
-
-    }
-
-    private companion object {
-
-        @JvmField
-        val CAST_ERROR_MESSAGE = """
-        Error while trying to cast $this.
-        This error may have been caused because different calls have been made in the the scope for the same object,
-        between two calls of the block. Calls in the scope must be consistent for the same object between two calls.
-            """.trimIndent()
 
     }
 

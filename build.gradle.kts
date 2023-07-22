@@ -28,7 +28,7 @@ allprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
     apply(plugin = "com.zwendo.restrikt")
-    apply(plugin = "kover")
+    apply(plugin = "org.jetbrains.kotlinx.kover")
 
     val projectName = project.name.toLowerCase()
     val projectVersion = findProp("$projectName.version") ?: "0.1.0"
@@ -63,8 +63,10 @@ allprojects {
         sign(publishing.publications)
     }
 
-    restrikt {
-        enabled = findProp("enableRestrikt") ?: false
+    kover {
+        excludeSourceSets {
+            names("jmh")
+        }
     }
 
     tasks {
