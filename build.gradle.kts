@@ -67,6 +67,12 @@ allprojects {
         enabled = findProp("enableRestrikt") ?: false
     }
 
+    kover {
+        excludeSourceSets {
+            names("jmh")
+        }
+    }
+
     tasks {
         test {
             useJUnitPlatform()
