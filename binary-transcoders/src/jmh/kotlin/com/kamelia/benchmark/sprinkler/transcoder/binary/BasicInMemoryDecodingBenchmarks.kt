@@ -9,31 +9,31 @@ import org.openjdk.jmh.annotations.*
 
 open class BasicInMemoryDecodingBenchmarks {
 
-//    @Benchmark
-//    fun handmadeDecoderSingleStepDecoding(state: BasicInMemoryPersonDecodingState) {
-//        state.handmade.decode(state.input)
-//    }
-//
-//    @Benchmark
-//    fun compositionDecoderSingleStepDecoding(state: BasicInMemoryPersonDecodingState) {
-//        state.composition.decode(state.input)
-//    }
-//
-//    @Benchmark
-//    fun handmadeDecoderSeveralStepsDecoding(state: BasicInMemoryPersonDecodingState) {
-//        var s: Decoder.State<BasicPerson>?
-//        do {
-//            s = state.handmade.decode(state.proxiedInput)
-//        } while (s != null && s.isNotDone())
-//    }
-//
-//    @Benchmark
-//    fun compositionDecoderSeveralStepsDecoding(state: BasicInMemoryPersonDecodingState) {
-//        var s: Decoder.State<BasicPerson>?
-//        do {
-//            s = state.composition.decode(state.proxiedInput)
-//        } while (s != null && s.isNotDone())
-//    }
+    @Benchmark
+    fun handmadeDecoderSingleStepDecoding(state: BasicInMemoryPersonDecodingState) {
+        state.handmade.decode(state.input)
+    }
+
+    @Benchmark
+    fun compositionDecoderSingleStepDecoding(state: BasicInMemoryPersonDecodingState) {
+        state.composition.decode(state.input)
+    }
+
+    @Benchmark
+    fun handmadeDecoderSeveralStepsDecoding(state: BasicInMemoryPersonDecodingState) {
+        var s: Decoder.State<BasicPerson>?
+        do {
+            s = state.handmade.decode(state.proxiedInput)
+        } while (s != null && s.isNotDone())
+    }
+
+    @Benchmark
+    fun compositionDecoderSeveralStepsDecoding(state: BasicInMemoryPersonDecodingState) {
+        var s: Decoder.State<BasicPerson>?
+        do {
+            s = state.composition.decode(state.proxiedInput)
+        } while (s != null && s.isNotDone())
+    }
 
 }
 
@@ -54,8 +54,9 @@ open class BasicInMemoryPersonDecodingState {
 
     @Setup(Level.Invocation)
     fun inputSetup() {
-        input = DecoderInput.from(ARRAY)
-        proxiedInput = inputProxy(DecoderInput.from(ARRAY))
+        val array = ARRAY
+        input = DecoderInput.from(array)
+        proxiedInput = inputProxy(DecoderInput.from(array))
     }
 
 }
