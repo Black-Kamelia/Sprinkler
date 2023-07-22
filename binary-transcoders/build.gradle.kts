@@ -21,13 +21,13 @@ tasks {
     }
 
     jmh {
-        warmup.set("60s")
-        timeOnIteration.set("60s")
+        warmup.set("5s") // 60s
+        timeOnIteration.set("5s") // 60s
         timeUnit.set("ms")
 
-        warmupIterations.set(5)
+        warmupIterations.set(3) // 5
         iterations.set(5)
-        fork.set(5)
+        fork.set(1) // 5
     }
 
 }

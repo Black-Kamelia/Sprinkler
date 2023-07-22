@@ -3,10 +3,6 @@ package com.kamelia.benchmark.sprinkler.transcoder.binary
 import com.kamelia.benchmark.sprinkler.transcoder.binary.`object`.BasicPerson
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.DecoderInput
 import com.kamelia.sprinkler.transcoder.binary.encoder.composer.composedEncoder
-import org.openjdk.jmh.annotations.Level
-import org.openjdk.jmh.annotations.Scope
-import org.openjdk.jmh.annotations.Setup
-import org.openjdk.jmh.annotations.State
 
 val ARRAY: ByteArray
     get() {
@@ -28,21 +24,4 @@ fun inputProxy(decoderInput: DecoderInput): DecoderInput {
             decoderInput.read()
         }
     }
-}
-
-@State(Scope.Benchmark)
-abstract class AbstractDecoderBenchmarkState {
-
-    @JvmField
-    var input: DecoderInput = DecoderInput.nullInput()
-
-    @JvmField
-    var proxiedInput: DecoderInput = DecoderInput.nullInput()
-
-    @Setup(Level.Invocation)
-    fun inputSetup() {
-        input = DecoderInput.from(ARRAY)
-        proxiedInput = inputProxy(DecoderInput.from(ARRAY))
-    }
-
 }
