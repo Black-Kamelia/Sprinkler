@@ -90,3 +90,11 @@ private class ComposedDecoderImpl<E>(
 
 @PackagePrivate
 internal val DEFAULT_LAYER = ElementsAccumulator.Layer(0, null)
+
+@PackagePrivate
+internal fun castErrorMessage(obj: Any?, clazz: Class<*>) = """
+        Error while trying to cast $obj as $clazz.
+        This error may have been caused because different calls have been made in the the scope for the same object,
+        between two calls of the decode method. Calls in the scope must be consistent for the same object between two
+        calls to the decode method.
+        """.trimIndent()
