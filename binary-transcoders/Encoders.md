@@ -169,8 +169,8 @@ Indeed, the provided factories primitive encoders are :
 - `BooleanEncoder`
 
 All of those, except for `ByteEncoder` and `BooleanEncoder`, accept `ByteOrder` as an argument, which is used to
-determine the byte order (endianness) of the encoded data.
-If you do not provide one, it will default to `ByteOrder.BIG_ENDIAN`.
+determine the byte order (endianness) of the encoded data. If you do not provide one, it will default to
+`ByteOrder.BIG_ENDIAN`.
 
 #### String Encoders
 
@@ -181,8 +181,8 @@ In binary encoding in general, there are two major ways to encode strings of tex
   which are null-terminated.
 
 To that effect, the two main string encoder factories are two overloads of `StringEncoder`, both of them accept a
-`Charset`, but also an `Encoder<Int>` to encode the length of the string, or a `ByteArray` corresponding to the end
-marker, respectively.
+`Charset`, and one also takes an `Encoder<Int>` to encode the length of the string, while the other one uses a
+`ByteArray` corresponding to the end marker.
 
 For example:
 
