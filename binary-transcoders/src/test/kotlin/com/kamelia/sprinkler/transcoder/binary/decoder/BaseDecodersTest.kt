@@ -7,12 +7,10 @@ import com.kamelia.sprinkler.transcoder.binary.common.UTF8_NULL
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.util.assertDoneAndGet
 import com.kamelia.sprinkler.util.byte
-import java.nio.ByteOrder
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.nio.ByteOrder
 
 class BaseDecodersTest {
 
@@ -428,7 +426,7 @@ class BaseDecodersTest {
 
     @Test
     fun `no op decoder works correctly`() {
-        val decoder = NoOpDecoder()
+        val decoder = UnitDecoder()
 
         val data = byteArrayOf(1).inputStream()
         val result = decoder.decode(data).assertDoneAndGet()
@@ -437,7 +435,7 @@ class BaseDecodersTest {
 
     @Test
     fun `no op decoder doesnt reads the input`() {
-        val decoder = NoOpDecoder()
+        val decoder = UnitDecoder()
         val inputValue = 4.toByte()
         val data = byteArrayOf(inputValue).inputStream()
 

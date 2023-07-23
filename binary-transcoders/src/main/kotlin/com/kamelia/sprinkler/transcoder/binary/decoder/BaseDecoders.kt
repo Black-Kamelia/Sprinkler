@@ -7,18 +7,8 @@ import com.kamelia.sprinkler.transcoder.binary.common.ASCII_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.LATIN1_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.UTF16_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.UTF8_NULL
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.ConstantSizedItemDecoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.MarkerEndedItemDecoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.PrefixedSizeItemDecoder
-import com.kamelia.sprinkler.util.readBoolean
-import com.kamelia.sprinkler.util.readByte
-import com.kamelia.sprinkler.util.readDouble
-import com.kamelia.sprinkler.util.readFloat
-import com.kamelia.sprinkler.util.readInt
-import com.kamelia.sprinkler.util.readLong
-import com.kamelia.sprinkler.util.readShort
-import com.kamelia.sprinkler.util.readString
+import com.kamelia.sprinkler.transcoder.binary.decoder.core.*
+import com.kamelia.sprinkler.util.*
 import java.nio.ByteOrder
 import java.nio.charset.Charset
 
@@ -308,7 +298,7 @@ fun <T : Enum<T>> EnumDecoderString(
  * @param element the constant value to return
  * @return a [Decoder] that reads a constant value from the input
  */
-fun <T> ConstantDecoder(element: T): Decoder<T> = ConstantSizedItemDecoder(0) { element }
+fun <T> ConstantDecoder(element: T): Decoder<T> = ConstantDecoder { element }
 
 /**
  * Creates a [Decoder] that reads a constant value from the input.
@@ -318,7 +308,11 @@ fun <T> ConstantDecoder(element: T): Decoder<T> = ConstantSizedItemDecoder(0) { 
  * @param factory the factory that creates the constant value to return
  * @return a [Decoder] that reads a constant value from the input
  */
-fun <T> ConstantDecoder(factory: () -> T): Decoder<T> = ConstantSizedItemDecoder(0) { factory() }
+fun <T> ConstantDecoder(factory: () -> T): Decoder<T> = object : Decoder<T> {
+    override fun decode(input: DecoderInput): Decoder.State<T> = Decoder.State.Done(factory())
+
+    override fun reset() = Unit
+}
 
 /**
  * Creates a [Decoder] that reads [Unit] from the input.
@@ -327,7 +321,7 @@ fun <T> ConstantDecoder(factory: () -> T): Decoder<T> = ConstantSizedItemDecoder
  *
  * @return a [Decoder] that reads [Unit] from the input
  */
-fun NoOpDecoder(): Decoder<Unit> = UNIT_DECODER
+fun UnitDecoder(): Decoder<Unit> = UNIT_DECODER
 
 /**
  * Creates a [Decoder] that reads `null` from the input.
