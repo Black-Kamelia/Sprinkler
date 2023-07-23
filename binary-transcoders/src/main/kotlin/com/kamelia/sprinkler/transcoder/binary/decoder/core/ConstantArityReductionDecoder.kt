@@ -33,7 +33,7 @@ import java.util.stream.Collector
  * @param R the type of the resulting object
  * @param collector a [Collector] used for the accumulation and creation of the resulting object
  * @param elementDecoder a [Decoder] used to decode the elements
- * @param size the number of elements to decode
+ * @param arity the number of elements to decode
  * @constructor Creates a new [ConstantArityReductionDecoder].
  * @see Collector
  * @see PrefixedArityReductionDecoder
@@ -42,25 +42,26 @@ import java.util.stream.Collector
 class ConstantArityReductionDecoder<T, C, R>(
     private val collector: Collector<T, C, R>,
     private val elementDecoder: Decoder<T>,
-    private val size: Int,
+    private val arity: Int,
 ) : Decoder<R> {
 
     private var collection: C? = null
     private var index = 0
 
     init {
-        require(size >= 0) { "Size must be non-negative (was $size)" }
+        require(arity >= 0) { "Arity must be non-negative (was $arity)" }
     }
 
     override fun decode(input: DecoderInput): Decoder.State<R> {
         val collection = collection ?: collector.supply().also { collection = it }
 
-        while (index < size) {
+        while (index < arity) {
             when (val elementState = elementDecoder.decode(input)) {
                 is Decoder.State.Done -> {
                     collector.accumulate(collection, elementState.value)
                     index++
                 }
+
                 else -> return elementState.mapEmptyState()
             }
         }
