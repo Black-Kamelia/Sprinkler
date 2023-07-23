@@ -99,11 +99,11 @@ This method is useful when the writing of byte is finished but the last byte is 
 written yet. All the padding bits appended to the last byte are set to `0`.
 
 ```kt
-val output: EncoderOutput = EncoderOutput.from { byte -> print(byte) }
-output.writeBit(1)
-output.writeBit(0)
-output.writeBit(1)
-output.flush() // should print the byte 1010_0000
+val output: EncoderOutput = ... // some output
+output.writeBit(1) // nothing is written
+output.writeBit(0) // nothing is written
+output.writeBit(1) // nothing is written
+output.flush() // should write the byte 1010_0000
 ```
 
 However, often, one needs quite a bit more than just these two methods to output the encoded data in an efficient way
