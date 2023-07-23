@@ -53,7 +53,7 @@ fun myDecoder(): Decoder<MyBytePair> = object : Decoder<MyBytePair> {
         val second: Int = input.read()                                // read the second byte
         if (second == -1) return Decoder.State.Processing             // if the input is empty, return Processing
         reset()                                                       // otherwise, reset the state of the decoder
-        return Decoder.State.Done(MyBytePair(first, second.toByte())) // and return the decoded object
+        return Decoder.State.Done(MyBytePair(first!!, second.toByte())) // and return the decoded object
     }
     
     override fun reset() {
