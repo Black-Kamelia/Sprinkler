@@ -3,14 +3,10 @@ package com.kamelia.sprinkler.transcoder.binary.encoder
 import com.kamelia.sprinkler.util.readInt
 import com.kamelia.sprinkler.util.readLong
 import com.kamelia.sprinkler.util.readString
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZonedDateTime
-import java.util.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.time.*
+import java.util.*
 
 class CommonEncodersTest {
 
@@ -173,7 +169,6 @@ class CommonEncodersTest {
         }
 
         val array = encoder.encode(zonedDateTime)
-        println(array.contentToString())
         val instant = array.readLong()
         val zoneIdSize = array.readInt(start = Long.SIZE_BYTES)
         val zoneIdString = array.readString(
