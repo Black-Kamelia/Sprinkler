@@ -1,9 +1,7 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Done
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Error
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Processing
+import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.*
 import com.kamelia.sprinkler.util.unsafeCast
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -65,6 +63,9 @@ interface Decoder<out T> {
     /**
      * Tries to decode an object of type [T] from the given [ByteBuffer] [input].
      *
+     * The [ByteBuffer] is assumed to be in write mode before the call to this method and will be in write mode after
+     * the call to this method.
+     *
      * @param input the input from which to decode the object
      * @return a [State] object representing the state of the decoding process
      */
@@ -81,6 +82,8 @@ interface Decoder<out T> {
     /**
      * Resets the internal state of the decoder. This method can be called at any time, even if the decoder is not in a
      * [State.Done] state.
+     *
+     * **NOTE**: This method does not need to be called after a
      */
     fun reset()
 
@@ -126,13 +129,10 @@ interface Decoder<out T> {
                 lazyField.value // force initialization
             }
 
-            override fun toString(): String {
-                val v = if (lazyField.isInitialized()) {
-                    lazyField.value.toString()
-                } else {
-                    "not initialized"
-                }
-                return "Done($v)"
+            override fun toString(): String = if (lazyField.isInitialized()) {
+                "Done(value=${lazyField.value.toString()})"
+            } else {
+                "Done(value not initialized)"
             }
 
         }
