@@ -42,7 +42,7 @@ others have default implementations depending on them.
 
 ### Encoder
 
-An `Encoder<T>` should implement at least the `encode(obj: T, output: EncoderOutput)` method. It is the main brick of
+An `Encoder<T>` should at least implement the `encode(obj: T, output: EncoderOutput)` method. It is the main brick of
 the API, and is used to define the behavior of the encoder. It should serialize the object `obj` to the `output`.
 
 From this, there are default implementations to write to other common outputs, such as a `ByteArray`, an `OutputStream`,
@@ -107,8 +107,8 @@ output.flush() // should write the byte 1010_0000
 ```
 
 However, often, one needs quite a bit more than just these two methods to output the encoded data in an efficient way
-(writing whole bytes, or event groups of bytes). To that effect, there are several sensible factories to create
-`EncoderOutput`s.
+(writing whole bytes, or even groups of bytes, instead of relying on the slow default implementation), and the logic 
+is quite complex to implement. To that effect, there are several sensible factories to create `EncoderOutput`s.
 
 Indeed, say we want to output the encoded data to *stdout*, here's an example of how we could do it:
 
@@ -119,7 +119,7 @@ stdoutEncoderOutput.write(42) // prints 42
 stdoutEncoderOutput.write(byteArrayOf(1, 2, 3)) // prints 1, 2 and 3
 ```
 
-(Obviously, this is not the most efficient way to do it, but it is just an example.)
+(Obviously, this is still not the most efficient way to do it, but it is just an example.)
 
 In fact, the `from` function above is an overload of a function which takes in an `OutputStream` as an argument.
 
@@ -133,13 +133,13 @@ As stated before, the `Encoder::encode` function actually acts as if the given `
 `ByteArray` by default, if you do not provide one.
 
 There are also several helper `encode` methods, such as ones which take in an `OutputStream`, a `File`, or a
-`java.nio.Path` as an argument, and automatically create an `EncoderOutput` for you behind the scenes.
+`Path` as an argument, and automatically create an `EncoderOutput` for you behind the scenes.
 
 ```kt
 val encoder: Encoder<String> = UTF8StringEncoder()
 encoder.encode("Hello, World!", System.out)
 encoder.encode("Hello, World!", File("hello.txt"))
-encoder.encode("Hello, World!", Path.of("hello.txt"))
+encoder.encode("Hello, World!", Path("hello.txt"))
 ```
 
 Note that there is a third factory to create an `EncoderOutput`, which is `EncoderOutput::nullOutput`. It returns an
