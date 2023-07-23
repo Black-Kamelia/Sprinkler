@@ -91,69 +91,6 @@ It offers several methods to perform different operations on the return object:
 - Bind operations, through `mapState`, `mapResult` or `mapEmptyState` ;
 - Utility operations, through `isDone`, `isNotDone`, `ifDone`, `ifError`, etc.
 
-### EncoderOutput
-
-Basically, the `EncoderOutput` is an abstraction that serves to map the behavior of an object to that of something similar
-to an `OutputStream`. It is used to output the encoded data, and is passed to the `Encoder` when encoding.
-
-The methods that need to be implemented are `writeBit(bit: Int)` and `flush()`.
-
-The `writeBit` method writes a single bit to the output. Only the least significant bit of the given `Int` is written,
-and all other bits are ignored. The `flush` method flushes the output, to force any buffered bytes to be written.
-This method is useful when the writing of byte is finished but the last byte is not full and therefore has not been
-written yet. All the padding bits appended to the last byte are set to `0`.
-
-```kt
-val output: EncoderOutput = EncoderOutput.from { byte -> print(byte) }
-output.writeBit(1)
-output.writeBit(0)
-output.writeBit(1)
-output.flush() // should print the byte 1010_0000
-```
-
-However, often, one needs quite a bit more than just these two methods to output the encoded data in an efficient way
-(writing whole bytes, or event groups of bytes). To that effect, there are several sensible factories to create
-`EncoderOutput`s.
-
-Indeed, say we want to output the encoded data to *stdout*, here's an example of how we could do it:
-
-```kt
-val stdoutEncoderOutput: EncoderOutput = EncoderOutput.from { byte -> print(byte) } // write byte implementation
-
-stdoutEncoderOutput.write(42) // prints 42
-stdoutEncoderOutput.write(byteArrayOf(1, 2, 3)) // prints 1, 2 and 3
-```
-
-(Obviously, this is not the most efficient way to do it, but it is just an example.)
-
-In fact, the `from` function above is an overload of a function which takes in an `OutputStream` as an argument.
-
-You can now use this `stdoutEncoderOutput` to output the encoded data to *stdout*.
-
-```kt
-UTF8StringEncoder().encode("Hello, World!", stdoutEncoderOutput) // prints the UTF-8 encoded bytes of "Hello, World!", prefixed with the size of the string
-```
-
-As stated before, the `Encoder::encode` function actually acts as if the given `EncoderOutput` writes to a
-`ByteArray` by default, if you do not provide one.
-
-There are also several helper `encode` methods, such as ones which take in an `OutputStream`, a `File`, or a
-`java.nio.Path` as an argument, and automatically create an `EncoderOutput` for you behind the scenes.
-
-```kt
-val encoder: Encoder<String> = UTF8StringEncoder()
-encoder.encode("Hello, World!", System.out)
-encoder.encode("Hello, World!", File("hello.txt"))
-encoder.encode("Hello, World!", Path.of("hello.txt"))
-```
-
-Note that there is a third factory to create an `EncoderOutput`, which is `EncoderOutput::nullOutput`. It returns an
-`EncoderOutput` which never writes to anything. It is a no-op, and is useful for testing purposes, for example.
-
----
-
-// get inspired by the text above to write the doc of DecoderInput
-
 ### DecoderInput
 
 The `DecoderInput` is an abstraction that serves to map the behavior of an object to that of something similar
@@ -185,10 +122,128 @@ The `from` function above takes in a function which returns a `Byte` as an argum
 
 ```kt
 val input: DecoderInput = DecoderInput.from(System.`in`) // from(InputStream)
-val input: DecoderInput = DecoderInput.from(ByteBuffer.allocate(10)) // from(ByteBuffer)
-val input: DecoderInput = DecoderInput.from(byteArrayOf(1, 2, 3)) // from(ByteArray)
+val input1: DecoderInput = DecoderInput.from(ByteBuffer.allocate(10)) // from(ByteBuffer)
+val input2: DecoderInput = DecoderInput.from(byteArrayOf(1, 2, 3)) // from(ByteArray)
 ```
 
 Note that there is a third factory to create a `DecoderInput`, which is `DecoderInput::nullInput`. It returns a
 `DecoderInput` which never reads from anything. It is a no-op, and is useful for testing purposes, for example.
+
+## Provided Decoders
+
+This library provides a lot of essential "atomic" decoders, which are used to decode most of the basic types, and some
+more complex but common ones, as well as factories to create them easily.
+
+### Core Decoders
+
+The core decoders implement and factorize the different ways to interpret a sequence of bytes; that is to say, for
+example, how to decode an arbitrary number of bytes from a sequence, a constant number of bytes from the sequence, etc.
+
+#### ConstantSizedDecoder
+
+The `ConstantSizedDecoder` is used to decode a sequence of bytes of a constant size. It
+is created from the number of bytes to read, and a function to convert the read bytes to the desired object.
+
+Here is an example of a decoder that decodes a single byte:
+
+```kt
+val byteDecoder: Decoder<Byte> = ConstantSizedDecoder(byteSize = 1, converter = { it[0] })
+```
+
+## PrefixedSizeDecoder
+
+The `PrefixedSizeDecoder` decoder is used to decode a sequence of bytes of a variable size. It  first reads a prefix of
+a constant size which represents the size of the sequence to read, and then reads the sequence itself. It is created
+from a decoder that decodes a `Number` and a function to convert the read bytes to the desired object.
+
+The following example shows an implementation of a decoder of `String` objects using the `PrefixedSizeDecoder` (it first
+decodes the size of the string represented as a `Byte`, and then reads the string itself).
+
+```kt
+val stringDecoder: Decoder<String> = PrefixedSizeDecoder(
+    sizeDecoder = byteDecoder, // the previously defined byte decoder
+    converter = { it.decodeToString() }
+)
+```
+
+#### MarkerEndedItemDecoder
+
+The `MarkerEndedItemDecoder` decoder is used to decode a sequence of bytes of a variable size, which is ended by a
+specific byte. It is created from an end marker (a `ByteArray`) and a function to convert the read bytes to the desired
+object.
+
+The following example shows an implementation of a decoder of `String` objects using the `MarkerEndedItemDecoder` (it
+stops decoding when it reads a `0` byte).
+
+```kt
+val stringDecoder: Decoder<String> = MarkerEndedItemDecoder(
+    endMarker = byteArrayOf(0), // the end marker
+    converter = { it.decodeToString() }
+)
+```
+
+#### ConstantArityReductionDecoder
+
+The `ConstantArityReductionDecoder` decoder is used to decode the same object a constant number of times. It is created
+from the number of times to decode the object, a decoder that decodes the objects and a `Collector` to collect the
+decoded objects.
+
+```kt
+val byteListDecoder: Decoder<List<Byte>> = ConstantArityReductionDecoder(
+    arity = 3,
+    elementDecoder = byteDecoder, // the previously defined byte decoder
+    collector = Collectors.toList()
+)
+```
+
+#### PrefixedArityReductionDecoder
+
+The `PrefixedArityReductionDecoder` decoder is used to decode the same object a variable number of times. It is created
+from a decoder that decodes the number of times to decode the objects, a decoder that decodes the object and a
+`Collector` to collect the decoded objects.
+
+```kt
+val byteListDecoder: Decoder<List<Byte>> = PrefixedArityReductionDecoder(
+    arityDecoder = byteDecoder,   // the previously defined byte decoder
+    elementDecoder = byteDecoder, // the previously defined byte decoder
+    collector = Collectors.toList()
+)
+```
+
+#### MarkerEndedArityReductionDecoder
+
+The `MarkerEndedArityReductionDecoder` decoder is used to decode the same object a variable number of times, until a
+specific object is read. It is created from a decoder that decodes the objects, a function that tests the decoded
+elements and returns whether the decoding should stop, a boolean that indicates whether the end marker should be
+included in the decoded objects, and a `Collector` to collect the decoded objects.
+
+The following example shows an implementation of a decoder of `List<Byte>` objects using the
+`MarkerEndedArityReductionDecoder` (it stops decoding when it reads a `0` byte).
+
+```kt 
+val byteListDecoder: Decoder<List<Byte>> = MarkerEndedArityReductionDecoder(
+    elementDecoder = byteDecoder, // the previously defined byte decoder
+    endMarkerPredicate = { it == 0 }, // the end marker
+    keepLast = false,
+    collector = Collectors.toList()
+)
+```
+
+#### NothingDecoder
+
+The `NothingDecoder` decoder is a special decoder that always returns `Decoder.State.Error`. It is useful when one
+needs a decoder of a specific type and does not have one. The class offers several constructors to create a decoder
+using a specific error message, a specific exception or a factory function.
+
+```kt
+val nothingDecoder: Decoder<Nothing> = NothingDecoder("This does not work")
+
+fun foo(decoder: Decoder<Int>) {
+    // does some stuff
+}
+
+foo(nothingDecoder) // valid, we can like this test the behavior of the function without having an actual decoder
+```
+
+
 
