@@ -71,7 +71,7 @@ abstraction to represent the stream of bytes to decode (see the next section for
 The previously defined decoder can be used as follows:
 
 ```kt
-val input: DecoderInput = ... // some input
+val input: DecoderInput = MyDecoderInput()
 val myPair: MyBytePair = myDecoder().decode(input).get() // decode the input and get the result
 ```
 
@@ -138,6 +138,8 @@ more complex but common ones, as well as factories to create them easily.
 
 The core decoders implement and factorize the different ways to interpret a sequence of bytes; that is to say, for
 example, how to decode an arbitrary number of bytes from a sequence, a constant number of bytes from the sequence, etc.
+This API offers relatively low-level decoders, which are used to create more complex ones. It is usually not necessary
+to use them directly, but they are provided for completeness.
 
 #### ConstantSizedDecoder
 
@@ -245,5 +247,96 @@ fun foo(decoder: Decoder<Int>) {
 foo(nothingDecoder) // valid, we can like this test the behavior of the function without having an actual decoder
 ```
 
+### Base Decoders
 
+Base decoders are the most basic decoders, and decode all the primitive types, as well as enum variants, and even
+`String`s from a chosen encoding.
+
+#### Primitive Decoders
+
+The most common types one will be decoding are the JVM primitive types.
+
+Indeed, the provided factories primitive decoders are :
+- `ByteDecoder`
+- `ShortDecoder`
+- `IntDecoder`
+- `LongDecoder`
+- `FloatDecoder`
+- `DoubleDecoder`
+- `BooleanDecoder`
+
+All of those, except for `ByteDecoder` and `BooleanDecoder`, accept `ByteOrder` as an argument, which is used to
+determine the byte order (endianness) of the encoded data. If you do not provide one, it will default to
+`ByteOrder.BIG_ENDIAN`.
+
+#### String Decoders
+
+In binary encoding in general, there are two major ways to decode strings of text (aside from the encoding):
+- Fixed-length encoding, where the length of the string is known beforehand, and is decoded before the string itself.
+- Variable-length encoding, where the length of the string is not known beforehand, in which case, a terminator flag
+  (or, end marker) is decoded after the string to indicate the end of the string, in the same vein as C-style strings,
+  which are null-terminated.
+
+To that effect, the two main string decoder factories are two overloads of `StringDecoder`, both of them accept a
+`Charset`, and one also takes a `Decoder<Int>` to decode the length of the string, while the other one uses a
+`ByteArray` corresponding to the end marker.
+
+For example:
+
+```kt
+val utf8PrefixedLengthDecoder: Decoder<String> = StringDecoder(Charsets.UTF_8, IntDecoder())
+val asciiNullTerminatedDecoder: Decoder<String> = StringDecoder(Charsets.US_ASCII, byteArrayOf(0))
+```
+
+Fortunately, there are also some predefined factories for the most common encodings, which are:
+- `UTF8StringDecoder`
+- `UTF16StringDecoder`
+- `ASCIIStringDecoder`
+- `Latin1StringDecoder`
+- `UTF8StringDecoderEM` (EM stands for End Marker)
+- `UTF16StringDecoderEM` (EM stands for End Marker)
+- `ASCIIStringDecoderEM` (EM stands for End Marker)
+- `Latin1StringDecoderEM` (EM stands for End Marker)
+
+They have sensible defaults for the length decoder, and the end marker, and are the recommended way to decode strings.
+
+#### Enum Decoders
+
+Enum decoders are used to decode enum variants. They are very simple, and come in two flavors:
+- `EnumDecoder` which decodes the ordinal of the enum variant.
+- `EnumDecoderString` which decodes the name of the enum variant.
+
+#### Constant Decoders
+
+Constant decoders are used to decode a constant value. The two base factories to create them are accept whether the
+constant value that will be decoded or a function that returns the constant value.
+
+For example:
+
+```kt
+val constantDecoder: Decoder<Int> = ConstantDecoder(42)
+val nowDecoder: Decoder<Long> = ConstantDecoder { System.currentTimeMillis() }
+```
+
+There also are two predefined factories for the most common constant decoders, which are:
+- `NullDecoder` which always decodes `null` ;
+- `UnitDecoder` which always decodes `Unit`.
+
+### Common Decoders
+
+Common decoders decode more complex types that are commonly used, and are composed of other decoders.
+
+Here is a list of the provided common decoders:
+
+- `UUIDDecoder` which decodes a `UUID` from two `Long`s.
+- `UUIDStringDecoder` which decodes a `UUID` from a `String` using the `UUID.fromString()` method.
+- `PairDecoder<T, U>` which composes two decoders (of `T` and `U`) to decode a `Pair<T, U>`.
+- Time related decoders :
+    - `InstantDecoder`
+    - `LocalTimeDecoder`
+    - `LocalDateDecoder`
+    - `LocalDateTimeDecoder`
+    - `DateDecoder`
+    - `ZoneIdDecoder`
+    - `ZonedDateTimeDecoder`
 
