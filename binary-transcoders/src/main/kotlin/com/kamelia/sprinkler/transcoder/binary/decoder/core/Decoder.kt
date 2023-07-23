@@ -107,33 +107,17 @@ interface Decoder<out T> {
          * via the [value] property.
          *
          * @param T the type of the decoded object
-         * @constructor Creates a new [Done] state with the given factory function.
-         * @param factory a function that returns the decoded object
+         * @property value The decoded object.
+         * @constructor Creates a new [Done] state with the given [value].
+         * @param value the decoded object
          */
-        class Done<T>(factory: () -> T) : State<T>() {
+        class Done<T>(val value: T) : State<T>() {
 
-            private val lazyField = lazy(LazyThreadSafetyMode.NONE, factory)
+            override fun toString(): String = "Done($value)"
 
-            /**
-             * The decoded object.
-             */
-            val value: T
-                get() = lazyField.value
+            override fun equals(other: Any?): Boolean = other is Done<*> && value == other.value
 
-            /**
-             * Creates a new [Done] state with the given [value].
-             *
-             * @param value the decoded object
-             */
-            constructor(value: T) : this({ value }) {
-                lazyField.value // force initialization
-            }
-
-            override fun toString(): String = if (lazyField.isInitialized()) {
-                "Done(value=${lazyField.value.toString()})"
-            } else {
-                "Done(value not initialized)"
-            }
+            override fun hashCode(): Int = value.hashCode()
 
         }
 
@@ -164,6 +148,10 @@ interface Decoder<out T> {
             constructor(message: String) : this(IllegalStateException(message))
 
             override fun toString(): String = "Error(${error.message})"
+
+            override fun equals(other: Any?): Boolean = other is Error && error == other.error
+
+            override fun hashCode(): Int = error.hashCode()
 
         }
 
