@@ -161,9 +161,9 @@ even `String`s to a chosen encoding.
 
 #### Primitive Encoders
 
-The most common types one will be encoding are the JVM primitive types.
+The ones corresponding to the most common types encode the JVM primitive types.
 
-Indeed, the provided factories primitive encoders are :
+Indeed, the provided factories of primitive encoders are :
 
 - `ByteEncoder`
 - `ShortEncoder`
@@ -173,13 +173,13 @@ Indeed, the provided factories primitive encoders are :
 - `DoubleEncoder`
 - `BooleanEncoder`
 
-All of those, except for `ByteEncoder` and `BooleanEncoder`, accept `ByteOrder` as an argument, which is used to
+All of those, except for `ByteEncoder` and `BooleanEncoder`, accept a `ByteOrder` as an argument, which is used to
 determine the byte order (endianness) of the encoded data. If you do not provide one, it will default to
 `ByteOrder.BIG_ENDIAN`.
 
 #### String Encoders
 
-In binary encoding in general, there are two major ways to encode strings of text (aside from the encoding):
+In binary encoding in general, there are two major ways to encode strings of text (aside from the charset):
 
 - Fixed-length encoding, where the length of the string is known beforehand, and is encoded before the string itself.
 - Variable-length encoding, where the length of the string is not known beforehand, in which case, a terminator flag
@@ -197,7 +197,7 @@ val utf8PrefixedLengthEncoder: Encoder<String> = StringEncoder(Charsets.UTF_8, I
 val asciiNullTerminatedEncoder: Encoder<String> = StringEncoder(Charsets.US_ASCII, byteArrayOf(0))
 ```
 
-Fortunately, there are also some predefined factories for the most common encodings, which are:
+Fortunately, there are also some predefined factories for the most common charsets, which are:
 
 - `UTF8StringEncoder`
 - `UTF16StringEncoder`
@@ -331,11 +331,11 @@ or even in a collection. For example, a linked list node is a recursive data str
 
 To encode an object using an `EncodingScope`, the interface has an `encode(obj: E, encoder: Encoder<E>)` method.
 This method is the main entry point for encoding and is the foundation of the interface as a whole. It enables the
-encoding of any type of object, provided an appropriate encoder is provided for that purpose.
+encoding of any type of object, provided an appropriate encoder is given for that purpose.
 
 However, the main advantage of the `EncodingScope` does not lie in this method but rather in the overloads provided by
-the interface. These overloads allow encoding of basic types (`Int`, `Long`, `String`, etc.). The benefit is that the
-way these objects are encoded is determined by the scope itself, in particular, by its implementation.
+the interface. These overloads allow the encoding of basic types (`Int`, `Long`, `String`, etc.). The benefit is that 
+the way these objects are encoded is determined by the scope itself, in particular, by its implementation.
 
 It is thus possible, using the `composedEncoder` method (which creates an encoder from an `EncodingScope` and will be
 presented in the next section in more details), to write the following code (note that the scope is passed as the
@@ -352,7 +352,8 @@ val encoder: Encoder<Person> = composedEncoder<Person> { obj: Person -> // this:
 
 As explained earlier, the interface also allows the encoding of recursive structures. This functionality is
 achieved using the encoder accessible through the `self` property, which is a special encoder that can encode an
-object of the same type as the scope to which it belongs, by repeating the same calls as those made on the scope.
+object of the same type as the scope to which it belongs to, by repeating the same calls as those made on the scope
+itself.
 
 Thus, it is possible to recursively encode a linked list as follows:
 
@@ -363,7 +364,7 @@ val encoder: Encoder<Node> = composedEncoder<Node> { obj: Node -> // this: Encod
     encode(obj.value) // EncodingScope.encode(Int)
     if (obj.next != null) {
         encode(true) // to indicate that the next node is not null
-        encode(obj.next, self) // EncodingScope.encode(Int) // EncodingScope.self
+        encode(obj.next, self) // EncodingScope.encode(Node) // EncodingScope.self
     } else {
         encode(false) // to indicate that the next node is null
     }
@@ -373,7 +374,7 @@ val encoder: Encoder<Node> = composedEncoder<Node> { obj: Node -> // this: Encod
 Similarly to the interface's overloads for encoding basic types, it also provides overloads to encode common recursive
 cases, such as:
 
-- `encode(E?)` for encoding optional recursion
+- `encode(E?)` for encoding optional recursion (like in the example above)
 - `encode(Collection<E>)` for encoding recursion represented by a collection
 - `encode(Array<E>)` for encoding recursion represented by an array
 - `encode(E)` for encoding direct recursion ; this method needs to be used within a conditional block to avoid infinite

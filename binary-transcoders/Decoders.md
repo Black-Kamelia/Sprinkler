@@ -9,10 +9,9 @@ We will see that the API provides building blocks to create decoders for any typ
 to create more complex decoders very easily.
 
 For simplification and readability purposes, every class name referenced in the following sections will not be written
-in their fqname form, but rather in their simple name form. For
-example, `com.kamelia.sprinkler.transcoder.binary.decoder.Decoder`
-will be written as `Decoder`. The same goes for all classes in the
-package `com.kamelia.sprinkler.transcoder.binary.decoder`.
+in their fqname form, but rather in their simple name form. For example, 
+`com.kamelia.sprinkler.transcoder.binary.decoder.Decoder` will be written as `Decoder`. The same goes for all classes in
+the package `com.kamelia.sprinkler.transcoder.binary.decoder`.
 
 ## Summary
 
@@ -21,12 +20,12 @@ package `com.kamelia.sprinkler.transcoder.binary.decoder`.
     - [DecoderInput](#decoderinput)
 - [Provided Decoders](#provided-decoders)
     - [Core Decoders](#core-decoders)
-        - [ConstantSizedDecoder](#constantsizeddecoder)
-        - [PrefixedSizeDecoder](#prefixedsizedecoder)
+        - [ConstantSizedItemDecoder](#ConstantSizedItemDecoder)
+        - [PrefixedSizeItemDecoder](#PrefixedSizeItemDecoder)
         - [MarkerEndedItemDecoder](#markerendeditemdecoder)
         - [ConstantArityReductionDecoder](#constantarityreductiondecoder)
         - [PrefixedArityReductionDecoder](#prefixedarityreductiondecoder)
-        - [MarkerEndedArityReductionDecoder](#markerendedarityreductiondecoder)
+        - [MarkerEndedReductionDecoder](#MarkerEndedReductionDecoder)
         - [NothingDecoder](#nothingdecoder)
     - [Base Decoders](#base-decoders)
         - [Primitive Decoders](#primitive-decoders)
@@ -56,16 +55,15 @@ While they have several methods, only a few need to actually be implemented in e
 default implementations depending on them.
 
 Along with them, a [monadic](https://en.wikipedia.org/wiki/Monad_(functional_programming)) result type is also provided
-to ensure that partial decoding is possible, in the form
-of `Decoder.State`.
+to ensure that partial decoding is possible, in the form of `Decoder.State`.
 
 ### Decoder
 
 A `Decoder<T>` should at least implement the following two methods: `decode(input: DecoderInput)` and `reset()`. The
 `decode` method is the main brick of the API, and is used to define the behavior of the decoder. It should deserialize
 the bytes coming from the `input` and return a `Decoder.State`. The `reset` method is used to reset the state of the
-decoder; However, the decoder automatically resets itself whenever it fully decodes an object (the method is useful when
-an error occurs, or when the decoding must be interrupted).
+decoder; However, the decoder automatically should reset itself whenever it fully decodes an object (the method is 
+useful when an error occurs, or when the decoding must be interrupted).
 
 Here is an example of a decoder:
 
@@ -76,15 +74,15 @@ fun myDecoder(): Decoder<MyBytePair> = object : Decoder<MyBytePair> {
     private var first: Byte? = null
 
     override fun decode(input: DecoderInput): Decoder.State<MyBytePair> {
-        if (first == null) {                                          // if the first byte has not been read yet
-            val byte: Int = input.read()                              // read the first byte
-            if (byte == -1) return Decoder.State.Processing           // if the input is empty, return Processing
-            first = byte.toByte()                                     // otherwise, store the byte
+        if (first == null) {                                            // if the first byte has not been read yet
+            val byte: Int = input.read()                                // read the first byte
+            if (byte == -1) return Decoder.State.Processing             // if the input is empty, return Processing
+            first = byte.toByte()                                       // otherwise, store the byte
         }
 
-        val second: Int = input.read()                                // read the second byte
-        if (second == -1) return Decoder.State.Processing             // if the input is empty, return Processing
-        reset()                                                       // otherwise, reset the state of the decoder
+        val second: Int = input.read()                                  // read the second byte
+        if (second == -1) return Decoder.State.Processing               // if the input is empty, return Processing
+        reset()                                                         // otherwise, reset the state of the decoder
         return Decoder.State.Done(MyBytePair(first!!, second.toByte())) // and return the decoded object
     }
 
@@ -112,15 +110,14 @@ val myPair: MyBytePair = myDecoder().decode(input).get() // decode the input and
 You can notice the `get()` method call on the result of the decoding. This is because the `decode` method returns a
 `Decoder.State`, which is a [monadic](https://en.wikipedia.org/wiki/Monad_(functional_programming)) type that represents
 the result of the decoding.
-It can be either:
 
+It can be either:
 - `Decoder.State.Done`, which means that the decoder has fully decoded the object and returns it (the instance contains
   the decoded object) ;
 - `Decoder.State.Processing`, which means that the decoder needs more bytes to fully decode the object ;
 - `Decoder.State.Error`, which means that an error occurred during the decoding (the instance contains the error).
 
 It offers several methods to perform different operations on the return object:
-
 - Unwrap operations, through `get` , `getOrNull`, `getOrElse` or `getOrThrow` ;
 - Bind operations, through `mapState`, `mapResult` or `mapEmptyState` ;
 - Utility operations, through `isDone`, `isNotDone`, `ifDone`, `ifError`, etc.
@@ -147,20 +144,20 @@ it:
 var value: Byte = 0.toByte()
 val stdinDecoderInput: DecoderInput = DecoderInput.from { value++ } // will return 0, 1, 2, ...
 
-stdinDecoderInput.read() // returns 0
-stdinDecoderInput.read() // returns 1
+stdinDecoderInput.read()    // returns 0
+stdinDecoderInput.read()    // returns 1
 stdinDecoderInput.readBit() // returns 0 (the most significant bit of 2 = 0000_0010)
 ```
 
 (Obviously, this is not the most realistic implementation, but it is just an example.)
 
-The `from` function above takes in a function which returns a `Byte` as an argument. There are also several helper
+The `from` function above takes in a function which returns a `Byte` as an argument. There are also several other helper
 `from` methods, such as ones which take in an `InputStream`, a `ByteBuffer`, or a `ByteArray` as an argument.
 
 ```kt
-val input: DecoderInput = DecoderInput.from(System.`in`) // from(InputStream)
-val input1: DecoderInput = DecoderInput.from(ByteBuffer.allocate(10)) // from(ByteBuffer)
-val input2: DecoderInput = DecoderInput.from(byteArrayOf(1, 2, 3)) // from(ByteArray)
+val input1: DecoderInput = DecoderInput.from(System.`in`) // from(InputStream)
+val input2: DecoderInput = DecoderInput.from(ByteBuffer.allocate(10)) // from(ByteBuffer)
+val input3: DecoderInput = DecoderInput.from(byteArrayOf(1, 2, 3)) // from(ByteArray)
 ```
 
 Note that there is a third factory to create a `DecoderInput`, which is `DecoderInput::nullInput`. It returns a
@@ -178,30 +175,33 @@ example, how to decode an arbitrary number of bytes from a sequence, a constant 
 This API offers relatively low-level decoders, which are used to create more complex ones. It is usually not necessary
 to use them directly, but they are provided for completeness.
 
-#### ConstantSizedDecoder
+#### ConstantSizedItemDecoder
 
-The `ConstantSizedDecoder` is used to decode a sequence of bytes of a constant size. It
+The `ConstantSizedItemDecoder` is used to decode a sequence of bytes of a constant size. It
 is created from the number of bytes to read, and a function to convert the read bytes to the desired object.
 
 Here is an example of a decoder that decodes a single byte:
 
 ```kt
-val byteDecoder: Decoder<Byte> = ConstantSizedDecoder(byteSize = 1, converter = { it[0] })
+val byteDecoder: Decoder<Byte> = ConstantSizedItemDecoder(
+    byteSize = 1, 
+    converter = { get(0) } // this: ByteArray
+)
 ```
 
-#### PrefixedSizeDecoder
+#### PrefixedSizeItemDecoder
 
-The `PrefixedSizeDecoder` decoder is used to decode a sequence of bytes of a variable size. It first reads a prefix of
+The `PrefixedSizeItemDecoder` decoder is used to decode a sequence of bytes of a variable size. It first reads a prefix of
 a constant size which represents the size of the sequence to read, and then reads the sequence itself. It is created
 from a decoder that decodes a `Number` and a function to convert the read bytes to the desired object.
 
-The following example shows an implementation of a decoder of `String` objects using the `PrefixedSizeDecoder` (it first
+The following example shows an implementation of a decoder of `String` objects using the `PrefixedSizeItemDecoder` (it first
 decodes the size of the string represented as a `Byte`, and then reads the string itself).
 
 ```kt
-val stringDecoder: Decoder<String> = PrefixedSizeDecoder(
+val stringDecoder: Decoder<String> = PrefixedSizeItemDecoder(
     sizeDecoder = byteDecoder, // the previously defined byte decoder
-    converter = { it.decodeToString() }
+    converter = { decodeToString() } // this: ByteArray, it: Int (size)
 )
 ```
 
@@ -217,7 +217,7 @@ stops decoding when it reads a `0` byte).
 ```kt
 val stringDecoder: Decoder<String> = MarkerEndedItemDecoder(
     endMarker = byteArrayOf(0), // the end marker
-    converter = { it.decodeToString() }
+    converter = { decodeToString() } // this: ByteArray, it: Int (size)
 )
 ```
 
@@ -229,9 +229,9 @@ decoded objects.
 
 ```kt
 val byteListDecoder: Decoder<List<Byte>> = ConstantArityReductionDecoder(
-    arity = 3,
+    collector = Collectors.toList(),
     elementDecoder = byteDecoder, // the previously defined byte decoder
-    collector = Collectors.toList()
+    arity = 3,
 )
 ```
 
@@ -243,28 +243,28 @@ from a decoder that decodes the number of times to decode the objects, a decoder
 
 ```kt
 val byteListDecoder: Decoder<List<Byte>> = PrefixedArityReductionDecoder(
-    arityDecoder = byteDecoder,   // the previously defined byte decoder
+    collector = Collectors.toList(),
     elementDecoder = byteDecoder, // the previously defined byte decoder
-    collector = Collectors.toList()
+    sizeDecoder = byteDecoder,    // the previously defined byte decoder
 )
 ```
 
-#### MarkerEndedArityReductionDecoder
+#### MarkerEndedReductionDecoder
 
-The `MarkerEndedArityReductionDecoder` decoder is used to decode the same object a variable number of times, until a
+The `MarkerEndedReductionDecoder` decoder is used to decode the same object a variable number of times, until a
 specific object is read. It is created from a decoder that decodes the objects, a function that tests the decoded
 elements and returns whether the decoding should stop, a boolean that indicates whether the end marker should be
 included in the decoded objects, and a `Collector` to collect the decoded objects.
 
 The following example shows an implementation of a decoder of `List<Byte>` objects using the
-`MarkerEndedArityReductionDecoder` (it stops decoding when it reads a `0` byte).
+`MarkerEndedReductionDecoder` (it stops decoding when it reads a `0` byte).
 
 ```kt 
-val byteListDecoder: Decoder<List<Byte>> = MarkerEndedArityReductionDecoder(
+val byteListDecoder: Decoder<List<Byte>> = MarkerEndedReductionDecoder(
+    collector = Collectors.toList(),
     elementDecoder = byteDecoder, // the previously defined byte decoder
-    endMarkerPredicate = { it == 0 }, // the end marker
     keepLast = false,
-    collector = Collectors.toList()
+    shouldStop = { it == 0 }, // the end marker
 )
 ```
 
@@ -281,7 +281,7 @@ fun foo(decoder: Decoder<Int>) {
     // does some stuff
 }
 
-foo(nothingDecoder) // valid, we can like this test the behavior of the function without having an actual decoder
+foo(nothingDecoder) // valid, we can test the behavior of the function without having an actual decoder
 ```
 
 ### Base Decoders
@@ -291,9 +291,9 @@ Base decoders are the most basic decoders, and decode all the primitive types, a
 
 #### Primitive Decoders
 
-The most common types one will be decoding are the JVM primitive types.
+The ones corresponding to the most common types decode the JVM primitive types.
 
-Indeed, the provided factories primitive decoders are :
+Indeed, the provided factories of primitive decoders are :
 
 - `ByteDecoder`
 - `ShortDecoder`
@@ -303,16 +303,16 @@ Indeed, the provided factories primitive decoders are :
 - `DoubleDecoder`
 - `BooleanDecoder`
 
-All of those, except for `ByteDecoder` and `BooleanDecoder`, accept `ByteOrder` as an argument, which is used to
+All of those, except for `ByteDecoder` and `BooleanDecoder`, accept a `ByteOrder` as an argument, which is used to
 determine the byte order (endianness) of the encoded data. If you do not provide one, it will default to
 `ByteOrder.BIG_ENDIAN`.
 
 #### String Decoders
 
-In binary encoding in general, there are two major ways to decode strings of text (aside from the encoding):
+In binary decoding in general, there are two major ways to decode strings of text (aside from the charset):
 
-- Fixed-length encoding, where the length of the string is known beforehand, and is decoded before the string itself.
-- Variable-length encoding, where the length of the string is not known beforehand, in which case, a terminator flag
+- Fixed-length decoding, where the length of the string is known beforehand, and is decoded before the string itself.
+- Variable-length decoding, where the length of the string is not known beforehand, in which case, a terminator flag
   (or, end marker) is decoded after the string to indicate the end of the string, in the same vein as C-style strings,
   which are null-terminated.
 
@@ -327,7 +327,7 @@ val utf8PrefixedLengthDecoder: Decoder<String> = StringDecoder(Charsets.UTF_8, I
 val asciiNullTerminatedDecoder: Decoder<String> = StringDecoder(Charsets.US_ASCII, byteArrayOf(0))
 ```
 
-Fortunately, there are also some predefined factories for the most common encodings, which are:
+Fortunately, there are also some predefined factories for the most common charsets, which are:
 
 - `UTF8StringDecoder`
 - `UTF16StringDecoder`
@@ -344,13 +344,13 @@ They have sensible defaults for the length decoder, and the end marker, and are 
 
 Enum decoders are used to decode enum variants. They are very simple, and come in two flavors:
 
-- `EnumDecoder` which decodes the ordinal of the enum variant.
-- `EnumDecoderString` which decodes the name of the enum variant.
+- `EnumDecoder` which decodes the enum variant from its ordinal.
+- `EnumDecoderString` which decodes the enum variant from its name.
 
 #### Constant Decoders
 
-Constant decoders are used to decode a constant value. The two base factories to create them are accept whether the
-constant value that will be decoded or a function that returns the constant value.
+Constant decoders are used to decode a constant value. The two base factories to create them accept either a constant
+value that will be decoded, or a function that returns the constant value.
 
 For example:
 
@@ -392,8 +392,8 @@ decoder for. To that effect, there are several decoder mappers that can be used 
 The first one is `Decoder<T>.mapTo(mapper: (T) -> Decoder<R>): Decoder<R>`. It is used to map a decoder to another type
 using a function that takes in the decoded object and returns a decoder for the desired type.
 
-Imagine for example a decoder that decodes all types of integers, by first decoding a byte the number of bytes to read,
-and then reading the bytes themselves. We could use the `mapTo` method to map the decoder to a `Decoder<Number>`:
+Say we want, for example, a decoder that decodes all types of integers, by first decoding a byte the number of bytes to 
+read, and then reading the bytes themselves. We could use the `mapTo` method to map the decoder to a `Decoder<Number>`:
 
 ```kt
 val numberDecoder: Decoder<Number> = ByteDecoder().mapTo {
@@ -441,15 +441,15 @@ val myEnumDecoder: Decoder<MyEnum> = UTF8StringDecoder().mapState {
     try {
         Decoder.State.Done(MyEnum.valueOf(it))
     } catch (e: IllegalArgumentException) {
-        Decoder.State.Error("Invalid enum value $it")
+        Decoder.State.Error("Unknown enum variant $it")
     }
 }
 ```
 
 ### Collections, Maps and Arrays
 
-Sometimes, one will have a decoder for a type, and will want to decode a collection, map or array of that type. To that
-effect, there are several mapper functions to create decoders for collections, maps and arrays.
+Sometimes, one will have a decoder for a type, and will want to decode a collection, map, or array of that type. To that
+effect, there are several mapper functions to create decoders for collections, maps, and arrays.
 
 The base mapper, `toCollection`, uses a `Collector` to determine how to collect the decoded objects. It exists in three
 variants:
@@ -481,12 +481,97 @@ val booleanDecoder: Decoder<Boolean> = BooleanEncoder()
 val nullableBooleanDecoder: Decoder<Boolean?> = booleanDecoder.toOptional()
 ```
 
+Note that in the Java world, there is no difference in the type itself, so one may need to name or document the decoder
+properly to clear the potential ambiguity.
+
 ## Decoder Composition
+
+The heart and goal of this library is to provide a way to compose atomic decoders together to create more complex
+decoders, which can in turn be used to compose even more complex decoders, and so on.
+
+For that, the API provides a neat DSL to compose decoders together, and even allow easy decoding of recursive data
+structures (a data structure which contains a nullable reference to its own type, or a collection of objects of its own
+type).
 
 ### DecodingScope interface
 
-### Scope usage
+The composition API takes shape through the `DecodingScope` interface. This interface simplifies the decoding of an
+object by decoding each of the different components required to create the object. It also allows decoding objects with
+a recursive structure, that is to say, an object which contains a reference to its own type, nullable or not, or even in
+a collection. For example, a linked list node is a recursive data structure.
 
+To encode an object using a `DecodingScope`, the interface has a `decode(decoder: Decoder<T>): T` method. This method
+is the main entry point for decoding and is the foundation of the interface as a whole. It enables the decoding of any
+type of object, provided an appropriate decoder is given for that purpose.
+
+However, the main advantage of the `DecodingScope` does not lie in this method but rather in the overloads provided by
+the interface. These overloads allow the decoding of basic types (`Int`, `Long`, `String`, etc.). The benefit is that
+the way these objects are decoded is determined by the scope itself, in particular, by its implementation.
+
+It is thus possible, using the `composedDecoder` method (which creates an encoder from an `EncodingScope` and will be
+presented in the next section in more details), to write the following code (note that the scope is passed as the
+receiver object):
+
+```kt
+class Person(val name: String, val age: Int)
+
+val decoder: Decoder<Person> = composedDecoder<Person> { // this: DecodingScope<Person>
+    val name: String = string()
+    val age: Int = int()
+    
+    Person(name, age)
+}
+```
+
+As explained earlier, the interface also allows the encoding of recursive structures. This functionality is achieved
+using the decoder accessible through the `self` property, which is a special decoder that can decode an object of the
+same type as the scope to which it belongs to, by repeating the same calls as those made on the scope itself.
+
+Thus, it is possible to recursively encode a linked list as follows:
+
+```kt
+class Node(val value: Int, val next: Node?)
+
+val decoder: Decoder<Node> = composedDecoder<Node> { // this: DecodingScope<Node>
+    val value = int() // DecodingScope.decode(Int)
+    val hasNext = boolean() // DecodingScope.decode(Boolean) / check if it is the last node
+    val next = if (hasNext) { // if it is not the last node
+        decode(self) // DecodingScope.decode(Node) // DecodingScope.self / decode the next node recursively
+    } else {
+        null // don't decode anymore
+    }
+    Node(value, next) // build the current node
+}
+```
+
+Similarly to the interface's overloads for decoding basic types, it also provides overloads to decode common recursive
+cases, such as:
+
+- `selfOrNull(): E?` for decoding optional recursion (like in the example above)
+- `selfCollection(Collector<E, *, R>): R` for decoding recursion represented by a collection
+- `selfList(): List<E>` which is an alias for `selfCollection(toList())`
+- `selfSet(): Set<E>` which is an alias for `selfCollection(toSet())`
+- `selfArray((Int) -> Array<E?>): Array<E>` which is an alias for `selfCollection(ExtendedCollectors.toArray(factory))`
+- `selfCollectionOrNull(Collector<E, *, R>): R?` for decoding optional recursion represented by a collection
+- `selfListOrNull(): List<E>?` which is an alias for `selfCollectionOrNull(toList())`
+- `selfSetOrNull(): Set<E>?` which is an alias for `selfCollectionOrNull(toSet())`
+- `selfArrayOrNull((Int) -> Array<E?>): Array<E>?` which is an alias for
+  `selfCollectionOrNull(ExtendedCollectors.toArray(factory))`
+- `self(): E` for encoding direct recursion ; this method needs to be used within a conditional block to avoir infinite
+  recursion.
+
+> **NOTE**: The self decoder is not implemented as a "typical" decoder and must be used with caution.
+> Any usage that does not adhere to the instructions provided in the documentation may result in unexpected behavior.
+
+Moreover, there are way to perform complex conditional decoding cases in an elegant manner thanks to some methods
+provided by the `DecodingScope`:
+- `oncePerObject(() -> T): T` executes the given function only once per scope, that is to say, in the case of recursive
+  encoding, any subsequent call to this method will return the cached result for the same object.
+- `skip(Long)` skips the given amount of bytes.
+- `errorState(Decoder.State.Error): Nothing` stops the decoding process and returns the given error state for the
+  current encoder.
+
+### Scope usage
 
 ### Implementation performances and advices
 
