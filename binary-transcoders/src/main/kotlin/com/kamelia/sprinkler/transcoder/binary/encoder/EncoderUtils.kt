@@ -3,6 +3,7 @@
 package com.kamelia.sprinkler.transcoder.binary.encoder
 
 import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
+import com.zwendo.restrikt.annotation.HideFromJava
 
 /**
  * Creates an encoder that encodes an object [R] using a given encoder of type [T]. The created encoder will map the
@@ -189,4 +190,5 @@ fun <T : Any> Encoder<T>.toOptional(nullabilityEncoder: Encoder<Boolean> = Boole
  * @param U the type of the second element of the pair
  * @see PairEncoder
  */
+@HideFromJava
 infix fun <T, U> Encoder<T>.and(other: Encoder<U>): Encoder<Pair<T, U>> = PairEncoder(this, other)
