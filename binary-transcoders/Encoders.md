@@ -37,9 +37,9 @@ the  package `com.kamelia.sprinkler.transcoder.binary.encoder`.
 
 The two main bricks of this API are the `Encoder` and `EncoderOutput` interfaces.
 
-They are used to define the behavior of the encoder and how to output the encoded data,
-respectively. While they have several methods, only a few need to actually be implemented in each of them, because the
-others have default implementations depending on them.
+They are used to define the behavior of the encoder and how to output the encoded data, respectively. While they have
+several methods, only a few need to actually be implemented in each of them, because the others have default
+implementations depending on them.
 
 ### Encoder
 
@@ -47,8 +47,8 @@ An `Encoder<T>` should at least implement the `encode(obj: T, output: EncoderOut
 the API, and is used to define the behavior of the encoder. It should serialize the object `obj` to the `output`.
 
 From this, there are default implementations to write to other common outputs, such as a `ByteArray`, an `OutputStream`,
-a `File`, or a `Path`. You can also implement your own `EncoderOutput` to write to something else
-(see [EncoderOutput](#encoderoutput)).
+a `File`, or a `Path`. You can also implement your own `EncoderOutput` to write to something else (see
+[EncoderOutput](#encoderoutput)).
 
 As stated before, an Encoder's implementation should be stateless, and deterministic. This means that it should always
 output the same data for the same input.
@@ -90,8 +90,7 @@ writes to a `ByteArray` and returns it. We will see in the next section how to u
 ### EncoderOutput
 
 Basically, the `EncoderOutput` is an abstraction that serves to map the behavior of an object to that of something
-similar
-to an `OutputStream`. It is used to output the encoded data, and is passed to the `Encoder` when encoding.
+similar to an `OutputStream`. It is used to output the encoded data, and is passed to the `Encoder` when encoding.
 
 The methods that need to be implemented are `writeBit(bit: Int)` and `flush()`.
 
@@ -158,8 +157,7 @@ more complex but common ones, as well as factories to create them easily.
 ### Base Encoders
 
 Base encoders are the most basic encoders, and encode all the primitive types, as well as enum variants, and
-even `String`s
-to a chosen encoding.
+even `String`s to a chosen encoding.
 
 #### Primitive Encoders
 
@@ -270,8 +268,8 @@ In the exact same vein as string encoders, there are two ways to encode iterable
 - Variable-length encoding, where the length of the iterable is not known beforehand, in which case, a terminator flag
   (or, end marker) is encoded after the iterable to indicate the end of the iterable.
 
-In the real world, `Iterable`s are often encoded using variable-length encoding, and to that effect,
-`toIterable` transforms an encoder of `T` to an encoder of `Iterable<T>` using variable-length encoding.
+In the real world, `Iterable`s are often encoded using variable-length encoding, and to that effect, `toIterable`
+transforms an encoder of `T` to an encoder of `Iterable<T>` using variable-length encoding.
 
 ```kt
 val intEncoder: Encoder<Int> = IntEncoder()
@@ -340,8 +338,8 @@ the interface. These overloads allow encoding of basic types (`Int`, `Long`, `St
 way these objects are encoded is determined by the scope itself, in particular, by its implementation.
 
 It is thus possible, using the `composedEncoder` method (which creates an encoder from an `EncodingScope` and will be
-presented in the next section in more details), to write the following code
-(note that the scope is passed as the receiver object):
+presented in the next section in more details), to write the following code (note that the scope is passed as the
+receiver object):
 
 ```kt
 class Person(val name: String, val age: Int)
