@@ -39,7 +39,7 @@ import java.nio.ByteBuffer
  * is not in a [State.Done] state (e.g. an error occurred and the decoder must be reset).
  *
  * **NOTE**: Implementations of this interface are responsible for resetting the internal state of the decoder when the
- * [decode] function are finished, that is to say when [Decoder.State.Done] is returned.
+ * [decode] function is finished, that is to say when [Decoder.State.Done] is returned.
  *
  * @param T the type of the object to be decoded.
  * @see DecoderInput
