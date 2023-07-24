@@ -7,29 +7,30 @@ We will see that the API provides building blocks to create encoders for any typ
 to create more complex encoders very easily.
 
 For simplification and readability purposes, every class name referenced in the following sections will not be written
-in their fqname form, but rather in their simple name form. For example, `com.kamelia.sprinkler.transcoder.binary.encoder.Encoder`
-will be written as `Encoder`. The same goes for all classes in the package `com.kamelia.sprinkler.transcoder.binary.encoder`.
+in their fqname form, but rather in their simple name form. For example,
+`com.kamelia.sprinkler.transcoder.binary.encoder.Encoder`will be written as `Encoder`. The same goes for all classes in
+the  package `com.kamelia.sprinkler.transcoder.binary.encoder`.
 
 ## Summary
 
 - [Main Interfaces](#main-interfaces)
-  - [Encoder](#encoder)
-  - [EncoderOutput](#encoderoutput)
+    - [Encoder](#encoder)
+    - [EncoderOutput](#encoderoutput)
 - [Provided Encoders](#provided-encoders)
-  - [Base Encoders](#base-encoders)
-    - [Primitive Encoders](#primitive-encoders)
-    - [String Encoders](#string-encoders)
-    - [Enum Encoders](#enum-encoders)
-    - [NoOp Encoder](#noop-encoder)
-  - [Common Encoders](#common-encoders)
+    - [Base Encoders](#base-encoders)
+        - [Primitive Encoders](#primitive-encoders)
+        - [String Encoders](#string-encoders)
+        - [Enum Encoders](#enum-encoders)
+        - [NoOp Encoder](#noop-encoder)
+    - [Common Encoders](#common-encoders)
 - [Encoder Mappers](#encoder-mappers)
-  - [Encoder::withMappedInput](#encoderwithmappedinput)
-  - [Iterables](#iterables)
-  - [Nullable](#nullable)
+    - [withMappedInput](#withmappedinput)
+    - [Iterables](#iterables)
+    - [Nullable](#nullable)
 - [Encoder Composition](#encoder-composition)
-  - [EncodingScope Interface](#encodingscope-interface)
-  - [Scope Usage](#scope-usage)
-    - [Examples](#examples)
+    - [EncodingScope Interface](#encodingscope-interface)
+    - [Scope Usage](#scope-usage)
+        - [Examples](#examples)
 - [Complete Example](#complete-example)
 
 ## Main Interfaces
@@ -46,7 +47,7 @@ An `Encoder<T>` should at least implement the `encode(obj: T, output: EncoderOut
 the API, and is used to define the behavior of the encoder. It should serialize the object `obj` to the `output`.
 
 From this, there are default implementations to write to other common outputs, such as a `ByteArray`, an `OutputStream`,
-a `File`, or a `Path`. You can also implement your own `EncoderOutput` to write to something else 
+a `File`, or a `Path`. You can also implement your own `EncoderOutput` to write to something else
 (see [EncoderOutput](#encoderoutput)).
 
 As stated before, an Encoder's implementation should be stateless, and deterministic. This means that it should always
@@ -88,14 +89,15 @@ writes to a `ByteArray` and returns it. We will see in the next section how to u
 
 ### EncoderOutput
 
-Basically, the `EncoderOutput` is an abstraction that serves to map the behavior of an object to that of something similar
-to an `OutputStream`. It is used to output the encoded data, and is passed to the `Encoder` when encoding. 
+Basically, the `EncoderOutput` is an abstraction that serves to map the behavior of an object to that of something
+similar
+to an `OutputStream`. It is used to output the encoded data, and is passed to the `Encoder` when encoding.
 
-The methods that need to be implemented are `writeBit(bit: Int)` and `flush()`. 
+The methods that need to be implemented are `writeBit(bit: Int)` and `flush()`.
 
 The `writeBit` method writes a single bit to the output. Only the least significant bit of the given `Int` is written,
-and all other bits are ignored. The `flush` method flushes the output, to force any buffered bytes to be written. 
-This method is useful when the writing of byte is finished but the last byte is not full and therefore has not been 
+and all other bits are ignored. The `flush` method flushes the output, to force any buffered bytes to be written.
+This method is useful when the writing of byte is finished but the last byte is not full and therefore has not been
 written yet. All the padding bits appended to the last byte are set to `0`.
 
 ```kt
@@ -107,7 +109,7 @@ output.flush() // should write the byte 1010_0000
 ```
 
 However, often, one needs quite a bit more than just these two methods to output the encoded data in an efficient way
-(writing whole bytes, or even groups of bytes, instead of relying on the slow default implementation), and the logic 
+(writing whole bytes, or even groups of bytes, instead of relying on the slow default implementation), and the logic
 is quite complex to implement. To that effect, there are several sensible factories to create `EncoderOutput`s.
 
 Indeed, say we want to output the encoded data to *stdout*, here's an example of how we could do it:
@@ -126,7 +128,10 @@ In fact, the `from` function above is an overload of a function which takes in a
 You can now use this `stdoutEncoderOutput` to output the encoded data to *stdout*.
 
 ```kt
-UTF8StringEncoder().encode("Hello, World!", stdoutEncoderOutput) // prints the UTF-8 encoded bytes of "Hello, World!", prefixed with the size of the string
+UTF8StringEncoder().encode(
+    "Hello, World!",
+    stdoutEncoderOutput
+) // prints the UTF-8 encoded bytes of "Hello, World!", prefixed with the size of the string
 ```
 
 As stated before, the `Encoder::encode` function actually acts as if the given `EncoderOutput` writes to a
@@ -152,7 +157,8 @@ more complex but common ones, as well as factories to create them easily.
 
 ### Base Encoders
 
-Base encoders are the most basic encoders, and encode all the primitive types, as well as enum variants, and even `String`s
+Base encoders are the most basic encoders, and encode all the primitive types, as well as enum variants, and
+even `String`s
 to a chosen encoding.
 
 #### Primitive Encoders
@@ -160,6 +166,7 @@ to a chosen encoding.
 The most common types one will be encoding are the JVM primitive types.
 
 Indeed, the provided factories primitive encoders are :
+
 - `ByteEncoder`
 - `ShortEncoder`
 - `IntEncoder`
@@ -175,9 +182,10 @@ determine the byte order (endianness) of the encoded data. If you do not provide
 #### String Encoders
 
 In binary encoding in general, there are two major ways to encode strings of text (aside from the encoding):
+
 - Fixed-length encoding, where the length of the string is known beforehand, and is encoded before the string itself.
 - Variable-length encoding, where the length of the string is not known beforehand, in which case, a terminator flag
-  (or, end marker) is encoded after the string to indicate the end of the string, in the same vein as C-style strings, 
+  (or, end marker) is encoded after the string to indicate the end of the string, in the same vein as C-style strings,
   which are null-terminated.
 
 To that effect, the two main string encoder factories are two overloads of `StringEncoder`, both of them accept a
@@ -192,6 +200,7 @@ val asciiNullTerminatedEncoder: Encoder<String> = StringEncoder(Charsets.US_ASCI
 ```
 
 Fortunately, there are also some predefined factories for the most common encodings, which are:
+
 - `UTF8StringEncoder`
 - `UTF16StringEncoder`
 - `ASCIIStringEncoder`
@@ -206,6 +215,7 @@ They have sensible defaults for the length encoder, and the end marker, and are 
 #### Enum Encoders
 
 Enum encoders are used to encode enum variants. They are very simple, and come in two flavors:
+
 - `EnumEncoder` which encodes the ordinal of the enum variant.
 - `EnumEncoderString` which encodes the name of the enum variant.
 
@@ -218,6 +228,7 @@ It's an encoder which does nothing. It is useful to swallow some data when encod
 Common encoders encode more complex types that are commonly used, and are composed of other encoders.
 
 Here is a list of the provided common encoders:
+
 - `UUIDEncoder` which encodes a `UUID` as two `Long`s.
 - `UUIDStringEncoder` which encodes a `UUID` as a `String` using the `UUID.toString()` method.
 - `PairEncoder<T, U>` which composes two encoders (of `T` and `U`) to encode a `Pair<T, U>`.
@@ -235,7 +246,7 @@ Here is a list of the provided common encoders:
 Often times, one will want to encode a derived type from a base type, or a collection of a type we already have an
 encoder for. To that effect, there are several encoder mappers that can be used to map an encoder to another type.
 
-### Encoder::withMappedInput
+### withMappedInput
 
 The first one is `Encoder<T>.withMappedInput(mapper: (R) -> T): Encoder<R>`, and simply transforms an encoder of `T` to
 an encoder of `R` by mapping the input of the encoder to `T` to an input of `R` using the given mapper.
@@ -253,7 +264,9 @@ long value using `Instant::toEpochMilli`, and then encoding the long value using
 ### Iterables
 
 In the exact same vein as string encoders, there are two ways to encode iterables:
-- Fixed-length encoding, where the length of the iterable is known beforehand, and is encoded before the iterable itself.
+
+- Fixed-length encoding, where the length of the iterable is known beforehand, and is encoded before the iterable
+  itself.
 - Variable-length encoding, where the length of the iterable is not known beforehand, in which case, a terminator flag
   (or, end marker) is encoded after the iterable to indicate the end of the iterable.
 
@@ -279,7 +292,7 @@ val intEncoder: Encoder<Int> = IntEncoder()
 val intArrayEncoder: Encoder<Array<Int>> = intEncoder.toArray()
 ```
 
-Similarly, `toMap` also comes in the two variations, and transforms an encoder of `Pair<T, U>` to an encoder of 
+Similarly, `toMap` also comes in the two variations, and transforms an encoder of `Pair<T, U>` to an encoder of
 `Map<T, U>`, OR an encoder of `K` to an encoder of `Map<K, V>` using an encoder of `V` as an argument.
 
 ```kt
@@ -294,7 +307,8 @@ val stringToIntEncoder: Encoder<Map<String, Int>> = stringEncoder.toMap(intEncod
 ### Nullable
 
 `toOptional` transforms an encoder of `T` to an encoder of `T?` using a prefixed encoded boolean to determine the
-presence of the value.
+presence of the value. The nullability of the value is encoded by prepending one byte to the actual object, where `0`
+means the value is null, and any other value means the value is not null.
 
 ```kt
 val booleanEncoder: Encoder<Boolean> = BooleanEncoder()
@@ -312,21 +326,21 @@ type).
 
 ### EncodingScope Interface
 
-The composition API takes shape through the `EncodingScope` interface. This interface simplifies the encoding of an 
-object by representing it as the encoding of its different components or properties. It also allows encoding objects 
-with a recursive structure, that is to say, an object which contains a reference to its own type, nullable or not, 
+The composition API takes shape through the `EncodingScope` interface. This interface simplifies the encoding of an
+object by representing it as the encoding of its different components or properties. It also allows encoding objects
+with a recursive structure, that is to say, an object which contains a reference to its own type, nullable or not,
 or even in a collection. For example, a linked list node is a recursive data structure.
 
-To encode an object using an `EncodingScope`, the interface has an `encode(obj: E, encoder: Encoder<E>)` method. 
+To encode an object using an `EncodingScope`, the interface has an `encode(obj: E, encoder: Encoder<E>)` method.
 This method is the main entry point for encoding and is the foundation of the interface as a whole. It enables the
 encoding of any type of object, provided an appropriate encoder is provided for that purpose.
 
-However, the main advantage of the `EncodingScope` does not lie in this method but rather in the overloads provided by 
-the interface. These overloads allow encoding of basic types (`Int`, `Long`, `String`, etc.). The benefit is that the 
+However, the main advantage of the `EncodingScope` does not lie in this method but rather in the overloads provided by
+the interface. These overloads allow encoding of basic types (`Int`, `Long`, `String`, etc.). The benefit is that the
 way these objects are encoded is determined by the scope itself, in particular, by its implementation.
 
 It is thus possible, using the `composedEncoder` method (which creates an encoder from an `EncodingScope` and will be
-presented in the next section in more details), to write the following code 
+presented in the next section in more details), to write the following code
 (note that the scope is passed as the receiver object):
 
 ```kt
@@ -338,8 +352,8 @@ val encoder: Encoder<Person> = composedEncoder<Person> { obj: Person -> // this:
 }
 ```
 
-As explained earlier, the interface also allows the encoding of recursive structures. This functionality is 
-achieved using the encoder accessible through the `self` property, which is a special encoder that can encode an 
+As explained earlier, the interface also allows the encoding of recursive structures. This functionality is
+achieved using the encoder accessible through the `self` property, which is a special encoder that can encode an
 object of the same type as the scope to which it belongs, by repeating the same calls as those made on the scope.
 
 Thus, it is possible to recursively encode a linked list as follows:
@@ -358,26 +372,27 @@ val encoder: Encoder<Node> = composedEncoder<Node> { obj: Node -> // this: Encod
 }
 ```
 
-Similarly to the interface's overloads for encoding basic types, it also provides overloads to encode common recursive 
+Similarly to the interface's overloads for encoding basic types, it also provides overloads to encode common recursive
 cases, such as:
+
 - `encode(E?)` for encoding optional recursion
 - `encode(Collection<E>)` for encoding recursion represented by a collection
 - `encode(Array<E>)` for encoding recursion represented by an array
-- `encode(E)` for encoding direct recursion ; this method needs to be used within a conditional block to avoid infinite 
+- `encode(E)` for encoding direct recursion ; this method needs to be used within a conditional block to avoid infinite
   recursion.
 
-> **NOTE**: The self encoder is not implemented as a "typical" encoder and must be used with caution. 
+> **NOTE**: The self encoder is not implemented as a "typical" encoder and must be used with caution.
 > Any usage that does not adhere to the instructions provided in the documentation may result in unexpected behavior.
 
 ### Scope Usage
 
 As of now, the `EncodingScope` interface is used through the `composedEncoder` top level function. This function allows
-one to declare and define a sequence of instructions to apply to the `EncodingScope` 
+one to declare and define a sequence of instructions to apply to the `EncodingScope`
 (the order of the scope's method calls is significant and determines the order of writes to the `EncoderOutput`),
 in order to encode an object of the given type.
 
 The scope provided to the user and on which encoding method calls can be made is an implementation using overloads
-based on the basic encoders of the library (which encode the basic types mentioned previously: 
+based on the basic encoders of the library (which encode the basic types mentioned previously:
 `Int`, `Long`, `String`, etc.)
 
 Note that it is also possible to specify the endianness of the number `Encoder`s for the entire scope, as shown below:
@@ -386,7 +401,7 @@ Note that it is also possible to specify the endianness of the number `Encoder`s
 class Person(val name: String, val age: Int)
 
 val encoder: Encoder<Person> = composedEncoder<Person>(
-  ByteOrder.LITTLE_ORDER // Int, Long, Float and Double will be encoded in little order
+    ByteOrder.LITTLE_ORDER // Int, Long, Float and Double will be encoded in little order
 ) { obj: Person -> // this: EncodingScope<Person>
     encode(obj.name)
     encode(obj.age) // encoded in little endian
@@ -398,6 +413,7 @@ val encoder: Encoder<Person> = composedEncoder<Person>(
 This section shows some examples of the use of the `composedEncoder` function.
 
 - Conditional encoding: saving alive enemies only, in a video game
+
 ```kt
 class Enemy(val name: String, var hp: Int, var isAlive: Boolean)
 
@@ -409,6 +425,7 @@ val enemyEncoder: Encoder<Enemy> = composedEncoder<Enemy> { obj: Enemy -> // thi
 ```
 
 - Recursive encoding: serializing a binary tree
+
 ```kt
 sealed interface Node {
     val value: Int
@@ -440,10 +457,10 @@ and recursive encoding:
 ```kt
 class Location(val coords: Pair<Double, Double>, val name: String)
 class Person(
-    val name: String, 
-    val age: Int, 
-    val children: List<Person> = emptyList(), 
-    val godParent: Person? = null, 
+    val name: String,
+    val age: Int,
+    val children: List<Person> = emptyList(),
+    val godParent: Person? = null,
     val location: Location? = null,
 )
 
@@ -451,7 +468,8 @@ class Person(
 val doubleEncoder: Encoder<Double> = DoubleEncoder()
 
 // aggregate encoders
-val coordsEncoder: Encoder<Pair<Double, Double>> = doubleEncoder and doubleEncoder // `and` is an infix shorthand for PairEncoder
+val coordsEncoder: Encoder<Pair<Double, Double>> =
+    doubleEncoder and doubleEncoder // `and` is an infix shorthand for PairEncoder
 
 // simply composed encoder
 val locationEncoder: Encoder<Location> = composedEncoder<Location> { // this: EncodingScope<Location>
