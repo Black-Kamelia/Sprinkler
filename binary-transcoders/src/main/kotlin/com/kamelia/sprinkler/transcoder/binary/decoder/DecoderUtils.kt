@@ -2,12 +2,9 @@
 
 package com.kamelia.sprinkler.transcoder.binary.decoder
 
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.ConstantArityReductionDecoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.DecoderInput
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.MarkerEndedReductionDecoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.PrefixedArityReductionDecoder
+import com.kamelia.sprinkler.transcoder.binary.decoder.core.*
 import com.kamelia.sprinkler.util.ExtendedCollectors
+import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.HideFromJava
 import java.util.stream.Collector
 import java.util.stream.Collectors
@@ -251,7 +248,7 @@ fun <T, C, R> Decoder<T>.toCollection(
  */
 @JvmOverloads
 fun <T> Decoder<T>.toList(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<List<T>> =
-    toCollection(Collectors.toList(), sizeDecoder)
+    toCollection(toListCollector(), sizeDecoder)
 
 /**
  * Creates a new decoder that decodes a list of [T]s.
@@ -268,7 +265,7 @@ fun <T> Decoder<T>.toList(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<
  */
 fun <T> Decoder<T>.toList(size: Int): Decoder<List<T>> {
     require(size >= 0) { "Size must be non-negative, but was $size" }
-    return toCollection(Collectors.toList(), size)
+    return toCollection(toListCollector(), size)
 }
 
 /**
@@ -288,7 +285,7 @@ fun <T> Decoder<T>.toList(size: Int): Decoder<List<T>> {
  */
 @JvmOverloads
 fun <T> Decoder<T>.toList(keepLast: Boolean = false, shouldStop: (T) -> Boolean): Decoder<List<T>> =
-    toCollection(Collectors.toList(), keepLast, shouldStop)
+    toCollection(toListCollector(), keepLast, shouldStop)
 
 /**
  * Creates a new decoder that decodes a set of [T]s.
@@ -306,7 +303,7 @@ fun <T> Decoder<T>.toList(keepLast: Boolean = false, shouldStop: (T) -> Boolean)
  */
 @JvmOverloads
 fun <T> Decoder<T>.toSet(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Set<T>> =
-    toCollection(Collectors.toSet(), sizeDecoder)
+    toCollection(toSetCollector(), sizeDecoder)
 
 /**
  * Creates a new decoder that decodes a set of [T]s.
@@ -323,7 +320,7 @@ fun <T> Decoder<T>.toSet(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<S
  */
 fun <T> Decoder<T>.toSet(size: Int): Decoder<Set<T>> {
     require(size >= 0) { "Size must be non-negative, but was $size" }
-    return toCollection(Collectors.toSet(), size)
+    return toCollection(toSetCollector(), size)
 }
 
 /**
@@ -343,7 +340,7 @@ fun <T> Decoder<T>.toSet(size: Int): Decoder<Set<T>> {
  */
 @JvmOverloads
 fun <T> Decoder<T>.toSet(keepLast: Boolean = false, shouldStop: (T) -> Boolean): Decoder<Set<T>> =
-    toCollection(Collectors.toSet(), keepLast, shouldStop)
+    toCollection(toSetCollector(), keepLast, shouldStop)
 
 /**
  * Creates a new decoder that decodes a map of [K]s to [V]s from a [Pair] decoder.
@@ -362,7 +359,7 @@ fun <T> Decoder<T>.toSet(keepLast: Boolean = false, shouldStop: (T) -> Boolean):
  */
 @JvmOverloads
 fun <K, V> Decoder<Pair<K, V>>.toMap(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<Map<K, V>> =
-    toCollection(ExtendedCollectors.toMap(), sizeDecoder)
+    toCollection(toMapCollector(), sizeDecoder)
 
 /**
  * Creates a new decoder that decodes a map of [K]s to [V]s from a [Pair] decoder.
@@ -380,7 +377,7 @@ fun <K, V> Decoder<Pair<K, V>>.toMap(sizeDecoder: Decoder<Number> = IntDecoder()
  */
 fun <K, V> Decoder<Pair<K, V>>.toMap(size: Int): Decoder<Map<K, V>> {
     require(size >= 0) { "Size must be non-negative, but was $size" }
-    return toCollection(ExtendedCollectors.toMap(), size)
+    return toCollection(toMapCollector(), size)
 }
 
 /**
@@ -403,7 +400,7 @@ fun <K, V> Decoder<Pair<K, V>>.toMap(size: Int): Decoder<Map<K, V>> {
 fun <K, V> Decoder<Pair<K, V>>.toMap(
     keepLast: Boolean = false,
     shouldStop: (Pair<K, V>) -> Boolean,
-): Decoder<Map<K, V>> = toCollection(ExtendedCollectors.toMap(), keepLast, shouldStop)
+): Decoder<Map<K, V>> = toCollection(toMapCollector(), keepLast, shouldStop)
 
 /**
  * Creates a new decoder that decodes an array of [T]s.
@@ -497,3 +494,15 @@ fun <T> Decoder<T>.toArray(
  */
 @HideFromJava
 infix fun <T, U> Decoder<T>.and(other: Decoder<U>): Decoder<Pair<T, U>> = PairDecoder(this, other)
+
+internal fun <T> toListCollector(): Collector<T, *, List<T>> = toList.unsafeCast()
+
+internal fun <T> toSetCollector(): Collector<T, *, Set<T>> = toSet.unsafeCast()
+
+internal fun <K, V> toMapCollector(): Collector<Pair<K, V>, *, Map<K, V>> = toMap.unsafeCast()
+
+private val toList = Collectors.toList<Any>()
+
+private val toSet = Collectors.toSet<Any>()
+
+private val toMap = ExtendedCollectors.toMap<Any, Any>()

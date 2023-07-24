@@ -1,10 +1,10 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
+import com.kamelia.sprinkler.transcoder.binary.decoder.toListCollector
+import com.kamelia.sprinkler.transcoder.binary.decoder.toSetCollector
 import com.kamelia.sprinkler.util.ExtendedCollectors
-import com.kamelia.sprinkler.util.unsafeCast
 import java.util.stream.Collector
-import java.util.stream.Collectors
 
 /**
  * Represents a scope in which an object can be decoded. This interface is used to compose decoders. It can be used to
@@ -225,7 +225,7 @@ sealed interface DecodingScope<E> {
      * @return the decoded list
      */
     @JvmName("decodeSelfList")
-    fun selfList(): List<E> = selfCollection(toList())
+    fun selfList(): List<E> = selfCollection(toListCollector())
 
     /**
      * Recursively decodes a set of objects of type [E]. The assumed representation of the set depends on the
@@ -234,7 +234,7 @@ sealed interface DecodingScope<E> {
      * @return the decoded set
      */
     @JvmName("decodeSelfSet")
-    fun selfSet(): Set<E> = selfCollection(toSet())
+    fun selfSet(): Set<E> = selfCollection(toSetCollector())
 
     /**
      * Recursively decodes an array of objects of type [E]. The assumed representation of the array depends on the
@@ -265,7 +265,7 @@ sealed interface DecodingScope<E> {
      * @return the decoded list, or `null` if the list is not present
      */
     @JvmName("decodeSelfListOrNull")
-    fun selfListOrNull(): List<E>? = selfCollectionOrNull(toList())
+    fun selfListOrNull(): List<E>? = selfCollectionOrNull(toListCollector())
 
     /**
      * Recursively decodes a nullable set of objects of type [E]. The assumed representation of the set depends on
@@ -274,7 +274,7 @@ sealed interface DecodingScope<E> {
      * @return the decoded set, or `null` if the set is not present
      */
     @JvmName("decodeSelfSetOrNull")
-    fun selfSetOrNull(): Set<E>? = selfCollectionOrNull(toSet())
+    fun selfSetOrNull(): Set<E>? = selfCollectionOrNull(toSetCollector())
 
     /**
      * Recursively decodes a nullable array of objects of type [E]. The assumed representation of the array depends on
@@ -289,11 +289,3 @@ sealed interface DecodingScope<E> {
         selfCollectionOrNull(ExtendedCollectors.toArray(factory))
 
 }
-
-private val toList = Collectors.toList<Any>()
-
-private val toSet = Collectors.toSet<Any>()
-
-private fun <T> toList(): Collector<T, *, List<T>> = toList.unsafeCast()
-
-private fun <T> toSet(): Collector<T, *, Set<T>> = toSet.unsafeCast()
