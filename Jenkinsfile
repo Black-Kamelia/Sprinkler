@@ -40,9 +40,9 @@ pipeline {
                         sh 'gradle readonly-collections:test'
                     }
                 }
-                stage('Binary Serializers') {
+                stage('Binary Transcoders') {
                     steps {
-                        sh 'gradle binary-serializers:test'
+                        sh 'gradle binary-transcoders:test'
                     }
                 }
             }
