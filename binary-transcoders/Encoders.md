@@ -391,8 +391,8 @@ one to declare and define a sequence of instructions to apply to the `EncodingSc
 in order to encode an object of the given type.
 
 The scope provided to the user and on which encoding method calls can be made is an implementation using overloads
-based on the basic encoders of the library (which encode the basic types mentioned previously:
-`Int`, `Long`, `String`, etc.)
+based on the basic encoders of the library (which encode the basic types mentioned previously: `Int`, `Long`, `String`,
+etc.)
 
 Note that it is also possible to specify the endianness of the number `Encoder`s for the entire scope, as shown below:
 
