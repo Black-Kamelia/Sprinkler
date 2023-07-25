@@ -9,5 +9,5 @@ pluginManagement {
 include(
     "readonly-collections",
     "binary-transcoders",
-    "util",
+    "utils",
 )

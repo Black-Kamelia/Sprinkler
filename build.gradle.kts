@@ -160,7 +160,6 @@ fun TaskContainerScope.setupKotlinCompilation(block: org.jetbrains.kotlin.gradle
     compileTestKotlin(block)
 }
 
-@Suppress("UNCHECKED_CAST")
 inline fun <reified T> Project.findProp(name: String): T {
     val strProp = findProperty(name) as? String
     return when (T::class) {

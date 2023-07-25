@@ -1,8 +1,8 @@
 package com.kamelia.sprinkler.util
 
+import java.nio.ByteOrder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.nio.ByteOrder
 
 class ByteAccessTest {
 
