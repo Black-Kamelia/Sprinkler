@@ -16,7 +16,7 @@ class ByteAccessTest {
     @Test
     fun `can read a byte from a short`() {
         val short = 0x1234.toShort()
-        val byte = short.byte(0)
+        val byte = short.byte(0, ByteOrder.BIG_ENDIAN)
         assertEquals(0x34.toByte(), byte)
     }
 
