@@ -24,9 +24,9 @@ pipeline {
         }
         stage('Build') {
             parallel {
-                stage('Util') {
+                stage('Utils') {
                     steps {
-                        sh 'gradle --parallel util:assemble'
+                        sh 'gradle --parallel utils:assemble'
                     }
                 }
                 stage('Readonly Collections') {
@@ -34,25 +34,45 @@ pipeline {
                         sh 'gradle --parallel readonly-collections:assemble'
                     }
                 }
+                stage('Binary Transcoders') {
+                    steps {
+                        sh 'gradle --parallel binary-transcoders:assemble'
+                    }
+                }
             }
         }
         stage('Test') {
             parallel {
-                stage('Util') {
+                stage('Utils') {
                     steps {
-                        sh 'gradle --parallel util:test -PenableRestrikt=false'
+                        sh 'gradle --parallel utils:test'
                     }
                 }
                 stage('Readonly Collections') {
                     steps {
-                        sh 'gradle --parallel readonly-collections:test -PenableRestrikt=false'
+                        sh 'gradle --parallel readonly-collections:test'
+                    }
+                }
+                stage('Binary Serializers') {
+                    steps {
+                        sh 'gradle --parallel binary-serializers:test'
                     }
                 }
             }
             post {
                 always {
                     junit checksName: 'Tests', allowEmptyResults: true, testResults: '**/build/test-results/test/TEST-*.xml'
-                    recordCoverage sourceDirectories: [[path: 'readonly-collections/src/main/java'], [path: 'util/src/main/kotlin'], [path: 'util/src/main/java'], [path: 'readonly-collections/src/main/kotlin']], tools: [[pattern: '**/build/reports/kover/xml/*.xml']]
+                    recordCoverage sourceDirectories: [
+                        [path: 'readonly-collections/src/main/kotlin'],
+                        [path: 'readonly-collections/src/main/java'],
+                        [path: 'utils/src/main/kotlin'],
+                        [path: 'utils/src/main/java'],
+                        [path: 'binary-serializers/src/main/kotlin'],
+                        [path: 'binary-serializers/src/main/java']
+                    ],
+                    tools: [
+                        [pattern: '**/build/reports/kover/report.xml']
+                    ]
                 }
             }
         }
