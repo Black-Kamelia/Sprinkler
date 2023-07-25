@@ -9,7 +9,7 @@ We will see that the API provides building blocks to create decoders for any typ
 to create more complex decoders very easily.
 
 For simplification and readability purposes, every class name referenced in the following sections will not be written
-in their fqname form, but rather in their simple name form. For example, 
+in their fqname form, but rather in their simple name form. For example,
 `com.kamelia.sprinkler.transcoder.binary.decoder.Decoder` will be written as `Decoder`. The same goes for all classes in
 the package `com.kamelia.sprinkler.transcoder.binary.decoder`.
 
@@ -42,8 +42,8 @@ the package `com.kamelia.sprinkler.transcoder.binary.decoder`.
 - [Decoder Composition](#decoder-composition)
     - [DecodingScope interface](#decodingscope-interface)
     - [Scope usage](#scope-usage)
+        - [Examples](#examples)
     - [Implementation performances and advices](#implementation-performances-and-advices)
-    - [Examples](#examples)
 - [Complete Example](#complete-example)
 
 ## Main interfaces
@@ -62,7 +62,7 @@ to ensure that partial decoding is possible, in the form of `Decoder.State`.
 A `Decoder<T>` should at least implement the following two methods: `decode(input: DecoderInput)` and `reset()`. The
 `decode` method is the main brick of the API, and is used to define the behavior of the decoder. It should deserialize
 the bytes coming from the `input` and return a `Decoder.State`. The `reset` method is used to reset the state of the
-decoder; However, the decoder automatically should reset itself whenever it fully decodes an object (the method is 
+decoder; However, the decoder automatically should reset itself whenever it fully decodes an object (the method is
 useful when an error occurs, or when the decoding must be interrupted).
 
 Here is an example of a decoder:
@@ -112,12 +112,14 @@ You can notice the `get()` method call on the result of the decoding. This is be
 the result of the decoding.
 
 It can be either:
+
 - `Decoder.State.Done`, which means that the decoder has fully decoded the object and returns it (the instance contains
   the decoded object) ;
 - `Decoder.State.Processing`, which means that the decoder needs more bytes to fully decode the object ;
 - `Decoder.State.Error`, which means that an error occurred during the decoding (the instance contains the error).
 
 It offers several methods to perform different operations on the return object:
+
 - Unwrap operations, through `get` , `getOrNull`, `getOrElse` or `getOrThrow` ;
 - Bind operations, through `mapState`, `mapResult` or `mapEmptyState` ;
 - Utility operations, through `isDone`, `isNotDone`, `ifDone`, `ifError`, etc.
@@ -184,19 +186,19 @@ Here is an example of a decoder that decodes a single byte:
 
 ```kt
 val byteDecoder: Decoder<Byte> = ConstantSizedItemDecoder(
-    byteSize = 1, 
+    byteSize = 1,
     converter = { get(0) } // this: ByteArray
 )
 ```
 
 #### PrefixedSizeItemDecoder
 
-The `PrefixedSizeItemDecoder` decoder is used to decode a sequence of bytes of a variable size. It first reads a prefix of
-a constant size which represents the size of the sequence to read, and then reads the sequence itself. It is created
+The `PrefixedSizeItemDecoder` decoder is used to decode a sequence of bytes of a variable size. It first reads a prefix
+of a constant size which represents the size of the sequence to read, and then reads the sequence itself. It is created
 from a decoder that decodes a `Number` and a function to convert the read bytes to the desired object.
 
-The following example shows an implementation of a decoder of `String` objects using the `PrefixedSizeItemDecoder` (it first
-decodes the size of the string represented as a `Byte`, and then reads the string itself).
+The following example shows an implementation of a decoder of `String` objects using the `PrefixedSizeItemDecoder` (it
+first decodes the size of the string represented as a `Byte`, and then reads the string itself).
 
 ```kt
 val stringDecoder: Decoder<String> = PrefixedSizeItemDecoder(
@@ -392,7 +394,7 @@ decoder for. To that effect, there are several decoder mappers that can be used 
 The first one is `Decoder<T>.mapTo(mapper: (T) -> Decoder<R>): Decoder<R>`. It is used to map a decoder to another type
 using a function that takes in the decoded object and returns a decoder for the desired type.
 
-Say we want, for example, a decoder that decodes all types of integers, by first decoding a byte the number of bytes to 
+Say we want, for example, a decoder that decodes all types of integers, by first decoding a byte the number of bytes to
 read, and then reading the bytes themselves. We could use the `mapTo` method to map the decoder to a `Decoder<Number>`:
 
 ```kt
@@ -518,7 +520,7 @@ class Person(val name: String, val age: Int)
 val decoder: Decoder<Person> = composedDecoder<Person> { // this: DecodingScope<Person>
     val name: String = string()
     val age: Int = int()
-    
+
     Person(name, age)
 }
 ```
@@ -533,10 +535,10 @@ Thus, it is possible to recursively encode a linked list as follows:
 class Node(val value: Int, val next: Node?)
 
 val decoder: Decoder<Node> = composedDecoder<Node> { // this: DecodingScope<Node>
-    val value = int() // DecodingScope.decode(Int)
-    val hasNext = boolean() // DecodingScope.decode(Boolean) / check if it is the last node
+    val value = int()         // DecodingScope.decode(Int)
+    val hasNext = boolean()   // DecodingScope.decode(Boolean) / check if it is the last node
     val next = if (hasNext) { // if it is not the last node
-        decode(self) // DecodingScope.decode(Node) // DecodingScope.self / decode the next node recursively
+        decode(self)          // DecodingScope.decode(Node) // DecodingScope.self / decode the next node recursively
     } else {
         null // don't decode anymore
     }
@@ -565,15 +567,90 @@ cases, such as:
 
 Moreover, there are way to perform complex conditional decoding cases in an elegant manner thanks to some methods
 provided by the `DecodingScope`:
-- `oncePerObject(() -> T): T` executes the given function only once per scope, that is to say, in the case of recursive
-  encoding, any subsequent call to this method will return the cached result for the same object.
-- `skip(Long)` skips the given amount of bytes.
-- `errorState(Decoder.State.Error): Nothing` stops the decoding process and returns the given error state for the
-  current encoder.
+
+The `oncePerObject(() -> T): T` method executes the given function only once per scope, that is to say, in the case of
+recursive encoding, any subsequent call to this method will return the cached result for the same object.
+
+It is mainly used to create a decoder using the `self` decoder, as it is not possible to declare it before the scope,
+and because it must be cached in case of decoding cannot be done in a single pass (to keep track of the partial data
+between calls).
+
+Here is an example of how to use it when creating a custom decoder using `self`:
+
+```kt
+class Box<T>(val value: T)
+class Person(val name: String, val fatherBox: Box<Person?>)
+
+val personDecoder: Decoder<Person> = composedDecoder<Person> { // this: DecodingScope<Person>
+    val name: String = string()
+
+    val fatherBoxDecoder: Decoder<Box<Person?>> = oncePerObject { self.toOptional().mapResult { Box(it) } }
+    val fatherBox: Box<Person?> = decode(fatherBoxDecoder)
+
+    Person(name, fatherBox)
+}
+```
+
+The API also provides the `skip(Long)` to skip a given amount of bytes. Useful when the format of the encoded object
+contains data that is not needed for the decoding process.
+
+```kt
+class Person(val name: String, val age: Int)
+
+val personDecoder: Decoder<Person> = composedDecoder<Person> { // this: DecodingScope<Person>
+    val name: String = string()
+    skip(8 + 8) // skips two doubles representing the latitude and longitude of the person's location
+    val age: Int = int()
+
+    Person(name, age)
+}
+```
+
+The available method is `errorState(Decoder.State.Error): Nothing`. It stops the decoding process and returns the given
+error state for the current decoder. This method allows to return an error state from the composed decoder.
+
+The following example shows how to use it to return an error state when the age of the person is negative:
+
+```kt
+class Person(val name: String, val age: Int)
+
+val personDecoder: Decoder<Person> = composedDecoder<Person> { // this: DecodingScope<Person>
+    val name: String = string()
+    val age: Int = int()
+
+    if (age < 0) {
+        errorState(Decoder.State.Error("Age cannot be negative"))
+    }
+
+    Person(name, age)
+}
+```
 
 ### Scope usage
 
-### Implementation performances and advices
+As of now, the `DecodingScope` interface is used through the `composedDecoder` top level function. This function allows
+one to declare and define a sequence of instructions to apply to the `DecodingScope` (the order of the scope's method
+calls is significant and determines the order of reads to the `DecoderOutput`), in order to decode an object of the
+given type.
+
+The scope provided to the user and on which decoding method calls can be made is an implementation using overloads
+based on the basic decoders of the library (which decode the basic types mentioned previously: `Int`, `Long`, `String`,
+etc.)
+
+Note that it is also possible to specify the endianness of the number `Decoder`s for the entire scope, as shown below:
+
+```kt
+class Person(val name: String, val age: Int)
+
+val decoder: Decoder<Person> = composedDecoder<Person>(
+    ByteOrder.LITTLE_ORDER // Int, Long, Float and Double will be encoded in little order
+) { // this: DecodingScope<Person>
+    val name: String = string()
+    val age: Int = int() // decoded in little endian
+    
+    Person(name, age)
+}
+```
 
 #### Examples
 
@@ -587,7 +664,7 @@ class Enemy(val name: String, var hp: Int)
 val enemyDecoder: Encoder<Enemy> = composedDecoder<Enemy> { // this: DecodingScope<Node>
     val name: String = string()
     val hp: Int = int()
-    
+
     Enemy(name, hp)
 }
 ```
@@ -606,17 +683,19 @@ val encoder: Decoder<Node> = composedDecoder<Node> { // this: DecodingScope<Node
     val isLeaf: Boolean = boolean()
     if (isLeaf) {
         val value: Int = int()
-        
+
         Node.Leaf(value)
     } else {
         val value: Int = int()
         val left: Node = self()
         val right: Node = self()
-        
+
         Node.Inner(value, left, right)
     }
 }
 ```
+
+### Implementation performances and advices
 
 ## Complete Example
 
@@ -637,13 +716,14 @@ class Person(
 val doubleDecoder: Decoder<Double> = DoubleDecoder()
 
 // aggregate decoders
-val coordsEncoder: Decoder<Pair<Double, Double>> = doubleDecoder and doubleDecoder // `and` is an infix shorthand for PairEncoder
+val coordsEncoder: Decoder<Pair<Double, Double>> =
+    doubleDecoder and doubleDecoder // `and` is an infix shorthand for PairEncoder
 
 // simply composed decoder
 val locationDecoder: Decoder<Location> = composedDecoder<Location> { // this: DecodingScope<Location>
     val coords: Pair<Double, Double> = decode(coordsEncoder)
     val name: String = string()
-    
+
     Location(coords, name)
 }
 
@@ -657,7 +737,7 @@ val personDecoder: Decoder<Person> = composedDecoder<Person> { // this: Decoding
     val children: List<Person> = selfList() // recursively decode a collection of itself
     val godParent: Person? = selfOrNull() // recursively decode itself, or null
     val location: Location? = decode(optionalLocationDecoder)
-    
+
     Person(name, age, children, godParent, location)
 }
 ```
