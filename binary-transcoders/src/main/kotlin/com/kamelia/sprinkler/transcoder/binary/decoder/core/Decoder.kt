@@ -1,7 +1,9 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.*
+import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Done
+import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Error
+import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Processing
 import com.kamelia.sprinkler.util.unsafeCast
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -103,7 +105,7 @@ interface Decoder<out T> {
      * @see Processing
      * @see Error
      */
-    sealed class State<out T> {
+    sealed interface State<out T> {
 
         /**
          * State returned when the decoding process has been completed successfully. The decoded object can be accessed
@@ -114,7 +116,7 @@ interface Decoder<out T> {
          * @constructor Creates a new [Done] state with the given [value].
          * @param value the decoded object
          */
-        class Done<T>(val value: T) : State<T>() {
+        class Done<T>(val value: T) : State<T> {
 
             override fun toString(): String = "Done($value)"
 
@@ -127,7 +129,7 @@ interface Decoder<out T> {
         /**
          * State returned when the decoding process has not been completed yet. More bytes are needed.
          */
-        object Processing : State<Nothing>() {
+        object Processing : State<Nothing> {
 
             override fun toString(): String = "Processing"
 
@@ -141,7 +143,7 @@ interface Decoder<out T> {
          * @param error the [Throwable] that caused the failure
          * @property error The [Throwable] that caused the failure.
          */
-        class Error(val error: Throwable) : State<Nothing>() {
+        class Error(val error: Throwable) : State<Nothing> {
 
             /**
              * Creates a new [Error] state with the given [message]. The exception will be an [IllegalStateException].
@@ -166,7 +168,7 @@ interface Decoder<out T> {
          * @return a new [State] with the mapped value
          * @param R the type of the new [State]
          */
-        inline fun <R> mapState(block: (T) -> State<R>): State<R> = when (this) {
+        fun <R> mapState(block: (T) -> State<R>): State<R> = when (this) {
             is Done -> block(value)
             else -> mapEmptyState()
         }
@@ -179,7 +181,7 @@ interface Decoder<out T> {
          * @return a new [State] with the mapped value
          * @param R the type of the new [State]
          */
-        inline fun <R> mapResult(block: (T) -> R): State<R> = mapState { Done(block(it)) }
+        fun <R> mapResult(block: (T) -> R): State<R> = mapState { Done(block(it)) }
 
         /**
          * Casts this [State] to a [State] of type [R]. This method is useful to propagate an [Error] or [Processing]
@@ -247,7 +249,7 @@ interface Decoder<out T> {
          * @return the decoded value if this [State] is a [Done] state, otherwise returns the value returned by the
          * given [default] factory
          */
-        inline fun getOrElse(default: () -> @UnsafeVariance T): T = when (this) {
+        fun getOrElse(default: () -> @UnsafeVariance T): T = when (this) {
             is Done -> value
             else -> default()
         }
@@ -259,7 +261,7 @@ interface Decoder<out T> {
          * @param throwable the factory to return the exception to throw if this [State] is not a [Done] state
          * @return the decoded value if this [State] is a [Done] state
          */
-        inline fun getOrThrow(throwable: () -> Throwable): T = when (this) {
+        fun getOrThrow(throwable: () -> Throwable): T = when (this) {
             is Done -> value
             else -> throw throwable()
         }
@@ -270,7 +272,7 @@ interface Decoder<out T> {
          * @param block the function to execute if this [State] is a [Done] state
          * @return this [State]
          */
-        inline fun ifDone(block: (T) -> Unit): State<T> = apply {
+        fun ifDone(block: (T) -> Unit): State<T> = apply {
             if (this is Done) {
                 block(value)
             }
@@ -282,7 +284,7 @@ interface Decoder<out T> {
          * @param block the function to execute if this [State] is an [Error] state
          * @return this [State]
          */
-        inline fun ifError(block: (Throwable) -> Unit): State<T> = apply {
+        fun ifError(block: (Throwable) -> Unit): State<T> = apply {
             if (this is Error) {
                 block(error)
             }
