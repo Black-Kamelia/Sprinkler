@@ -1,11 +1,17 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 
-import com.kamelia.sprinkler.transcoder.binary.decoder.*
+import com.kamelia.sprinkler.transcoder.binary.decoder.BooleanDecoder
+import com.kamelia.sprinkler.transcoder.binary.decoder.ByteDecoder
+import com.kamelia.sprinkler.transcoder.binary.decoder.DoubleDecoder
+import com.kamelia.sprinkler.transcoder.binary.decoder.FloatDecoder
+import com.kamelia.sprinkler.transcoder.binary.decoder.IntDecoder
+import com.kamelia.sprinkler.transcoder.binary.decoder.LongDecoder
+import com.kamelia.sprinkler.transcoder.binary.decoder.ShortDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.DecoderInput
+import com.kamelia.sprinkler.transcoder.binary.decoder.toCollection
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
-import java.lang.ClassCastException
 import java.nio.ByteOrder
 import java.util.stream.Collector
 
@@ -96,28 +102,10 @@ internal class DecodingScopeImpl<E>(
         throw AssertionError("A String decoder should always be present")
     }
 
-    override fun selfOrNull(): E? {
-        val isPresent = decode(computed { BooleanDecoder() })
-        return if (isPresent) {
-            decode(self)
-        } else {
-            null
-        }
-    }
-
-    override fun <R> selfCollectionOrNull(collector: Collector<E, *, R>): R? {
-        val isPresent = decode(computed { BooleanDecoder() })
-        return if (isPresent) {
-            selfCollection(collector)
-        } else {
-            null
-        }
-    }
-
     @JvmName("decodeSelfCollection")
     override fun <R> selfCollection(collector: Collector<E, *, R>): R {
         val decoder = oncePerObject {
-            self.toCollection(collector, computed { IntDecoder(ByteOrder.BIG_ENDIAN) })
+            self.toCollection(collector, computed { IntDecoder(endianness) })
         }
         return decode(decoder)
     }
@@ -140,7 +128,7 @@ internal class DecodingScopeImpl<E>(
         override fun decode(input: DecoderInput): Decoder.State<E> = if (accumulator.hasRecursionElement()) {
             val element = accumulator.getFromRecursion()
             currentIndex++
-            Decoder.State.Done(element.unsafeCast<E>())
+            Decoder.State.Done(element.unsafeCast())
         } else {
             throw RecursionMarker
         }

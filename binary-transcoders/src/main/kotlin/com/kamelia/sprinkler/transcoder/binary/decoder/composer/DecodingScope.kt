@@ -205,7 +205,12 @@ sealed interface DecodingScope<E> {
      * @return the decoded object, or `null` if the object is not present
      */
     @JvmName("decodeSelfOrNull")
-    fun selfOrNull(): E?
+    fun selfOrNull(): E? =
+        if (boolean()) {
+            self()
+        } else {
+            null
+        }
 
     /**
      * Recursively decodes a collection of objects of type [E] using the given [collector]. The assumed representation
@@ -256,7 +261,12 @@ sealed interface DecodingScope<E> {
      * @return the decoded collection, or `null` if the collection is not present
      */
     @JvmName("decodeSelfCollectionOrNull")
-    fun <R> selfCollectionOrNull(collector: Collector<E, *, R>): R?
+    fun <R> selfCollectionOrNull(collector: Collector<E, *, R>): R? =
+        if (boolean()) {
+            selfCollection(collector)
+        } else {
+            null
+        }
 
     /**
      * Recursively decodes a nullable list of objects of type [E]. The assumed representation of the list depends on
