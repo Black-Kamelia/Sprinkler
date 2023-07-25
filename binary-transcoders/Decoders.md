@@ -474,7 +474,7 @@ exist in the three previously mentioned variants):
 
 ### toOptional
 
-`toOptional` transforms a decoder of `T` to an encoder of `T?` using a prefixed encoded boolean to determine the
+`toOptional` transforms a decoder of `T` to an decoder of `T?` using a prefixed encoded boolean to determine the
 presence of the value. The nullability is expected to be encoded with a single byte prefixed to the encoded value,
 where `0` means that the value is not present, and any other value means that the value is present.
 
@@ -510,7 +510,7 @@ However, the main advantage of the `DecodingScope` does not lie in this method b
 the interface. These overloads allow the decoding of basic types (`Int`, `Long`, `String`, etc.). The benefit is that
 the way these objects are decoded is determined by the scope itself, in particular, by its implementation.
 
-It is thus possible, using the `composedDecoder` method (which creates an encoder from an `EncodingScope` and will be
+It is thus possible, using the `composedDecoder` method (which creates a decoder from a `DecodingScope` and will be
 presented in the next section in more details), to write the following code (note that the scope is passed as the
 receiver object):
 
@@ -699,7 +699,7 @@ val encoder: Decoder<Node> = composedDecoder<Node> { // this: DecodingScope<Node
 
 ## Complete Example
 
-Here is a more complex example of creation of several encoders using only encoder composition, the provided factories,
+Here is a more complex example of creation of several decoders using only decoder composition, the provided factories,
 and recursive encoding:
 
 ```kt
@@ -716,12 +716,12 @@ class Person(
 val doubleDecoder: Decoder<Double> = DoubleDecoder()
 
 // aggregate decoders
-val coordsEncoder: Decoder<Pair<Double, Double>> =
+val coordsDecoder: Decoder<Pair<Double, Double>> =
     doubleDecoder and doubleDecoder // `and` is an infix shorthand for PairEncoder
 
 // simply composed decoder
 val locationDecoder: Decoder<Location> = composedDecoder<Location> { // this: DecodingScope<Location>
-    val coords: Pair<Double, Double> = decode(coordsEncoder)
+    val coords: Pair<Double, Double> = decode(coordsDecoder)
     val name: String = string()
 
     Location(coords, name)
