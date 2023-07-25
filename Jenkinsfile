@@ -54,8 +54,8 @@ pipeline {
                         [path: 'readonly-collections/src/main/java'],
                         [path: 'utils/src/main/kotlin'],
                         [path: 'utils/src/main/java'],
-                        [path: 'binary-serializers/src/main/kotlin'],
-                        [path: 'binary-serializers/src/main/java']
+                        [path: 'binary-transcoders/src/main/kotlin'],
+                        [path: 'binary-transcoders/src/main/java']
                     ],
                     tools: [
                         [pattern: '**/build/reports/kover/report.xml']
