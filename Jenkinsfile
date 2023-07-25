@@ -42,12 +42,12 @@ pipeline {
             }
         }
         stage('Test') {
-            parallel {
-                stage('Utils') {
-                    steps {
-                        sh 'gradle --parallel utils:test'
-                    }
+            stage('Utils') {
+                steps {
+                    sh 'gradle --parallel utils:test'
                 }
+            }
+            parallel {
                 stage('Readonly Collections') {
                     steps {
                         sh 'gradle --parallel readonly-collections:test'
