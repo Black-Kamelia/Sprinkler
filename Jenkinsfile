@@ -4,6 +4,7 @@ pipeline {
         timestamps()
         ansiColor('xterm')
         timeout(time: 15, unit: 'MINUTES')
+        disableConcurrentBuilds()
     }
     tools {
         gradle 'gradle-7.5.0'
@@ -23,39 +24,25 @@ pipeline {
             }
         }
         stage('Build') {
-            parallel {
-                stage('Utils') {
-                    steps {
-                        sh 'gradle --parallel utils:assemble'
-                    }
-                }
-                stage('Readonly Collections') {
-                    steps {
-                        sh 'gradle --parallel readonly-collections:assemble'
-                    }
-                }
-                stage('Binary Transcoders') {
-                    steps {
-                        sh 'gradle --parallel binary-transcoders:assemble'
-                    }
-                }
+            steps {
+                sh 'gradle --parallel assemble'
             }
         }
         stage('Test') {
-            stage('Utils') {
-                steps {
-                    sh 'gradle --parallel utils:test'
-                }
-            }
             parallel {
+                stage('Utils') {
+                    steps {
+                        sh 'gradle utils:test'
+                    }
+                }
                 stage('Readonly Collections') {
                     steps {
-                        sh 'gradle --parallel readonly-collections:test'
+                        sh 'gradle readonly-collections:test'
                     }
                 }
                 stage('Binary Serializers') {
                     steps {
-                        sh 'gradle --parallel binary-serializers:test'
+                        sh 'gradle binary-serializers:test'
                     }
                 }
             }
