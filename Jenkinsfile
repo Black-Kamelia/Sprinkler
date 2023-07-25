@@ -1,13 +1,16 @@
 pipeline {
-    agent {
-        docker {
-            image 'gradle:7.5.0-jdk17'
-            reuseNode true
-        }
+    agent any
+    options {
+        timestamps()
+        ansiColor('xterm')
+        timeout(time: 15, unit: 'MINUTES')
+    }
+    tools {
+        gradle 'gradle-7.5.0'
     }
 
     stages {
-        stage('Build') {
+        stage('Precondition') {
             steps {
                 script {
                     def branch = env.CHANGE_BRANCH
@@ -17,26 +20,39 @@ pipeline {
                         error 'Only develop branch can be merged into master'
                     }
                 }
-                sh 'gradle build -q -x test'
+            }
+        }
+        stage('Build') {
+            parallel {
+                stage('Util') {
+                    steps {
+                        sh 'gradle --parallel util:assemble'
+                    }
+                }
+                stage('Readonly Collections') {
+                    steps {
+                        sh 'gradle --parallel readonly-collections:assemble'
+                    }
+                }
             }
         }
         stage('Test') {
-            steps {
-                sh 'gradle test -q -PenableRestrikt=false'
+            parallel {
+                stage('Util') {
+                    steps {
+                        sh 'gradle --parallel util:test -PenableRestrikt=false'
+                    }
+                }
+                stage('Readonly Collections') {
+                    steps {
+                        sh 'gradle --parallel readonly-collections:test -PenableRestrikt=false'
+                    }
+                }
             }
             post {
                 always {
                     junit checksName: 'Tests', allowEmptyResults: true, testResults: '**/build/test-results/test/TEST-*.xml'
-                    publishCoverage adapters: [jacocoAdapter(mergeToOneReport: true, path: '**/build/reports/kover/report.xml')],
-                        sourceDirectories: [
-                            [path: 'binary-serializers/src/main/kotlin'],
-                            [path: 'binary-serializers/src/main/java'],
-                            [path: 'readonly-collections/src/main/kotlin'],
-                            [path: 'readonly-collections/src/main/java'],
-                            [path: 'util/src/main/kotlin'],
-                            [path: 'util/src/main/java']
-                        ],
-                        sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+                    recordCoverage sourceDirectories: [[path: 'readonly-collections/src/main/java'], [path: 'util/src/main/kotlin'], [path: 'util/src/main/java'], [path: 'readonly-collections/src/main/kotlin']], tools: [[pattern: '**/build/reports/kover/xml/*.xml']]
                 }
             }
         }
@@ -49,7 +65,7 @@ pipeline {
                         usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
                         usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass'),
                 ]) {
-                    sh 'gradle -q publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
+                    sh 'gradle publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
                 }
             }
         }
