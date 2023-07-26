@@ -44,7 +44,6 @@ internal class DecodingScopeImpl<E>(
             }
         }
 
-
     override fun <T> oncePerObject(block: () -> T): T = if (currentIndex < accumulator.size) { // already decoded
         accumulator[currentIndex++].unsafeCast()
     } else { // decode
