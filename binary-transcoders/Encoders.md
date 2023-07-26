@@ -390,7 +390,7 @@ one to declare and define a sequence of instructions to apply to the `EncodingSc
 (the order of the scope's method calls is significant and determines the order of writes to the `EncoderOutput`),
 in order to encode an object of the given type.
 
-The scope provided to the user and on which encoding method calls can be made is an implementation using overloads
+The scope provided to the user and on which the encoding method calls can be made is an implementation using overloads
 based on the basic encoders of the library (which encode the basic types mentioned previously: `Int`, `Long`, `String`,
 etc.)
 
@@ -400,7 +400,7 @@ Note that it is also possible to specify the endianness of the number `Encoder`s
 class Person(val name: String, val age: Int)
 
 val encoder: Encoder<Person> = composedEncoder<Person>(
-    ByteOrder.LITTLE_ORDER // Int, Long, Float and Double will be encoded in little order
+    ByteOrder.LITTLE_ORDER // Int, Long, Float and Double will be encoded in little endian
 ) { obj: Person -> // this: EncodingScope<Person>
     encode(obj.name)
     encode(obj.age) // encoded in little endian
@@ -467,8 +467,8 @@ class Person(
 val doubleEncoder: Encoder<Double> = DoubleEncoder()
 
 // aggregate encoders
-val coordsEncoder: Encoder<Pair<Double, Double>> =
-    doubleEncoder and doubleEncoder // `and` is an infix shorthand for PairEncoder
+// `and` is an infix shorthand for PairEncoder
+val coordsEncoder: Encoder<Pair<Double, Double>> = doubleEncoder and doubleEncoder
 
 // simply composed encoder
 val locationEncoder: Encoder<Location> = composedEncoder<Location> { // this: EncodingScope<Location>

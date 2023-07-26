@@ -33,7 +33,7 @@ same vein as projects such as ***kotlinx***, that is mainly used in **[Black Kam
 
 - ***[ReadOnly Collections](readonly-collections/README.md)***: Cast-safe read-only collections for Kotlin
 - ***[Binary Transcoders](binary-transcoders/README.md)***: Composable binary encoders and decoders builders
-- ***[Utils](util/README.md)***: Various utilities for Kotlin (and Java+Kotlin)
+- ***[Utils](utils/README.md)***: Various utilities for Kotlin (and Java+Kotlin)
 
 ## Integration
 
@@ -41,9 +41,9 @@ same vein as projects such as ***kotlinx***, that is mainly used in **[Black Kam
 
 The available modules are:
 
-- `readonly-collections` [![Maven Central](https://shields.black-kamelia.com/maven-central/v/com.black-kamelia.sprinkler/readonly-collections)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/readonly-collections)
-- `binary-transcoders` [![Maven Central](https://shields.black-kamelia.com/maven-central/v/com.black-kamelia.sprinkler/binary-transcoders)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/binary-transcoders)
-- `util` [![Maven Central](https://shields.black-kamelia.com/maven-central/v/com.black-kamelia.sprinkler/util)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/util)
+- `readonly-collections` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/readonly-collections)](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/readonly-collections)
+- `binary-transcoders` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/binary-transcoders)](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/binary-transcoders)
+- `util` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/utils)](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/utils)
 
 ### Maven
 

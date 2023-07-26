@@ -43,7 +43,7 @@ the package `com.kamelia.sprinkler.transcoder.binary.decoder`.
     - [DecodingScope interface](#decodingscope-interface)
     - [Scope usage](#scope-usage)
         - [Examples](#examples)
-    - [Implementation performances and advices](#implementation-performances-and-advices)
+    - [Implementation, performances and advices](#implementation-performances-and-advices)
 - [Complete Example](#complete-example)
 
 ## Main interfaces
@@ -474,12 +474,12 @@ exist in the three previously mentioned variants):
 
 ### toOptional
 
-`toOptional` transforms a decoder of `T` to an decoder of `T?` using a prefixed encoded boolean to determine the
+`toOptional` transforms a decoder of `T` to a decoder of `T?` using a prefixed encoded boolean to determine the
 presence of the value. The nullability is expected to be encoded with a single byte prefixed to the encoded value,
 where `0` means that the value is not present, and any other value means that the value is present.
 
 ```kt
-val booleanDecoder: Decoder<Boolean> = BooleanEncoder()
+val booleanDecoder: Decoder<Boolean> = BooleanDecoder()
 val nullableBooleanDecoder: Decoder<Boolean?> = booleanDecoder.toOptional()
 ```
 
@@ -502,7 +502,7 @@ object by decoding each of the different components required to create the objec
 a recursive structure, that is to say, an object which contains a reference to its own type, nullable or not, or even in
 a collection. For example, a linked list node is a recursive data structure.
 
-To encode an object using a `DecodingScope`, the interface has a `decode(decoder: Decoder<T>): T` method. This method
+To decode an object using a `DecodingScope`, the interface has a `decode(decoder: Decoder<T>): T` method. This method
 is the main entry point for decoding and is the foundation of the interface as a whole. It enables the decoding of any
 type of object, provided an appropriate decoder is given for that purpose.
 
@@ -529,7 +529,7 @@ As explained earlier, the interface also allows the encoding of recursive struct
 using the decoder accessible through the `self` property, which is a special decoder that can decode an object of the
 same type as the scope to which it belongs to, by repeating the same calls as those made on the scope itself.
 
-Thus, it is possible to recursively encode a linked list as follows:
+Thus, it is possible to recursively decode a linked list as follows:
 
 ```kt
 class Node(val value: Int, val next: Node?)
@@ -571,9 +571,9 @@ provided by the `DecodingScope`:
 The `oncePerObject(() -> T): T` method executes the given function only once per scope, that is to say, in the case of
 recursive encoding, any subsequent call to this method will return the cached result for the same object.
 
-It is mainly used to create a decoder using the `self` decoder, as it is not possible to declare it before the scope,
-and because it must be cached in case of decoding cannot be done in a single pass (to keep track of the partial data
-between calls).
+It is mainly used to create a derived decoder using the `self` decoder, as it is not possible to declare it before the 
+scope, and because it must be cached in the case where decoding cannot be done in a single pass (to keep track of the 
+partial data between calls).
 
 Here is an example of how to use it when creating a custom decoder using `self`:
 
@@ -599,7 +599,7 @@ class Person(val name: String, val age: Int)
 
 val personDecoder: Decoder<Person> = composedDecoder<Person> { // this: DecodingScope<Person>
     val name: String = string()
-    skip(8 + 8) // skips two doubles representing the latitude and longitude of the person's location
+    skip(Double.SIZE_BYTES * 2) // skips two doubles representing the latitude and longitude of the person's location
     val age: Int = int()
 
     Person(name, age)
@@ -633,7 +633,7 @@ one to declare and define a sequence of instructions to apply to the `DecodingSc
 calls is significant and determines the order of reads to the `DecoderOutput`), in order to decode an object of the
 given type.
 
-The scope provided to the user and on which decoding method calls can be made is an implementation using overloads
+The scope provided to the user and on which the decoding method calls can be made is an implementation using overloads
 based on the basic decoders of the library (which decode the basic types mentioned previously: `Int`, `Long`, `String`,
 etc.)
 
@@ -643,10 +643,10 @@ Note that it is also possible to specify the endianness of the number `Decoder`s
 class Person(val name: String, val age: Int)
 
 val decoder: Decoder<Person> = composedDecoder<Person>(
-    ByteOrder.LITTLE_ORDER // Int, Long, Float and Double will be encoded in little order
+    ByteOrder.LITTLE_ORDER // Int, Long, Float and Double will be interpreted in little endian
 ) { // this: DecodingScope<Person>
     val name: String = string()
-    val age: Int = int() // decoded in little endian
+    val age: Int = int() // interpreted in little endian
     
     Person(name, age)
 }
@@ -661,7 +661,7 @@ This section shows some examples of the use of the `composedDecoder` function.
 ```kt
 class Enemy(val name: String, var hp: Int)
 
-val enemyDecoder: Encoder<Enemy> = composedDecoder<Enemy> { // this: DecodingScope<Node>
+val enemyDecoder: Decoder<Enemy> = composedDecoder<Enemy> { // this: DecodingScope<Node>
     val name: String = string()
     val hp: Int = int()
 
@@ -679,7 +679,7 @@ sealed interface Node {
     class Leaf(override val value: Int)
 }
 
-val encoder: Decoder<Node> = composedDecoder<Node> { // this: DecodingScope<Node>
+val decoder: Decoder<Node> = composedDecoder<Node> { // this: DecodingScope<Node>
     val isLeaf: Boolean = boolean()
     if (isLeaf) {
         val value: Int = int()
@@ -695,7 +695,139 @@ val encoder: Decoder<Node> = composedDecoder<Node> { // this: DecodingScope<Node
 }
 ```
 
-### Implementation performances and advices
+### Implementation, performances and advices
+
+#### Implementation
+
+One of the big specificities of the implementation of the decoder composition is that it is done using exceptions. You
+may have noticed that inside the `composedDecoder` function, the `decode` method and all its shorthand methods always
+returns the actual object, and never a `Decoder.State` in case of missing bytes or error. This is because the method
+will throw an exception if the actual `Decoder.decode` call does not return a `Decoder.State.Done` value. This exception
+will then be caught by the `composedDecoder` function, which will then return the `Decoder.State` value to the user.
+
+```kt
+class Person(val name: String, val age: Int)
+
+val myDecoder: Decoder<Person> = composedDecoder<Person> { // this: DecodingScope<Person>
+    val name: String = string()
+    val age: Int = int()
+
+    Person(name, age)
+}
+
+val input: DecoderInput = DecoderInput.nullInput()
+val result: Decoder.State<Person> = myDecoder.decode(input)
+```
+
+In the above example, let's say that the `string` method call cannot fully read the string because there are not enough
+bytes in the `DecoderOutput` to do so. The steps of the decoding process will be the following:
+
+![Decoding process schema](./assets/img/bintrans_exceptions.dark.svg#gh-dark-mode-only)
+![Decoding process schema](./assets/img/bintrans_exceptions.light.svg#gh-light-mode-only)
+
+Other parts of the implementation of the scope also rely on exceptions, such as the return of `Decoder.State.Error`
+values from the underlying decoders, recursive decoding or the `errorState` method call.
+
+This design choice allows users to write their decoders in a more imperative way, without having to worry about the
+`Decoder.State` values returned by the `decode` method calls. However, this design choice has a cost in terms of
+performances, a topic that will be discussed in the next section.
+
+#### Performances
+
+The use of exceptions in the implementation of the decoder composition has a cost in terms of performances. Despite the
+small optimizations that have been made (use of singleton exceptions, reduction of allocations between the `decode`
+method calls, etc.), the performances of the decoder created through composition are significantly lower than those of
+a decoder created by hand (a class implementing the `Decoder` interface).
+
+However, the performances offered by the decoder composition are still, in most cases, sufficient for the decoding of
+binary data. The following table shows the results of a benchmark comparing the performances of a decoder created by
+hand and a decoder created through composition (using jmh):
+
+|    cases \ ops per ms    | Composition |  Handmade  |
+|:------------------------:|:-----------:|:----------:|
+|  ByteArray single step   |  8 533.491  | 48 436.599 |
+| ByteArray several steps  |   476.447   | 48 895.678 |
+|     File single step     |   54.503    | 4 118.578  |
+|    File several steps    |   50.883    | 3 588.680  |
+|  ByteBuffer single step  |  7 410.855  | 50 410.224 |
+| ByteBuffer several steps |   731.728   | 50 385.284 |
+
+> Note: in the above table, the "single step" cases correspond to the decoding that runs in a single call to the
+> `decode` method, while the "several steps" cases correspond to the decoding that runs the worst case scenario, where
+> the input size is one byte and the decoder is called for each byte. 
+
+> Specs of the machine used for the benchmark:
+> - Windows 11
+> - CPU: Intel Core i9 TODO
+> - 32 GB of RAM DDR4 TODO
+> 
+> Benchmark config:
+> - JMH version: 1.33
+> - VM version: JDK 17
+> - Benchmark mode: Throughput, ops/time
+> - Warmup: 5 iterations, 60 s each
+> - Measurement: 5 iterations, 60 s each
+> - Forks: 5
+
+The results clearly show that the performances of the decoder created through composition are significantly lower than
+those of the decoder created by hand, with an average of 27 times faster, a minimum of 6 times and a maximum of 101
+times. The great disparity between this 6 and 101 times is due to the fact that the difference is much more important
+when the slowest part of the decoding is the transformation of the bytes (as in the decoding itself), and much less
+important when the slowest part is the reading of the bytes (as in the reading of a file) TODO.
+
+Finally, as stated previously, the performances of the decoder created through composition are still (most of the time)
+sufficient for the decoding of binary data. For example, an online game client receives an average of 150MB of data per
+hour, while the composition decoder would be able to decode 731.728 * 1000 * 3600 = 2634220800.0 B/h, or 2.6GB/h in the
+worst case scenario (where the bytes are received one by one from the network, which will never happen in practice).
+
+#### Advices
+
+In the case where the performances of the decoder created through composition are not sufficient, the user can always
+create their own decoder by hand.
+
+The following example shows how a simple decoder can be created by hand:
+
+```kt
+class Person(val name: String, val age: Int)
+
+class PersonDecoder : Decoder<Person> {
+
+    private val stringDecoder: Decoder<String> = UTF8StringDecoder()
+    private val intDecoder: Decoder<Int> = IntDecoder()
+
+    private var name: String? = null
+
+    override fun decode(input: DecoderInput): Decoder.State<Person> {
+        if (name == null) { // decode the name if it has not been decoded yet
+            val state: Decoder.State<String> = stringDecoder.decode(input)
+            // return the state if the name has not been fully decoded
+            if (state.isNotDone()) return state.mapEmptyState()
+            name = state.get()
+        }
+
+        val state: Decoder.State<Int> = intDecoder.decode(input)
+        // return the state if the age has not been fully decoded
+        if (state.isNotDone()) return state.mapEmptyState()
+
+        // store the name in a local variable to reset the field
+        val personName = name!!
+        name = null
+
+        return Decoder.State.Done(Person(personName, state.get()))
+    }
+
+    override fun reset() {
+        name = null
+        stringDecoder.reset()
+        intDecoder.reset()
+    }
+
+}
+```
+
+As you can see, even for a simple object, the implementation of the decoder is quite big. This is why the composition
+emphasizes the readability over the performances. The complexity also increases exponentially when it comes to
+recursive decoding, which is why the composition is a good alternative to the recursive decoding.
 
 ## Complete Example
 
@@ -716,8 +848,8 @@ class Person(
 val doubleDecoder: Decoder<Double> = DoubleDecoder()
 
 // aggregate decoders
-val coordsDecoder: Decoder<Pair<Double, Double>> =
-    doubleDecoder and doubleDecoder // `and` is an infix shorthand for PairEncoder
+// `and` is an infix shorthand for PairDecoder
+val coordsDecoder: Decoder<Pair<Double, Double>> = doubleDecoder and doubleDecoder
 
 // simply composed decoder
 val locationDecoder: Decoder<Location> = composedDecoder<Location> { // this: DecodingScope<Location>

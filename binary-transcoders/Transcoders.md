@@ -6,5 +6,9 @@ deserializing data in a binary format.
 As of now, one can create a `Transcoder` using the `Transcoder.create(encoder, decoder)` function, or by implementing
 the `Transcoder` interface directly.
 
-> **Coming soon:** a way to create a `Transcoder` using the composition API (which will provide the `encode` and `decode`
-> functions in one go).
+```kotlin
+val encoder: Encoder<Int> = IntEncoder()
+val decoder: Decoder<Int> = IntDecoder()
+
+val transcoder: Transcoder<Int> = Transcoder.create(encoder, decoder)
+```
