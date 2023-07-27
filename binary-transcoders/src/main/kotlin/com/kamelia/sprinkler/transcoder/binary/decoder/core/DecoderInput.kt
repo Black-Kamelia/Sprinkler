@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
 import com.kamelia.sprinkler.transcoder.binary.common.BitOrder
+import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.*
@@ -30,6 +31,7 @@ interface DecoderInput {
      * Reads a single bit from the source. Returns -1 if there are no more bits to read.
      *
      * @return the bit read, or -1 if there are no more bits to read
+     * @throws IOException if an I/O error occurs
      */
     fun readBit(): Int
 
@@ -37,6 +39,7 @@ interface DecoderInput {
      * Reads a full byte from the source. Returns -1 if there is less than 1 byte left to read.
      *
      * @return the byte read, or -1 if there is less than 1 byte left to read
+     * @throws IOException if an I/O error occurs
      */
     fun read(): Int
 
@@ -49,6 +52,7 @@ interface DecoderInput {
      * @param length the number of bits to read
      * @return the number of bits actually read
      * @throws IndexOutOfBoundsException if [start] < 0 or [length] < 0 or [start] + [length] > [ByteArray.size] * 8
+     * @throws IOException if an I/O error occurs
      */
     fun readBits(bytes: ByteArray, start: Int, length: Int): Int {
         Objects.checkFromIndexSize(start, length, bytes.size * 8)
@@ -91,6 +95,7 @@ interface DecoderInput {
      * @param length the exclusive end index in the [ByteArray] to read into
      * @return the number of bytes read
      * @throws IndexOutOfBoundsException if [start] < 0 or [length] < 0 or [start] + [length] > [ByteArray.size]
+     * @throws IOException if an I/O error occurs
      */
     fun read(bytes: ByteArray, start: Int, length: Int): Int {
         Objects.checkFromIndexSize(start, length, bytes.size)
@@ -110,6 +115,7 @@ interface DecoderInput {
      * @param bytes the [ByteArray] to read into
      * @param start the inclusive start index in the [ByteArray] to read into
      * @return the number of bytes read
+     * @throws IOException if an I/O error occurs
      */
     fun read(bytes: ByteArray, start: Int): Int = read(bytes, start, bytes.size - start)
 
@@ -128,6 +134,7 @@ interface DecoderInput {
      *
      * @param bytes the [MutableCollection] to read into
      * @param length the maximum number of bytes to read
+     * @throws IOException if an I/O error occurs
      */
     fun read(bytes: MutableCollection<Byte>, length: Int): Int {
         var read = 0
@@ -146,6 +153,7 @@ interface DecoderInput {
      *
      * @param bytes the [MutableCollection] to read into
      * @return the number of bytes read
+     * @throws IOException if an I/O error occurs
      */
     fun read(bytes: MutableCollection<Byte>): Int = read(bytes, Int.MAX_VALUE)
 
@@ -154,6 +162,7 @@ interface DecoderInput {
      *
      * @param n the number of bytes to skip
      * @return the number of bytes actually skipped
+     * @throws IOException if an I/O error occurs
      */
     fun skip(n: Long): Long {
         var skipped = 0L

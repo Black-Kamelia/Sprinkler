@@ -5,6 +5,7 @@ import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Done
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Error
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Processing
 import com.kamelia.sprinkler.util.unsafeCast
+import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
 
@@ -54,6 +55,7 @@ interface Decoder<out T> {
      *
      * @param input the input from which to decode the object
      * @return a [State] object representing the state of the decoding process
+     * @throws IOException if an I/O error occurs
      */
     fun decode(input: DecoderInput): State<T>
 
@@ -62,6 +64,7 @@ interface Decoder<out T> {
      *
      * @param input the input from which to decode the object
      * @return a [State] object representing the state of the decoding process
+     * @throws IOException if an I/O error occurs
      */
     fun decode(input: InputStream): State<T> = decode(DecoderInput.from(input))
 
@@ -88,7 +91,11 @@ interface Decoder<out T> {
      * Resets the internal state of the decoder. This method can be called at any time, even if the decoder is not in a
      * [State.Done] state.
      *
-     * **NOTE**: This method does not need to be called after a
+     * **NOTE**: This method does not need to be called after a successful decoding process, as the internal state of
+     * the decoder should be reset automatically by the implementing class.
+     *
+     * **NOTE**: This method must be called after the return of a [State.Error] object, as the internal state of the
+     * decoder may be in an inconsistent state.
      */
     fun reset()
 

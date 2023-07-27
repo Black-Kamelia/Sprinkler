@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.transcoder.binary.encoder.core
 
 import java.io.File
+import java.io.IOException
 import java.io.OutputStream
 import java.nio.file.Path
 import kotlin.io.path.outputStream
@@ -37,6 +38,7 @@ fun interface Encoder<in T> {
      * @param obj the object to encode
      * @param output the output to write the encoded bytes to
      * @see EncoderOutput
+     * @throws IOException if an I/O error occurs
      */
     fun encode(obj: T, output: EncoderOutput)
 
@@ -59,6 +61,7 @@ fun interface Encoder<in T> {
      *
      * @param obj the object to encode
      * @param output the output to write the encoded bytes to
+     * @throws IOException if an I/O error occurs
      */
     fun encode(obj: T, output: OutputStream): Unit = encode(obj, EncoderOutput.from(output))
 
@@ -67,6 +70,7 @@ fun interface Encoder<in T> {
      *
      * @param obj the object to encode
      * @param output the output to write the encoded bytes to
+     * @throws IOException if an I/O error occurs
      */
     fun encode(obj: T, output: Path): Unit = output.outputStream().use { encode(obj, it) }
 
@@ -75,6 +79,7 @@ fun interface Encoder<in T> {
      *
      * @param obj the object to encode
      * @param output the output to write the encoded bytes to
+     * @throws IOException if an I/O error occurs
      */
     fun encode(obj: T, output: File): Unit = output.outputStream().use { encode(obj, it) }
 
