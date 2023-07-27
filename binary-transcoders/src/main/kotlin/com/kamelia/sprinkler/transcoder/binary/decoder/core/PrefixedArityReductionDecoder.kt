@@ -58,7 +58,6 @@ class PrefixedArityReductionDecoder<T, C, R>(
                 is Decoder.State.Done -> {
                     val size = sizeState.value.toInt()
                     if (size < 0) {
-                        reset()
                         return Decoder.State.Error(IllegalStateException("Size must be positive, but was $size"))
                     }
                     this.size = size
