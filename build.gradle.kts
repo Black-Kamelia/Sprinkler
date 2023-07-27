@@ -109,7 +109,7 @@ allprojects {
     publishing {
         publications {
             create<MavenPublication>("maven-$projectName") {
-                groupId = findProp<String>("projectGroup") + ".sprinkler"
+                groupId = findProp<String>("projectGroup")
                 artifactId = projectName
                 version = projectVersion
                 from(components["java"])
