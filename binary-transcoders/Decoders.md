@@ -44,6 +44,9 @@ the package `com.kamelia.sprinkler.transcoder.binary.decoder`.
     - [Scope usage](#scope-usage)
         - [Examples](#examples)
     - [Implementation, performances and advices](#implementation-performances-and-advices)
+        - [Implementation](#implementation)
+        - [Performances](#performances)
+        - [Advices](#advices)
 - [Complete Example](#complete-example)
 
 ## Main interfaces
@@ -701,7 +704,7 @@ val decoder: Decoder<Node> = composedDecoder<Node> { // this: DecodingScope<Node
 
 One of the big specificities of the implementation of the decoder composition is that it is done using exceptions. You
 may have noticed that inside the `composedDecoder` function, the `decode` method and all its shorthand methods always
-returns the actual object, and never a `Decoder.State` in case of missing bytes or error. This is because the method
+return the actual object, and never a `Decoder.State` in case of missing bytes or error. This is because the method
 will throw an exception if the actual `Decoder.decode` call does not return a `Decoder.State.Done` value. This exception
 will then be caught by the `composedDecoder` function, which will then return the `Decoder.State` value to the user.
 
@@ -720,10 +723,14 @@ val result: Decoder.State<Person> = myDecoder.decode(input)
 ```
 
 In the above example, let's say that the `string` method call cannot fully read the string because there are not enough
-bytes in the `DecoderOutput` to do so. The steps of the decoding process will be the following:
+bytes yet in the `DecoderOutput` to do so. The steps of the decoding process will be the following:
 
-![Decoding process schema](./assets/img/bintrans_exceptions.dark.svg#gh-dark-mode-only)
-![Decoding process schema](./assets/img/bintrans_exceptions.light.svg#gh-light-mode-only)
+<div align="center">
+
+![Decoding process diagram](./assets/img/bintrans_exceptions.dark.svg#gh-dark-mode-only)
+![Decoding process diagram](./assets/img/bintrans_exceptions.light.svg#gh-light-mode-only)
+
+</div>
 
 Other parts of the implementation of the scope also rely on exceptions, such as the return of `Decoder.State.Error`
 values from the underlying decoders, recursive decoding or the `errorState` method call.
@@ -737,13 +744,13 @@ performances, a topic that will be discussed in the next section.
 The use of exceptions in the implementation of the decoder composition has a cost in terms of performances. Despite the
 small optimizations that have been made (use of singleton exceptions, reduction of allocations between the `decode`
 method calls, etc.), the performances of the decoder created through composition are significantly lower than those of
-a decoder created by hand (a class implementing the `Decoder` interface).
+a "handmade" decoder (a class implementing the `Decoder` interface).
 
-However, the performances offered by the decoder composition are still, in most cases, sufficient for the decoding of
-binary data. The following table shows the results of a benchmark comparing the performances of a decoder created by
-hand and a decoder created through composition (using jmh):
+However, the performance offered by the decoder composition is still, in most cases, sufficient for the decoding of
+binary data. The following table shows the results of a benchmark comparing the performances of a handmade decoder and a
+decoder created through composition (benchmarks done using jmh) (higher is better):
 
-|    cases \ ops per ms    | Composition |  Handmade  |
+|    cases / ops per ms    | Composition |  Handmade  |
 |:------------------------:|:-----------:|:----------:|
 |  ByteArray single step   |  8 533.491  | 48 436.599 |
 | ByteArray several steps  |   476.447   | 48 895.678 |
@@ -752,9 +759,10 @@ hand and a decoder created through composition (using jmh):
 |  ByteBuffer single step  |  7 410.855  | 50 410.224 |
 | ByteBuffer several steps |   731.728   | 50 385.284 |
 
-> Note: in the above table, the "single step" cases correspond to the decoding that runs in a single call to the
-> `decode` method, while the "several steps" cases correspond to the decoding that runs the worst case scenario, where
-> the input size is one byte and the decoder is called for each byte. 
+
+> **Note**: in the table above, the "single step" cases correspond to the decoding processes that run in a single call 
+> to the `decode` method, while the "several steps" cases correspond to the decoding processes that run in the worst 
+> case scenario, where the input size is one byte and the decoder is called for each byte. 
 
 > Specs of the machine used for the benchmark:
 > - Windows 11
@@ -770,12 +778,12 @@ hand and a decoder created through composition (using jmh):
 > - Forks: 5
 
 The results clearly show that the performances of the decoder created through composition are significantly lower than
-those of the decoder created by hand, with an average of 27 times faster, a minimum of 6 times and a maximum of 101
+those of the handmade decoder, with an average of 27 times faster, a minimum of 6 times and a maximum of 101
 times. The great disparity between this 6 and 101 times is due to the fact that the difference is much more important
 when the slowest part of the decoding is the transformation of the bytes (as in the decoding itself), and much less
 important when the slowest part is the reading of the bytes (as in the reading of a file) TODO.
 
-Finally, as stated previously, the performances of the decoder created through composition are still (most of the time)
+Finally, as stated previously, the performance of the decoders created through composition is still (most of the time)
 sufficient for the decoding of binary data. For example, an online game client receives an average of 150MB of data per
 hour, while the composition decoder would be able to decode 731.728 * 1000 * 3600 = 2634220800.0 B/h, or 2.6GB/h in the
 worst case scenario (where the bytes are received one by one from the network, which will never happen in practice).
@@ -826,8 +834,9 @@ class PersonDecoder : Decoder<Person> {
 ```
 
 As you can see, even for a simple object, the implementation of the decoder is quite big. This is why the composition
-emphasizes the readability over the performances. The complexity also increases exponentially when it comes to
-recursive decoding, which is why the composition is a good alternative to the recursive decoding.
+emphasizes on readability over performance. The complexity of the implementation also increases exponentially when it 
+comes to recursive decoding, which is why the composition is a good tool to describe how recursive decoding should be 
+done.
 
 ## Complete Example
 
