@@ -41,9 +41,9 @@ same vein as projects such as ***kotlinx***, that is mainly used in **[Black Kam
 
 The available modules are:
 
-- `readonly-collections` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/readonly-collections)](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/readonly-collections)
-- `binary-transcoders` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/binary-transcoders)](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/binary-transcoders)
-- `util` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/utils)](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/utils)
+- `readonly-collections` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/readonly-collections)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/readonly-collections)
+- `binary-transcoders` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/binary-transcoders)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/binary-transcoders)
+- `util` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/utils)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/utils)
 
 ### Maven
 

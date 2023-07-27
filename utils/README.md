@@ -1,5 +1,7 @@
 # Sprinkler: Utils
 
+[![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/utils)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/utils)
+
 ## Summary
 
 - [Intentions](#intentions)

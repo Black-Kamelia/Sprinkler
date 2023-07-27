@@ -1,5 +1,7 @@
 # Sprinkler: Binary Transcoders
 
+[![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/binary-transcoders)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/binary-transcoders)
+
 ## Summary
 
 - [Intentions](#intentions)

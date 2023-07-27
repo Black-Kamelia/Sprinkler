@@ -1,5 +1,7 @@
 # Sprinkler: ReadOnly Collections
 
+[![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/readonly-collections)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/readonly-collections)
+
 ## Summary
 
 - [Intentions](#intentions)
