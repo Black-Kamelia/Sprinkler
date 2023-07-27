@@ -571,7 +571,7 @@ cases, such as:
 Moreover, there are way to perform complex conditional decoding cases in an elegant manner thanks to some methods
 provided by the `DecodingScope`:
 
-The `oncePerObject(() -> T): T` method executes the given function only once per scope, that is to say, in the case of
+The `objectScoped(() -> T): T` method executes the given function only once per scope, that is to say, in the case of
 recursive encoding, any subsequent call to this method will return the cached result for the same object.
 
 It is mainly used to create a derived decoder using the `self` decoder, as it is not possible to declare it before the 
@@ -587,7 +587,7 @@ class Person(val name: String, val fatherBox: Box<Person?>)
 val personDecoder: Decoder<Person> = composedDecoder<Person> { // this: DecodingScope<Person>
     val name: String = string()
 
-    val fatherBoxDecoder: Decoder<Box<Person?>> = oncePerObject { self.toOptional().mapResult { Box(it) } }
+    val fatherBoxDecoder: Decoder<Box<Person?>> = objectScoped { self.toOptional().mapResult { Box(it) } }
     val fatherBox: Box<Person?> = decode(fatherBoxDecoder)
 
     Person(name, fatherBox)
@@ -778,10 +778,7 @@ decoder created through composition (benchmarks done using jmh) (higher is bette
 > - Forks: 5
 
 The results clearly show that the performances of the decoder created through composition are significantly lower than
-those of the handmade decoder, with an average of 27 times faster, a minimum of 6 times and a maximum of 101
-times. The great disparity between this 6 and 101 times is due to the fact that the difference is much more important
-when the slowest part of the decoding is the transformation of the bytes (as in the decoding itself), and much less
-important when the slowest part is the reading of the bytes (as in the reading of a file) TODO.
+those of the handmade decoder, with an average of 27 times faster.
 
 Finally, as stated previously, the performance of the decoders created through composition is still (most of the time)
 sufficient for the decoding of binary data. For example, an online game client receives an average of 150MB of data per
