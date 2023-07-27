@@ -1,52 +1,49 @@
-import java.util.Base64
-import java.util.Properties
+import java.util.*
 
 plugins {
     val kotlinVersion: String by System.getProperties()
     val restriktVersion: String by System.getProperties()
+    val koverVersion: String by System.getProperties()
     java
     `maven-publish`
     signing
-    jacoco
+    id("org.jetbrains.kotlinx.kover") version koverVersion
     kotlin("jvm") version kotlinVersion
     id("com.zwendo.restrikt") version restriktVersion
 }
 
-val projectGroup: String by project
-val projectGroupFqName: String by project
-val projectMembers: String by project
-val projectWebsite: String by project
-
-val kotlinVersion: String by System.getProperties()
 val jvmVersion: String by project
-val junitVersion: String by project
-
 val rootProjectName = rootProject.name.toLowerCase()
 
-group = projectGroup
+group = findProp<String>("projectGroup")
 
 val props = Properties().apply { load(file("gradle.properties").reader()) }
 
 fun String.base64Decode() = String(Base64.getDecoder().decode(this))
 
+val restriktVersion: String by System.getProperties()
 allprojects {
     apply(plugin = "java")
     apply(plugin = "kotlin")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
     apply(plugin = "com.zwendo.restrikt")
-    apply(plugin = "jacoco")
+    apply(plugin = "org.jetbrains.kotlinx.kover")
 
     val projectName = project.name.toLowerCase()
-    val projectVersion = props["$projectName.version"] as? String ?: "0.1.0"
+    val projectVersion = findProp("$projectName.version") ?: "0.1.0"
 
     repositories {
         mavenCentral()
     }
 
     dependencies {
+        val junitVersion: String by project
+
+        implementation("com.zwendo:restrikt-annotation:$restriktVersion")
         testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
         testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
+        testImplementation("org.junit.jupiter", "junit-jupiter-params", junitVersion)
     }
 
     java {
@@ -55,25 +52,44 @@ allprojects {
     }
 
     signing {
-        val signingKey = findProperty("signingKey") as? String ?: ""
-        val signingPassword = findProperty("signingPassword") as? String ?: ""
-        useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
+        val signingKey = findProp<String?>("signingKey")
+        val signingPassword = findProp<String?>("signingPassword")
+        if (signingKey != null && signingPassword != null) {
+            logger.info("Using in memory keys for signing")
+            useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
+        } else {
+            logger.info("Using local GPG keys for signing")
+        }
         sign(publishing.publications)
+    }
+
+    kover {
+        excludeSourceSets {
+            names("jmh")
+        }
     }
 
     tasks {
         test {
             useJUnitPlatform()
             ignoreFailures = true
-            finalizedBy(jacocoTestReport)
+            finalizedBy(koverVerify)
         }
 
-        compileJava {
+        koverVerify {
+            finalizedBy(koverXmlReport)
+        }
+
+        koverXmlReport {
+            finalizedBy(koverHtmlReport)
+        }
+
+        setupJavaCompilation {
             sourceCompatibility = jvmVersion
             targetCompatibility = jvmVersion
         }
 
-        compileKotlin {
+        setupKotlinCompilation {
             kotlinOptions {
                 jvmTarget = jvmVersion
                 freeCompilerArgs = listOf(
@@ -88,31 +104,23 @@ allprojects {
             archiveBaseName.set("$rootProjectName-$projectName-$projectVersion")
         }
 
-        jacocoTestReport {
-            reports {
-                xml.required.set(true)
-                csv.required.set(false)
-                html.required.set(true)
-            }
-        }
     }
 
     publishing {
         publications {
-            val artifactName = "$rootProjectName-$projectName"
-            create<MavenPublication>("maven-$artifactName") {
-                groupId = projectGroup
-                artifactId = artifactName
+            create<MavenPublication>("maven-$projectName") {
+                groupId = findProp<String>("projectGroup") + ".sprinkler"
+                artifactId = projectName
                 version = projectVersion
                 from(components["java"])
 
                 pom {
-                    name.set(artifactName)
+                    name.set(projectName)
                     description.set("Sprinkler@${projectName} | Black Kamelia")
                     url.set("https://github.com/Black-Kamelia/Sprinkler")
 
                     developers {
-                        projectMembers.split(",").forEach {
+                        findProp<String>("projectMembers").split(",").forEach {
                             developer {
                                 id.set(it)
                             }
@@ -146,5 +154,24 @@ allprojects {
                 }
             }
         }
+    }
+}
+
+fun TaskContainerScope.setupJavaCompilation(block: JavaCompile.() -> Unit) {
+    compileJava(block)
+    compileTestJava(block)
+}
+
+fun TaskContainerScope.setupKotlinCompilation(block: org.jetbrains.kotlin.gradle.tasks.KotlinCompile.() -> Unit) {
+    compileKotlin(block)
+    compileTestKotlin(block)
+}
+
+inline fun <reified T> Project.findProp(name: String): T {
+    val strProp = findProperty(name) as? String
+    return when (T::class) {
+        Boolean::class -> strProp?.toBoolean() as T
+        Int::class -> strProp?.toInt() as T
+        else -> strProp as T
     }
 }

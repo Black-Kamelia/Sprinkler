@@ -7,7 +7,7 @@ import org.junit.jupiter.api.assertThrows
 class SetTest {
 
     @Test
-    fun `read only set cannot be casted to mutable set`() {
+    fun `read only set cannot be cast to mutable set`() {
         val readOnlySet = readOnlySetOf(1, 2, 3)
 
         @Suppress("UNCHECKED_CAST")
@@ -15,7 +15,7 @@ class SetTest {
     }
 
     @Test
-    fun `read only set iterator cannot be casted to mutable iterator`() {
+    fun `read only set iterator cannot be cast to mutable iterator`() {
         val readOnlySet = readOnlySetOf(1, 2, 3)
         val iterator = readOnlySet.iterator()
 

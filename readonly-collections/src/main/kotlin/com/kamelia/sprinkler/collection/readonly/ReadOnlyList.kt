@@ -1,7 +1,5 @@
 package com.kamelia.sprinkler.collection.readonly
 
-import com.kamelia.sprinkler.collection.readonly.internal.ReadOnlySubList
-
 /**
  * Represents a read-only ordered [Collection] of elements. This interface and all its sub-interfaces only allow
  * read-only operations.
@@ -30,11 +28,10 @@ interface ReadOnlyList<out E> : List<E>, ReadOnlyCollection<E> {
      * @param fromIndex the low endpoint (inclusive) of the subList
      * @param toIndex the high endpoint (exclusive) of the subList
      * @return a [ReadOnlyList] containing the specified range of elements from this list
-     * @throws IndexOutOfBoundsException if [fromIndex] < 0 or [toIndex] > size
-     * @throws IllegalArgumentException if [fromIndex] > [toIndex]
+     * @throws IndexOutOfBoundsException if [fromIndex] < 0 or [toIndex] > size or [fromIndex] > [toIndex] or
+     * [toIndex] > [size], as specified by [List.subList][java.util.List.subList]
      * @see List.subList
      */
-    override fun subList(fromIndex: Int, toIndex: Int): ReadOnlyList<E> =
-        ReadOnlySubList(this, fromIndex, toIndex)
+    override fun subList(fromIndex: Int, toIndex: Int): ReadOnlyList<E>
 
 }

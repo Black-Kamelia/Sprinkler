@@ -1,5 +1,7 @@
 package com.kamelia.sprinkler.collection.readonly
 
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -7,7 +9,7 @@ import org.junit.jupiter.api.assertThrows
 class IterableTest {
 
     @Test
-    fun `read only iterable cannot be casted to mutable iterable`() {
+    fun `read only iterable cannot be cast to mutable iterable`() {
         val readOnlyIterable = listOf(1, 2, 3).asReadOnlyIterable()
 
         @Suppress("UNCHECKED_CAST")
@@ -39,6 +41,32 @@ class IterableTest {
         val iterableIterator = iterable.readOnlyIterator()
 
         assertTrue(listIterator.javaClass == iterableIterator.javaClass)
+    }
+
+    @Test
+    fun `read only iterable correctly delegates methods from any to the inner iterable`() {
+        val list1 = listOf(1, 5, 7)
+
+        val iterable1 = list1.asReadOnlyIterable()
+        val iterable2 = listOf(24).asReadOnlyIterable()
+
+        assertEquals(list1.hashCode(), iterable1.hashCode())
+        assertEquals(list1.toString(), iterable1.toString())
+        assertNotEquals(list1.hashCode(), iterable2.hashCode())
+        assertNotEquals(list1.toString(), iterable2.toString())
+        assertNotEquals(iterable1, iterable2)
+        assertEquals(iterable1, list1)
+        assertNotEquals(iterable2, list1)
+        assertNotEquals(list1, iterable1) // false because list equals expects a list
+        iterable1.iterator()
+    }
+
+    @Test
+    fun `read only iterable iterator cannot be cast`() {
+        val iterable = listOf(1, 2, 3).asReadOnlyIterable()
+
+        @Suppress("UNCHECKED_CAST")
+        assertThrows<ClassCastException> { iterable.iterator() as MutableIterator<Int> }
     }
 
 }

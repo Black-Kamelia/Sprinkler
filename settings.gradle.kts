@@ -6,4 +6,8 @@ pluginManagement {
     }
 }
 
-include("readonly-collections")
+include(
+    "readonly-collections",
+    "binary-transcoders",
+    "utils",
+)

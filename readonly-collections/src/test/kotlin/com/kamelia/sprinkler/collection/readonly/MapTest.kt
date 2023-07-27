@@ -1,5 +1,7 @@
 package com.kamelia.sprinkler.collection.readonly
 
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -7,7 +9,7 @@ import org.junit.jupiter.api.assertThrows
 class MapTest {
 
     @Test
-    fun `read only map cannot be casted to mutable map`() {
+    fun `read only map cannot be cast to mutable map`() {
         val readOnlyMap = readOnlyMapOf(1 to "one", 2 to "two", 3 to "three")
 
         @Suppress("UNCHECKED_CAST")
@@ -15,7 +17,7 @@ class MapTest {
     }
 
     @Test
-    fun `read only map iterator cannot be casted to mutable iterator`() {
+    fun `read only map iterator cannot be cast to mutable iterator`() {
         val readOnlyMap = readOnlyMapOf(1 to "one", 2 to "two", 3 to "three")
         val iterator = readOnlyMap.iterator()
 
@@ -105,7 +107,7 @@ class MapTest {
     }
 
     @Test
-    fun `map entries cannot be casted to mutable map entries`() {
+    fun `map entries cannot be cast to mutable map entries`() {
         val readOnlyMap = readOnlyMapOf(1 to "one", 2 to "two", 3 to "three")
         val entries = readOnlyMap.entries
 
@@ -114,7 +116,7 @@ class MapTest {
     }
 
     @Test
-    fun `map keys cannot be casted to mutable map keys`() {
+    fun `map keys cannot be cast to mutable map keys`() {
         val readOnlyMap = mapOf(1 to "one", 2 to "two", 3 to "three").asReadOnlyMap()
         val keys = readOnlyMap.keys
 
@@ -123,7 +125,7 @@ class MapTest {
     }
 
     @Test
-    fun `map values cannot be casted to mutable map values`() {
+    fun `map values cannot be cast to mutable map values`() {
         val readOnlyMap = readOnlyMapOf(1 to "one", 2 to "two", 3 to "three")
         val values = readOnlyMap.values
 
@@ -132,13 +134,42 @@ class MapTest {
     }
 
     @Test
-    fun `map entries iterator cannot be casted to mutable map entries iterator`() {
+    fun `map entries iterator cannot be cast to mutable map entries iterator`() {
         val readOnlyMap = readOnlyMapOf(1 to "one", 2 to "two", 3 to "three")
         val entries = readOnlyMap.entries
         val iterator = entries.iterator()
 
         @Suppress("UNCHECKED_CAST")
         assertThrows<ClassCastException> { iterator as MutableIterator<MutableMap.MutableEntry<Int, String>> }
+    }
+
+    @Test
+    fun `map entries methods inherited from Set are delegated to the inner set`() {
+        val map = mutableMapOf(1 to "one", 2 to "two", 3 to "three")
+        val readOnlyMap = map.asReadOnlyMap()
+        val readOnlyEntries = readOnlyMap.entries as Set<Map.Entry<Int, String>>
+        val entries = map.entries
+
+        val entry = entries.first()
+        assertTrue(readOnlyEntries.contains(entry))
+        assertTrue(readOnlyEntries.containsAll(entries))
+        entries.remove(entry)
+        assertFalse(entry in readOnlyEntries)
+        assertTrue(readOnlyEntries.isNotEmpty())
+        assertEquals(readOnlyEntries.size, entries.size)
+        assertTrue(readOnlyEntries.containsAll(entries))
+    }
+
+    @Test
+    fun `map entries methods inherited from Any are delegated to the inner set`() {
+        val map = mapOf(1 to "one", 2 to "two", 3 to "three")
+        val readOnlyMap = map.asReadOnlyMap()
+        val readOnlyEntries = readOnlyMap.entries
+        val entries = map.entries
+
+        assertTrue(readOnlyEntries.toString() == entries.toString())
+        assertTrue(readOnlyEntries.hashCode() == entries.hashCode())
+        assertTrue(readOnlyEntries == entries)
     }
 
     @Test
