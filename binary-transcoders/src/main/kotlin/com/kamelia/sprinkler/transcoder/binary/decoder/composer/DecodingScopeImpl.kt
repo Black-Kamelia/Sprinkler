@@ -44,7 +44,7 @@ internal class DecodingScopeImpl<E>(
             }
         }
 
-    override fun <T> oncePerObject(block: () -> T): T = if (currentIndex < accumulator.size) { // already decoded
+    override fun <T> objectScope(block: () -> T): T = if (currentIndex < accumulator.size) { // already decoded
         accumulator[currentIndex++].unsafeCast()
     } else { // decode
         currentIndex++
@@ -103,7 +103,7 @@ internal class DecodingScopeImpl<E>(
 
     @JvmName("decodeSelfCollection")
     override fun <R> selfCollection(collector: Collector<E, *, R>): R {
-        val decoder = oncePerObject {
+        val decoder = objectScope {
             self.toCollection(collector, computed { IntDecoder(endianness) })
         }
         return decode(decoder)

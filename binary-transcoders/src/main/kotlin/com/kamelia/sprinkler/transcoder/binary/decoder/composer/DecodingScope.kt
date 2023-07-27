@@ -101,15 +101,30 @@ sealed interface DecodingScope<E> {
     fun <T> decode(decoder: Decoder<T>): T
 
     /**
-     * Executes the given [block] once per object, meaning that in case of recursive decoding, the block will be
-     * executed only once per object. Any subsequent call to this method will return the cached result for the same
-     * object.
+     * Adds the result of the given [block] to the current object scope. The result will be cached and reused for any
+     * future subsequent use of the scope to decode the same object. This method is useful to create and cache custom
+     * decoders using the [self] decoder.
+     *
+     * Different usages of the method in the same scope are independent, the cached value will only be used for the same
+     * exact call if the decoder relying on this scope is called again for the same object.
+     *
+     * ```
+     * fun usingScope(scope: DecodingScope<MyType>): Decoder<MyType> {
+     *     val customDecoder = scope.objectScope {
+     *         scode.self.toOptional().toList().toSet() // reused if the method is called again for the same object
+     *     }
+     *     val otherCustomDecoder = scope.objectScope {
+     *         scope.self.toFoo() // same as above and this call is totally independent from the previous one
+     *     }
+     *     // ...
+     * }
+     * ```
      *
      * @param block the block to execute
      * @param T the type of the object to decode
      * @return the result of the block
      */
-    fun <T> oncePerObject(block: () -> T): T
+    fun <T> objectScope(block: () -> T): T
 
     /**
      * Skips the given [count] of bytes.
