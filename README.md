@@ -43,7 +43,7 @@ The available modules are:
 
 - `readonly-collections` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/readonly-collections)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/readonly-collections)
 - `binary-transcoders` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/binary-transcoders)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/binary-transcoders)
-- `util` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/utils)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/utils)
+- `utils` [![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/utils)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/utils)
 
 ### Maven
 
