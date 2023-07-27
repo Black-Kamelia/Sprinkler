@@ -1,11 +1,7 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 
 class DecoderStateTest {
@@ -175,14 +171,6 @@ class DecoderStateTest {
     }
 
     @Test
-    fun `Done toString doesn't initialize the value`() {
-        val done = Decoder.State.Done { throw IllegalStateException("Should not be called") }
-        assertDoesNotThrow {
-            done.toString()
-        }
-    }
-
-    @Test
     fun `ifError works correctly`() {
         val value = "hello"
         val done = Decoder.State.Done(value)
@@ -195,6 +183,54 @@ class DecoderStateTest {
         processing.ifError { set.add(3) }
 
         assertEquals(setOf(2), set)
+    }
+
+    @Test
+    fun `Done#equals works correctly`() {
+        val done1 = Decoder.State.Done("hello")
+        val done2 = Decoder.State.Done("hello")
+        val done3 = Decoder.State.Done("world")
+
+        assertEquals(done1, done2)
+        assertNotEquals(done1, done3)
+        assertNotEquals(done1, 3)
+    }
+
+    @Test
+    fun `Done#hashCode works correctly`() {
+        val done1 = Decoder.State.Done("hello")
+        val done2 = Decoder.State.Done("hello")
+
+        assertEquals(done1.hashCode(), done2.hashCode())
+    }
+
+    @Test
+    fun `Done#hashCode works correctly with null`() {
+        val done1 = Decoder.State.Done(null)
+        val done2 = Decoder.State.Done(null)
+
+        assertEquals(done1.hashCode(), done2.hashCode())
+    }
+
+    @Test
+    fun `Error#equals works correctly`() {
+        val exception = IllegalStateException()
+        val error1 = Decoder.State.Error(exception)
+        val error2 = Decoder.State.Error(exception)
+        val error3 = Decoder.State.Error(IllegalArgumentException())
+
+        assertEquals(error1, error2)
+        assertNotEquals(error1, error3)
+        assertNotEquals(error1, 3)
+    }
+
+    @Test
+    fun `Error#hashCode works correctly`() {
+        val exception = IllegalStateException()
+        val error1 = Decoder.State.Error(exception)
+        val error2 = Decoder.State.Error(exception)
+
+        assertEquals(error1.hashCode(), error2.hashCode())
     }
 
 }

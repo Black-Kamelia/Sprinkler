@@ -29,12 +29,12 @@ object ExtendedCollectors {
      * @return a [collector][Collector] that creates an [array][Array] from elements
      */
     @JvmStatic
-    fun <T> toArray(factory: (Int) -> Array<T?>): Collector<T, *, Array<T>> = Collector.of(
-        { mutableListOf<T>() },
+    fun <T> toArray(factory: (Int) -> Array<T?>): Collector<T, *, Array<T>> = Collector.of<T, ArrayList<T>, Array<T>?>(
+        ::ArrayList,
         { list, t -> list.add(t) },
         { list1, list2 -> list1.apply { addAll(list2) } },
         { list ->
-            val array = @Suppress("UNCHECKED_CAST") (factory(list.size) as Array<T>)
+            val array = factory(list.size).unsafeCast<Array<T>>()
             list.forEachIndexed { index, t -> array[index] = t }
             array
         }
@@ -109,8 +109,8 @@ object ExtendedCollectors {
         arrayFactory: (Int) -> R,
         arrayAccumulator: R.(Int, T) -> Unit
     ): Collector<T, *, R> = Collector.of(
-        ::mutableListOf,
-        MutableList<T>::add,
+        ::ArrayList,
+        ArrayList<T>::add,
         { list1, list2 -> list1.apply { addAll(list2) } },
         { list ->
             val r = arrayFactory(list.size)

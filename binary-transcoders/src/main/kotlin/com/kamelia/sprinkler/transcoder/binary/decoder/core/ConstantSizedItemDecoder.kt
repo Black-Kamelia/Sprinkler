@@ -8,7 +8,7 @@ package com.kamelia.sprinkler.transcoder.binary.decoder.core
  * @param byteSize the number of bytes to read
  * @param converter a function to convert the bytes (stored in a [ByteArray]) to the decoded object
  * @constructor Creates a new [ConstantSizedItemDecoder].
- * @throws IllegalArgumentException if [byteSize] is negative
+ * @throws IllegalArgumentException if byteSize is negative
  */
 class ConstantSizedItemDecoder<E>(
     byteSize: Int,

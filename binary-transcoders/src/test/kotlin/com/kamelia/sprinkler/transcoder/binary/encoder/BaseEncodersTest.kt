@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.transcoder.binary.encoder
 
 import com.kamelia.sprinkler.transcoder.binary.common.ASCII_NULL
+import com.kamelia.sprinkler.transcoder.binary.common.LATIN1_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.UTF16_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.UTF8_NULL
 import com.kamelia.sprinkler.util.readDouble
@@ -217,6 +218,37 @@ class BaseEncodersTest {
     fun `end marker ascii string encoder throws on empty end marker`() {
         assertThrows<IllegalArgumentException> {
             ASCIIStringEncoderEM(byteArrayOf())
+        }
+    }
+
+    @Test
+    fun `size prefixed latin1 string encoder works correctly`() {
+        val encoder = Latin1StringEncoder()
+        val string = "Hello, world!"
+        val bytes = encoder.encode(string)
+        assertEquals(string.toByteArray(Charsets.ISO_8859_1).size, bytes.readInt())
+        assertEquals(
+            string,
+            String(bytes, Int.SIZE_BYTES, bytes.size - Int.SIZE_BYTES, Charsets.ISO_8859_1)
+        )
+    }
+
+    @Test
+    fun `end marker latin1 string encoder works correctly`() {
+        val encoder = Latin1StringEncoderEM()
+        val string = "Hello, world!"
+        val bytes = encoder.encode(string)
+        assertEquals(
+            string,
+            String(bytes, 0, bytes.size - ASCII_NULL.size, Charsets.ISO_8859_1)
+        )
+        assertArrayEquals(LATIN1_NULL, bytes.sliceArray(bytes.size - LATIN1_NULL.size until bytes.size))
+    }
+
+    @Test
+    fun `end marker latin1 string encoder throws on empty end marker`() {
+        assertThrows<IllegalArgumentException> {
+            Latin1StringEncoderEM(byteArrayOf())
         }
     }
 

@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":util"))
+    implementation(project(":utils"))
 }
 
 val jvmVersion: String by rootProject

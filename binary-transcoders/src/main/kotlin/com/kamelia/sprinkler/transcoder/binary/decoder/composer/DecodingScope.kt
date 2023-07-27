@@ -1,10 +1,10 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
+import com.kamelia.sprinkler.transcoder.binary.decoder.toListCollector
+import com.kamelia.sprinkler.transcoder.binary.decoder.toSetCollector
 import com.kamelia.sprinkler.util.ExtendedCollectors
-import com.kamelia.sprinkler.util.unsafeCast
 import java.util.stream.Collector
-import java.util.stream.Collectors
 
 /**
  * Represents a scope in which an object can be decoded. This interface is used to compose decoders. It can be used to
@@ -101,15 +101,30 @@ sealed interface DecodingScope<E> {
     fun <T> decode(decoder: Decoder<T>): T
 
     /**
-     * Executes the given [block] once per object, meaning that in case of recursive decoding, the block will be
-     * executed only once per object. Any subsequent call to this method will return the cached result for the same
-     * object.
+     * Adds the result of the given [block] to the current object scope. The result will be cached and reused for any
+     * future subsequent use of the scope to decode the same object. This method is useful to create and cache custom
+     * decoders using the [self] decoder.
+     *
+     * Different usages of the method in the same scope are independent, the cached value will only be used for the same
+     * exact call if the decoder relying on this scope is called again for the same object.
+     *
+     * ```
+     * fun usingScope(scope: DecodingScope<MyType>): Decoder<MyType> {
+     *     val customDecoder = scope.objectScope {
+     *         scode.self.toOptional().toList().toSet() // reused if the method is called again for the same object
+     *     }
+     *     val otherCustomDecoder = scope.objectScope {
+     *         scope.self.toFoo() // same as above and this call is totally independent from the previous one
+     *     }
+     *     // ...
+     * }
+     * ```
      *
      * @param block the block to execute
      * @param T the type of the object to decode
      * @return the result of the block
      */
-    fun <T> oncePerObject(block: () -> T): T
+    fun <T> objectScope(block: () -> T): T
 
     /**
      * Skips the given [count] of bytes.
@@ -205,7 +220,12 @@ sealed interface DecodingScope<E> {
      * @return the decoded object, or `null` if the object is not present
      */
     @JvmName("decodeSelfOrNull")
-    fun selfOrNull(): E?
+    fun selfOrNull(): E? =
+        if (boolean()) {
+            self()
+        } else {
+            null
+        }
 
     /**
      * Recursively decodes a collection of objects of type [E] using the given [collector]. The assumed representation
@@ -225,7 +245,7 @@ sealed interface DecodingScope<E> {
      * @return the decoded list
      */
     @JvmName("decodeSelfList")
-    fun selfList(): List<E> = selfCollection(toList())
+    fun selfList(): List<E> = selfCollection(toListCollector())
 
     /**
      * Recursively decodes a set of objects of type [E]. The assumed representation of the set depends on the
@@ -234,7 +254,7 @@ sealed interface DecodingScope<E> {
      * @return the decoded set
      */
     @JvmName("decodeSelfSet")
-    fun selfSet(): Set<E> = selfCollection(toSet())
+    fun selfSet(): Set<E> = selfCollection(toSetCollector())
 
     /**
      * Recursively decodes an array of objects of type [E]. The assumed representation of the array depends on the
@@ -256,7 +276,12 @@ sealed interface DecodingScope<E> {
      * @return the decoded collection, or `null` if the collection is not present
      */
     @JvmName("decodeSelfCollectionOrNull")
-    fun <R> selfCollectionOrNull(collector: Collector<E, *, R>): R?
+    fun <R> selfCollectionOrNull(collector: Collector<E, *, R>): R? =
+        if (boolean()) {
+            selfCollection(collector)
+        } else {
+            null
+        }
 
     /**
      * Recursively decodes a nullable list of objects of type [E]. The assumed representation of the list depends on
@@ -265,7 +290,7 @@ sealed interface DecodingScope<E> {
      * @return the decoded list, or `null` if the list is not present
      */
     @JvmName("decodeSelfListOrNull")
-    fun selfListOrNull(): List<E>? = selfCollectionOrNull(toList())
+    fun selfListOrNull(): List<E>? = selfCollectionOrNull(toListCollector())
 
     /**
      * Recursively decodes a nullable set of objects of type [E]. The assumed representation of the set depends on
@@ -274,7 +299,7 @@ sealed interface DecodingScope<E> {
      * @return the decoded set, or `null` if the set is not present
      */
     @JvmName("decodeSelfSetOrNull")
-    fun selfSetOrNull(): Set<E>? = selfCollectionOrNull(toSet())
+    fun selfSetOrNull(): Set<E>? = selfCollectionOrNull(toSetCollector())
 
     /**
      * Recursively decodes a nullable array of objects of type [E]. The assumed representation of the array depends on
@@ -289,11 +314,3 @@ sealed interface DecodingScope<E> {
         selfCollectionOrNull(ExtendedCollectors.toArray(factory))
 
 }
-
-private val toList = Collectors.toList<Any>()
-
-private val toSet = Collectors.toSet<Any>()
-
-private fun <T> toList(): Collector<T, *, List<T>> = toList.unsafeCast()
-
-private fun <T> toSet(): Collector<T, *, Set<T>> = toSet.unsafeCast()

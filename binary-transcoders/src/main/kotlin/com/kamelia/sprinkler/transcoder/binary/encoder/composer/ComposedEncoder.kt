@@ -33,8 +33,6 @@ import java.nio.ByteOrder
  * **NOTE**: The returned encoder is not thread-safe. Unexpected behaviours may occur if the internal cache of the
  * decoder is modified concurrently.
  *
- * &nbsp;
- *
  * @param endianness the endianness of the encoder (defaults to [ByteOrder.BIG_ENDIAN])
  * @param stringEncoder the encoder to use for [String] objects (defaults to the default [UTF8StringEncoder])
  * @param block the block that will encode the object

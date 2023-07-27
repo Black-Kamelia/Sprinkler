@@ -5,6 +5,7 @@ import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Done
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Error
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder.State.Processing
 import com.kamelia.sprinkler.util.unsafeCast
+import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
 
@@ -40,6 +41,9 @@ import java.nio.ByteBuffer
  * To completely reset the decoder, the [reset] method can be called. It can be called at any time, even if the decoder
  * is not in a [State.Done] state (e.g. an error occurred and the decoder must be reset).
  *
+ * **NOTE**: Implementations of this interface are responsible for resetting the internal state of the decoder when the
+ * [decode] function is finished, that is to say when [Decoder.State.Done] is returned.
+ *
  * @param T the type of the object to be decoded.
  * @see DecoderInput
  * @see State
@@ -51,6 +55,7 @@ interface Decoder<out T> {
      *
      * @param input the input from which to decode the object
      * @return a [State] object representing the state of the decoding process
+     * @throws IOException if an I/O error occurs
      */
     fun decode(input: DecoderInput): State<T>
 
@@ -59,11 +64,15 @@ interface Decoder<out T> {
      *
      * @param input the input from which to decode the object
      * @return a [State] object representing the state of the decoding process
+     * @throws IOException if an I/O error occurs
      */
     fun decode(input: InputStream): State<T> = decode(DecoderInput.from(input))
 
     /**
      * Tries to decode an object of type [T] from the given [ByteBuffer] [input].
+     *
+     * The [ByteBuffer] is assumed to be in write mode before the call to this method and will be in write mode after
+     * the call to this method.
      *
      * @param input the input from which to decode the object
      * @return a [State] object representing the state of the decoding process
@@ -81,6 +90,12 @@ interface Decoder<out T> {
     /**
      * Resets the internal state of the decoder. This method can be called at any time, even if the decoder is not in a
      * [State.Done] state.
+     *
+     * **NOTE**: This method does not need to be called after a successful decoding process, as the internal state of
+     * the decoder should be reset automatically by the implementing class.
+     *
+     * **NOTE**: This method must be called after the return of a [State.Error] object, as the internal state of the
+     * decoder may be in an inconsistent state.
      */
     fun reset()
 
@@ -97,50 +112,31 @@ interface Decoder<out T> {
      * @see Processing
      * @see Error
      */
-    sealed class State<out T> {
+    sealed interface State<out T> {
 
         /**
          * State returned when the decoding process has been completed successfully. The decoded object can be accessed
          * via the [value] property.
          *
          * @param T the type of the decoded object
-         * @constructor Creates a new [Done] state with the given factory function.
-         * @param factory a function that returns the decoded object
+         * @property value The decoded object.
+         * @constructor Creates a new [Done] state with the given [value].
+         * @param value the decoded object
          */
-        class Done<T>(factory: () -> T) : State<T>() {
+        class Done<T>(val value: T) : State<T> {
 
-            private val lazyField = lazy(LazyThreadSafetyMode.NONE, factory)
+            override fun toString(): String = "Done($value)"
 
-            /**
-             * The decoded object.
-             */
-            val value: T
-                get() = lazyField.value
+            override fun equals(other: Any?): Boolean = other is Done<*> && value == other.value
 
-            /**
-             * Creates a new [Done] state with the given [value].
-             *
-             * @param value the decoded object
-             */
-            constructor(value: T) : this({ value }) {
-                lazyField.value // force initialization
-            }
-
-            override fun toString(): String {
-                val v = if (lazyField.isInitialized()) {
-                    lazyField.value.toString()
-                } else {
-                    "not initialized"
-                }
-                return "Done($v)"
-            }
+            override fun hashCode(): Int = value.hashCode()
 
         }
 
         /**
          * State returned when the decoding process has not been completed yet. More bytes are needed.
          */
-        object Processing : State<Nothing>() {
+        object Processing : State<Nothing> {
 
             override fun toString(): String = "Processing"
 
@@ -154,7 +150,7 @@ interface Decoder<out T> {
          * @param error the [Throwable] that caused the failure
          * @property error The [Throwable] that caused the failure.
          */
-        class Error(val error: Throwable) : State<Nothing>() {
+        class Error(val error: Throwable) : State<Nothing> {
 
             /**
              * Creates a new [Error] state with the given [message]. The exception will be an [IllegalStateException].
@@ -164,6 +160,10 @@ interface Decoder<out T> {
             constructor(message: String) : this(IllegalStateException(message))
 
             override fun toString(): String = "Error(${error.message})"
+
+            override fun equals(other: Any?): Boolean = other is Error && error == other.error
+
+            override fun hashCode(): Int = error.hashCode()
 
         }
 
@@ -175,7 +175,7 @@ interface Decoder<out T> {
          * @return a new [State] with the mapped value
          * @param R the type of the new [State]
          */
-        inline fun <R> mapState(block: (T) -> State<R>): State<R> = when (this) {
+        fun <R> mapState(block: (T) -> State<R>): State<R> = when (this) {
             is Done -> block(value)
             else -> mapEmptyState()
         }
@@ -188,7 +188,7 @@ interface Decoder<out T> {
          * @return a new [State] with the mapped value
          * @param R the type of the new [State]
          */
-        inline fun <R> mapResult(block: (T) -> R): State<R> = mapState { Done(block(it)) }
+        fun <R> mapResult(block: (T) -> R): State<R> = mapState { Done(block(it)) }
 
         /**
          * Casts this [State] to a [State] of type [R]. This method is useful to propagate an [Error] or [Processing]
@@ -256,7 +256,7 @@ interface Decoder<out T> {
          * @return the decoded value if this [State] is a [Done] state, otherwise returns the value returned by the
          * given [default] factory
          */
-        inline fun getOrElse(default: () -> @UnsafeVariance T): T = when (this) {
+        fun getOrElse(default: () -> @UnsafeVariance T): T = when (this) {
             is Done -> value
             else -> default()
         }
@@ -268,7 +268,7 @@ interface Decoder<out T> {
          * @param throwable the factory to return the exception to throw if this [State] is not a [Done] state
          * @return the decoded value if this [State] is a [Done] state
          */
-        inline fun getOrThrow(throwable: () -> Throwable): T = when (this) {
+        fun getOrThrow(throwable: () -> Throwable): T = when (this) {
             is Done -> value
             else -> throw throwable()
         }
@@ -279,7 +279,7 @@ interface Decoder<out T> {
          * @param block the function to execute if this [State] is a [Done] state
          * @return this [State]
          */
-        inline fun ifDone(block: (T) -> Unit): State<T> = apply {
+        fun ifDone(block: (T) -> Unit): State<T> = apply {
             if (this is Done) {
                 block(value)
             }
@@ -291,7 +291,7 @@ interface Decoder<out T> {
          * @param block the function to execute if this [State] is an [Error] state
          * @return this [State]
          */
-        inline fun ifError(block: (Throwable) -> Unit): State<T> = apply {
+        fun ifError(block: (Throwable) -> Unit): State<T> = apply {
             if (this is Error) {
                 block(error)
             }

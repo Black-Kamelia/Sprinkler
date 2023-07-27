@@ -4,6 +4,7 @@
 package com.kamelia.sprinkler.transcoder.binary.encoder
 
 import com.kamelia.sprinkler.transcoder.binary.common.ASCII_NULL
+import com.kamelia.sprinkler.transcoder.binary.common.LATIN1_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.UTF16_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.UTF8_NULL
 import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
@@ -193,6 +194,33 @@ fun ASCIIStringEncoder(sizeEncoder: Encoder<Int> = IntEncoder()): Encoder<String
 @JvmOverloads
 fun ASCIIStringEncoderEM(endMarker: ByteArray = ASCII_NULL): Encoder<String> =
     StringEncoder(Charsets.US_ASCII, endMarker)
+
+/**
+ * Creates an [Encoder] that writes a [String] to the output.
+ *
+ * The string is encoded using the [ascii][Charsets.ISO_8859_1] charset, and is prefixed with the number of bytes of the
+ * encoded string. The size of the string is encoded using the [sizeEncoder] parameter.
+ *
+ * @param sizeEncoder the encoder to use for encoding the size of the string (defaults to the default [IntEncoder])
+ * @return an [Encoder] that writes a [String] to the output
+ */
+@JvmOverloads
+fun Latin1StringEncoder(sizeEncoder: Encoder<Int> = IntEncoder()): Encoder<String> =
+    StringEncoder(Charsets.ISO_8859_1, sizeEncoder)
+
+/**
+ * Creates an [Encoder] that writes a [String] to the output.
+ *
+ * The string is encoded using the [ascii][Charsets.ISO_8859_1] charset, and is terminated by a predefined sequence of
+ * bytes represented by the [endMarker] parameter.
+ *
+ * @param endMarker the sequence of bytes that will be written at the end of the string (defaults to [ASCII_NULL])
+ * @return an [Encoder] that writes a [String] to the output
+ * @throws IllegalArgumentException if the [endMarker] is empty
+ */
+@JvmOverloads
+fun Latin1StringEncoderEM(endMarker: ByteArray = LATIN1_NULL): Encoder<String> =
+    StringEncoder(Charsets.ISO_8859_1, endMarker)
 
 /**
  * Creates an [Encoder] that writes a [String] to the output.

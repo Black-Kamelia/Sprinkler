@@ -12,6 +12,7 @@ import java.nio.ByteOrder
  * @param index the index of the bit to return
  * @return the bit at the given [index]
  */
+@JvmName("getBit")
 inline fun Byte.bit(index: Int): Int = toInt() ushr index and 0x1
 
 /**
@@ -23,6 +24,7 @@ inline fun Byte.bit(index: Int): Int = toInt() ushr index and 0x1
  * @return the byte at the given [index]
  */
 @JvmOverloads
+@JvmName("getByte")
 inline fun Short.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte = if (endianness.isBigEndian) {
     (toInt() ushr (index shl 3) and 0xFF).toByte()
 } else {
@@ -39,6 +41,7 @@ inline fun Short.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN):
  * @return the bit at the given [index]
  */
 @JvmOverloads
+@JvmName("getBit")
 inline fun Short.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int = if (endianness.isBigEndian) {
     toInt() ushr index and 0x1
 } else {
@@ -56,6 +59,7 @@ inline fun Short.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): 
  * @return the byte at the given [index]
  */
 @JvmOverloads
+@JvmName("getByte")
 inline fun Int.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte = if (endianness.isBigEndian) {
     (this ushr (index shl 3) and 0xFF).toByte()
 } else {
@@ -72,6 +76,7 @@ inline fun Int.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): B
  * @return the bit at the given [index]
  */
 @JvmOverloads
+@JvmName("getBit")
 inline fun Int.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int = if (endianness.isBigEndian) {
     this ushr index and 0x1
 } else {
@@ -89,6 +94,7 @@ inline fun Int.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): In
  * @return the byte at the given [index]
  */
 @JvmOverloads
+@JvmName("getByte")
 inline fun Long.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte = if (endianness.isBigEndian) {
     (this ushr (index shl 3) and 0xFF).toByte()
 } else {
@@ -105,6 +111,7 @@ inline fun Long.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): 
  * @return the bit at the given [index]
  */
 @JvmOverloads
+@JvmName("getBit")
 inline fun Long.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int = if (endianness.isBigEndian) {
     (this ushr index and 0x1).toInt()
 } else {
@@ -122,6 +129,7 @@ inline fun Long.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): I
  * @return the byte at the given [index]
  */
 @JvmOverloads
+@JvmName("getByte")
 inline fun Float.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte =
     toRawBits().byte(index, endianness)
 
@@ -135,6 +143,7 @@ inline fun Float.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN):
  * @return the bit at the given [index]
  */
 @JvmOverloads
+@JvmName("getBit")
 inline fun Float.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int = toRawBits().bit(index, endianness)
 
 /**
@@ -146,6 +155,7 @@ inline fun Float.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): 
  * @return the byte at the given [index]
  */
 @JvmOverloads
+@JvmName("getByte")
 inline fun Double.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte =
     toRawBits().byte(index, endianness)
 
@@ -159,6 +169,7 @@ inline fun Double.byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN)
  * @return the bit at the given [index]
  */
 @JvmOverloads
+@JvmName("getBit")
 inline fun Double.bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int =
     toRawBits().bit(index, endianness)
 

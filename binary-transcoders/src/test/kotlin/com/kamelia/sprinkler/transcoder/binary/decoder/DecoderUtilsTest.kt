@@ -3,12 +3,10 @@ package com.kamelia.sprinkler.transcoder.binary.decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.util.assertDoneAndGet
 import com.kamelia.sprinkler.util.byte
-import java.util.stream.Collectors
-import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.stream.Collectors
 
 class DecoderUtilsTest {
 
@@ -145,7 +143,7 @@ class DecoderUtilsTest {
 
     @Test
     fun `toOptional works correctly when element is absent`() {
-        val decoder = NoOpDecoder().toOptional()
+        val decoder = UnitDecoder().toOptional()
 
         val data = byteArrayOf(0)
         val result = decoder.decode(data).assertDoneAndGet()

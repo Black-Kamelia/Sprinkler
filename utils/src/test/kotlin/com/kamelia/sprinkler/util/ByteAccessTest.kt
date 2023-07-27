@@ -1,8 +1,8 @@
 package com.kamelia.sprinkler.util
 
+import java.nio.ByteOrder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.nio.ByteOrder
 
 class ByteAccessTest {
 
@@ -16,7 +16,7 @@ class ByteAccessTest {
     @Test
     fun `can read a byte from a short`() {
         val short = 0x1234.toShort()
-        val byte = short.byte(0)
+        val byte = short.byte(0, ByteOrder.BIG_ENDIAN)
         assertEquals(0x34.toByte(), byte)
     }
 

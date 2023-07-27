@@ -85,7 +85,7 @@ class EncoderUtilsTest {
     @Test
     fun `toMap with pair encoder works correctly with end marker`() {
         val byteEncoder = ByteEncoder()
-        val mapEncoder = PairEncoder(byteEncoder, byteEncoder).toMap(0.toByte() to 0)
+        val mapEncoder = (byteEncoder and byteEncoder).toMap(0.toByte() to 0)
 
         val map = mapOf<Byte, Byte>(1.toByte() to 2, 3.toByte() to 4)
         val array = mapEncoder.encode(map)

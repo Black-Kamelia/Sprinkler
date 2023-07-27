@@ -5,14 +5,11 @@ import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.NothingDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.util.assertDoneAndGet
 import com.kamelia.sprinkler.util.byte
-import java.nio.ByteOrder
-import java.util.stream.Collectors
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.nio.ByteOrder
+import java.util.stream.Collectors
 
 class DecodingScopeImplTest {
 
@@ -24,8 +21,7 @@ class DecodingScopeImplTest {
                 called = true
                 byte()
             } else {
-                val s = string()
-                println(s)
+                string()
             }
             byte()
         }

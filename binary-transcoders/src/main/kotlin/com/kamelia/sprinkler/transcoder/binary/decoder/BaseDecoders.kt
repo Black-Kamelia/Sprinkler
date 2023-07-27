@@ -4,20 +4,11 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder
 
 import com.kamelia.sprinkler.transcoder.binary.common.ASCII_NULL
+import com.kamelia.sprinkler.transcoder.binary.common.LATIN1_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.UTF16_NULL
 import com.kamelia.sprinkler.transcoder.binary.common.UTF8_NULL
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.ConstantSizedItemDecoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.MarkerEndedItemDecoder
-import com.kamelia.sprinkler.transcoder.binary.decoder.core.PrefixedSizeItemDecoder
-import com.kamelia.sprinkler.util.readBoolean
-import com.kamelia.sprinkler.util.readByte
-import com.kamelia.sprinkler.util.readDouble
-import com.kamelia.sprinkler.util.readFloat
-import com.kamelia.sprinkler.util.readInt
-import com.kamelia.sprinkler.util.readLong
-import com.kamelia.sprinkler.util.readShort
-import com.kamelia.sprinkler.util.readString
+import com.kamelia.sprinkler.transcoder.binary.decoder.core.*
+import com.kamelia.sprinkler.util.*
 import java.nio.ByteOrder
 import java.nio.charset.Charset
 
@@ -183,6 +174,34 @@ fun ASCIIStringDecoderEM(endMarker: ByteArray = ASCII_NULL): Decoder<String> =
 /**
  * Creates a [Decoder] that reads a [String] from the input.
  *
+ * The string is encoded using the [ascii][Charsets.ISO_8859_1] charset, and is prefixed with the number of bytes in the
+ * string. The size of the string is decoded using the [sizeDecoder] parameter.
+ *
+ * @param sizeDecoder the [Decoder] used to decode the size of the string (defaults to the default [IntDecoder])
+ * @return a [Decoder] that reads a [String] from the input
+ */
+@JvmOverloads
+fun Latin1StringDecoder(sizeDecoder: Decoder<Number> = IntDecoder()): Decoder<String> =
+    StringDecoder(Charsets.ISO_8859_1, sizeDecoder)
+
+/**
+ * Creates a [Decoder] that reads a [String] from the input.
+ *
+ * The string is encoded using the [ascii][Charsets.ISO_8859_1] charset, and is terminated by a predefined sequence of bytes
+ * represented by the [endMarker] parameter.
+ *
+ * @param endMarker the sequence of bytes that marks the end of the string (defaults to [ASCII_NULL])
+ * @return a [Decoder] that reads a [String] from the input
+ * @throws IllegalArgumentException if the [endMarker] is empty
+ */
+@JvmOverloads
+fun Latin1StringDecoderEM(endMarker: ByteArray = LATIN1_NULL): Decoder<String> =
+    StringDecoder(Charsets.ISO_8859_1, endMarker)
+
+
+/**
+ * Creates a [Decoder] that reads a [String] from the input.
+ *
  * The string is encoded using the [charset] parameter, and is prefixed with the number of bytes in the string. The size
  * of the string is decoded using the [sizeDecoder] parameter.
  *
@@ -279,7 +298,7 @@ fun <T : Enum<T>> EnumDecoderString(
  * @param element the constant value to return
  * @return a [Decoder] that reads a constant value from the input
  */
-fun <T> ConstantDecoder(element: T): Decoder<T> = ConstantSizedItemDecoder(0) { element }
+fun <T> ConstantDecoder(element: T): Decoder<T> = ConstantDecoder { element }
 
 /**
  * Creates a [Decoder] that reads a constant value from the input.
@@ -289,7 +308,11 @@ fun <T> ConstantDecoder(element: T): Decoder<T> = ConstantSizedItemDecoder(0) { 
  * @param factory the factory that creates the constant value to return
  * @return a [Decoder] that reads a constant value from the input
  */
-fun <T> ConstantDecoder(factory: () -> T): Decoder<T> = ConstantSizedItemDecoder(0) { factory() }
+fun <T> ConstantDecoder(factory: () -> T): Decoder<T> = object : Decoder<T> {
+    override fun decode(input: DecoderInput): Decoder.State<T> = Decoder.State.Done(factory())
+
+    override fun reset() = Unit
+}
 
 /**
  * Creates a [Decoder] that reads [Unit] from the input.
@@ -298,7 +321,7 @@ fun <T> ConstantDecoder(factory: () -> T): Decoder<T> = ConstantSizedItemDecoder
  *
  * @return a [Decoder] that reads [Unit] from the input
  */
-fun NoOpDecoder(): Decoder<Unit> = UNIT_DECODER
+fun UnitDecoder(): Decoder<Unit> = UNIT_DECODER
 
 /**
  * Creates a [Decoder] that reads `null` from the input.

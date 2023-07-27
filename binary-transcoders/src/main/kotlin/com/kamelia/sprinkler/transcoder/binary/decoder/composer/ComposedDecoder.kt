@@ -88,6 +88,7 @@ private class ComposedDecoderImpl<E>(
 
 }
 
+@JvmField
 @PackagePrivate
 internal val DEFAULT_LAYER = ElementsAccumulator.Layer(0, null)
 

@@ -2,6 +2,7 @@ package com.kamelia.sprinkler.transcoder.binary.encoder.core
 
 import com.kamelia.sprinkler.transcoder.binary.common.BitOrder
 import com.kamelia.sprinkler.util.bit
+import java.io.IOException
 import java.io.OutputStream
 import java.util.*
 import kotlin.experimental.or
@@ -30,6 +31,7 @@ interface EncoderOutput {
      * bits are ignored.
      *
      * @param bit the bit to write
+     * @throws IOException if an I/O error occurs
      */
     fun writeBit(bit: Int)
 
@@ -38,6 +40,7 @@ interface EncoderOutput {
      * finished but the last byte is not full and therefore has not been written yet.
      *
      * All the padding bits appended to the last byte are set to `0`.
+     * @throws IOException if an I/O error occurs
      */
     fun flush()
 
@@ -46,6 +49,7 @@ interface EncoderOutput {
      * bits are ignored.
      *
      * @param bit the bit to write
+     * @throws IOException if an I/O error occurs
      */
     fun writeBit(bit: Byte) = writeBit(bit.toInt())
 
@@ -54,6 +58,7 @@ interface EncoderOutput {
      * written.
      *
      * @param bit the bit to write
+     * @throws IOException if an I/O error occurs
      */
     fun writeBit(bit: Boolean) = writeBit(if (bit) 1 else 0)
 
@@ -65,6 +70,7 @@ interface EncoderOutput {
      * @param start the inclusive start index in the [Int] to write
      * @param length the exclusive end index in the [Int] to write
      * @throws IndexOutOfBoundsException if [start] < 0 or [length] < 0 or [start] + [length] > 8
+     * @throws IOException if an I/O error occurs
      */
     fun writeBits(byte: Int, start: Int, length: Int) {
         Objects.checkFromIndexSize(start, length, 8)
@@ -80,6 +86,7 @@ interface EncoderOutput {
      * @param byte the [Int] to write
      * @param length the number of bits to write
      * @throws IndexOutOfBoundsException if [length] < 0 or [length] > 8
+     * @throws IOException if an I/O error occurs
      */
     fun writeBits(byte: Int, length: Int) = writeBits(byte, 0, length)
 
@@ -91,6 +98,7 @@ interface EncoderOutput {
      * @param start the inclusive start index in the [Byte] to write
      * @param length the exclusive end index in the [Byte] to write
      * @throws IndexOutOfBoundsException if [start] < 0 or [length] < 0 or [start] + [length] > 8
+     * @throws IOException if an I/O error occurs
      */
     fun writeBits(byte: Byte, start: Int, length: Int) = writeBits(byte.toInt(), start, length)
 
@@ -101,6 +109,7 @@ interface EncoderOutput {
      * @param byte the [Byte] to write
      * @param length the number of bits to write
      * @throws IndexOutOfBoundsException if [length] < 0 or [length] > 8
+     * @throws IOException if an I/O error occurs
      */
     fun writeBits(byte: Byte, length: Int) = writeBits(byte.toInt(), 0, length)
 
@@ -113,6 +122,7 @@ interface EncoderOutput {
      * @param start the inclusive start index in the [ByteArray] to write
      * @param length the exclusive end index in the [ByteArray] to write
      * @throws IndexOutOfBoundsException if [start] < 0 or [length] < 0 or [start] + [length] > [bytes].size * 8
+     * @throws IOException if an I/O error occurs
      */
     fun writeBits(bytes: ByteArray, start: Int, length: Int) {
         Objects.checkFromIndexSize(start, length, bytes.size * 8)
@@ -143,6 +153,7 @@ interface EncoderOutput {
      * @param bytes the [ByteArray] to write
      * @param length the number of bits to write
      * @throws IndexOutOfBoundsException if [length] < 0 or [length] > [bytes].size * 8
+     * @throws IOException if an I/O error occurs
      */
     fun writeBits(bytes: ByteArray, length: Int) = writeBits(bytes, 0, length)
 
@@ -150,6 +161,7 @@ interface EncoderOutput {
      * Writes a single byte to the output.
      *
      * @param byte the byte to write
+     * @throws IOException if an I/O error occurs
      */
     fun write(byte: Int): Unit = writeBits(byte, 0, 8)
 
@@ -157,6 +169,7 @@ interface EncoderOutput {
      * Writes a single byte to the output.
      *
      * @param byte the byte to write
+     * @throws IOException if an I/O error occurs
      */
     fun write(byte: Byte): Unit = write(byte.toInt())
 
@@ -168,6 +181,7 @@ interface EncoderOutput {
      * @param start the inclusive start index in the [ByteArray] to write
      * @param length the exclusive end index in the [ByteArray] to write
      * @throws IndexOutOfBoundsException if [start] < 0 or [length] < 0 or [start] + [length] > [ByteArray.size]
+     * @throws IOException if an I/O error occurs
      */
     fun write(bytes: ByteArray, start: Int, length: Int) {
         Objects.checkFromIndexSize(start, length, bytes.size)
@@ -183,6 +197,7 @@ interface EncoderOutput {
      *
      * @param bytes the [ByteArray] to write
      * @param start the inclusive start index in the [ByteArray] to write
+     * @throws IOException if an I/O error occurs
      */
     fun write(bytes: ByteArray, start: Int): Unit = write(bytes, start, bytes.size - start)
 
@@ -190,6 +205,7 @@ interface EncoderOutput {
      * Writes bytes from the given [ByteArray] to the output. The method will write all bytes from the [ByteArray].
      *
      * @param bytes the [ByteArray] to write
+     * @throws IOException if an I/O error occurs
      */
     fun write(bytes: ByteArray): Unit = write(bytes, 0, bytes.size)
 
@@ -197,6 +213,7 @@ interface EncoderOutput {
      * Writes bytes from the given [Iterable] of bytes to the output.
      *
      * @param bytes the [Iterable] of bytes to write
+     * @throws IOException if an I/O error occurs
      */
     fun write(bytes: Iterable<Byte>): Unit = bytes.forEach(::write)
 
