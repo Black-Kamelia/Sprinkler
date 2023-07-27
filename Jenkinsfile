@@ -4,6 +4,7 @@ pipeline {
         timestamps()
         ansiColor('xterm')
         timeout(time: 15, unit: 'MINUTES')
+        disableConcurrentBuilds()
     }
     tools {
         gradle 'gradle-7.5.0'
@@ -23,36 +24,42 @@ pipeline {
             }
         }
         stage('Build') {
-            parallel {
-                stage('Util') {
-                    steps {
-                        sh 'gradle --parallel util:assemble'
-                    }
-                }
-                stage('Readonly Collections') {
-                    steps {
-                        sh 'gradle --parallel readonly-collections:assemble'
-                    }
-                }
+            steps {
+                sh 'gradle --parallel assemble'
             }
         }
         stage('Test') {
             parallel {
-                stage('Util') {
+                stage('Utils') {
                     steps {
-                        sh 'gradle --parallel util:test -PenableRestrikt=false'
+                        sh 'gradle utils:test'
                     }
                 }
                 stage('Readonly Collections') {
                     steps {
-                        sh 'gradle --parallel readonly-collections:test -PenableRestrikt=false'
+                        sh 'gradle readonly-collections:test'
+                    }
+                }
+                stage('Binary Transcoders') {
+                    steps {
+                        sh 'gradle binary-transcoders:test'
                     }
                 }
             }
             post {
                 always {
                     junit checksName: 'Tests', allowEmptyResults: true, testResults: '**/build/test-results/test/TEST-*.xml'
-                    recordCoverage sourceDirectories: [[path: 'readonly-collections/src/main/java'], [path: 'util/src/main/kotlin'], [path: 'util/src/main/java'], [path: 'readonly-collections/src/main/kotlin']], tools: [[pattern: '**/build/reports/kover/xml/*.xml']]
+                    recordCoverage sourceDirectories: [
+                        [path: 'readonly-collections/src/main/kotlin'],
+                        [path: 'readonly-collections/src/main/java'],
+                        [path: 'utils/src/main/kotlin'],
+                        [path: 'utils/src/main/java'],
+                        [path: 'binary-transcoders/src/main/kotlin'],
+                        [path: 'binary-transcoders/src/main/java']
+                    ],
+                    tools: [
+                        [pattern: '**/build/reports/kover/report.xml']
+                    ]
                 }
             }
         }

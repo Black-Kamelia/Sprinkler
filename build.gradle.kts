@@ -21,13 +21,14 @@ val props = Properties().apply { load(file("gradle.properties").reader()) }
 
 fun String.base64Decode() = String(Base64.getDecoder().decode(this))
 
+val restriktVersion: String by System.getProperties()
 allprojects {
     apply(plugin = "java")
     apply(plugin = "kotlin")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
     apply(plugin = "com.zwendo.restrikt")
-    apply(plugin = "kover")
+    apply(plugin = "org.jetbrains.kotlinx.kover")
 
     val projectName = project.name.toLowerCase()
     val projectVersion = findProp("$projectName.version") ?: "0.1.0"
@@ -39,8 +40,10 @@ allprojects {
     dependencies {
         val junitVersion: String by project
 
+        implementation("com.zwendo:restrikt-annotation:$restriktVersion")
         testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
         testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
+        testImplementation("org.junit.jupiter", "junit-jupiter-params", junitVersion)
     }
 
     java {
@@ -60,8 +63,10 @@ allprojects {
         sign(publishing.publications)
     }
 
-    restrikt {
-        enabled = findProp("enableRestrikt") ?: true
+    kover {
+        excludeSourceSets {
+            names("jmh")
+        }
     }
 
     tasks {
@@ -103,15 +108,14 @@ allprojects {
 
     publishing {
         publications {
-            val artifactName = "$rootProjectName-$projectName"
-            create<MavenPublication>("maven-$artifactName") {
-                groupId = findProp("projectGroup")
-                artifactId = artifactName
+            create<MavenPublication>("maven-$projectName") {
+                groupId = findProp<String>("projectGroup") + ".sprinkler"
+                artifactId = projectName
                 version = projectVersion
                 from(components["java"])
 
                 pom {
-                    name.set(artifactName)
+                    name.set(projectName)
                     description.set("Sprinkler@${projectName} | Black Kamelia")
                     url.set("https://github.com/Black-Kamelia/Sprinkler")
 
@@ -156,13 +160,11 @@ fun TaskContainerScope.setupKotlinCompilation(block: org.jetbrains.kotlin.gradle
     compileTestKotlin(block)
 }
 
-@Suppress("UNCHECKED_CAST")
 inline fun <reified T> Project.findProp(name: String): T {
     val strProp = findProperty(name) as? String
-    return when (T::class.java) {
-        Boolean::class.javaPrimitiveType -> strProp?.toBoolean() as T
-        Boolean::class.javaObjectType -> strProp?.toBoolean() as T
-        Int::class.java -> strProp?.toInt() as T
+    return when (T::class) {
+        Boolean::class -> strProp?.toBoolean() as T
+        Int::class -> strProp?.toInt() as T
         else -> strProp as T
     }
 }
