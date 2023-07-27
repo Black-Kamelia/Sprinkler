@@ -758,8 +758,8 @@ hand and a decoder created through composition (using jmh):
 
 > Specs of the machine used for the benchmark:
 > - Windows 11
-> - CPU: Intel Core i9 TODO
-> - 32 GB of RAM DDR4 TODO
+> - CPU: Intel Core i9-10900KF @ 3.70 GHz, 10 cores, 20 logical processors
+> - 32 GB of RAM DDR4 @ 3200 MHz
 > 
 > Benchmark config:
 > - JMH version: 1.33
