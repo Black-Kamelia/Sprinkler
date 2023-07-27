@@ -127,6 +127,13 @@ allprojects {
                         }
                     }
 
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+
                     scm {
                         connection.set("scm:git:git://github.com/Black-Kamelia/Sprinkler.git")
                         developerConnection.set("scm:git:ssh://github.com/Black-Kamelia/Sprinkler.git")
