@@ -11,12 +11,12 @@
   - [Collector Shorthands](#collector-shorthands)
   - [Collector Factories](#collector-factories)
 - [Kotlin Lambda Adapters for Java](#kotlin-lambda-adapters-for-java)
-  - [KotlinDslAdapter](#kotlindsladapter)
   - [LambdaAdapters](#lambdaadapters)
   - [InvokeExtensions](#invokeextensions)
 - [ByteArrayDecoding](#bytearraydecoding)
 - [ByteAccess](#byteaccess)
 - [unsafeCast](#unsafecast)
+- [Changelog](#changelog)
 
 ## Intentions
 
@@ -206,40 +206,6 @@ if the function is supposed to return `Unit`, then the lambda will have to expli
 singleton, which is not convenient especially when the lambda is a one-liner, and when comparing it to Kotlin where it
 is the equivalent of return void.
 
-### KotlinDslAdapter
-
-One of the provided helpers is the `KotlinDslAdapter` interface. A library author simply needs to add it to another
-class or interface as a super-type to get its benefits, that is to say, a method which returns `Unit`. It is useful
-to easily adapt a Kotlin DSL to be easily used in Java.
-
-For example:
-```kt
-// Builder.kt
-class MyBuilder : KotlinDslAdapter {
-    fun withA(i: Int): MyBuilder {
-        // ...
-    }
-    // ...
-}
-
-fun dsl(block: MyBuilder.() -> Unit): MyObject {
-    // ...
-}
-```
-
-Can be used in Java like this:
-```java
-// Main.java
-class Main {
-  public static void main(String[] args) {
-    var result = BuilderKt.dsl(builder -> builder
-      .withA(5)
-      .finish()
-    );
-  }
-}
-```
-
 ### LambdaAdapters
 
 The `LambdaAdapters` class provides a few static methods to adapt lambdas to Kotlin's function types. That is to say,
@@ -323,3 +289,7 @@ inline fun <T> Any?.unsafeCast(): T = this as T
 It is useful when you know that a value is of a certain type, but the compiler doesn't, and you would need to add
 a `Suppress` annotation to avoid a warning. It's also useful when chaining operations. It is mostly a convenience function
 that should only be used in exceptional cases in library code.
+
+## Changelog
+
+[Changelog](CHANGELOG.md)

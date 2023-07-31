@@ -1,4 +1,4 @@
-package com.kamelia.sprinkler.util.jvmlambda;
+package com.kamelia.sprinkler.bridge;
 
 import kotlin.Deprecated;
 import kotlin.DeprecationLevel;
@@ -36,7 +36,7 @@ import kotlin.Unit;
  *      var result = BuilderKt.dsl(builder -> builder
  *              .withA(5)
  *              // ...
- *              .finish()
+ *              .unit()
  *      );
  *   }
  *
@@ -55,7 +55,7 @@ public interface KotlinDslAdapter {
         message = "this method only exists to simplify Kotlin DSL usage from Java",
         level = DeprecationLevel.HIDDEN
     )
-    default Unit finish() {
+    default Unit unit() {
         return Unit.INSTANCE;
     }
 

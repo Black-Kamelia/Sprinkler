@@ -14,6 +14,7 @@
   - [ReadOnlyListIterator](#readonlylistiterator)
   - [ReadOnlySet](#readonlyset)
   - [ReadOnlyMap](#readonlymap)
+- [Changelog](#changelog)
 
 ## Intentions
 
@@ -154,3 +155,7 @@ If the implementation is a wrapper around a mutable map, it is still read-only b
 
 This cannot be down-cast to any implementation of `Map` that is mutable (one will never be able to down-cast it).
 Moreover, no write operations are allowed.
+
+## Changelog
+
+[Changelog](CHANGELOG.md)
