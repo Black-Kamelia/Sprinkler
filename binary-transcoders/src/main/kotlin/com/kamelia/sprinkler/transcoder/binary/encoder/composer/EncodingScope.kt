@@ -1,7 +1,7 @@
 package com.kamelia.sprinkler.transcoder.binary.encoder.composer
 
+import com.kamelia.sprinkler.bridge.KotlinDslAdapter
 import com.kamelia.sprinkler.transcoder.binary.encoder.core.Encoder
-import com.kamelia.sprinkler.util.jvmlambda.KotlinDslAdapter
 
 /**
  * Represents a scope in which an object can be encoded. This interface is used to compose encoders. It can be used as
