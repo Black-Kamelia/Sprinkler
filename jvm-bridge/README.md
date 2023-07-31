@@ -6,6 +6,7 @@
 
 - [Intentions](#intentions)
 - [KotlinDslAdapter](#kotlindsladapter)
+- [Changelog](#changelog)
 
 ## Intentions
 
@@ -49,3 +50,7 @@ class Main {
   }
 }
 ```
+
+## Changelog
+
+[Changelog](CHANGELOG.md)

@@ -16,6 +16,7 @@
 - [ByteArrayDecoding](#bytearraydecoding)
 - [ByteAccess](#byteaccess)
 - [unsafeCast](#unsafecast)
+- [Changelog](#changelog)
 
 ## Intentions
 
@@ -288,3 +289,7 @@ inline fun <T> Any?.unsafeCast(): T = this as T
 It is useful when you know that a value is of a certain type, but the compiler doesn't, and you would need to add
 a `Suppress` annotation to avoid a warning. It's also useful when chaining operations. It is mostly a convenience function
 that should only be used in exceptional cases in library code.
+
+## Changelog
+
+[Changelog](CHANGELOG.md)
