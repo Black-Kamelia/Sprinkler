@@ -55,7 +55,7 @@ already opened ones:
 
 ```java
 try (var resource1 = new Resource1()) {
-	resource1.doSomething();
+    resource1.doSomething();
     // Use resource1
     try (var resource2 = new Resource2()) {
         // Use resource2
@@ -138,7 +138,7 @@ It is an interface with several methods and properties:
 - the `getValue` method which allows one to use a `Box` as a property delegate. Trying to read the delegated property
   before the value is set will throw an `IllegalStateException`.
 
-Moreover, it has sub-interface `Box.Mutable<T>` which adds a `fill` method that allows to set the inner value of the 
+Moreover, it has a sub-interface `Box.Mutable<T>` which adds a `fill` method that allows to set the inner value of the 
 box, and returns whether it was empty or not, or in other words, if the fill was successful or not (`true` if it was,
 `false` if it wasn't).
 
@@ -173,13 +173,13 @@ fun main() {
 
 ## Collector Utilities
 
-Sprinkler-util brings a few utilities to simplify the creation of Java `Collector`s, and their usage which is sometimes
+Sprinkler-utils brings a few utilities to simplify the creation of Java `Collector`s, and their usage which is sometimes
 a bit clunky.
 
 ### Collector Shorthands
 
 Calling the different functional interfaces composing a `Collector` is often redundant : you obtain the element thanks
-to a getter, and then call the interface's method with the arguments. Sprinkler-util provides a few shorthands to
+to a getter, and then call the interface's method with the arguments. Sprinkler-utils provides a few shorthands to
 simplify this. They are all extension functions on `Collector` and are all inlined.
 
 - `supply` is a shorthand method for `Collector::supplier::get`

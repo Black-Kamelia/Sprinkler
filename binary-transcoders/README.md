@@ -8,6 +8,7 @@
 - [Getting Started](#getting-started)
 - [Encoders](#encoders)
 - [Decoders](#decoders)
+- [Transcoders](#transcoders)
 - [Changelog](#changelog)
 
 ## Intentions
