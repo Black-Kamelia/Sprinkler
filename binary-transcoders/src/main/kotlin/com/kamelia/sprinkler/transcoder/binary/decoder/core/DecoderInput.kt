@@ -30,6 +30,10 @@ interface DecoderInput {
     /**
      * Reads a single bit from the source. Returns -1 if there are no more bits to read.
      *
+     * **Note:** This method is similar to [InputStream.read] in the sense that the returned value is an [Int] and not
+     * a [Boolean]. This is because the returned value is -1 if there is less than 1 bit left to read, and -1 is not a
+     * valid bit value, so there is no risk of ambiguity with a valid byte value (0 or 1).
+     *
      * @return the bit read, or -1 if there are no more bits to read
      * @throws IOException if an I/O error occurs
      */
@@ -37,6 +41,10 @@ interface DecoderInput {
 
     /**
      * Reads a full byte from the source. Returns -1 if there is less than 1 byte left to read.
+     *
+     * **Note:** This method is similar to [InputStream.read] in the sense that the returned value is an [Int] and not
+     * a [Byte]. This is because the returned value is -1 if there is less than 1 byte left to read, and -1 is not a
+     * valid byte value, so there is no risk of ambiguity with a valid byte value (0 to 255).
      *
      * @return the byte read, or -1 if there is less than 1 byte left to read
      * @throws IOException if an I/O error occurs
