@@ -1,5 +1,7 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
+import kotlin.math.max
+
 /**
  * A [Decoder] decoding objects represented by a fixed number of bytes. This decoder accumulates the bytes read and
  * calls a [converter] function to convert these bytes to the decoded object.
@@ -25,7 +27,7 @@ class ConstantSizedItemDecoder<E>(
     override fun decode(input: DecoderInput): Decoder.State<E> {
         if (array.isEmpty()) return Decoder.State.Done(array.converter()) // shortcut
 
-        index += input.read(array, index)
+        index += max(0, input.read(array, index))
         return if (index == array.size) {
             Decoder.State.Done(array.converter()).also { reset() }
         } else {

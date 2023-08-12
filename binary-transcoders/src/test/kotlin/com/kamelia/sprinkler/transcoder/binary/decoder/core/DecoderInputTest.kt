@@ -3,6 +3,7 @@ package com.kamelia.sprinkler.transcoder.binary.decoder.core
 import java.io.ByteArrayInputStream
 import java.nio.ByteBuffer
 import java.util.stream.Stream
+import kotlin.math.max
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.api.Test
@@ -39,7 +40,7 @@ class DecoderInputTest {
         assertEquals(b2, receiver[2])
         assertEquals(b3, receiver[3])
         assertEquals(0, receiver[1]) // not overwritten
-        assertEquals(0, input.read(receiver))
+        assertEquals(-1, input.read(receiver))
     }
 
     @ParameterizedTest
@@ -72,7 +73,7 @@ class DecoderInputTest {
         assertEquals(listOf(b1), receiver)
         assertEquals(2, input.read(receiver))
         assertEquals(listOf(b1, b2, b3), receiver)
-        assertEquals(0, input.read(receiver))
+        assertEquals(-1, input.read(receiver))
     }
 
     @ParameterizedTest
@@ -95,6 +96,22 @@ class DecoderInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
+    fun `read to collection stops after read 2 bytes when collection add returns false`(factory: (ByteArray) -> DecoderInput) {
+        val b1 = 3.toByte()
+
+        val inner = ArrayList<Byte>()
+        val dummyList: MutableList<Byte> = object : MutableList<Byte> by inner {
+            override fun add(element: Byte): Boolean = if (inner.size == 2) false else inner.add(element)
+        }
+
+        val input = factory(byteArrayOf(b1, b1, b1))
+        assertEquals(1, input.read(dummyList, 1))
+        assertEquals(listOf(b1), dummyList)
+        assertEquals(1, input.read(dummyList, 2))
+    }
+
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
     fun `skip works correctly`(factory: (ByteArray) -> DecoderInput) {
         val b1 = 3.toByte()
         val b2 = 5.toByte()
@@ -111,9 +128,9 @@ class DecoderInputTest {
         val input = DecoderInput.nullInput()
         assertEquals(-1, input.read().toByte())
         assertEquals(-1, input.readBit().toByte())
-        assertEquals(0, input.read(ByteArray(1), 0, 1))
-        assertEquals(0, input.readBits(ByteArray(1), 0, 1))
-        assertEquals(0, input.read(mutableListOf()))
+        assertEquals(-1, input.read(ByteArray(1), 0, 1))
+        assertEquals(-1, input.readBits(ByteArray(1), 0, 1))
+        assertEquals(-1, input.read(mutableListOf()))
         assertEquals(0, input.skip(1))
         assertThrows<IndexOutOfBoundsException> { input.read(ByteArray(1), -1, 1) }
         assertThrows<IndexOutOfBoundsException> { input.read(ByteArray(1), 2, 0) }
@@ -369,7 +386,7 @@ class DecoderInputTest {
 
         @JvmStatic
         fun decoderDataInputImplementations(): Stream<Arguments> = Stream.of(
-            Arguments.of(Named.of<(ByteArray) -> DecoderInput>("ByteArray") { DecoderInput.Companion.from(it) }),
+            Arguments.of(Named.of<(ByteArray) -> DecoderInput>("ByteArray") { DecoderInput.from(it) }),
             Arguments.of(Named.of<(ByteArray) -> DecoderInput>("InputStream") {
                 DecoderInput.from(ByteArrayInputStream(it))
             }),

@@ -1,5 +1,7 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
+import kotlin.math.max
+
 /**
  * A [Decoder] that decodes an object with a variable size. The number of bytes to read are prefixed to the actual bytes
  * of the object. This size is decoded by a [sizeDecoder] and then the n bytes are accumulated internally. Once all
@@ -56,7 +58,7 @@ class PrefixedSizeItemDecoder<E>(
     private fun decodeContent(input: DecoderInput): Decoder.State<E> {
         val array = array!!
         if (index < bytesToRead) {
-            index += input.read(array, index, bytesToRead - index)
+            index += max(0, input.read(array, index, bytesToRead - index))
         }
 
         return if (index == bytesToRead) {

@@ -5,6 +5,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.*
+import kotlin.math.max
 import kotlin.math.min
 
 /**
@@ -75,7 +76,7 @@ interface DecoderInput {
 
         val fullBytes = (length - readFromPrefix) / 8
         val fullBytesStart = if (prefixOffset == 0) actualStart else actualStart + 1
-        val fullBytesRead = read(bytes, fullBytesStart, fullBytes)
+        val fullBytesRead = max(0, read(bytes, fullBytesStart, fullBytes))
         readBits += fullBytesRead * 8
         if (fullBytesRead < fullBytes) { // less than 1 byte left to read, we still try to read the remaining bits
             // there is at most 7 bits left to read
@@ -98,6 +99,10 @@ interface DecoderInput {
      * [length] parameters specify the range of indices in the [ByteArray] to read into. The [start] parameter is
      * inclusive, and the [length] parameter is exclusive.
      *
+     * If [length] is zero, then no bytes are read and `0` is returned; otherwise, there is an attempt to read at
+     * least one byte. If no byte is available because the stream is at end of file, the value `-1` is returned;
+     * otherwise, at least one byte is read and stored into the [ByteArray][bytes].
+     *
      * @param bytes the [ByteArray] to read into
      * @param start the inclusive start index in the [ByteArray] to read into
      * @param length the exclusive end index in the [ByteArray] to read into
@@ -107,7 +112,16 @@ interface DecoderInput {
      */
     fun read(bytes: ByteArray, start: Int, length: Int): Int {
         Objects.checkFromIndexSize(start, length, bytes.size)
-        for (i in start until start + length) {
+
+        // We need to try to read the first byte, to check if the stream is at the end of file
+        // If that's the case, we return -1 immediately
+        // Otherwise we proceed normally
+        if (length == 0) return 0
+        val firstByte = read()
+        if (firstByte == -1) return -1
+        bytes[start] = firstByte.toByte()
+
+        for (i in start + 1 until start + length) {
             val read = read()
             if (read == -1) return i - start
             bytes[i] = read.toByte()
@@ -120,6 +134,10 @@ interface DecoderInput {
      * parameter specifies the start index in the [ByteArray] to read into. The method will read as many bytes as
      * possible, up to the end of the [ByteArray].
      *
+     * If the size to read (`[bytes].size - [start]`) is zero, then no bytes are read and `0` is returned; otherwise,
+     * there is an attempt to read at least one byte. If no byte is available because the stream is at end of file,
+     * the value `-1` is returned; otherwise, at least one byte is read and stored into the [ByteArray][bytes].
+     *
      * @param bytes the [ByteArray] to read into
      * @param start the inclusive start index in the [ByteArray] to read into
      * @return the number of bytes read
@@ -131,6 +149,10 @@ interface DecoderInput {
      * Reads bytes from the source into the given [ByteArray] and returns the number of bytes read. The method will
      * try to fill the entire [ByteArray].
      *
+     * If the [ByteArray][bytes]'s length is zero, then no bytes are read and `0` is returned; otherwise,
+     * there is an attempt to read at least one byte. If no byte is available because the stream is at end of file,
+     * the value `-1` is returned; otherwise, at least one byte is read and stored into the [ByteArray][bytes].
+     *
      * @param bytes the [ByteArray] to read into
      * @return the number of bytes read
      */
@@ -140,13 +162,27 @@ interface DecoderInput {
      * Reads bytes from the source into the given [MutableCollection] and returns the number of bytes read. The [length]
      * parameter specifies the maximum number of bytes to read.
      *
+     * If [length] is zero, then no bytes are read and `0` is returned; otherwise, there is an attempt to read at
+     * least one byte. If no byte is available because the stream is at end of file, the value `-1` is returned;
+     * otherwise, at least one byte is read and stored into the [MutableCollection][bytes].
+     *
      * @param bytes the [MutableCollection] to read into
      * @param length the maximum number of bytes to read
      * @throws IOException if an I/O error occurs
      */
     fun read(bytes: MutableCollection<Byte>, length: Int): Int {
+        if (length == 0) return 0
         var read = 0
-        for (i in 0 until length) {
+
+        // We need to try to read the first byte, to check if the stream is at the end of file
+        // If that's the case, we return -1 immediately
+        // Otherwise we proceed normally
+        val firstByte = read()
+        if (firstByte == -1) return -1
+        if (bytes.add(firstByte.toByte())) read++
+        else return 0
+
+        for (i in 1 until length) {
             val readByte = read()
             if (readByte == -1) break
             if (!bytes.add(readByte.toByte())) break
@@ -158,6 +194,10 @@ interface DecoderInput {
     /**
      * Reads bytes from the source into the given [MutableCollection] and returns the number of bytes read. The method
      * will read as many bytes as possible, up to [Int.MAX_VALUE] element.
+     *
+     * If the [MutableCollection][bytes]'s size is zero, then no bytes are read and `0` is returned; otherwise,
+     * there is an attempt to read at least one byte. If no byte is available because the stream is at end of file,
+     * the value `-1` is returned; otherwise, at least one byte is read and stored into the [MutableCollection][bytes].
      *
      * @param bytes the [MutableCollection] to read into
      * @return the number of bytes read
@@ -194,12 +234,12 @@ interface DecoderInput {
             override fun read(): Int = -1
             override fun readBits(bytes: ByteArray, start: Int, length: Int): Int {
                 Objects.checkFromIndexSize(start, length, bytes.size * 8)
-                return 0
+                return -1
             }
 
             override fun read(bytes: ByteArray, start: Int, length: Int): Int {
                 Objects.checkFromIndexSize(start, length, bytes.size)
-                return 0
+                return -1
             }
         }
 
@@ -244,7 +284,7 @@ interface DecoderInput {
 
                 override fun read(bytes: ByteArray, start: Int, length: Int): Int {
                     Objects.checkFromIndexSize(start, length, bytes.size)
-                    if (length == 0 || inner.position() == 0) return 0
+                    if (length == 0 || inner.position() == 0) return -1
 
                     inner.flip()
                     isInWriteMode = false
