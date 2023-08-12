@@ -67,6 +67,14 @@ interface Box<out T> {
          */
         fun fill(value: T): Boolean
 
+        /**
+         * Delegate operator for the [fill] function.
+         */
+        @HideFromJava
+        operator fun setValue(thisRef: Any?, property: Any?, value: T) {
+            fill(value)
+        }
+
     }
 
     companion object {
