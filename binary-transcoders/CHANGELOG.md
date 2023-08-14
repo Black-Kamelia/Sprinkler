@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `EncodingScope` interface now extends `KotlinDslAdapter` interface from the `jvm-bridge` module instead of the`utils`
   module. ([#30](https://github.com/Black-Kamelia/Sprinkler/issues/30))
-- `DecoderInput::read` methods now return -1 when there is nothing to be read anymore, instead of 0, which is only 
+- `DecoderInput::read` and `DecoderInput::readBits` methods now return -1 when there is nothing to be read anymore, instead of 0, which is only 
   returned if the requested length to read is 0 itself (if the byte array's length is 0, for example).
 
 ## 0.1.0 (2023-07-27)

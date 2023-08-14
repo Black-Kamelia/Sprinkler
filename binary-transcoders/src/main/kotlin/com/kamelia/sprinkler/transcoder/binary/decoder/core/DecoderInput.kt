@@ -198,9 +198,8 @@ interface DecoderInput {
      * Reads bytes from the source into the given [MutableCollection] and returns the number of bytes read. The method
      * will read as many bytes as possible, up to [Int.MAX_VALUE] element.
      *
-     * If the [MutableCollection][bytes]'s size is zero, then no bytes are read and `0` is returned; otherwise,
-     * there is an attempt to read at least one byte. If no byte is available because the stream is at end of file,
-     * the value `-1` is returned; otherwise, at least one byte is read and stored into the [MutableCollection][bytes].
+     * If no byte is available because the stream is at end of file, the value `-1` is returned; otherwise, at least one
+     * byte is read and stored into the [MutableCollection][bytes].
      *
      * @param bytes the [MutableCollection] to read into
      * @return the number of bytes read
