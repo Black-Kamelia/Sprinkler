@@ -56,6 +56,10 @@ interface DecoderInput {
      * Reads [length] bits from the source and writes them to the given [bytes] byte array. The bits are written
      * starting at the [start] bit index in the [bytes] array. Returns the number of bits actually read.
      *
+     * If [length] is zero, or the [ByteArray][bytes]'s length is 0, then no bits are read and `0` is returned;
+     * otherwise, there is an attempt to read at least one bit. If no bit is available because the stream is at end of
+     * file, the value `-1` is returned; otherwise, at least one bit is read and stored into the [ByteArray][bytes].
+     *
      * @param bytes the byte array to write the bits to
      * @param start the start bit index in the [bytes] array
      * @param length the number of bits to read
