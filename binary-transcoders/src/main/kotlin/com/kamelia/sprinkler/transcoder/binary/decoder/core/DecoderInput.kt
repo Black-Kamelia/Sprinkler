@@ -65,12 +65,15 @@ interface DecoderInput {
      */
     fun readBits(bytes: ByteArray, start: Int, length: Int): Int {
         Objects.checkFromIndexSize(start, length, bytes.size * 8)
+        if (bytes.isEmpty() || length == 0) return 0
+
         val actualStart = start / 8
         var readBits = 0
 
         val prefixOffset = start and 7
         val readFromPrefix = if (prefixOffset > 0) min(8 - prefixOffset, length) else 0
         val readPre = innerReadBits(bytes, actualStart, prefixOffset, readFromPrefix)
+        if (readPre == 0) return -1
         readBits += readPre
         if (readPre < readFromPrefix) return readBits
 
