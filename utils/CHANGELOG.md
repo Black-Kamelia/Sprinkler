@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `KotlinDslAdapter` interface, which has been moved to the `jvm-bridge` module.
 ([#30](https://github.com/Black-Kamelia/Sprinkler/issues/30))
 
+### Added
+
+- `castOrNull` extension to cast `Any?` to `T?` if possible.
+
 ## 1.0.0 (2023-07-27)
 
 Initial release.

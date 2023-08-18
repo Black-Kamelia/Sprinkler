@@ -277,9 +277,13 @@ The `endianness` is used to signify if the `Number` should be interpreted as if 
 
 Of course, `Byte` has only the `bit` function, which doesn't accept an `endianness`, since it is already a byte.
 
+## Typing extensions
+
+To simplify casting and type inference, a few extensions are provided.
+
 ## unsafeCast
 
-A simple extension function on `Any?`:
+A simple extension function on `Any?`, that allows to cast it to any type without any check. It is defined as follows:
 
 ```kt
 @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
@@ -289,6 +293,41 @@ inline fun <T> Any?.unsafeCast(): T = this as T
 It is useful when you know that a value is of a certain type, but the compiler doesn't, and you would need to add
 a `Suppress` annotation to avoid a warning. It's also useful when chaining operations. It is mostly a convenience function
 that should only be used in exceptional cases in library code.
+
+It also offers a cleaner syntax to chain operations on a value of an unknown type:
+
+```kt
+class Foo(val value: Any)
+
+fun countAInFooString(value: Any): Int = value
+    .unsafeCast<Foo>()
+    .value
+    .unsafeCast<String>()
+    .count { 'a' == it }
+```
+
+instead of:
+
+```kt
+class Foo(val value: Any)
+
+fun countA(value: Any): Int = 
+    ((value as Foo)
+    .value as String)
+    .count { 'a' == it }
+```
+
+## castOrNull
+
+A simple extension function on `Any?`, that allows to cast it to any type, and returns `null` if the cast fails (this
+function is the equivalent of `as?`). It is defined as follows:
+
+```kt
+@Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
+inline fun <reified T> Any?.castOrNull(): T? = this as? T
+```
+
+In the same way as `unsafeCast`, it is useful when it comes to chaining operations to avoid nested `as?` calls.
 
 ## Changelog
 
