@@ -5,7 +5,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.*
-import kotlin.math.max
 import kotlin.math.min
 
 /**
@@ -41,13 +40,14 @@ interface DecoderInput {
     fun readBit(): Int
 
     /**
-     * Reads a full byte from the source. Returns -1 if there is less than 1 byte left to read.
+     * Reads a full byte from the source. Returns -1 if the end of the stream has been reached, and -2 if there is less
+     * than 1 byte left to read (between 1 and 7 bits left).
      *
      * **Note:** This method is similar to [InputStream.read] in the sense that the returned value is an [Int] and not
      * a [Byte]. This is because the returned value is -1 if there is less than 1 byte left to read, and -1 is not a
      * valid byte value, so there is no risk of ambiguity with a valid byte value (0 to 255).
      *
-     * @return the byte read, or -1 if there is less than 1 byte left to read
+     * @return the byte read, or -1 if the end of the stream has been reached, and -2 if there is less than 1 byte left
      * @throws IOException if an I/O error occurs
      */
     fun read(): Int
@@ -77,13 +77,21 @@ interface DecoderInput {
         val prefixOffset = start and 7
         val readFromPrefix = if (prefixOffset > 0) min(8 - prefixOffset, length) else 0
         val readPre = innerReadBits(bytes, actualStart, prefixOffset, readFromPrefix)
-        if (readPre == 0) return -1
+        if (readPre < 0) return -1
         readBits += readPre
         if (readPre < readFromPrefix) return readBits
 
         val fullBytes = (length - readFromPrefix) / 8
         val fullBytesStart = if (prefixOffset == 0) actualStart else actualStart + 1
-        val fullBytesRead = max(0, read(bytes, fullBytesStart, fullBytes))
+        val fullBytesRead = read(bytes, fullBytesStart, fullBytes)
+        if (fullBytesRead == -1) {
+            // return the number of bits read if we read at least 1 bit
+            return if (readBits == 0) -1 else readBits
+        } else if (fullBytesRead == -2) {
+            // we know that there is some bits, meaning that we can assume that readBits > 0
+            return innerReadBits(bytes, start, 0,fullBytes * 8) + readBits
+        }
+
         readBits += fullBytesRead * 8
         if (fullBytesRead < fullBytes) { // less than 1 byte left to read, we still try to read the remaining bits
             // there is at most 7 bits left to read
@@ -95,6 +103,7 @@ interface DecoderInput {
         val suffixOffset = (length - readBits) and 7
         val lastIndex = (start + length) / 8
         val readPost = innerReadBits(bytes, lastIndex, 0, suffixOffset)
+        if (readPost < 0) return if (readBits == 0) -1 else readBits
         readBits += readPost
         if (readPost < suffixOffset) return readBits
 
@@ -119,18 +128,19 @@ interface DecoderInput {
      */
     fun read(bytes: ByteArray, start: Int, length: Int): Int {
         Objects.checkFromIndexSize(start, length, bytes.size)
+        if (length == 0) return 0
 
         // We need to try to read the first byte, to check if the stream is at the end of file
         // If that's the case, we return -1 immediately
         // Otherwise we proceed normally
-        if (length == 0) return 0
         val firstByte = read()
-        if (firstByte == -1) return -1
+        if (firstByte < 0) return firstByte
+
         bytes[start] = firstByte.toByte()
 
         for (i in start + 1 until start + length) {
             val read = read()
-            if (read == -1) return i - start
+            if (read < 0) return i - start
             bytes[i] = read.toByte()
         }
         return length
@@ -290,10 +300,17 @@ interface DecoderInput {
 
                 override fun read(bytes: ByteArray, start: Int, length: Int): Int {
                     Objects.checkFromIndexSize(start, length, bytes.size)
-                    if (length == 0 || inner.position() == 0) return -1
+                    if (length == 0) return 0
+                    if ((isInWriteMode && inner.position() == 0) || (!isInWriteMode && inner.remaining() == 0)) {
+                        return if (bitLeft != 0) -2 else -1
+                    }
 
-                    inner.flip()
-                    isInWriteMode = false
+                    val wasInWriteMode = isInWriteMode
+                    if (isInWriteMode) {
+                        inner.flip()
+                        isInWriteMode = false
+                    }
+
 
                     val read = if (bitLeft != 0) {
                         super.read(bytes, start, length)
@@ -303,13 +320,16 @@ interface DecoderInput {
                         actualLength
                     }
 
-                    inner.compact()
-                    isInWriteMode = true
+                    if (wasInWriteMode) {
+                        inner.compact()
+                        isInWriteMode = true
+                    }
 
                     return read
                 }
 
                 override fun readByte(): Int {
+                    val wasInWriteMode = isInWriteMode
                     if (isInWriteMode) {
                         inner.flip()
                     }
@@ -318,7 +338,7 @@ interface DecoderInput {
                     } else {
                         -1
                     }
-                    if (isInWriteMode) {
+                    if (wasInWriteMode) {
                         inner.compact()
                     }
                     return byte
@@ -387,7 +407,7 @@ private fun DecoderInput.innerReadBits(bytes: ByteArray, index: Int, bitIndex: I
     for (it in 0 until length) {
         val bit = readBit()
         if (bit == -1) {
-            if (it == 0) return 0
+            if (it == 0) return -1
             break
         }
         readBits++
@@ -421,7 +441,7 @@ private abstract class AbstractDecoderInput : DecoderInput {
         readByte()
     } else {
         if (!refillBuffer()) {
-            -1
+            -2
         } else {
             // read 8 bits from the buffer
             val result = ((buffer and 0xFF00) ushr 8) and 0xFF
