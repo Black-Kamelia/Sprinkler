@@ -1,7 +1,7 @@
 @file:Suppress("NOTHING_TO_INLINE")
 @file:HideFromJava
 
-package com.kamelia.sprinkler.util
+package com.kamelia.sprinkler.bridge
 
 import com.zwendo.restrikt.annotation.HideFromJava
 import java.util.stream.Collector

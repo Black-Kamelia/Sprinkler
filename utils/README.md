@@ -7,12 +7,7 @@
 - [Intentions](#intentions)
 - [CloseableScope](#closeablescope)
 - [Box Delegate](#box-delegate)
-- [Collector Utilities](#collector-utilities)
-  - [Collector Shorthands](#collector-shorthands)
-  - [Collector Factories](#collector-factories)
-- [Kotlin Lambda Adapters for Java](#kotlin-lambda-adapters-for-java)
-  - [LambdaAdapters](#lambdaadapters)
-  - [InvokeExtensions](#invokeextensions)
+- [Collector Factories](#collector-factories)
 - [ByteArrayDecoding](#bytearraydecoding)
 - [ByteAccess](#byteaccess)
 - [unsafeCast](#unsafecast)
@@ -34,8 +29,12 @@ But one might see that they are not entirely symmetrical in their usage as soon 
 
 ```java
 // java
-try (var resource1 = new Resource1(); var resource2 = new Resource2()) {
-    // Use resources
+class Main {
+    public static void main(String[] args) {
+        try (var resource1 = new Resource1(); var resource2 = new Resource2()) {
+            // Use resources
+        }
+    }
 }
 ```
 
@@ -54,11 +53,15 @@ Another issue arises in Java's case when we want to use a new resource within th
 already opened ones:
 
 ```java
-try (var resource1 = new Resource1()) {
-    resource1.doSomething();
-    // Use resource1
-    try (var resource2 = new Resource2()) {
-        // Use resource2
+class Main {
+    public static void main(String[] args) {
+        try (var resource1 = new Resource1()) {
+            resource1.doSomething();
+            // Use resource1
+            try (var resource2 = new Resource2()) {
+                // Use resource2
+            }
+        }
     }
 }
 ```
@@ -140,7 +143,7 @@ It is an interface with several methods and properties:
 
 Moreover, it has a sub-interface `Box.Mutable<T>` which adds a `fill` method that allows to set the inner value of the 
 box, and returns whether it was empty or not, or in other words, if the fill was successful or not (`true` if it was,
-`false` if it wasn't).
+`false` if it wasn't). It also features a `setValue` method which allows one to use a `Box.Mutable` as a property.
 
 One may want to implement them, but the real goal is to use the provided factories:
 - `Box.empty<T>()` returns an empty box. It is not mutable, and cannot ever be filled.
@@ -157,7 +160,7 @@ Here is a simple example:
 
 ```kt
 class Foo(intBox: Box<Int>) {
-    val i by intBox
+    var i by intBox
 }
 
 fun main() {
@@ -166,29 +169,12 @@ fun main() {
    runCatching {
      println(foo.i) // Throws an exception
    }
-   box.fill(1)
+   foo.i = 1
    println(foo.i) // Prints 1
 }
 ```
 
-## Collector Utilities
-
-Sprinkler-utils brings a few utilities to simplify the creation of Java `Collector`s, and their usage which is sometimes
-a bit clunky.
-
-### Collector Shorthands
-
-Calling the different functional interfaces composing a `Collector` is often redundant : you obtain the element thanks
-to a getter, and then call the interface's method with the arguments. Sprinkler-utils provides a few shorthands to
-simplify this. They are all extension functions on `Collector` and are all inlined.
-
-- `supply` is a shorthand method for `Collector::supplier::get`
-- `accumulate` is a shorthand method for `Collector::accumulator::accept`
-- `combine` is a shorthand method for `Collector::combiner::apply`
-- `finish` is a shorthand method for `Collector::finisher::apply`
-- `characteristics` is a shorthand property for `Collector::characteristics`
-
-### Collector Factories
+## Collector Factories
 
 Java's standard library is missing a few very common `Collector` factories. To that effect, those are provided by
 the `ExtendedCollectors` class.
@@ -197,56 +183,6 @@ the `ExtendedCollectors` class.
 - `ExtendedCollectors.toArray` returns a collector that collects elements to an array.
 - `to[Primitive]Array` returns a collector that collects elements to a primitive array, where `[Primitive]` is the
   wanted primitive (e.g. `toIntArray`, `toDoubleArray`).
-
-## Kotlin Lambda Adapters for Java
-
-Kotlin's type system is very good, and the addition of the `Unit` type allows better type coherence in many cases.
-However, while in Java, one can very easily implement lambdas for Kotlin's function types for the most part, 
-if the function is supposed to return `Unit`, then the lambda will have to explicitly return the `Unit.INSTANCE`
-singleton, which is not convenient especially when the lambda is a one-liner, and when comparing it to Kotlin where it
-is the equivalent of return void.
-
-### LambdaAdapters
-
-The `LambdaAdapters` class provides a few static methods to adapt lambdas to Kotlin's function types. That is to say,
-they adapt the common Java functional interfaces which return `void` to Kotlin's function types which return `Unit`.
-(`Runnable`, `Consumer`, `BiConsumer`)
-
-It is important to note that the lambda is not wrapped in a Kotlin function type, it is actually a subtype of both the 
-Kotlin function type **and** the corresponding Java functional interface.
-
-```kt
-// Kotlin
-fun foo(block: (String) -> Unit) {
-    // ...
-}
-```
-
-```java
-// Java
-import static com.kamelia.sprinkler.util.jvmlambda.LambdaAdapters.*; // static import the `a` (adapt) functions
-
-class Main {
-    public static void main(String[] args) {
-        // you can write
-        foo(a(arg -> System.out.println(arg)));
-        
-        // instead of
-        foo(arg -> {
-            System.out.println(arg);
-            return Unit.INSTANCE;
-        });
-    }
-}
-```
-
-No need to explicitly return `Unit.INSTANCE` anymore.
-
-### InvokeExtensions
-
-This file provides an `invoke` extension operator to **every single** Java functional interface from the standard library.
-
-For example, on a `Consumer<T>`, it allows to call `consumer(value)` instead of `consumer.accept(value)`.
 
 ## ByteArrayDecoding
 
@@ -277,9 +213,13 @@ The `endianness` is used to signify if the `Number` should be interpreted as if 
 
 Of course, `Byte` has only the `bit` function, which doesn't accept an `endianness`, since it is already a byte.
 
+## Typing extensions
+
+To simplify casting and type inference, a few extensions are provided.
+
 ## unsafeCast
 
-A simple extension function on `Any?`:
+A simple extension function on `Any?`, that allows to cast it to any type without any check. It is defined as follows:
 
 ```kt
 @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
@@ -289,6 +229,41 @@ inline fun <T> Any?.unsafeCast(): T = this as T
 It is useful when you know that a value is of a certain type, but the compiler doesn't, and you would need to add
 a `Suppress` annotation to avoid a warning. It's also useful when chaining operations. It is mostly a convenience function
 that should only be used in exceptional cases in library code.
+
+It also offers a cleaner syntax to chain operations on a value of an unknown type:
+
+```kt
+class Foo(val value: Any)
+
+fun countAInFooString(value: Any): Int = value
+    .unsafeCast<Foo>()
+    .value
+    .unsafeCast<String>()
+    .count { 'a' == it }
+```
+
+instead of:
+
+```kt
+class Foo(val value: Any)
+
+fun countA(value: Any): Int = 
+    ((value as Foo)
+    .value as String)
+    .count { 'a' == it }
+```
+
+## castOrNull
+
+A simple extension function on `Any?`, that allows to cast it to any type, and returns `null` if the cast fails (this
+function is the equivalent of `as?`). It is defined as follows:
+
+```kt
+@Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
+inline fun <reified T> Any?.castOrNull(): T? = this as? T
+```
+
+In the same way as `unsafeCast`, it is useful when it comes to chaining operations to avoid nested `as?` calls.
 
 ## Changelog
 

@@ -1,4 +1,4 @@
-package com.kamelia.sprinkler.util.jvmlambda;
+package com.kamelia.sprinkler.bridge;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
