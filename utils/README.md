@@ -140,7 +140,7 @@ It is an interface with several methods and properties:
 
 Moreover, it has a sub-interface `Box.Mutable<T>` which adds a `fill` method that allows to set the inner value of the 
 box, and returns whether it was empty or not, or in other words, if the fill was successful or not (`true` if it was,
-`false` if it wasn't).
+`false` if it wasn't). It also features a `setValue` method which allows one to use a `Box.Mutable` as a property.
 
 One may want to implement them, but the real goal is to use the provided factories:
 - `Box.empty<T>()` returns an empty box. It is not mutable, and cannot ever be filled.
@@ -157,7 +157,7 @@ Here is a simple example:
 
 ```kt
 class Foo(intBox: Box<Int>) {
-    val i by intBox
+    var i by intBox
 }
 
 fun main() {
@@ -166,7 +166,7 @@ fun main() {
    runCatching {
      println(foo.i) // Throws an exception
    }
-   box.fill(1)
+   foo.i = 1
    println(foo.i) // Prints 1
 }
 ```
