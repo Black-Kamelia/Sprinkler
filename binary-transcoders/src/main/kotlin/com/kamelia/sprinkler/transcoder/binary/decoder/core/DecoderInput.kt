@@ -89,7 +89,7 @@ interface DecoderInput {
             return if (readBits == 0) -1 else readBits
         } else if (fullBytesRead == -2) {
             // we know that there is some bits, meaning that we can assume that readBits > 0
-            return innerReadBits(bytes, start, 0,fullBytes * 8) + readBits
+            return innerReadBits(bytes, start, 0, fullBytes * 8) + readBits
         }
 
         readBits += fullBytesRead * 8
@@ -119,10 +119,13 @@ interface DecoderInput {
      * least one byte. If no byte is available because the stream is at end of file, the value `-1` is returned;
      * otherwise, at least one byte is read and stored into the [ByteArray][bytes].
      *
+     * If there is at least one bit left, but less than 8 (between 1 and 7), then -2 is returned.
+     *
      * @param bytes the [ByteArray] to read into
      * @param start the inclusive start index in the [ByteArray] to read into
      * @param length the exclusive end index in the [ByteArray] to read into
-     * @return the number of bytes read
+     * @return the number of bytes read, or -1 if the end of the stream has been reached, and -2 if there is less than
+     * 1 byte left
      * @throws IndexOutOfBoundsException if [start] < 0 or [length] < 0 or [start] + [length] > [ByteArray.size]
      * @throws IOException if an I/O error occurs
      */
@@ -155,9 +158,12 @@ interface DecoderInput {
      * there is an attempt to read at least one byte. If no byte is available because the stream is at end of file,
      * the value `-1` is returned; otherwise, at least one byte is read and stored into the [ByteArray][bytes].
      *
+     * If there is at least one bit left, but less than 8 (between 1 and 7), then -2 is returned.
+     *
      * @param bytes the [ByteArray] to read into
      * @param start the inclusive start index in the [ByteArray] to read into
-     * @return the number of bytes read
+     * @return the number of bytes read, or -1 if the end of the stream has been reached, and -2 if there is less than
+     * 1 byte left
      * @throws IOException if an I/O error occurs
      */
     fun read(bytes: ByteArray, start: Int): Int = read(bytes, start, bytes.size - start)
@@ -170,8 +176,11 @@ interface DecoderInput {
      * there is an attempt to read at least one byte. If no byte is available because the stream is at end of file,
      * the value `-1` is returned; otherwise, at least one byte is read and stored into the [ByteArray][bytes].
      *
+     * If there is at least one bit left, but less than 8 (between 1 and 7), then -2 is returned.
+     *
      * @param bytes the [ByteArray] to read into
-     * @return the number of bytes read
+     * @return the number of bytes read, or -1 if the end of the stream has been reached, and -2 if there is less than
+     * 1 byte left
      */
     fun read(bytes: ByteArray): Int = read(bytes, 0, bytes.size)
 
@@ -183,8 +192,12 @@ interface DecoderInput {
      * least one byte. If no byte is available because the stream is at end of file, the value `-1` is returned;
      * otherwise, at least one byte is read and stored into the [MutableCollection][bytes].
      *
+     * If there is at least one bit left, but less than 8 (between 1 and 7), then -2 is returned.
+     *
      * @param bytes the [MutableCollection] to read into
      * @param length the maximum number of bytes to read
+     * @return the number of bytes read, or -1 if the end of the stream has been reached, and -2 if there is less than
+     * 1 byte left
      * @throws IOException if an I/O error occurs
      */
     fun read(bytes: MutableCollection<Byte>, length: Int): Int {
@@ -195,7 +208,7 @@ interface DecoderInput {
         // If that's the case, we return -1 immediately
         // Otherwise we proceed normally
         val firstByte = read()
-        if (firstByte == -1) return -1
+        if (firstByte < 0) return firstByte
         if (bytes.add(firstByte.toByte())) read++
         else return 0
 
@@ -215,8 +228,11 @@ interface DecoderInput {
      * If no byte is available because the stream is at end of file, the value `-1` is returned; otherwise, at least one
      * byte is read and stored into the [MutableCollection][bytes].
      *
+     * If there is at least one bit left, but less than 8 (between 1 and 7), then -2 is returned.
+     *
      * @param bytes the [MutableCollection] to read into
-     * @return the number of bytes read
+     * @return the number of bytes read, or -1 if the end of the stream has been reached, and -2 if there is less than
+     * 1 byte left
      * @throws IOException if an I/O error occurs
      */
     fun read(bytes: MutableCollection<Byte>): Int = read(bytes, Int.MAX_VALUE)
