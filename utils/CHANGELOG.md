@@ -11,8 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 #### Removed
 
-- `KotlinDslAdapter` interface, which has been moved to the `jvm-bridge` module.
+- `KotlinDslAdapter` interface has been moved to the `jvm-bridge` module.
 ([#30](https://github.com/Black-Kamelia/Sprinkler/issues/30))
+- `LambdaAdapters`, `InvokeExtensions` and `CollectorExtensions` classes have been moved to the `jvm-bridge` module.
 
 ### Added
 

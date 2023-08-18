@@ -1,9 +1,9 @@
-package com.kamelia.sprinkler.util
+package com.kamelia.sprinkler.bridge
 
-import java.util.stream.Collector
-import java.util.stream.Collector.Characteristics
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.util.stream.Collector
+import java.util.stream.Collector.Characteristics
 
 class CollectorExtensionsTest {
 
