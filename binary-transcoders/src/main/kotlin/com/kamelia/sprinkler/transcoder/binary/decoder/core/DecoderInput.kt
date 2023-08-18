@@ -69,7 +69,7 @@ interface DecoderInput {
      */
     fun readBits(bytes: ByteArray, start: Int, length: Int): Int {
         Objects.checkFromIndexSize(start, length, bytes.size * 8)
-        if (bytes.isEmpty() || length == 0) return 0
+        if (length == 0) return 0
 
         val actualStart = start / 8
         var readBits = 0
@@ -313,6 +313,22 @@ interface DecoderInput {
             object : AbstractDecoderInput() {
 
                 private var isInWriteMode = true
+
+                override fun readBits(bytes: ByteArray, start: Int, length: Int): Int {
+                    Objects.checkFromIndexSize(start, length, bytes.size * 8)
+                    if (inner.position() == 0 && bitLeft == 0) return -1
+                    if (length == 0) return 0
+
+                    inner.flip()
+                    isInWriteMode = false
+
+                    val bits = super.readBits(bytes, start, length)
+
+                    inner.compact()
+                    isInWriteMode = true
+
+                    return bits
+                }
 
                 override fun read(bytes: ByteArray, start: Int, length: Int): Int {
                     Objects.checkFromIndexSize(start, length, bytes.size)

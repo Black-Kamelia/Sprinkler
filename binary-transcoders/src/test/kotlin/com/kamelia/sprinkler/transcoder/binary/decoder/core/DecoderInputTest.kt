@@ -199,6 +199,16 @@ class DecoderInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
+    fun `read bits from byte array returns 0 when length == 0`(factory: (ByteArray) -> DecoderInput) {
+        val input = factory(byteArrayOf(1, 2, 3))
+        val receiver = ByteArray(2)
+        assertEquals(0, input.readBits(receiver, 0, 0))
+        assertEquals(0, receiver[0])
+        assertEquals(0, receiver[1])
+    }
+
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
     fun `read bits from byte array works for FB only and start 8 != 0`(factory: (ByteArray) -> DecoderInput) {
         val input = factory(byteArrayOf(1, 2, 3))
         val receiver = ByteArray(3)
@@ -206,6 +216,16 @@ class DecoderInputTest {
         assertEquals(0, receiver[0])
         assertEquals(1, receiver[1])
         assertEquals(2, receiver[2])
+    }
+
+    // test for ByteBuffer, to ensure that isInWriteMode field is correctly updated
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
+    fun `read bits from byte array PP FB SP works correctly for ByteBuffer`(factory: (ByteArray) -> DecoderInput) {
+        val input = factory(byteArrayOf(1, 2, 3, 5))
+        val receiver = ByteArray(4)
+        input.readBit()
+        assertEquals(16, input.readBits(receiver, 7, 16))
     }
 
     @ParameterizedTest
