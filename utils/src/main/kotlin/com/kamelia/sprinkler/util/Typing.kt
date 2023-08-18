@@ -10,7 +10,7 @@ package com.kamelia.sprinkler.util
 inline fun <T> Any?.unsafeCast(): T = this as T
 
 /**
- * Tries to this nullable object to the specified type [T].
+ * Tries to cast this nullable object to the specified type [T].
  * If the cast fails, returns null.
  *
  * @receiver the object to cast or null
