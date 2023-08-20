@@ -8,6 +8,8 @@
 - [Getting Started](#getting-started)
 - [Encoders](#encoders)
 - [Decoders](#decoders)
+- [Transcoders](#transcoders)
+- [Changelog](#changelog)
 
 ## Intentions
 
@@ -81,3 +83,7 @@ For a complete guide on how to use decoders, see [Decoders.md](Decoders.md).
 
 Transcoders are, by definition, both encoders and decoders. They are stateful, and should be created each time.
 For a complete guide on how to use transcoders, see [Transcoders.md](Transcoders.md).
+
+## Changelog
+
+[Changelog](CHANGELOG.md)

@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation(project(":utils"))
+    api(project(":jvm-bridge"))
 }
 
 val jvmVersion: String by rootProject

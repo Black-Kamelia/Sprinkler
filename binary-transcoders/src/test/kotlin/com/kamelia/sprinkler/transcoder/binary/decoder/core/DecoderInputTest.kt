@@ -1,8 +1,5 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
-import java.io.ByteArrayInputStream
-import java.nio.ByteBuffer
-import java.util.stream.Stream
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.api.Test
@@ -10,6 +7,9 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.io.ByteArrayInputStream
+import java.nio.ByteBuffer
+import java.util.stream.Stream
 
 class DecoderInputTest {
 
@@ -39,7 +39,7 @@ class DecoderInputTest {
         assertEquals(b2, receiver[2])
         assertEquals(b3, receiver[3])
         assertEquals(0, receiver[1]) // not overwritten
-        assertEquals(0, input.read(receiver))
+        assertEquals(-1, input.read(receiver))
     }
 
     @ParameterizedTest
@@ -72,7 +72,7 @@ class DecoderInputTest {
         assertEquals(listOf(b1), receiver)
         assertEquals(2, input.read(receiver))
         assertEquals(listOf(b1, b2, b3), receiver)
-        assertEquals(0, input.read(receiver))
+        assertEquals(-1, input.read(receiver))
     }
 
     @ParameterizedTest
@@ -95,6 +95,22 @@ class DecoderInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
+    fun `read to collection stops after read 2 bytes when collection add returns false`(factory: (ByteArray) -> DecoderInput) {
+        val b1 = 3.toByte()
+
+        val inner = ArrayList<Byte>()
+        val dummyList: MutableList<Byte> = object : MutableList<Byte> by inner {
+            override fun add(element: Byte): Boolean = if (inner.size == 2) false else inner.add(element)
+        }
+
+        val input = factory(byteArrayOf(b1, b1, b1))
+        assertEquals(1, input.read(dummyList, 1))
+        assertEquals(listOf(b1), dummyList)
+        assertEquals(1, input.read(dummyList, 2))
+    }
+
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
     fun `skip works correctly`(factory: (ByteArray) -> DecoderInput) {
         val b1 = 3.toByte()
         val b2 = 5.toByte()
@@ -111,9 +127,9 @@ class DecoderInputTest {
         val input = DecoderInput.nullInput()
         assertEquals(-1, input.read().toByte())
         assertEquals(-1, input.readBit().toByte())
-        assertEquals(0, input.read(ByteArray(1), 0, 1))
-        assertEquals(0, input.readBits(ByteArray(1), 0, 1))
-        assertEquals(0, input.read(mutableListOf()))
+        assertEquals(-1, input.read(ByteArray(1), 0, 1))
+        assertEquals(-1, input.readBits(ByteArray(1), 0, 1))
+        assertEquals(-1, input.read(mutableListOf()))
         assertEquals(0, input.skip(1))
         assertThrows<IndexOutOfBoundsException> { input.read(ByteArray(1), -1, 1) }
         assertThrows<IndexOutOfBoundsException> { input.read(ByteArray(1), 2, 0) }
@@ -160,10 +176,10 @@ class DecoderInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
-    fun `read returns -1 when there is less than 8 bits to read`(factory: (ByteArray) -> DecoderInput) {
+    fun `read returns -2 when there is less than 8 bits to read`(factory: (ByteArray) -> DecoderInput) {
         val input = factory(byteArrayOf(0b1111_1110.toByte()))
         assertEquals(1, input.readBit())
-        assertEquals(-1, input.read())
+        assertEquals(-2, input.read())
     }
 
     // NOTE FOR THE READ BITS TESTS
@@ -183,6 +199,16 @@ class DecoderInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
+    fun `read bits from byte array returns 0 when length == 0`(factory: (ByteArray) -> DecoderInput) {
+        val input = factory(byteArrayOf(1, 2, 3))
+        val receiver = ByteArray(2)
+        assertEquals(0, input.readBits(receiver, 0, 0))
+        assertEquals(0, receiver[0])
+        assertEquals(0, receiver[1])
+    }
+
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
     fun `read bits from byte array works for FB only and start 8 != 0`(factory: (ByteArray) -> DecoderInput) {
         val input = factory(byteArrayOf(1, 2, 3))
         val receiver = ByteArray(3)
@@ -192,14 +218,24 @@ class DecoderInputTest {
         assertEquals(2, receiver[2])
     }
 
+    // test for ByteBuffer, to ensure that isInWriteMode field is correctly updated
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
-    fun `read bits from byte array FB returns 0 when there isn't enough bits to read`(
+    fun `read bits from byte array PP FB SP works correctly for ByteBuffer`(factory: (ByteArray) -> DecoderInput) {
+        val input = factory(byteArrayOf(1, 2, 3, 5))
+        val receiver = ByteArray(4)
+        input.readBit()
+        assertEquals(16, input.readBits(receiver, 7, 16))
+    }
+
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
+    fun `read bits from byte array FB returns -1 when there isn't enough bits to read`(
         factory: (ByteArray) -> DecoderInput,
     ) {
         val input = factory(byteArrayOf())
         val receiver = byteArrayOf(3)
-        assertEquals(0, input.readBits(receiver, 0, 8))
+        assertEquals(-1, input.readBits(receiver, 0, 8))
         assertEquals(3, receiver[0])
     }
 
@@ -227,12 +263,12 @@ class DecoderInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
-    fun `read bits from byte array PP returns 0 when there isn't enough bits to read`(
+    fun `read bits from byte array PP returns -1 when there isn't enough bits to read`(
         factory: (ByteArray) -> DecoderInput,
     ) {
         val input = factory(byteArrayOf())
         val receiver = byteArrayOf(3)
-        assertEquals(0, input.readBits(receiver, 3, 4))
+        assertEquals(-1, input.readBits(receiver, 3, 4))
         assertEquals(3, receiver[0])
     }
 
@@ -271,10 +307,10 @@ class DecoderInputTest {
 
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
-    fun `read bits from byte array SP returns 0 when there isn't enough bits to read`(factory: (ByteArray) -> DecoderInput) {
+    fun `read bits from byte array SP returns -1 when there isn't enough bits to read`(factory: (ByteArray) -> DecoderInput) {
         val input = factory(byteArrayOf())
         val receiver = byteArrayOf(3)
-        assertEquals(0, input.readBits(receiver, 0, 4))
+        assertEquals(-1, input.readBits(receiver, 0, 4))
         assertEquals(3, receiver[0])
     }
 
@@ -369,7 +405,7 @@ class DecoderInputTest {
 
         @JvmStatic
         fun decoderDataInputImplementations(): Stream<Arguments> = Stream.of(
-            Arguments.of(Named.of<(ByteArray) -> DecoderInput>("ByteArray") { DecoderInput.Companion.from(it) }),
+            Arguments.of(Named.of<(ByteArray) -> DecoderInput>("ByteArray") { DecoderInput.from(it) }),
             Arguments.of(Named.of<(ByteArray) -> DecoderInput>("InputStream") {
                 DecoderInput.from(ByteArrayInputStream(it))
             }),

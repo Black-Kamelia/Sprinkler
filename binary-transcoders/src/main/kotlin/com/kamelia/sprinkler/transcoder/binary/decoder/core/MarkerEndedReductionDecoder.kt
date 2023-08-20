@@ -1,8 +1,8 @@
 package com.kamelia.sprinkler.transcoder.binary.decoder.core
 
-import com.kamelia.sprinkler.util.accumulate
-import com.kamelia.sprinkler.util.finish
-import com.kamelia.sprinkler.util.supply
+import com.kamelia.sprinkler.bridge.accumulate
+import com.kamelia.sprinkler.bridge.finish
+import com.kamelia.sprinkler.bridge.supply
 import java.util.stream.Collector
 
 
