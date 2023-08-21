@@ -22,7 +22,7 @@ val props = Properties().apply { load(file("gradle.properties").reader()) }
 fun String.base64Decode() = String(Base64.getDecoder().decode(this))
 
 val restriktVersion: String by System.getProperties()
-allprojects {
+subprojects {
     apply(plugin = "java")
     apply(plugin = "kotlin")
     apply(plugin = "maven-publish")
