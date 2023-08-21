@@ -109,6 +109,7 @@ subprojects {
     publishing {
         publications {
             create<MavenPublication>("maven-$projectName") {
+                withoutBuildIdentifier()
                 groupId = findProp<String>("projectGroup")
                 artifactId = projectName
                 version = projectVersion
