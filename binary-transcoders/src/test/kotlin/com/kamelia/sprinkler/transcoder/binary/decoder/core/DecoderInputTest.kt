@@ -218,6 +218,16 @@ class DecoderInputTest {
         assertEquals(2, receiver[2])
     }
 
+    @ParameterizedTest
+    @MethodSource("decoderDataInputImplementations")
+    fun `read bits from byte array less than length for FB only`(factory: (ByteArray) -> DecoderInput) {
+        val input = factory(byteArrayOf(1, 2))
+        val receiver = ByteArray(3)
+        input.readBit()
+        assertEquals(15, input.readBits(receiver, 0, 16))
+        assertEquals(2, receiver[0])
+    }
+
     // test for ByteBuffer, to ensure that isInWriteMode field is correctly updated
     @ParameterizedTest
     @MethodSource("decoderDataInputImplementations")
