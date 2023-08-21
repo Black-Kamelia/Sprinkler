@@ -19,16 +19,30 @@ class TypingTest {
     }
 
     @Test
-    fun `castOrNull works correctly`() {
+    fun `castOrNull casts when the receiver has the correct type`() {
         val value: Any = 42
-        val r1 = assertDoesNotThrow {
+        val r = assertDoesNotThrow {
+            value.castOrNull<Int>() ?: 0
+        }
+        assertEquals(42, r)
+    }
+
+    @Test
+    fun `castOrNull returns null when the receiver has the wrong type`() {
+        val value: Any = "qsdqfgd"
+        val r = assertDoesNotThrow {
             value.castOrNull<Int>()?.plus(4) ?: 0
         }
-        assertEquals(46, r1)
-        val r2 = assertDoesNotThrow {
-            value.castOrNull<String>()?.length ?: 0
+        assertEquals(0, r)
+    }
+
+    @Test
+    fun `castOrNull returns null when the receiver is null`() {
+        val value: Any? = null
+        val r = assertDoesNotThrow {
+            value.castOrNull<Int>() ?: 0
         }
-        assertEquals(0, r2)
+        assertEquals(0, r)
     }
 
 }
