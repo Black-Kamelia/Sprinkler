@@ -60,7 +60,7 @@ pipeline {
                         [path: 'utils/src/main/kotlin'],
                         [path: 'utils/src/main/java'],
                         [path: 'binary-transcoders/src/main/kotlin'],
-                        [path: 'binary-transcoders/src/main/java']
+                        [path: 'binary-transcoders/src/main/java'],
                         [path: 'jvm-bridge/src/main/kotlin'],
                         [path: 'jvm-bridge/src/main/java']
                     ],
