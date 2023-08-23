@@ -23,27 +23,27 @@ package com.kamelia.sprinkler.util
  * @see [VariableResolver]
  */
 fun String.interpolate(resolver: VariableResolver): String {
-    val builder = StringBuilder()
-    var state = State.DEFAULT
-    var keyBuilder = StringBuilder()
+    val builder = StringBuilder() // final string builder
+    var state = State.DEFAULT // current state of the parser
+    var keyBuilder = StringBuilder() // builder used to build the key of the variable
 
     forEachIndexed { index, char ->
         when (state) {
             State.DEFAULT -> {
                 when (char) {
-                    '{' -> state = State.IN_CURLY
-                    '\\' -> state = State.BACKSLASH
-                    else -> builder.append(char)
+                    '{' -> state = State.IN_CURLY // start of a variable
+                    '\\' -> state = State.BACKSLASH // start of an escape sequence
+                    else -> builder.append(char) // any other character is appended to the final string
                 }
             }
-            State.BACKSLASH -> {
-                state = State.DEFAULT
+            State.BACKSLASH -> { // in this state the '{' is escaped
                 builder.append(char)
+                state = State.DEFAULT
             }
             State.IN_CURLY -> {
-                if ('}' == char) {
+                if ('}' == char) { // end of the variable
                     val key = keyBuilder.toString()
-                    val value = try {
+                    val value = try { // try to resolve the variable
                         resolver.value(key)
                     } catch (e: VariableResolver.ResolutionException) {
                         illegalArgument("Error while resolving variable '$key': ${e.message!!}")
@@ -51,20 +51,17 @@ fun String.interpolate(resolver: VariableResolver): String {
                     builder.append(value)
                     keyBuilder = StringBuilder()
                     state = State.DEFAULT
-                } else {
-                    if ('_' != char && '-' != char && !char.isLetterOrDigit()) {
-                        illegalArgument(
-                            "Unexpected character '$char' in interpolated value near character ${index + 1}"
-                        )
-                    } else {
-                        keyBuilder.append(char)
+                } else { // append the current character to the key
+                    require(char.isLetterOrDigit() || '_' == char || '-' == char) {
+                        "Unexpected character '$char' in interpolated value near character ${index + 1}"
                     }
+                    keyBuilder.append(char)
                 }
             }
         }
     }
-    if (state == State.IN_CURLY) {
-        illegalArgument("Unexpected end of string in interpolated value")
+    require(State.IN_CURLY !== state) { // ensure that the string does not end in the middle of a variable
+        "Unexpected end of string in interpolated value"
     }
 
     return builder.toString()
