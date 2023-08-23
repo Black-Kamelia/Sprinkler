@@ -169,9 +169,6 @@ fun String.interpolate(vararg args: Pair<String, Any>, fallback: String? = null)
 /**
  * Interface for resolving variables during string interpolation. This interface maps variable names to their
  * values.
- *
- * @see [String.interpolateIndexed]
- * @see [VariableResolver.fromList]
  */
 fun interface VariableResolver {
 
@@ -210,7 +207,7 @@ fun interface VariableResolver {
          * Example:
          * ```kt
          * val args = listOf("foo", "bar", "baz")
-         * val resolver = NameResolver.fromList(args)
+         * val resolver = VariableResolver.fromList(args)
          * val result = "Hello {0}, {2}, {1}".interpolate(resolver)
          * println(result) // prints "Hello foo, baz, bar"
          * ```
@@ -237,7 +234,7 @@ fun interface VariableResolver {
          *
          * Example:
          * ```kt
-         * val resolver = NameResolver.fromVararg("foo", "bar", "baz")
+         * val resolver = VariableResolver.fromVararg("foo", "bar", "baz")
          * val result = "Hello {0}, {2}, {1}".interpolate(resolver)
          * println(result) // prints "Hello foo, baz, bar"
          * ```
@@ -256,7 +253,7 @@ fun interface VariableResolver {
          *
          * Example:
          * ```kt
-         * val resolver = NameResolver.fromMap(mapOf("name" to "John", "age" to 42), fallback = "unknown")
+         * val resolver = VariableResolver.fromMap(mapOf("name" to "John", "age" to 42), fallback = "unknown")
          * val result = "Hello {name}, you are {age} years old, and you live in {city}".interpolate(resolver)
          * println(result) // prints "Hello John, you are 42 years old, and you live in unknown"
          * ```
@@ -280,7 +277,7 @@ fun interface VariableResolver {
          *
          * Example:
          * ```kt
-         * val resolver = NameResolver.fromPairs("name" to "John", "age" to 42, fallback = "unknown")
+         * val resolver = VariableResolver.fromPairs("name" to "John", "age" to 42, fallback = "unknown")
          * val result = "Hello {name}, you are {age} years old, and you live in {city}".interpolate(resolver)
          * println(result) // prints "Hello John, you are 42 years old, and you live in unknown"
          * ```
