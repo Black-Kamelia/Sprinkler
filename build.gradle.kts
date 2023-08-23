@@ -6,7 +6,7 @@ plugins {
     val koverVersion: String by System.getProperties()
     java
     `maven-publish`
-//    signing
+    signing
     id("org.jetbrains.kotlinx.kover") version koverVersion
     kotlin("jvm") version kotlinVersion
     id("com.zwendo.restrikt") version restriktVersion
@@ -51,17 +51,17 @@ allprojects {
         withSourcesJar()
     }
 
-//    signing {
-//        val signingKey = findProp<String?>("signingKey")
-//        val signingPassword = findProp<String?>("signingPassword")
-//        if (signingKey != null && signingPassword != null) {
-//            logger.info("Using in memory keys for signing")
-//            useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
-//        } else {
-//            logger.info("Using local GPG keys for signing")
-//        }
-//        sign(publishing.publications)
-//    }
+    signing {
+        val signingKey = findProp<String?>("signingKey")
+        val signingPassword = findProp<String?>("signingPassword")
+        if (signingKey != null && signingPassword != null) {
+            logger.info("Using in memory keys for signing")
+            useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
+        } else {
+            logger.info("Using local GPG keys for signing")
+        }
+        sign(publishing.publications)
+    }
 
     kover {
         excludeSourceSets {
