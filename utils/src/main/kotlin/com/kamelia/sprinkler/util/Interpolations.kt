@@ -1,4 +1,4 @@
-@file:JvmName("Strings")
+@file:JvmName("Interpolations")
 
 package com.kamelia.sprinkler.util
 
