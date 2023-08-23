@@ -86,7 +86,7 @@ fun String.interpolate(resolver: VariableResolver): String {
  * is if the index is out of bounds
  * @see [VariableResolver]
  */
-fun String.interpolate(vararg args: Any): String = interpolate(VariableResolver.create(*args))
+fun String.interpolate(vararg args: Any): String = interpolate(VariableResolver.fromVararg(*args))
 
 /**
  * Interpolates variables in this string using the given array [args].
@@ -110,7 +110,7 @@ fun String.interpolate(vararg args: Any): String = interpolate(VariableResolver.
  * is if the index is out of bounds
  * @see [VariableResolver]
  */
-fun String.interpolate(args: Array<Any>): String = interpolate(VariableResolver.create(args))
+fun String.interpolateWithArray(args: Array<out Any>): String = interpolate(VariableResolver.fromArray(args))
 
 
 /**
@@ -136,7 +136,7 @@ fun String.interpolate(args: Array<Any>): String = interpolate(VariableResolver.
  * @see [VariableResolver]
  */
 fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String =
-    interpolate(VariableResolver.create(args, fallback))
+    interpolate(VariableResolver.fromMap(args, fallback))
 
 /**
  * Interpolates variables in this string using the given [Pair] array [args]. The array of pairs is converted to a
@@ -163,14 +163,14 @@ fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String
  * @see [VariableResolver]
  */
 fun String.interpolate(vararg args: Pair<String, Any>, fallback: String? = null): String =
-    interpolate(VariableResolver.create(args.toMap(), fallback))
+    interpolate(VariableResolver.fromMap(args.toMap(), fallback))
 
 /**
  * Interface for resolving variables during string interpolation. This interface maps variable names to their
  * values.
  *
- * @see [String.interpolate]
- * @see [VariableResolver.create]
+ * @see [String.interpolateWithArray]
+ * @see [VariableResolver.fromArray]
  */
 fun interface VariableResolver {
 
@@ -217,7 +217,7 @@ fun interface VariableResolver {
          * @param args the array of values
          * @return a [VariableResolver] that resolves variables by their index in the given [array][args]
          */
-        fun create(args: Array<Any>): VariableResolver =
+        fun fromArray(args: Array<out Any>): VariableResolver =
             VariableResolver { name ->
                 val index = name.toIntOrNull()
                     ?: throw ResolutionException("index must be a parsable integer, but was'$name'")
@@ -244,7 +244,7 @@ fun interface VariableResolver {
          * @param args the vararg of values
          * @return a [VariableResolver] that resolves variables by their index in the given [vararg][args]
          */
-        fun create(vararg args: Any?): VariableResolver = create(args)
+        fun fromVararg(vararg args: Any): VariableResolver = fromArray(args)
 
         /**
          * Creates a [VariableResolver] that resolves variables by their name in the given [map][args].
@@ -264,7 +264,7 @@ fun interface VariableResolver {
          * @param fallback the fallback value (defaults to `null`)
          * @return a [VariableResolver] that resolves variables by their name in the given [map][args]
          */
-        fun create(args: Map<String, Any>, fallback: String? = null): VariableResolver =
+        fun fromMap(args: Map<String, Any>, fallback: String? = null): VariableResolver =
             VariableResolver { name ->
                 args[name]?.toString() ?: fallback ?: throw ResolutionException("unknown variable name '$name'")
             }
@@ -288,8 +288,8 @@ fun interface VariableResolver {
          * @param fallback the fallback value (defaults to `null`)
          * @return a [VariableResolver] that resolves variables by their name in the [Pair] array [args]
          */
-        fun create(vararg args: Pair<String, Any>, fallback: String? = null): VariableResolver =
-            create(args.toMap(), fallback)
+        fun fromPairs(vararg args: Pair<String, Any>, fallback: String? = null): VariableResolver =
+            fromMap(args.toMap(), fallback)
 
     }
 
