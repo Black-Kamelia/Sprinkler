@@ -82,7 +82,7 @@ fun String.interpolate(resolver: VariableResolver): String {
  * It can be used as follows:
  *
  * ```kt
- * val result = "Hello {0}, you are {1} years old".interpolateWithVararg("John", 42)
+ * val result = "Hello {0}, you are {1} years old".interpolateIndexed("John", 42)
  * ```
  *
  * @param args the vararg of values
@@ -91,13 +91,13 @@ fun String.interpolate(resolver: VariableResolver): String {
  * is if the index is out of bounds
  * @see [VariableResolver]
  */
-fun String.interpolateWithVararg(vararg args: Any): String = interpolate(VariableResolver.fromVararg(*args))
+fun String.interpolateIndexed(vararg args: Any): String = interpolate(VariableResolver.fromVararg(*args))
 
 /**
- * Interpolates variables in this string using the given array [args].
+ * Interpolates variables in this string using the given list [args].
  *
  * Variable are resolved by their index in the given [args]. The variable passed to is parsed as an integer, and the
- * value at the corresponding index in the [array][args] is returned. If name does not represent a valid integer, or if
+ * value at the corresponding index in the [list][args] is returned. If name does not represent a valid integer, or if
  * the index is not in between 0 and the number of arguments, an [IllegalArgumentException] is thrown.
  *
  * &nbsp;
@@ -105,17 +105,17 @@ fun String.interpolateWithVararg(vararg args: Any): String = interpolate(Variabl
  * It can be used as follows:
  *
  * ```kt
- * val args = arrayOf("John", 42)
- * val result = "Hello {0}, you are {1} years old".interpolate(args)
+ * val args = listOf("John", 42)
+ * val result = "Hello {0}, you are {1} years old".interpolateIndexed(args)
  * ```
  *
- * @param args the array of values
+ * @param args the list of values
  * @return the interpolated string
  * @throws IllegalArgumentException if a variable has an invalid name, or if a variable name is not a valid integer or
  * is if the index is out of bounds
  * @see [VariableResolver]
  */
-fun String.interpolate(args: Array<out Any>): String = interpolate(VariableResolver.fromArray(args))
+fun String.interpolateIndexed(args: List<Any>): String = interpolate(VariableResolver.fromList(args))
 
 /**
  * Interpolates variables in this string using the given map of [args].
@@ -173,8 +173,8 @@ fun String.interpolate(vararg args: Pair<String, Any>, fallback: String? = null)
  * Interface for resolving variables during string interpolation. This interface maps variable names to their
  * values.
  *
- * @see [String.interpolate]
- * @see [VariableResolver.fromArray]
+ * @see [String.interpolateIndexed]
+ * @see [VariableResolver.fromList]
  */
 fun interface VariableResolver {
 
@@ -204,24 +204,24 @@ fun interface VariableResolver {
     companion object {
 
         /**
-         * Creates a [VariableResolver] that resolves variables by their index in the given [array][args].
+         * Creates a [VariableResolver] that resolves variables by their index in the given [list][args].
          *
          * The variable passed to [VariableResolver.value] is parsed as an integer, and the value at the corresponding index
-         * in the [array][args] is returned. If name does not represent a valid integer, or if the index is out of
+         * in the [list][args] is returned. If name does not represent a valid integer, or if the index is out of
          * bounds, an [ResolutionException] is thrown.
          *
          * Example:
          * ```kt
-         * val args = arrayOf("foo", "bar", "baz")
-         * val resolver = NameResolver.create(args)
+         * val args = listOf("foo", "bar", "baz")
+         * val resolver = NameResolver.fromList(args)
          * val result = "Hello {0}, {2}, {1}".interpolate(resolver)
          * println(result) // prints "Hello foo, baz, bar"
          * ```
          *
-         * @param args the array of values
-         * @return a [VariableResolver] that resolves variables by their index in the given [array][args]
+         * @param args the list of values
+         * @return a [VariableResolver] that resolves variables by their index in the given [list][args]
          */
-        fun fromArray(args: Array<out Any>): VariableResolver =
+        fun fromList(args: List<Any>): VariableResolver =
             VariableResolver { name ->
                 val index = name.toIntOrNull()
                     ?: throw ResolutionException("index must be a parsable integer, but was'$name'")
@@ -240,7 +240,7 @@ fun interface VariableResolver {
          *
          * Example:
          * ```kt
-         * val resolver = NameResolver.create("foo", "bar", "baz")
+         * val resolver = NameResolver.fromVararg("foo", "bar", "baz")
          * val result = "Hello {0}, {2}, {1}".interpolate(resolver)
          * println(result) // prints "Hello foo, baz, bar"
          * ```
@@ -248,7 +248,7 @@ fun interface VariableResolver {
          * @param args the vararg of values
          * @return a [VariableResolver] that resolves variables by their index in the given [vararg][args]
          */
-        fun fromVararg(vararg args: Any): VariableResolver = fromArray(args)
+        fun fromVararg(vararg args: Any): VariableResolver = fromList(args.asList())
 
         /**
          * Creates a [VariableResolver] that resolves variables by their name in the given [map][args].
@@ -259,7 +259,7 @@ fun interface VariableResolver {
          *
          * Example:
          * ```kt
-         * val resolver = NameResolver.create(mapOf("name" to "John", "age" to 42), fallback = "unknown")
+         * val resolver = NameResolver.fromMap(mapOf("name" to "John", "age" to 42), fallback = "unknown")
          * val result = "Hello {name}, you are {age} years old, and you live in {city}".interpolate(resolver)
          * println(result) // prints "Hello John, you are 42 years old, and you live in unknown"
          * ```
@@ -283,7 +283,7 @@ fun interface VariableResolver {
          *
          * Example:
          * ```kt
-         * val resolver = NameResolver.create("name" to "John", "age" to 42, fallback = "unknown")
+         * val resolver = NameResolver.fromPairs("name" to "John", "age" to 42, fallback = "unknown")
          * val result = "Hello {name}, you are {age} years old, and you live in {city}".interpolate(resolver)
          * println(result) // prints "Hello John, you are 42 years old, and you live in unknown"
          * ```

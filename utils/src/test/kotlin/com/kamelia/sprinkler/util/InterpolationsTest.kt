@@ -40,7 +40,7 @@ class InterpolationsTest {
 
     @Test
     fun `array VariableResolver returns the variable at the index`() {
-        val resolver = VariableResolver.fromArray(arrayOf(1, "a", true))
+        val resolver = VariableResolver.fromList(listOf(1, "a", true))
         assertEquals("1", resolver.value("0"))
         assertEquals("true", resolver.value("2"))
         assertEquals("a", resolver.value("1"))
@@ -48,7 +48,7 @@ class InterpolationsTest {
 
     @Test
     fun `array VariableResolver throws an exception if the index is not an integer`() {
-        val resolver = VariableResolver.fromArray(arrayOf(1, "a", true))
+        val resolver = VariableResolver.fromList(listOf(1, "a", true))
         assertThrows<VariableResolver.ResolutionException> {
             resolver.value("a")
         }
@@ -56,7 +56,7 @@ class InterpolationsTest {
 
     @Test
     fun `array VariableResolver throws an exception if the index is negative`() {
-        val resolver = VariableResolver.fromArray(arrayOf(1, "a", true))
+        val resolver = VariableResolver.fromList(listOf(1, "a", true))
         assertThrows<VariableResolver.ResolutionException> {
             resolver.value("-3")
         }
@@ -64,7 +64,7 @@ class InterpolationsTest {
 
     @Test
     fun `array VariableResolver throws an exception if the index is greater than the array size`() {
-        val resolver = VariableResolver.fromArray(arrayOf(1, "a", true))
+        val resolver = VariableResolver.fromList(listOf(1, "a", true))
         assertThrows<VariableResolver.ResolutionException> {
             resolver.value("3")
         }
@@ -107,68 +107,68 @@ class InterpolationsTest {
     }
 
     @Test
-    fun `interpolate(Array) replaces the found variables`() {
+    fun `interpolate(List) replaces the found variables`() {
         val str = "Hello {0}, you are {1} years old"
-        assertEquals("Hello John, you are 25 years old", str.interpolate(arrayOf("John", 25, "foo")))
+        assertEquals("Hello John, you are 25 years old", str.interpolateIndexed(listOf("John", 25, "foo")))
     }
 
     @Test
-    fun `interpolate(Array) throws an exception if the index is not an integer`() {
+    fun `interpolate(List) throws an exception if the index is not an integer`() {
         val str = "Hello {0}, you are {a} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolate(arrayOf("John", 25, "foo", "bar"))
+            str.interpolateIndexed(arrayOf("John", 25, "foo", "bar"))
         }
     }
 
     @Test
-    fun `interpolate(Array) throws an exception if the index is negative`() {
+    fun `interpolate(List) throws an exception if the index is negative`() {
         val str = "Hello {0}, you are {-1} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolate(arrayOf("John", 25, "foo", "bar"))
+            str.interpolateIndexed(arrayOf("John", 25, "foo", "bar"))
         }
     }
 
     @Test
-    fun `interpolate(Array) throws an exception if the index is greater than the array size`() {
+    fun `interpolate(List) throws an exception if the index is greater than the array size`() {
         val str = "Hello {0}, you are {3} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolate(arrayOf("John", 25))
+            str.interpolateIndexed(arrayOf("John", 25))
         }
     }
 
     @Test
-    fun `interpolate(Array) throws if the variable identifier is invalid`() {
+    fun `interpolate(List) throws if the variable identifier is invalid`() {
         val str = "Hello {0}, you are {§} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolate(arrayOf("John", 25, "foo", "bar"))
+            str.interpolateIndexed(arrayOf("John", 25, "foo", "bar"))
         }
     }
 
     @Test
-    fun `interpolate(Array) throws if the curly braces are not closed`() {
+    fun `interpolate(List) throws if the curly braces are not closed`() {
         val str = "Hello {0}, you are {1"
         assertThrows<IllegalArgumentException> {
-            str.interpolate(arrayOf("John", 25, "foo", "bar"))
+            str.interpolateIndexed(arrayOf("John", 25, "foo", "bar"))
         }
     }
 
     @Test
-    fun `interpolate(Array) does not replace ignored variables`() {
+    fun `interpolate(List) does not replace ignored variables`() {
         val str = "Hello {0}, you are \\{1} years old"
-        assertEquals("Hello John, you are {1} years old", str.interpolate(arrayOf("John", "25")))
+        assertEquals("Hello John, you are {1} years old", str.interpolateIndexed(listOf("John", "25")))
     }
 
     @Test
     fun `interpolate(vararg) replaces the found variables`() {
         val str = "Hello {0}, you are {1} years old"
-        assertEquals("Hello John, you are 25 years old", str.interpolateWithVararg("John", 25, "foo"))
+        assertEquals("Hello John, you are 25 years old", str.interpolateIndexed("John", 25, "foo"))
     }
 
     @Test
     fun `interpolate(vararg) throws an exception if the index is not an integer`() {
         val str = "Hello {0}, you are {a} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithVararg("John", 25, "foo", "bar")
+            str.interpolateIndexed("John", 25, "foo", "bar")
         }
     }
 
@@ -176,7 +176,7 @@ class InterpolationsTest {
     fun `interpolate(vararg) throws an exception if the index is negative`() {
         val str = "Hello {0}, you are {-1} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithVararg("John", 25, "foo", "bar")
+            str.interpolateIndexed("John", 25, "foo", "bar")
         }
     }
 
@@ -184,7 +184,7 @@ class InterpolationsTest {
     fun `interpolate(vararg) throws an exception if the index is greater than the array size`() {
         val str = "Hello {0}, you are {3} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithVararg("John", 25)
+            str.interpolateIndexed("John", 25)
         }
     }
 
@@ -192,7 +192,7 @@ class InterpolationsTest {
     fun `interpolate(vararg) throws if the variable identifier is invalid`() {
         val str = "Hello {0}, you are {§} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithVararg("John", 25, "foo", "bar")
+            str.interpolateIndexed("John", 25, "foo", "bar")
         }
     }
 
@@ -200,14 +200,14 @@ class InterpolationsTest {
     fun `interpolate(vararg) throws if the curly braces are not closed`() {
         val str = "Hello {0}, you are {1"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithVararg("John", 25, "foo", "bar")
+            str.interpolateIndexed("John", 25, "foo", "bar")
         }
     }
 
     @Test
     fun `interpolate(vararg) does not replace ignored variables`() {
         val str = "Hello {0}, you are \\{1} years old"
-        assertEquals("Hello John, you are {1} years old", str.interpolateWithVararg("John", "25"))
+        assertEquals("Hello John, you are {1} years old", str.interpolateIndexed("John", "25"))
     }
 
     @Test
