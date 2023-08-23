@@ -5,7 +5,7 @@ import com.kamelia.sprinkler.util.illegalArgument
 
 sealed interface TranslationNode {
 
-    class Inner(internal val children: Map<String, TranslationNode>) : TranslationNode {
+    class Inner(private val children: Map<String, TranslationNode>) : TranslationNode {
 
         fun getNode(key: String): TranslationNode {
             val fastResult = children[key]
