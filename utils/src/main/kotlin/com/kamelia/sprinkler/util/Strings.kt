@@ -1,4 +1,4 @@
-@file:JvmName("Interpolations")
+@file:JvmName("Strings")
 
 package com.kamelia.sprinkler.util
 
@@ -8,7 +8,7 @@ fun String.interpolate(resolver: NameResolver): String {
     var state = State.DEFAULT
     var keyBuilder = StringBuilder()
 
-    forEach { char ->
+    forEachIndexed { index, char ->
         when (state) {
             State.DEFAULT -> {
                 when (char) {
@@ -17,26 +17,27 @@ fun String.interpolate(resolver: NameResolver): String {
                     else -> builder.append(char)
                 }
             }
-
             State.BACKSLASH -> {
                 state = State.DEFAULT
-                val actualChar = ESCAPED_CHARS[char] ?: char
-                builder.append(actualChar)
+                builder.append(char)
             }
-
             State.IN_CURLY -> {
-                when (char) {
-                    '\\' -> error("Unexpected '\\' in interpolated value")
-                    '{' -> error("Unexpected '{' in interpolated value")
-                    '}' -> {
-                        val key = keyBuilder.toString()
-                        val value = resolver.value(key)
-                        builder.append(value)
-                        keyBuilder = StringBuilder()
-                        state = State.DEFAULT
+                if ('}' == char) {
+                    val key = keyBuilder.toString()
+                    val value = try {
+                        resolver.value(key)
+                    } catch (e: NameResolver.NameResolutionException) {
+                        illegalArgument("Error while resolving variable '$key': ${e.message!!}")
                     }
-
-                    else -> keyBuilder.append(char)
+                    builder.append(value)
+                    keyBuilder = StringBuilder()
+                    state = State.DEFAULT
+                } else {
+                    if ('_' != char && '-' != char && !char.isLetterOrDigit()) {
+                        illegalArgument("Unexpected character '$char' in interpolated value near character ${index + 1}")
+                    } else {
+                        keyBuilder.append(char)
+                    }
                 }
             }
         }
@@ -65,13 +66,25 @@ fun interface NameResolver {
     /**
      * Returns the value of the variable with the given [name].
      *
-     * Implementations may throw an [IllegalArgumentException] if the variable is unknown, or return a default value.
+     * Implementations may throw an [NameResolutionException] if the variable is unknown, or return a default value.
      *
      * @param name the name of the variable
      * @return the value of the variable
-     * @throws IllegalArgumentException if the variable is unknown
+     * @throws NameResolutionException if the variable is unknown
      */
     fun value(name: String): String
+
+    /**
+     * Exception thrown by [NameResolver] implementations when a variable name cannot be resolved.
+     *
+     * @param message the exception message
+     * @see NameResolver.value
+     */
+    class NameResolutionException(message: String) : IllegalArgumentException(message) {
+
+        override fun fillInStackTrace(): Throwable = this // no need to fill in the stack trace
+
+    }
 
     companion object {
 
@@ -80,7 +93,7 @@ fun interface NameResolver {
          *
          * The variable passed to [NameResolver.value] is parsed as an integer, and the value at the corresponding index
          * in the [array][args] is returned. If name does not represent a valid integer, or if the index is out of
-         * bounds, an [IllegalArgumentException] is thrown.
+         * bounds, an [NameResolutionException] is thrown.
          *
          * Example:
          * ```kt
@@ -94,9 +107,10 @@ fun interface NameResolver {
          */
         fun create(vararg args: Any?): NameResolver =
             NameResolver { name ->
-                val index = name.toIntOrNull() ?: illegalArgument("Invalid index '$name'")
+                val index = name.toIntOrNull()
+                    ?: throw NameResolutionException("index must be a parsable integer, but was'$name'")
                 if (index !in args.indices) {
-                    illegalArgument("index must be in between 0 and ${args.size}, but was $index")
+                    throw NameResolutionException("index must be in between 0 and ${args.size}, but was $index")
                 }
                 args[index].toString()
             }
@@ -106,7 +120,7 @@ fun interface NameResolver {
          *
          * The name of the variable passed to [NameResolver.value] is used as a key in the [map][args], and the value
          * associated with that key is returned. If a variable is unknown, the [fallback] value is returned. If the
-         * [fallback] value is `null`, an [IllegalArgumentException] is thrown.
+         * [fallback] value is `null`, an [NameResolutionException] is thrown.
          *
          * Example:
          * ```kt
@@ -121,7 +135,7 @@ fun interface NameResolver {
          */
         fun create(args: Map<String, Any>, fallback: String? = null): NameResolver =
             NameResolver { name ->
-                args[name]?.toString() ?: fallback ?: illegalArgument("Unknown variable '$name'")
+                args[name]?.toString() ?: fallback ?: throw NameResolutionException("unknown variable name '$name'")
             }
 
         /**
@@ -130,7 +144,7 @@ fun interface NameResolver {
          *
          * The name of the variable passed to [NameResolver.value] is used as a key in the map created from the
          * [array][args] and the value associated with that key is returned. If a variable is unknown, the [fallback]
-         * value is returned. If the [fallback] value is `null`, an [IllegalArgumentException] is thrown.
+         * value is returned. If the [fallback] value is `null`, an [NameResolutionException] is thrown.
          *
          * Example:
          * ```kt
@@ -150,17 +164,6 @@ fun interface NameResolver {
 
 }
 
-
-private val ESCAPED_CHARS = mapOf(
-    'b' to '\b',
-    't' to '\t',
-    'n' to '\n',
-    'r' to '\r',
-    'f' to '\u000C',
-    '\'' to '\'',
-    '"' to '"',
-    '\\' to '\\',
-)
 
 private enum class State {
     DEFAULT,
