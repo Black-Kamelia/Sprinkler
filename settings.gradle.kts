@@ -7,8 +7,9 @@ pluginManagement {
 }
 
 include(
-    "readonly-collections",
-    "binary-transcoders",
     "utils",
     "jvm-bridge",
+    "readonly-collections",
+    "binary-transcoders",
+    "i18n",
 )
