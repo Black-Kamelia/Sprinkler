@@ -15,6 +15,8 @@
 - [ByteArrayDecoding](#bytearraydecoding)
 - [ByteAccess](#byteaccess)
 - [unsafeCast](#unsafecast)
+- [castOrNull](#castornull)
+- [Exceptions](#exceptions)
 - [Changelog](#changelog)
 
 ## Intentions
@@ -339,6 +341,13 @@ inline fun <reified T> Any?.castOrNull(): T? = this as? T
 ```
 
 In the same way as `unsafeCast`, it is useful when it comes to chaining operations to avoid nested `as?` calls.
+
+## Exceptions
+
+The library provides a few methods to throw exceptions with a message.
+
+- `illegalArgument(message: String): Nothing` throws an `IllegalArgumentException` with the given message.
+- `assertionError(message: String): Nothing` throws an `AssertionError` with the given message.
 
 ## Changelog
 
