@@ -136,6 +136,7 @@ fun String.interpolateIndexed(args: List<Any>): String = interpolate(VariableRes
  * [fallback] value is `null`
  * @see [VariableResolver]
  */
+@JvmOverloads
 fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String =
     interpolate(VariableResolver.fromMap(args, fallback))
 
@@ -163,6 +164,7 @@ fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String
  * [fallback] value is `null`
  * @see [VariableResolver]
  */
+@JvmOverloads
 fun String.interpolate(vararg args: Pair<String, Any>, fallback: String? = null): String =
     interpolate(VariableResolver.fromMap(args.toMap(), fallback))
 
@@ -215,6 +217,7 @@ fun interface VariableResolver {
          * @param args the list of values
          * @return a [VariableResolver] that resolves variables by their index in the given [list][args]
          */
+        @JvmStatic
         fun fromList(args: List<Any>): VariableResolver =
             VariableResolver { name ->
                 val index = name.toIntOrNull()
@@ -242,6 +245,7 @@ fun interface VariableResolver {
          * @param args the vararg of values
          * @return a [VariableResolver] that resolves variables by their index in the given [vararg][args]
          */
+        @JvmStatic
         fun fromVararg(vararg args: Any): VariableResolver = fromList(args.asList())
 
         /**
@@ -262,6 +266,8 @@ fun interface VariableResolver {
          * @param fallback the fallback value (defaults to `null`)
          * @return a [VariableResolver] that resolves variables by their name in the given [map][args]
          */
+        @JvmStatic
+        @JvmOverloads
         fun fromMap(args: Map<String, Any>, fallback: String? = null): VariableResolver =
             VariableResolver { name ->
                 args[name]?.toString() ?: fallback ?: throw ResolutionException("unknown variable name '$name'")
@@ -286,6 +292,8 @@ fun interface VariableResolver {
          * @param fallback the fallback value (defaults to `null`)
          * @return a [VariableResolver] that resolves variables by their name in the [Pair] array [args]
          */
+        @JvmStatic
+        @JvmOverloads
         fun fromPairs(vararg args: Pair<String, Any>, fallback: String? = null): VariableResolver =
             fromMap(args.toMap(), fallback)
 
