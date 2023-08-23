@@ -82,7 +82,7 @@ fun String.interpolate(resolver: VariableResolver): String {
  * It can be used as follows:
  *
  * ```kt
- * val result = "Hello {0}, you are {1} years old".interpolate("John", 42)
+ * val result = "Hello {0}, you are {1} years old".interpolateWithVararg("John", 42)
  * ```
  *
  * @param args the vararg of values
@@ -115,8 +115,7 @@ fun String.interpolateWithVararg(vararg args: Any): String = interpolate(Variabl
  * is if the index is out of bounds
  * @see [VariableResolver]
  */
-fun String.interpolateWithArray(args: Array<out Any>): String = interpolate(VariableResolver.fromArray(args))
-
+fun String.interpolate(args: Array<out Any>): String = interpolate(VariableResolver.fromArray(args))
 
 /**
  * Interpolates variables in this string using the given map of [args].
@@ -140,7 +139,7 @@ fun String.interpolateWithArray(args: Array<out Any>): String = interpolate(Vari
  * [fallback] value is `null`
  * @see [VariableResolver]
  */
-fun String.interpolateWithMap(args: Map<String, Any>, fallback: String? = null): String =
+fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String =
     interpolate(VariableResolver.fromMap(args, fallback))
 
 /**
@@ -167,14 +166,14 @@ fun String.interpolateWithMap(args: Map<String, Any>, fallback: String? = null):
  * [fallback] value is `null`
  * @see [VariableResolver]
  */
-fun String.interpolateWithPairs(vararg args: Pair<String, Any>, fallback: String? = null): String =
+fun String.interpolate(vararg args: Pair<String, Any>, fallback: String? = null): String =
     interpolate(VariableResolver.fromMap(args.toMap(), fallback))
 
 /**
  * Interface for resolving variables during string interpolation. This interface maps variable names to their
  * values.
  *
- * @see [String.interpolateWithArray]
+ * @see [String.interpolate]
  * @see [VariableResolver.fromArray]
  */
 fun interface VariableResolver {

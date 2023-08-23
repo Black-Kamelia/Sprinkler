@@ -109,14 +109,14 @@ class InterpolationsTest {
     @Test
     fun `interpolate(Array) replaces the found variables`() {
         val str = "Hello {0}, you are {1} years old"
-        assertEquals("Hello John, you are 25 years old", str.interpolateWithArray(arrayOf("John", 25, "foo")))
+        assertEquals("Hello John, you are 25 years old", str.interpolate(arrayOf("John", 25, "foo")))
     }
 
     @Test
     fun `interpolate(Array) throws an exception if the index is not an integer`() {
         val str = "Hello {0}, you are {a} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithArray(arrayOf("John", 25, "foo", "bar"))
+            str.interpolate(arrayOf("John", 25, "foo", "bar"))
         }
     }
 
@@ -124,7 +124,7 @@ class InterpolationsTest {
     fun `interpolate(Array) throws an exception if the index is negative`() {
         val str = "Hello {0}, you are {-1} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithArray(arrayOf("John", 25, "foo", "bar"))
+            str.interpolate(arrayOf("John", 25, "foo", "bar"))
         }
     }
 
@@ -132,7 +132,7 @@ class InterpolationsTest {
     fun `interpolate(Array) throws an exception if the index is greater than the array size`() {
         val str = "Hello {0}, you are {3} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithArray(arrayOf("John", 25))
+            str.interpolate(arrayOf("John", 25))
         }
     }
 
@@ -140,7 +140,7 @@ class InterpolationsTest {
     fun `interpolate(Array) throws if the variable identifier is invalid`() {
         val str = "Hello {0}, you are {§} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithArray(arrayOf("John", 25, "foo", "bar"))
+            str.interpolate(arrayOf("John", 25, "foo", "bar"))
         }
     }
 
@@ -148,14 +148,14 @@ class InterpolationsTest {
     fun `interpolate(Array) throws if the curly braces are not closed`() {
         val str = "Hello {0}, you are {1"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithArray(arrayOf("John", 25, "foo", "bar"))
+            str.interpolate(arrayOf("John", 25, "foo", "bar"))
         }
     }
 
     @Test
     fun `interpolate(Array) does not replace ignored variables`() {
         val str = "Hello {0}, you are \\{1} years old"
-        assertEquals("Hello John, you are {1} years old", str.interpolateWithArray(arrayOf("John", "25")))
+        assertEquals("Hello John, you are {1} years old", str.interpolate(arrayOf("John", "25")))
     }
 
     @Test
@@ -215,7 +215,7 @@ class InterpolationsTest {
         val str = "Hello {name}, you are {age} years old"
         assertEquals(
             "Hello John, you are 25 years old",
-            str.interpolateWithMap(mapOf("name" to "John", "age" to 25, "foo" to "bar"))
+            str.interpolate(mapOf("name" to "John", "age" to 25, "foo" to "bar"))
         )
     }
 
@@ -224,7 +224,7 @@ class InterpolationsTest {
         val str = "Hello {name}, you are {age} years old"
         assertEquals(
             "Hello John, you are 25 years old",
-            str.interpolateWithMap(mapOf("name" to "John", "age" to 25), "fallback")
+            str.interpolate(mapOf("name" to "John", "age" to 25), "fallback")
         )
     }
 
@@ -232,7 +232,7 @@ class InterpolationsTest {
     fun `interpolate(Map) throws an exception if the key is not found and no fallback is provided`() {
         val str = "Hello {name}, you are {age} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithMap(mapOf("name" to "John"))
+            str.interpolate(mapOf("name" to "John"))
         }
     }
 
@@ -240,7 +240,7 @@ class InterpolationsTest {
     fun `interpolate(Map) throws if the variable identifier is invalid`() {
         val str = "Hello {name}, you are {§} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithMap(mapOf("name" to "John", "age" to 25, "foo" to "bar"))
+            str.interpolate(mapOf("name" to "John", "age" to 25, "foo" to "bar"))
         }
     }
 
@@ -248,7 +248,7 @@ class InterpolationsTest {
     fun `interpolate(Map) throws if the curly braces are not closed`() {
         val str = "Hello {name}, you are {age"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithMap(mapOf("name" to "John", "age" to 25, "foo" to "bar"))
+            str.interpolate(mapOf("name" to "John", "age" to 25, "foo" to "bar"))
         }
     }
 
@@ -257,7 +257,7 @@ class InterpolationsTest {
         val str = "Hello {name}, you are \\{age} years old"
         assertEquals(
             "Hello John, you are {age} years old",
-            str.interpolateWithMap(mapOf("name" to "John", "age" to 25))
+            str.interpolate(mapOf("name" to "John", "age" to 25))
         )
     }
 
@@ -266,7 +266,7 @@ class InterpolationsTest {
         val str = "Hello {name-}, you are {age} years old"
         assertEquals(
             "Hello John, you are 25 years old",
-            str.interpolateWithMap(mapOf("name-" to "John", "age" to 25, "foo" to "bar"))
+            str.interpolate(mapOf("name-" to "John", "age" to 25, "foo" to "bar"))
         )
     }
 
@@ -275,7 +275,7 @@ class InterpolationsTest {
         val str = "Hello {name_}, you are {age} years old"
         assertEquals(
             "Hello John, you are 25 years old",
-            str.interpolateWithMap(mapOf("name_" to "John", "age" to 25, "foo" to "bar"))
+            str.interpolate(mapOf("name_" to "John", "age" to 25, "foo" to "bar"))
         )
     }
 
@@ -284,7 +284,7 @@ class InterpolationsTest {
         val str = "Hello {name}, you are {age} years old"
         assertEquals(
             "Hello John, you are 25 years old",
-            str.interpolateWithPairs("name" to "John", "age" to 25, "foo" to "bar")
+            str.interpolate("name" to "John", "age" to 25, "foo" to "bar")
         )
     }
 
@@ -293,7 +293,7 @@ class InterpolationsTest {
         val str = "Hello {name}, you are {age} years old"
         assertEquals(
             "Hello John, you are 25 years old",
-            str.interpolateWithPairs("name" to "John", "age" to 25, fallback = "fallback")
+            str.interpolate("name" to "John", "age" to 25, fallback = "fallback")
         )
     }
 
@@ -301,7 +301,7 @@ class InterpolationsTest {
     fun `interpolate(Pairs) throws an exception if the key is not found and no fallback is provided`() {
         val str = "Hello {name}, you are {age} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithPairs("name" to "John")
+            str.interpolate("name" to "John")
         }
     }
 
@@ -309,7 +309,7 @@ class InterpolationsTest {
     fun `interpolate(Pairs) throws if the variable identifier is invalid`() {
         val str = "Hello {name}, you are {§} years old"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithPairs("name" to "John", "age" to 25, "foo" to "bar")
+            str.interpolate("name" to "John", "age" to 25, "foo" to "bar")
         }
     }
 
@@ -317,14 +317,14 @@ class InterpolationsTest {
     fun `interpolate(Pairs) throws if the curly braces are not closed`() {
         val str = "Hello {name}, you are {age"
         assertThrows<IllegalArgumentException> {
-            str.interpolateWithPairs("name" to "John", "age" to 25, "foo" to "bar")
+            str.interpolate("name" to "John", "age" to 25, "foo" to "bar")
         }
     }
 
     @Test
     fun `interpolate(Pairs) does not replace ignored variables`() {
         val str = "Hello {name}, you are \\{age} years old"
-        assertEquals("Hello John, you are {age} years old", str.interpolateWithPairs("name" to "John", "age" to 25))
+        assertEquals("Hello John, you are {age} years old", str.interpolate("name" to "John", "age" to 25))
     }
 
     @Test
@@ -332,7 +332,7 @@ class InterpolationsTest {
         val str = "Hello {name-}, you are {age} years old"
         assertEquals(
             "Hello John, you are 25 years old",
-            str.interpolateWithPairs("name-" to "John", "age" to 25, "foo" to "bar")
+            str.interpolate("name-" to "John", "age" to 25, "foo" to "bar")
         )
     }
 
@@ -341,7 +341,7 @@ class InterpolationsTest {
         val str = "Hello {name_}, you are {age} years old"
         assertEquals(
             "Hello John, you are 25 years old",
-            str.interpolateWithPairs("name_" to "John", "age" to 25, "foo" to "bar")
+            str.interpolate("name_" to "John", "age" to 25, "foo" to "bar")
         )
     }
 
