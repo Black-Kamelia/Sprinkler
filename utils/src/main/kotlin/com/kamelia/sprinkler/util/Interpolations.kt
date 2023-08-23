@@ -80,13 +80,38 @@ fun String.interpolate(resolver: VariableResolver): String {
  * val result = "Hello {0}, you are {1} years old".interpolate("John", 42)
  * ```
  *
+ * @param args the vararg of values
+ * @return the interpolated string
+ * @throws IllegalArgumentException if a variable has an invalid name, or if a variable name is not a valid integer or
+ * is if the index is out of bounds
+ * @see [VariableResolver]
+ */
+fun String.interpolate(vararg args: Any): String = interpolate(VariableResolver.create(*args))
+
+/**
+ * Interpolates variables in this string using the given array [args].
+ *
+ * Variable are resolved by their index in the given [args]. The variable passed to is parsed as an integer, and the
+ * value at the corresponding index in the [array][args] is returned. If name does not represent a valid integer, or if
+ * the index is not in between 0 and the number of arguments, an [IllegalArgumentException] is thrown.
+ *
+ * &nbsp;
+ *
+ * It can be used as follows:
+ *
+ * ```kt
+ * val args = arrayOf("John", 42)
+ * val result = "Hello {0}, you are {1} years old".interpolate(args)
+ * ```
+ *
  * @param args the array of values
  * @return the interpolated string
  * @throws IllegalArgumentException if a variable has an invalid name, or if a variable name is not a valid integer or
  * is if the index is out of bounds
  * @see [VariableResolver]
  */
-fun String.interpolate(vararg args: Any?): String = interpolate(VariableResolver.create(*args))
+fun String.interpolate(args: Array<Any>): String = interpolate(VariableResolver.create(args))
+
 
 /**
  * Interpolates variables in this string using the given map of [args].
