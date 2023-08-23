@@ -6,6 +6,9 @@
 
 - [Intentions](#intentions)
 - [String interpolation](#string-interpolation)
+  - [String syntax](#string-syntax)
+  - [Interpolation](#interpolation)
+  - [Custom Variable Resolvers](#custom-variable-resolvers)
 - [CloseableScope](#closeablescope)
 - [Box Delegate](#box-delegate)
 - [Collector Factories](#collector-factories)
@@ -65,6 +68,32 @@ val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(
 print(string) // prints "Hello I'm John, and I'm unknown years old."
 ```
 
+The second variant comes in two flavors: `interpolate(vararg args: Any)` and `interpolate(args: List<Any>)`. They take
+a vararg or a list of values, and will replace the variables in the string using their index in the list. The variable
+names in the string must be integers, and in the range of the list. If a variable name is not an integer, or is out of
+bounds, an exception will be thrown.
+
+```kt
+val string = "'Hello I'm {0}, and I'm {1} years old.' said {0}.".interpolate(
+    "John",
+    42,
+)
+print(string) // prints "'Hello I'm John, and I'm 42 years old.' said John"
+```
+
+### Custom Variable Resolvers
+
+The previously presented functions are all using under the hood the default interpolation function
+`interpolate(VariableResolver)`. This function takes a `VariableResolver` as a parameter, which is a functional
+interface representing a function that takes a variable name and returns its value.
+
+Here is a dumb but simple example of how to use it:
+
+```kt
+val myResolver = VariableResolver { name -> name.reversed() }
+val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(myResolver)
+print(string) // prints "Hello I'm eman, and I'm ega years old."
+```
 
 ## CloseableScope
 
