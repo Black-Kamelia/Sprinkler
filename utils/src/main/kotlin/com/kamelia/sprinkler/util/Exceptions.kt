@@ -1,3 +1,5 @@
+@file:JvmName("Exceptions")
+
 package com.kamelia.sprinkler.util
 
 /**
