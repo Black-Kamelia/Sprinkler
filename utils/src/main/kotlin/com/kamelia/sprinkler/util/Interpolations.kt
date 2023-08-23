@@ -13,7 +13,7 @@ package com.kamelia.sprinkler.util
  * This function can be used as follows:
  *
  * ```kt
- * val resolver: NameResolver = ...
+ * val resolver: VariableResolver = ...
  * val result = "Hello {user_name}, you are {user-age} years old".interpolate(resolver)
  * ```
  *

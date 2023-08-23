@@ -91,7 +91,7 @@ interface representing a function that takes a variable name and returns its val
 Here is a dumb but simple example of how to use it:
 
 ```kt
-val myResolver = VariableResolver { name -> name.reversed() }
+val myResolver = VariableResolver { variableName -> variableName.reversed() }
 val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(myResolver)
 print(string) // prints "Hello I'm eman, and I'm ega years old."
 ```
