@@ -2,8 +2,27 @@
 
 package com.kamelia.sprinkler.util
 
-
-fun String.interpolate(resolver: NameResolver): String {
+/**
+ * Interpolates variables in this string using the given [resolver]. This function replaces all occurrences of
+ * `{variable}` with the value of the variable returned by [VariableResolver.value].
+ *
+ * Names must be alphanumeric, and may contain underscores and dashes.
+ *
+ * &nbsp;
+ *
+ * This function can be used as follows:
+ *
+ * ```kt
+ * val resolver: NameResolver = ...
+ * val result = "Hello {name}, you are {age} years old".interpolate(resolver)
+ * ```
+ *
+ * @param resolver the [VariableResolver] to use for resolving variable names
+ * @return the interpolated string
+ * @throws IllegalArgumentException if a variable has an invalid name, or if an error occurs while resolving a variable
+ * @see [VariableResolver]
+ */
+fun String.interpolate(resolver: VariableResolver): String {
     val builder = StringBuilder()
     var state = State.DEFAULT
     var keyBuilder = StringBuilder()
@@ -26,7 +45,7 @@ fun String.interpolate(resolver: NameResolver): String {
                     val key = keyBuilder.toString()
                     val value = try {
                         resolver.value(key)
-                    } catch (e: NameResolver.NameResolutionException) {
+                    } catch (e: VariableResolver.NameResolutionException) {
                         illegalArgument("Error while resolving variable '$key': ${e.message!!}")
                     }
                     builder.append(value)
@@ -46,22 +65,89 @@ fun String.interpolate(resolver: NameResolver): String {
     return builder.toString()
 }
 
-fun String.interpolate(vararg args: Any?): String = interpolate(NameResolver.create(*args))
-
-fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String =
-    interpolate(NameResolver.create(args, fallback))
-
-fun String.interpolate(vararg args: Pair<String, Any>, fallback: String? = null): String =
-    interpolate(NameResolver.create(args.toMap(), fallback))
+/**
+ * Interpolates variables in this string using the given vararg [args].
+ *
+ * Variable are resolved by their index in the given [args]. The variable passed to is parsed as an integer, and the
+ * value at the corresponding index in the [array][args] is returned. If name does not represent a valid integer, or if
+ * the index is not in between 0 and the number of arguments, an [IllegalArgumentException] is thrown.
+ *
+ * &nbsp;
+ *
+ * It can be used as follows:
+ *
+ * ```kt
+ * val result = "Hello {0}, you are {1} years old".interpolate("John", 42)
+ * ```
+ *
+ * @param args the array of values
+ * @return the interpolated string
+ * @throws IllegalArgumentException if a variable has an invalid name, or if a variable name is not a valid integer or
+ * is if the index is out of bounds
+ * @see [VariableResolver]
+ */
+fun String.interpolate(vararg args: Any?): String = interpolate(VariableResolver.create(*args))
 
 /**
- * Interface for resolving variable names during string interpolation. This interface maps variable names to their
+ * Interpolates variables in this string using the given map of [args].
+ *
+ * Variable are resolved by their name in the given [map][args]. The name of the variable passed to is used as a key in
+ * the [map][args], and the value associated with that key is returned. If a variable is unknown, the [fallback] value
+ * is returned. If the [fallback] value is `null`, an [IllegalArgumentException] is thrown.
+ *
+ * &nbsp;
+ *
+ * It can be used as follows:
+ *
+ * ```kt
+ * val result = "Hello {name}, you are {age} years old".interpolate(mapOf("name" to "John", "age" to 42))
+ * ```
+ *
+ * @param args the map of values
+ * @param fallback the fallback value (defaults to `null`)
+ * @return the interpolated string
+ * @throws IllegalArgumentException if a variable has an invalid name, or if a variable name is unknown and the
+ * [fallback] value is `null`
+ * @see [VariableResolver]
+ */
+fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String =
+    interpolate(VariableResolver.create(args, fallback))
+
+/**
+ * Interpolates variables in this string using the given [Pair] array [args]. The array of pairs is converted to a
+ * [map][Map].
+ *
+ * Variable are resolved by their name in the [Pair] array [args]. The name of the variable passed to is used as a key
+ * in the map created from the [array][args] and the value associated with that key is returned. If a variable is
+ * unknown, the [fallback] value is returned. If the [fallback] value is `null`, an [IllegalArgumentException] is
+ * thrown.
+ *
+ * &nbsp;
+ *
+ * It can be used as follows:
+ *
+ * ```kt
+ * val result = "Hello {name}, you are {age} years old".interpolate("name" to "John", "age" to 42)
+ * ```
+ *
+ * @param args the array of pairs
+ * @param fallback the fallback value (defaults to `null`)
+ * @return the interpolated string
+ * @throws IllegalArgumentException if a variable has an invalid name, or if a variable name is unknown and the
+ * [fallback] value is `null`
+ * @see [VariableResolver]
+ */
+fun String.interpolate(vararg args: Pair<String, Any>, fallback: String? = null): String =
+    interpolate(VariableResolver.create(args.toMap(), fallback))
+
+/**
+ * Interface for resolving variables during string interpolation. This interface maps variable names to their
  * values.
  *
  * @see [String.interpolate]
- * @see [NameResolver.create]
+ * @see [VariableResolver.create]
  */
-fun interface NameResolver {
+fun interface VariableResolver {
 
     /**
      * Returns the value of the variable with the given [name].
@@ -75,10 +161,10 @@ fun interface NameResolver {
     fun value(name: String): String
 
     /**
-     * Exception thrown by [NameResolver] implementations when a variable name cannot be resolved.
+     * Exception thrown by [VariableResolver] implementations when a variable name cannot be resolved.
      *
      * @param message the exception message
-     * @see NameResolver.value
+     * @see VariableResolver.value
      */
     class NameResolutionException(message: String) : IllegalArgumentException(message) {
 
@@ -89,9 +175,9 @@ fun interface NameResolver {
     companion object {
 
         /**
-         * Creates a [NameResolver] that resolves variables by their index in the given [array][args].
+         * Creates a [VariableResolver] that resolves variables by their index in the given [array][args].
          *
-         * The variable passed to [NameResolver.value] is parsed as an integer, and the value at the corresponding index
+         * The variable passed to [VariableResolver.value] is parsed as an integer, and the value at the corresponding index
          * in the [array][args] is returned. If name does not represent a valid integer, or if the index is out of
          * bounds, an [NameResolutionException] is thrown.
          *
@@ -103,10 +189,10 @@ fun interface NameResolver {
          * ```
          *
          * @param args the array of values
-         * @return a [NameResolver] that resolves variables by their index in the given [array][args]
+         * @return a [VariableResolver] that resolves variables by their index in the given [array][args]
          */
-        fun create(vararg args: Any?): NameResolver =
-            NameResolver { name ->
+        fun create(vararg args: Any?): VariableResolver =
+            VariableResolver { name ->
                 val index = name.toIntOrNull()
                     ?: throw NameResolutionException("index must be a parsable integer, but was'$name'")
                 if (index !in args.indices) {
@@ -116,9 +202,9 @@ fun interface NameResolver {
             }
 
         /**
-         * Creates a [NameResolver] that resolves variables by their name in the given [map][args].
+         * Creates a [VariableResolver] that resolves variables by their name in the given [map][args].
          *
-         * The name of the variable passed to [NameResolver.value] is used as a key in the [map][args], and the value
+         * The name of the variable passed to [VariableResolver.value] is used as a key in the [map][args], and the value
          * associated with that key is returned. If a variable is unknown, the [fallback] value is returned. If the
          * [fallback] value is `null`, an [NameResolutionException] is thrown.
          *
@@ -131,18 +217,18 @@ fun interface NameResolver {
          *
          * @param args the map of values
          * @param fallback the fallback value (defaults to `null`)
-         * @return a [NameResolver] that resolves variables by their name in the given [map][args]
+         * @return a [VariableResolver] that resolves variables by their name in the given [map][args]
          */
-        fun create(args: Map<String, Any>, fallback: String? = null): NameResolver =
-            NameResolver { name ->
+        fun create(args: Map<String, Any>, fallback: String? = null): VariableResolver =
+            VariableResolver { name ->
                 args[name]?.toString() ?: fallback ?: throw NameResolutionException("unknown variable name '$name'")
             }
 
         /**
-         * Creates a [NameResolver] that resolves variables by their name in the [Pair] array [args]. The array of pairs
+         * Creates a [VariableResolver] that resolves variables by their name in the [Pair] array [args]. The array of pairs
          * is converted to a [map][Map].
          *
-         * The name of the variable passed to [NameResolver.value] is used as a key in the map created from the
+         * The name of the variable passed to [VariableResolver.value] is used as a key in the map created from the
          * [array][args] and the value associated with that key is returned. If a variable is unknown, the [fallback]
          * value is returned. If the [fallback] value is `null`, an [NameResolutionException] is thrown.
          *
@@ -155,9 +241,9 @@ fun interface NameResolver {
          *
          * @param args the array of pairs
          * @param fallback the fallback value (defaults to `null`)
-         * @return a [NameResolver] that resolves variables by their name in the [Pair] array [args]
+         * @return a [VariableResolver] that resolves variables by their name in the [Pair] array [args]
          */
-        fun create(vararg args: Pair<String, Any>, fallback: String? = null): NameResolver =
+        fun create(vararg args: Pair<String, Any>, fallback: String? = null): VariableResolver =
             create(args.toMap(), fallback)
 
     }
