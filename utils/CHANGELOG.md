@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - String interpolation API. ([#45](https://github.com/Black-Kamelia/Sprinkler/issues/45))
 - Added the `illegalArgument` and `assertionFailed` functions to throw Throwable with a message.
+([!47](https://github.com/Black-Kamelia/Sprinkler/pull/47))
 
 ## 2.0.0 (2023-07-31)
 
