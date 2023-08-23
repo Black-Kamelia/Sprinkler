@@ -53,13 +53,18 @@ fun String.interpolate(resolver: VariableResolver): String {
                     state = State.DEFAULT
                 } else {
                     if ('_' != char && '-' != char && !char.isLetterOrDigit()) {
-                        illegalArgument("Unexpected character '$char' in interpolated value near character ${index + 1}")
+                        illegalArgument(
+                            "Unexpected character '$char' in interpolated value near character ${index + 1}"
+                        )
                     } else {
                         keyBuilder.append(char)
                     }
                 }
             }
         }
+    }
+    if (state == State.IN_CURLY) {
+        illegalArgument("Unexpected end of string in interpolated value")
     }
 
     return builder.toString()
@@ -86,7 +91,7 @@ fun String.interpolate(resolver: VariableResolver): String {
  * is if the index is out of bounds
  * @see [VariableResolver]
  */
-fun String.interpolate(vararg args: Any): String = interpolate(VariableResolver.fromVararg(*args))
+fun String.interpolateWithVararg(vararg args: Any): String = interpolate(VariableResolver.fromVararg(*args))
 
 /**
  * Interpolates variables in this string using the given array [args].
@@ -135,7 +140,7 @@ fun String.interpolateWithArray(args: Array<out Any>): String = interpolate(Vari
  * [fallback] value is `null`
  * @see [VariableResolver]
  */
-fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String =
+fun String.interpolateWithMap(args: Map<String, Any>, fallback: String? = null): String =
     interpolate(VariableResolver.fromMap(args, fallback))
 
 /**
@@ -162,7 +167,7 @@ fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String
  * [fallback] value is `null`
  * @see [VariableResolver]
  */
-fun String.interpolate(vararg args: Pair<String, Any>, fallback: String? = null): String =
+fun String.interpolateWithPairs(vararg args: Pair<String, Any>, fallback: String? = null): String =
     interpolate(VariableResolver.fromMap(args.toMap(), fallback))
 
 /**
