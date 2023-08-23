@@ -84,7 +84,7 @@ print(string) // prints "'Hello I'm John, and I'm 42 years old.' said John"
 
 ### Custom Variable Resolvers
 
-The previously presented functions are all using under the hood the default interpolation function
+The previously introduced functions are all using under the hood the default interpolation function
 `interpolate(VariableResolver)`. This function takes a `VariableResolver` as a parameter, which is a functional
 interface representing a function that takes a variable name and returns its value.
 
