@@ -14,4 +14,12 @@ class ExceptionsTest {
         assertEquals("foo", ex.message)
     }
 
+    @Test
+    fun `assertionFailed throws AssertionError with the given message`() {
+        val ex = assertThrows<AssertionError> {
+            assertionFailed("foo")
+        }
+        assertEquals("foo", ex.message)
+    }
+
 }
