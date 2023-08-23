@@ -45,7 +45,7 @@ fun String.interpolate(resolver: VariableResolver): String {
                     val key = keyBuilder.toString()
                     val value = try {
                         resolver.value(key)
-                    } catch (e: VariableResolver.NameResolutionException) {
+                    } catch (e: VariableResolver.ResolutionException) {
                         illegalArgument("Error while resolving variable '$key': ${e.message!!}")
                     }
                     builder.append(value)
@@ -152,11 +152,11 @@ fun interface VariableResolver {
     /**
      * Returns the value of the variable with the given [name].
      *
-     * Implementations may throw an [NameResolutionException] if the variable is unknown, or return a default value.
+     * Implementations may throw an [ResolutionException] if the variable is unknown, or return a default value.
      *
      * @param name the name of the variable
      * @return the value of the variable
-     * @throws NameResolutionException if the variable is unknown
+     * @throws ResolutionException if the variable is unknown
      */
     fun value(name: String): String
 
@@ -166,7 +166,7 @@ fun interface VariableResolver {
      * @param message the exception message
      * @see VariableResolver.value
      */
-    class NameResolutionException(message: String) : IllegalArgumentException(message) {
+    class ResolutionException(message: String) : IllegalArgumentException(message) {
 
         override fun fillInStackTrace(): Throwable = this // no need to fill in the stack trace
 
@@ -179,7 +179,35 @@ fun interface VariableResolver {
          *
          * The variable passed to [VariableResolver.value] is parsed as an integer, and the value at the corresponding index
          * in the [array][args] is returned. If name does not represent a valid integer, or if the index is out of
-         * bounds, an [NameResolutionException] is thrown.
+         * bounds, an [ResolutionException] is thrown.
+         *
+         * Example:
+         * ```kt
+         * val args = arrayOf("foo", "bar", "baz")
+         * val resolver = NameResolver.create(args)
+         * val result = "Hello {0}, {2}, {1}".interpolate(resolver)
+         * println(result) // prints "Hello foo, baz, bar"
+         * ```
+         *
+         * @param args the array of values
+         * @return a [VariableResolver] that resolves variables by their index in the given [array][args]
+         */
+        fun create(args: Array<Any>): VariableResolver =
+            VariableResolver { name ->
+                val index = name.toIntOrNull()
+                    ?: throw ResolutionException("index must be a parsable integer, but was'$name'")
+                if (index !in args.indices) {
+                    throw ResolutionException("index must be in between 0 and ${args.size}, but was $index")
+                }
+                args[index].toString()
+            }
+
+        /**
+         * Creates a [VariableResolver] that resolves variables by their index in the given [vararg][args].
+         *
+         * The variable passed to [VariableResolver.value] is parsed as an integer, and the value at the corresponding index
+         * in the [vararg][args] is returned. If name does not represent a valid integer, or if the index is out of
+         * bounds, an [ResolutionException] is thrown.
          *
          * Example:
          * ```kt
@@ -188,25 +216,17 @@ fun interface VariableResolver {
          * println(result) // prints "Hello foo, baz, bar"
          * ```
          *
-         * @param args the array of values
-         * @return a [VariableResolver] that resolves variables by their index in the given [array][args]
+         * @param args the vararg of values
+         * @return a [VariableResolver] that resolves variables by their index in the given [vararg][args]
          */
-        fun create(vararg args: Any?): VariableResolver =
-            VariableResolver { name ->
-                val index = name.toIntOrNull()
-                    ?: throw NameResolutionException("index must be a parsable integer, but was'$name'")
-                if (index !in args.indices) {
-                    throw NameResolutionException("index must be in between 0 and ${args.size}, but was $index")
-                }
-                args[index].toString()
-            }
+        fun create(vararg args: Any?): VariableResolver = create(args)
 
         /**
          * Creates a [VariableResolver] that resolves variables by their name in the given [map][args].
          *
          * The name of the variable passed to [VariableResolver.value] is used as a key in the [map][args], and the value
          * associated with that key is returned. If a variable is unknown, the [fallback] value is returned. If the
-         * [fallback] value is `null`, an [NameResolutionException] is thrown.
+         * [fallback] value is `null`, an [ResolutionException] is thrown.
          *
          * Example:
          * ```kt
@@ -221,7 +241,7 @@ fun interface VariableResolver {
          */
         fun create(args: Map<String, Any>, fallback: String? = null): VariableResolver =
             VariableResolver { name ->
-                args[name]?.toString() ?: fallback ?: throw NameResolutionException("unknown variable name '$name'")
+                args[name]?.toString() ?: fallback ?: throw ResolutionException("unknown variable name '$name'")
             }
 
         /**
@@ -230,7 +250,7 @@ fun interface VariableResolver {
          *
          * The name of the variable passed to [VariableResolver.value] is used as a key in the map created from the
          * [array][args] and the value associated with that key is returned. If a variable is unknown, the [fallback]
-         * value is returned. If the [fallback] value is `null`, an [NameResolutionException] is thrown.
+         * value is returned. If the [fallback] value is `null`, an [ResolutionException] is thrown.
          *
          * Example:
          * ```kt
