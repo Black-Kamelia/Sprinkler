@@ -14,8 +14,7 @@
 - [Collector Factories](#collector-factories)
 - [ByteArrayDecoding](#bytearraydecoding)
 - [ByteAccess](#byteaccess)
-- [unsafeCast](#unsafecast)
-- [castOrNull](#castornull)
+- [Casts](#casts)
 - [Exceptions](#exceptions)
 - [Changelog](#changelog)
 
@@ -294,7 +293,11 @@ Of course, `Byte` has only the `bit` function, which doesn't accept an `endianne
 
 To simplify casting and type inference, a few extensions are provided.
 
-## unsafeCast
+## Casts
+
+Sprinkler offers several functions to cast values to other types.
+
+### unsafeCast
 
 A simple extension function on `Any?`, that allows to cast it to any type without any check. It is defined as follows:
 
@@ -330,7 +333,7 @@ fun countA(value: Any): Int =
     .count { 'a' == it }
 ```
 
-## castOrNull
+### castOrNull
 
 A simple extension function on `Any?`, that allows to cast it to any type, and returns `null` if the cast fails (this
 function is the equivalent of `as?`). It is defined as follows:
