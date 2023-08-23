@@ -347,7 +347,9 @@ In the same way as `unsafeCast`, it is useful when it comes to chaining operatio
 
 ## Exceptions
 
-The library provides a few methods to throw exceptions with a message.
+The library provides a few methods to throw exceptions with a message. The reason for this is that the standard library
+provides the `error` function to throw an IllegalStateException, but nothing else. To complement this, the following
+functions are provided:
 
 - `illegalArgument(message: String): Nothing` throws an `IllegalArgumentException` with the given message.
 - `assertionError(message: String): Nothing` throws an `AssertionError` with the given message.
