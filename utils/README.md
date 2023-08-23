@@ -5,6 +5,7 @@
 ## Summary
 
 - [Intentions](#intentions)
+- [String interpolation](#string-interpolation)
 - [CloseableScope](#closeablescope)
 - [Box Delegate](#box-delegate)
 - [Collector Factories](#collector-factories)
@@ -19,6 +20,51 @@ The purpose of this module is to provide a set of utilities that are useful for 
 enough to deserve their own module.
 
 You may see it as a "stdlib++".
+
+## String interpolation
+
+Kotlin's string interpolation is great, but can only be used in the context of string literals. This module provides a
+few extension functions to allow dynamic string interpolation with any object.
+
+### String syntax
+
+A string that can be interpolated is a string that contains variables, which are delimited by `{}`. The name of the
+variable is the content of the braces and must be an alphanumeric string identifier that can contain underscores and
+dashes. `"Hello {name}, I'm {my-name} and I'm {my_age} years old."` is a valid string that contains 3 variables.
+
+Any opened brace must be closed, and opening braces can be escaped using a backslash (`\{`). For example, the string
+`"Hello {name"` is invalid but `"Hello \{name"` is valid because the opening brace is escaped.
+
+Failure to respect these rules will result in an exception being thrown.
+
+### Interpolation
+
+To interpolate a string, one must use the `interpolate` extension function on a `String`. It exists in several variants.
+
+The first ones are `interpolate(vararg args: Pair<String, Any>)` and `interpolate(args: Map<String, Any>)`. They take a
+list of pairs of variable names associated with their values or a map with the same semantics. The variable names must
+be valid identifiers, and the values can be of any type. The function will replace all variables in the string with
+their associated value.
+
+```kt
+val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(
+    "name" to "John",
+    "age" to 42,
+)
+print(string) // prints "Hello I'm John, and I'm 42 years old."
+```
+
+Both of these functions accepts an optional `fallback` parameter, which is a string that will be used as a fallback
+value if a variable is not found in the given arguments. If no fallback is provided, an exception will be thrown.
+
+```kt
+val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(
+    "name" to "John",
+    fallback = "unknown"
+)
+print(string) // prints "Hello I'm John, and I'm unknown years old."
+```
+
 
 ## CloseableScope
 
