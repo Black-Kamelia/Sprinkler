@@ -6,9 +6,22 @@ package com.kamelia.sprinkler.util
  * Interpolates variables in this string using the given [resolver]. This function replaces all occurrences of
  * `{variable}` with the value of the variable returned by [VariableResolver.value].
  *
- * Names must be alphanumeric, and may contain underscores and dashes.
+ * Strings that are valid for interpolation are defined as follows:
+ * - String may contain **zero**, **one** or **more** variables delimited by **curly braces** (`{}`) ;
+ * - Variable names must only contain **alphanumeric** characters, **underscores** (`_`) and **dashes** (`-`) ;
+ * - **Escaping** of curly braces is possible using a **backslash** (`\`), and **only the opening** curly brace (`{`)
+ * needs to be escaped ;
+ * - Any **non-escaped curly brace** is considered the start of a variable and **must be closed** before the end of the
+ * string ;
+ * - If a variable **name is empty**, the variable is resolved by using the **count of variables** encountered so far.
+ * The first variable has index 0, the second index 1, and so on. Note that even variables with a **non-empty name are**
+ * **also counted** (e.g. in `"Hello {name}, I'm {}"`, the `{}` has the index 1 because the variable `name` is counted).
  *
- * &nbsp;
+ * Any string that does not conform to these rules is considered invalid, a call to this function with an invalid string
+ * will result in an [IllegalArgumentException] being thrown.
+ *
+ * **NOTE**: Depending on the implementation of [VariableResolver] used, this function may also throw an
+ * [IllegalArgumentException] if a variable name is invalid for the given [VariableResolver].
  *
  * This function can be used as follows:
  *
@@ -19,7 +32,8 @@ package com.kamelia.sprinkler.util
  *
  * @param resolver the [VariableResolver] to use for resolving variable names
  * @return the interpolated string
- * @throws IllegalArgumentException if a variable has an invalid name, or if an error occurs while resolving a variable
+ * @throws IllegalArgumentException if the string is invalid, or if a variable name is invalid for the given
+ * [VariableResolver]
  * @see [VariableResolver]
  */
 fun String.interpolate(resolver: VariableResolver): String {
@@ -79,12 +93,20 @@ fun String.interpolate(resolver: VariableResolver): String {
  * Interpolates variables in this string using the given vararg [args].
  *
  * Variable are resolved by their index in the given [args]. The variable passed to is parsed as an integer, and the
- * value at the corresponding index in the [array][args] is returned. If name does not represent a valid integer, or if
- * the index is not in between 0 and the number of arguments, an [IllegalArgumentException] is thrown.
+ * value at the corresponding index in the [array][args] is returned.
  *
- * &nbsp;
+ * Strings must follow the same rules as defined in [String.interpolate]. In addition, the following rules apply to
+ * variable names:
+ * - Name must be a **valid integer** ;
+ * - The **index** specified in the name must be in between **0** and the **number of arguments in [args]**.
  *
- * It can be used as follows:
+ * **NOTE**: As empty variable names are resolved by using the count of variables encountered so far, they are totally
+ * valid for this function, as long as the resulting index is in bounds.
+ *
+ * Any string that does not conform to these rules is considered invalid, a call to this function with an invalid string
+ * will result in an [IllegalArgumentException] being thrown.
+ *
+ * This function can be used as follows:
  *
  * ```kt
  * val result = "Hello {0}, you are {1} years old".interpolateIndexed("John", 42)
@@ -92,9 +114,9 @@ fun String.interpolate(resolver: VariableResolver): String {
  *
  * @param args the vararg of values
  * @return the interpolated string
- * @throws IllegalArgumentException if a variable has an invalid name, or if a variable name is not a valid integer or
- * is if the index is out of bounds
- * @see [VariableResolver]
+ * @throws IllegalArgumentException if the string is invalid, or if a variable name does not conform to the rules
+ * defined above
+ * @see [VariableResolver.fromVararg]
  */
 fun String.interpolateIndexed(vararg args: Any): String = interpolate(VariableResolver.fromVararg(*args))
 
@@ -102,8 +124,18 @@ fun String.interpolateIndexed(vararg args: Any): String = interpolate(VariableRe
  * Interpolates variables in this string using the given list [args].
  *
  * Variable are resolved by their index in the given [args]. The variable passed to is parsed as an integer, and the
- * value at the corresponding index in the [list][args] is returned. If name does not represent a valid integer, or if
- * the index is not in between 0 and the number of arguments, an [IllegalArgumentException] is thrown.
+ * value at the corresponding index in the [list][args] is returned.
+ *
+ * Strings must follow the same rules as defined in [String.interpolate]. In addition, the following rules apply to
+ * variable names:
+ * - Name must be a **valid integer** ;
+ * - The **index** specified in the name must be in between **0** and the **number of arguments in [args]**.
+ *
+ * **NOTE**: As empty variable names are resolved by using the count of variables encountered so far, they are totally
+ * valid for this function, as long as the resulting index is in bounds.
+ *
+ * Any string that does not conform to these rules is considered invalid, a call to this function with an invalid string
+ * will result in an [IllegalArgumentException] being thrown.
  *
  * &nbsp;
  *
@@ -116,9 +148,9 @@ fun String.interpolateIndexed(vararg args: Any): String = interpolate(VariableRe
  *
  * @param args the list of values
  * @return the interpolated string
- * @throws IllegalArgumentException if a variable has an invalid name, or if a variable name is not a valid integer or
- * is if the index is out of bounds
- * @see [VariableResolver]
+ * @throws IllegalArgumentException if the string is invalid, or if a variable name does not conform to the rules
+ * defined above
+ * @see [VariableResolver.fromList]
  */
 fun String.interpolateIndexed(args: List<Any>): String = interpolate(VariableResolver.fromList(args))
 
@@ -129,7 +161,7 @@ fun String.interpolateIndexed(args: List<Any>): String = interpolate(VariableRes
  * the [map][args], and the value associated with that key is returned. If a variable is unknown, the [fallback] value
  * is returned. If the [fallback] value is `null`, an [IllegalArgumentException] is thrown.
  *
- * &nbsp;
+ * Strings must follow the same rules as defined in [String.interpolate].
  *
  * It can be used as follows:
  *
@@ -140,9 +172,9 @@ fun String.interpolateIndexed(args: List<Any>): String = interpolate(VariableRes
  * @param args the map of values
  * @param fallback the fallback value (defaults to `null`)
  * @return the interpolated string
- * @throws IllegalArgumentException if a variable has an invalid name, or if a variable name is unknown and the
- * [fallback] value is `null`
- * @see [VariableResolver]
+ * @throws IllegalArgumentException if the string is invalid, or if a variable name is unknown and the [fallback] value
+ * is `null`
+ * @see [VariableResolver.fromMap]
  */
 @JvmOverloads
 fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String =
@@ -157,7 +189,7 @@ fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String
  * unknown, the [fallback] value is returned. If the [fallback] value is `null`, an [IllegalArgumentException] is
  * thrown.
  *
- * &nbsp;
+ * Strings must follow the same rules as defined in [String.interpolate].
  *
  * It can be used as follows:
  *
@@ -168,9 +200,9 @@ fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String
  * @param args the array of pairs
  * @param fallback the fallback value (defaults to `null`)
  * @return the interpolated string
- * @throws IllegalArgumentException if a variable has an invalid name, or if a variable name is unknown and the
- * [fallback] value is `null`
- * @see [VariableResolver]
+ * @throws IllegalArgumentException if the string is invalid, or if a variable name is unknown and the [fallback] value
+ * is `null`
+ * @see [VariableResolver.fromPairs]
  */
 @JvmOverloads
 fun String.interpolate(vararg args: Pair<String, Any>, fallback: String? = null): String =
