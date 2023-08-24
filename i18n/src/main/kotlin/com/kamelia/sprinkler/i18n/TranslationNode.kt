@@ -3,31 +3,34 @@ package com.kamelia.sprinkler.i18n
 import com.kamelia.sprinkler.util.castOrNull
 import com.kamelia.sprinkler.util.illegalArgument
 
-sealed interface TranslationNode {
+internal interface TranslationNode {
 
-    class Inner(private val children: Map<String, TranslationNode>) : TranslationNode {
+    fun section(key: String): TranslationNode?
 
-        fun getNode(key: String): TranslationNode {
-            val fastResult = children[key]
-            if (fastResult != null) return fastResult
+    fun string(key: String): String
 
-            val keyParts = key.split('.')
-            var current: TranslationNode = this
-            for (keyPart in keyParts) {
-                current = current.castOrNull<Inner>()?.children?.get(keyPart)
-                    ?: illegalArgument("No node found with key $key")
-            }
-            return current
+}
+
+
+private class TranslationNodeImpl(private val children: Map<String, Any>) : TranslationNode {
+
+    fun getNode(key: String): Any {
+        val fastResult = children[key]
+        if (fastResult != null) return fastResult
+
+        val keyParts = key.split('.')
+        var current: Any = this
+        for (keyPart in keyParts) {
+            current = current.castOrNull<TranslationNodeImpl>()?.children?.get(keyPart)
+                ?: illegalArgument("No node found with key $key")
         }
-
-        fun section(key: String): Inner = getNode(key).castOrNull<Inner>()
-            ?: illegalArgument("No section found with key $key")
-
-        fun string(key: String): String = getNode(key).castOrNull<Leaf>()?.value
-            ?: illegalArgument("No string found with key $key")
-
+        return current
     }
 
-    class Leaf(val value: String) : TranslationNode
+    override fun section(key: String): TranslationNode = getNode(key).castOrNull<TranslationNode>()
+        ?: illegalArgument("No section found with key $key")
+
+    override fun string(key: String): String = getNode(key).castOrNull<String>()
+        ?: illegalArgument("No string found with key $key")
 
 }
