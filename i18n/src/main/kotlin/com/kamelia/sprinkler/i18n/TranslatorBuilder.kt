@@ -90,7 +90,6 @@ class TranslatorBuilder internal constructor(
                     check(old == null) { "Duplicate key '$key' for locale '$locale'" }
                     addValue(localeMap, key, value)
                 }
-
                 DuplicateKeyResolutionPolicy.KEEP_FIRST -> old ?: addValue(localeMap, key, value)
                 DuplicateKeyResolutionPolicy.KEEP_LAST -> addValue(localeMap, key, value)
             }

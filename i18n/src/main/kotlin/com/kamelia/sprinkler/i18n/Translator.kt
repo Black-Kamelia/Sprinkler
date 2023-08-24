@@ -3,7 +3,6 @@ package com.kamelia.sprinkler.i18n
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.kamelia.sprinkler.util.castOrNull
 import com.kamelia.sprinkler.util.illegalArgument
-import com.kamelia.sprinkler.util.interpolateIndexed
 import com.kamelia.sprinkler.util.unsafeCast
 import org.yaml.snakeyaml.Yaml
 import java.io.File
@@ -11,11 +10,13 @@ import java.util.*
 
 interface Translator {
 
+    var currentLocale: Locale
+
     val defaultLocale: Locale
 
     fun translate(key: String, locale: Locale): String
 
-    fun translate(key: String): String = translate(key, defaultLocale)
+    fun translate(key: String): String = translate(key, currentLocale)
 
     fun section(key: String): Translator
 
@@ -36,6 +37,8 @@ internal class TranslatorImpl private constructor(
     override val defaultLocale: Locale,
     private val children: Map<Locale, Map<String, Any>>,
 ) : Translator {
+
+    override var currentLocale: Locale = defaultLocale
 
     constructor(defaultLocale: Locale, children: Map<Locale, Map<String, Any>>) : this(null, defaultLocale, children)
 
@@ -97,6 +100,6 @@ fun main() {
         .addMap(Locale.CHINESE, mapOf("color" to "bingchilling2"))
         .duplicateKeyResolutionPolicy(TranslatorBuilder.DuplicateKeyResolutionPolicy.KEEP_FIRST)
         .build()
-    println(translator)
-    println(translator.t("player1.line", Locale.ENGLISH).interpolateIndexed("John"))
+    translator.currentLocale = Locale.CHINESE
+    println(translator.translate("color"))
 }
