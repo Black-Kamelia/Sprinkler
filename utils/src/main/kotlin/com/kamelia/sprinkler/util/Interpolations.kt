@@ -98,7 +98,7 @@ fun String.interpolate(resolver: VariableResolver): String {
  * Strings must follow the same rules as defined in [String.interpolate]. In addition, the following rules apply to
  * variable names:
  * - Name must be a **valid integer** ;
- * - The **index** specified in the name must be in between **0** and the **number of arguments in [args]**.
+ * - The **index** specified in the name must be in between **0** and the **number of arguments in [args]** - 1.
  *
  * **NOTE**: As empty variable names are resolved by using the count of variables encountered so far, they are totally
  * valid for this function, as long as the resulting index is in bounds.
@@ -129,7 +129,7 @@ fun String.interpolateIndexed(vararg args: Any): String = interpolate(VariableRe
  * Strings must follow the same rules as defined in [String.interpolate]. In addition, the following rules apply to
  * variable names:
  * - Name must be a **valid integer** ;
- * - The **index** specified in the name must be in between **0** and the **number of arguments in [args]**.
+ * - The **index** specified in the name must be in between **0** and the **number of arguments in [args]** - 1.
  *
  * **NOTE**: As empty variable names are resolved by using the count of variables encountered so far, they are totally
  * valid for this function, as long as the resulting index is in bounds.
@@ -231,11 +231,7 @@ fun interface VariableResolver {
      * @param message the exception message
      * @see VariableResolver.value
      */
-    class ResolutionException(message: String) : IllegalArgumentException(message) {
-
-        override fun fillInStackTrace(): Throwable = this // no need to fill in the stack trace
-
-    }
+    class ResolutionException(message: String) : IllegalArgumentException(message)
 
     companion object {
 
