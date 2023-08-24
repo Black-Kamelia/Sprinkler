@@ -32,18 +32,29 @@ few extension functions to allow dynamic string interpolation with any object.
 
 ### String syntax
 
-A string that can be interpolated is a string that contains variables, which are delimited by `{}`. The name of the
-variable is the content of the braces and must be an alphanumeric string identifier that can contain underscores and
-dashes. `"Hello {name}, I'm {my-name} and I'm {my_age} years old."` is a valid string that contains 3 variables.
+Strings that are valid for interpolation are defined as follows:
+- String may contain zero, one or more variables delimited by curly braces (`{}`) ;
+- Variable names must only contain alphanumeric characters, underscores (`_`) and dashes (`-`) ;
+- Escaping of curly braces is possible using a backslash (`\ `), and only the opening curly brace (`{`) needs to be
+escaped ;
+- Any non-escaped curly brace is considered the start of a variable and must be closed before the end of the string ;
+- If a variable name is empty, the variable is resolved by using the count of variables encountered so far. The first
+variable has index 0, the second index 1, and so on. Note that even variables with a non-empty name are also counted
+(e.g. in `"Hello {name}, I'm {}"`, the `{}` has the index 1 because the variable `name` is counted).
 
-Any opened brace must be closed, and opening braces can be escaped using a backslash (`\{`). For example, the string
-`"Hello {name"` is invalid but `"Hello \{name"` is valid because the opening brace is escaped.
+Here are a few examples of valid strings:
+- `"Hello {Name}, I'm {my-NAME} and I'm {myAge} years old."`
+- `"I like {0} and {1}."`
+- `"I ate \{"`
+- `"{} or {} ?"`
+- `"See you next {time_unit}, at {}."`
 
-Failure to respect these rules will result in an exception being thrown.
+Failure to respect the previously defined rules will result in an exception being thrown.
 
 ### Interpolation
 
 To interpolate a string, one must use the `interpolate` extension function on a `String`. It exists in several variants.
+The strings to interpolate must respect the previously defined syntax, as well a different one depending on the variant.
 
 The first ones are `interpolate(vararg args: Pair<String, Any>)` and `interpolate(args: Map<String, Any>)`. They take a
 list of pairs of variable names associated with their values or a map with the same semantics. The variable names must
@@ -58,8 +69,9 @@ val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(
 print(string) // prints "Hello I'm John, and I'm 42 years old."
 ```
 
-Both of these functions accepts an optional `fallback` parameter, which is a string that will be used as a fallback
-value if a variable is not found in the given arguments. If no fallback is provided, an exception will be thrown.
+The strings interpolated with this variant must in addition to respect the defined syntax, have all their variables
+names present in the given arguments. If a variable is not found, an exception will be thrown, unless an optional
+`fallback` parameter is provided. It will be used as a default value if a variable is not found in the given arguments.
 
 ```kt
 val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(
@@ -70,9 +82,16 @@ print(string) // prints "Hello I'm John, and I'm unknown years old."
 ```
 
 The second variant comes in two flavors: `interpolate(vararg args: Any)` and `interpolate(args: List<Any>)`. They take
-a vararg or a list of values, and will replace the variables in the string using their index in the list. The variable
-names in the string must be integers, and in the range of the list. If a variable name is not an integer, or is out of
-bounds, an exception will be thrown.
+a vararg or a list of values, and will replace the variables in the string using their index in the list.
+
+Besides respecting the defined string syntax, the strings interpolated with this variant must have all their variables
+being named according to the following rules:
+
+- The variable name must be a valid integer ;
+- The value of the variable must be between 0 and the number of provided arguments minus 1.
+
+Note that as empty variable names are replaced by the index of the variable, they can be used in this variant, as long
+as they are in the bounds of the number of provided arguments.
 
 ```kt
 val string = "'Hello I'm {0}, and I'm {1} years old.' said {0}.".interpolate(
@@ -95,6 +114,11 @@ val myResolver = VariableResolver { variableName -> variableName.reversed() }
 val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(myResolver)
 print(string) // prints "Hello I'm eman, and I'm ega years old."
 ```
+
+A `VariableResolver`, can define specific rules that accepts a subset of the valid variable names (e.g. the vararg
+variant only accepts integers). If a variable name is not accepted by the resolver, it should throw the
+`VariableResolver.ResolutionException` exception. This exception will be caught by the interpolation functions to
+provide a more meaningful error message.
 
 ## CloseableScope
 
