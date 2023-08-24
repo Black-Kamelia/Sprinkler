@@ -26,6 +26,7 @@ fun String.interpolate(resolver: VariableResolver): String {
     val builder = StringBuilder() // final string builder
     var state = State.DEFAULT // current state of the parser
     var keyBuilder = StringBuilder() // builder used to build the key of the variable
+    var variableCount = 0 // number of variables encountered to resolve empty names
 
     forEachIndexed { index, char ->
         when (state) {
@@ -42,15 +43,22 @@ fun String.interpolate(resolver: VariableResolver): String {
             }
             State.IN_CURLY -> {
                 if ('}' == char) { // end of the variable
-                    val key = keyBuilder.toString()
+                    val key = if (keyBuilder.isEmpty()) { // if the key is empty, use the variable count
+                        variableCount.toString()
+                    } else {
+                        keyBuilder.toString()
+                    }
+
                     val value = try { // try to resolve the variable
                         resolver.value(key)
                     } catch (e: VariableResolver.ResolutionException) {
                         illegalArgument("Error while resolving variable '$key': ${e.message!!}")
                     }
+
                     builder.append(value)
                     keyBuilder = StringBuilder()
                     state = State.DEFAULT
+                    variableCount++
                 } else { // append the current character to the key
                     require(char.isLetterOrDigit() || '_' == char || '-' == char) {
                         "Unexpected character '$char' in interpolated value near character ${index + 1}"
