@@ -15,6 +15,11 @@ import java.util.*
  */
 interface Translator {
 
+    val rootKey: String?
+
+    val isRoot: Boolean
+        get() = rootKey == null
+
     val defaultLocale: Locale
 
     fun translate(key: String, locale: Locale): String
@@ -32,7 +37,7 @@ interface Translator {
 }
 
 internal class TranslatorImpl private constructor(
-    private val rootKey: String?,
+    override val rootKey: String?,
     override val defaultLocale: Locale,
     private val children: Map<Locale, Map<String, Any>>,
 ) : Translator {
