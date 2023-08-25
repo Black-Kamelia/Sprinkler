@@ -3,45 +3,170 @@ package com.kamelia.sprinkler.i18n
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.kamelia.sprinkler.util.illegalArgument
 import com.kamelia.sprinkler.util.unsafeCast
+import com.zwendo.restrikt.annotation.PackagePrivate
 import org.yaml.snakeyaml.Yaml
 import java.io.File
 import java.util.*
 
 /**
- * - key syntax
- * - accepted value types (string, map, list)
- * - flattening
+ * Interface representing an object that can be used to translate strings. Through [translate] method (and its
+ * shorthand [t]), a key can be translated using a [Locale].
  *
+ * Keys are represented as strings, and must respect the following syntax:
+ * - A key is composed of one or more key **identifiers** separated by a **dot** ;
+ * - **Identifiers** must be **at least one character long**, **start and end** with an **alphanumeric character**, and can contain
+ * **alphanumeric characters**, **dashes** and **underscores** ;
+ *
+ * For example, the following keys are valid:
+ * - `foo`
+ * - `foo.bar`
+ * - `foo-bar`
+ * - `foo_bar`
+ *
+ * Any other key is invalid and will throw an [IllegalArgumentException] when used to translate a value.
+ *
+ * If a valid key is passed to the [translate] method, the [Translator] will try to find a translation for the given
+ * key and the given locale (depending on the chosen overload it can be the [currentLocale] or the provided locale
+ * parameter). If no translation is found for the given locale, the [defaultLocale] will be used as a fallback. If no
+ * translation is found for the [defaultLocale], an [IllegalArgumentException] will be thrown.
+ *
+ * @see TranslatorBuilder
  */
 interface Translator {
 
-    val rootKey: String?
+    /**
+     * The prefix prepended to all keys used to translate values. If null, the [Translator] is a root [Translator].
+     */
+    val prefix: String?
 
+    /**
+     * Whether this [Translator] is a root [Translator], meaning that no prefix is prepended to the keys used to
+     * translate values.
+     */
     val isRoot: Boolean
-        get() = rootKey == null
+        get() = prefix == null
 
+    /**
+     * The default locale that is used as a fallback when a translation is not found for the current locale.
+     */
     val defaultLocale: Locale
 
+    /**
+     * The current locale used to translate keys.
+     */
     val currentLocale: Locale
 
+    /**
+     * Translates the given key to the given [locale]. If the key is not found for the given [locale] the key will be
+     * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
+     * will be thrown.
+     *
+     * **NOTE**: If [locale] is the [defaultLocale], the fallback step will be skipped in case the key is not found.
+     *
+     * @param key the key to translate
+     * @param locale the locale to translate the key to
+     * @return the translated key
+     * @throws IllegalArgumentException if the key is not [valid][Translator], or if it does not exist for the [locale]
+     * and the [defaultLocale]
+     */
     fun translate(key: String, locale: Locale): String
 
+    /**
+     * Translates the given key to the [currentLocale]. If the key is not found for the [currentLocale] the key will be
+     * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
+     * will be thrown.
+     *
+     * **NOTE**: If the [currentLocale] is the [defaultLocale], the fallback step will be skipped in case the key is not
+     * found.
+     *
+     * @param key the key to translate
+     * @return the translated key
+     * @throws IllegalArgumentException if the key is not [valid][Translator], or if it does not exist for the
+     * [currentLocale] and the [defaultLocale]
+     */
     fun translate(key: String): String = translate(key, currentLocale)
 
+    /**
+     * Returns a new [Translator] with the given [key] as root key. The [key] will be prepended to all keys used to
+     * translate values.
+     *
+     * **NOTE**: This method does not check if the key actually exists in the translations.
+     *
+     * @param key the root key
+     * @return a new [Translator] with the given [key] as root key
+     * @throws IllegalArgumentException if the key is not [valid][Translator]
+     */
     fun section(key: String): Translator
 
+    /**
+     * Translates the given key to the given [locale]. If the key is not found for the given [locale] the key will be
+     * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
+     * will be thrown.
+     *
+     * **NOTE**: If [locale] is the [defaultLocale], the fallback step will be skipped in case the key is not found.
+     *
+     * @param key the key to translate
+     * @param locale the locale to translate the key to
+     * @return the translated key
+     * @throws IllegalArgumentException if the key is not [valid][Translator], or if it does not exist for the [locale]
+     * and the [defaultLocale]
+     */
     fun t(key: String, locale: Locale): String = translate(key, locale)
 
+    /**
+     * Translates the given key to the [currentLocale]. If the key is not found for the [currentLocale] the key will be
+     * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
+     * will be thrown.
+     *
+     * **NOTE**: If the [currentLocale] is the [defaultLocale], the fallback step will be skipped in case the key is not
+     * found.
+     *
+     * @param key the key to translate
+     * @return the translated key
+     * @throws IllegalArgumentException if the key is not [valid][Translator], or if it does not exist for the
+     * [currentLocale] and the [defaultLocale]
+     */
     fun t(key: String): String = translate(key)
 
+    /**
+     * Returns a map containing all translations for all locales.
+     *
+     * **NOTE**: If this [Translator] is a section, only the translations for the keys under the section will be
+     * returned.
+     *
+     * @return a map containing all translations for all locales
+     */
     fun toMap(): Map<Locale, Map<String, String>>
 
+    /**
+     * Returns a pretty-printed string representation of this [Translator] for the given [locale].
+     *
+     * @param locale the locale to use to translate the keys
+     * @return a pretty-printed string representation of this [Translator]
+     */
     fun prettyDisplay(locale: Locale): String
 
+    /**
+     * Returns a new [Translator] with the given [locale] as current locale. This operation is lightweight (it simply
+     * translation map is shared between all instances), meaning that it can be used frequently without any performance
+     * impact.
+     *
+     * **NOTE**: This method does not check if the [locale] is actually supported by this [Translator].
+     *
+     * @param locale the new current locale
+     * @return a new [Translator] with the given [locale] as current locale
+     */
     fun withNewCurrentLocale(locale: Locale): Translator
 
     companion object {
 
+        /**
+         * Returns a new [TranslatorBuilder] with the given [defaultLocale]. The [defaultLocale] will be used as the
+         * default locale for all [Translator]s built by the returned [TranslatorBuilder].
+         *
+         * @param defaultLocale the default locale
+         * @return a new [TranslatorBuilder] with the given [defaultLocale]
+         */
         @JvmStatic
         fun builder(defaultLocale: Locale): TranslatorBuilder = TranslatorBuilder(defaultLocale)
 
@@ -49,8 +174,9 @@ interface Translator {
 
 }
 
+@PackagePrivate
 internal class TranslatorImpl private constructor(
-    override val rootKey: String?,
+    override val prefix: String?,
     override val defaultLocale: Locale,
     override val currentLocale: Locale,
     private val translations: Map<Locale, Map<String, String>>,
@@ -67,7 +193,7 @@ internal class TranslatorImpl private constructor(
         require(FULL_KEY_REGEX.matches(key)) {
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
-        val actualKey = rootKey?.let { "$it.$key" } ?: key
+        val actualKey = prefix?.let { "$it.$key" } ?: key
         return try {
             innerTranslate(actualKey, locale)
         } catch (e: NotFoundException) {
@@ -79,7 +205,7 @@ internal class TranslatorImpl private constructor(
         require(FULL_KEY_REGEX.matches(key)) {
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
-        val newRootKey = rootKey?.let { "$it.$key" } ?: key
+        val newRootKey = prefix?.let { "$it.$key" } ?: key
         return TranslatorImpl(newRootKey, currentLocale, defaultLocale, translations)
     }
 
@@ -91,7 +217,7 @@ internal class TranslatorImpl private constructor(
                 }
             }
         }
-        val root = rootKey!!
+        val root = prefix!!
         return buildMap {
             translations.forEach { (locale, map) ->
                 put(locale, map.filter { (key, _) -> key.startsWith(root) })
@@ -102,11 +228,10 @@ internal class TranslatorImpl private constructor(
     override fun prettyDisplay(locale: Locale): String {
         val map = translations[locale] ?: return "{}"
         val dumpMap = HashMap<String, Any>()
-        val root = rootKey ?: ""
+        val root = prefix ?: ""
         val rootLength = root.split('.').size - 1
         map.asSequence()
             .filter { it.key.startsWith(root) }
-            .sortedBy { it.key }
             .forEach { (key, value) ->
                 val split = key.split('.')
                 var currentMap = dumpMap
@@ -128,7 +253,7 @@ internal class TranslatorImpl private constructor(
     }
 
     override fun withNewCurrentLocale(locale: Locale): Translator =
-        TranslatorImpl(rootKey, defaultLocale, locale, translations)
+        TranslatorImpl(prefix, defaultLocale, locale, translations)
 
 
     private fun innerTranslate(key: String, locale: Locale): String {
@@ -142,7 +267,7 @@ internal class TranslatorImpl private constructor(
     }
 
     override fun toString(): String =
-        "Translator(rootKey=$rootKey, defaultLocale=$defaultLocale, translations=$translations)"
+        "Translator(rootKey=$prefix, defaultLocale=$defaultLocale, translations=$translations)"
 
 
 }
