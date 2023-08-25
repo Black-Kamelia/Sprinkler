@@ -26,9 +26,13 @@ interface Translator {
 
     fun translate(key: String, locale: Locale): String
 
+    fun translate(key: String): String = translate(key, currentLocale)
+
     fun section(key: String): Translator
 
     fun t(key: String, locale: Locale): String = translate(key, locale)
+
+    fun t(key: String): String = translate(key)
 
     fun toMap(): Map<Locale, Map<String, String>>
 
