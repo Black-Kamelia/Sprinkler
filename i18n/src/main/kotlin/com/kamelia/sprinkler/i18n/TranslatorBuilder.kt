@@ -24,11 +24,6 @@ class TranslatorBuilder internal constructor(
     private val translatorContent = ArrayList<TranslationResourceInformation>()
 
     /**
-     * How values are stored in the map.
-     */
-    private var keyStoragePolicy = KeyStoragePolicy.FLAT
-
-    /**
      * How to handle duplicate keys.
      */
     private var duplicateKeyResolution = DuplicateKeyResolution.FAIL
@@ -53,14 +48,9 @@ class TranslatorBuilder internal constructor(
         }
     }
 
-    fun withKeyStoragePolicy(policy: KeyStoragePolicy): TranslatorBuilder = apply {
-        keyStoragePolicy = policy
+    fun duplicateKeyResolutionPolicy(duplicateKeyResolution: DuplicateKeyResolution): TranslatorBuilder = apply {
+        this.duplicateKeyResolution = duplicateKeyResolution
     }
-
-    fun duplicateKeyResolutionPolicy(duplicateKeyResolution: DuplicateKeyResolution): TranslatorBuilder =
-        apply {
-            this.duplicateKeyResolution = duplicateKeyResolution
-        }
 
     fun build(): Translator {
         val finalMap = HashMap<Locale, HashMap<String, Any>>()
@@ -77,13 +67,6 @@ class TranslatorBuilder internal constructor(
             }
         }
         return TranslatorImpl(defaultLocale, finalMap.unsafeCast())
-    }
-
-    enum class KeyStoragePolicy {
-        FLAT,
-        NESTED,
-        FLAT_AND_NESTED,
-        ;
     }
 
     enum class DuplicateKeyResolution {
@@ -115,14 +98,6 @@ class TranslatorBuilder internal constructor(
     }
 
     private fun addValue(finalMap: HashMap<String, Any>, rootKey: String, element: Any) {
-        when (keyStoragePolicy) {
-            KeyStoragePolicy.FLAT -> addFlattenedValue(finalMap, rootKey, element)
-            KeyStoragePolicy.NESTED -> TODO()
-            KeyStoragePolicy.FLAT_AND_NESTED -> TODO()
-        }
-    }
-
-    private fun addFlattenedValue(finalMap: HashMap<String, Any>, rootKey: String, element: Any) {
         val toFlatten = ArrayDeque<Pair<String, Any>>()
         toFlatten.addLast(rootKey to element)
 
@@ -132,9 +107,11 @@ class TranslatorBuilder internal constructor(
                 is Map<*, *> -> current.unsafeCast<Map<String, Any>>().forEach { (subKey, subValue) ->
                     toFlatten.addLast("$key.$subKey" to subValue)
                 }
+
                 is List<*> -> current.unsafeCast<List<Any>>().forEachIndexed { index, it ->
                     toFlatten.addLast("$key.$index" to it)
                 }
+
                 is String, is Number, is Boolean -> finalMap[key] = current.toString()
                 else -> error("Unsupported type ${current::class.simpleName}. For more details about supported types, see Translator interface documentation.")
             }
@@ -154,7 +131,6 @@ class TranslatorBuilder internal constructor(
             listOf(locale to info.parser.parseFile(info.path, info.fromResources))
         }
 
-
 }
 
 
@@ -163,7 +139,7 @@ private sealed interface TranslationResourceInformation
 private class LoadedFileInfo(
     val path: Path,
     val fromResources: Boolean,
-    val parser: I18nFileParser
+    val parser: I18nFileParser,
 ) : TranslationResourceInformation
 
 private class LoadedMap(val locale: Locale, val map: Map<String, Any>) : TranslationResourceInformation
