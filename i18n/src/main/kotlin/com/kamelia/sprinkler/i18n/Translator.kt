@@ -37,11 +37,14 @@ internal class TranslatorImpl private constructor(
     override fun section(key: String): Translator = TranslatorImpl(key, defaultLocale, children)
 
     override fun translate(key: String, locale: Locale): String {
+        require(FULL_KEY_REGEX.matches(key)) {
+            "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
+        }
         val actualKey = rootKey?.let { "$it.$key" } ?: key
         return try {
             innerTranslate(actualKey, locale)
         } catch (e: IllegalArgumentException) {
-            illegalArgument("Key '$actualKey' not found for locale '$locale'")
+            illegalArgument("Key '$actualKey' not found for locale '$locale'.")
         }
     }
 
@@ -69,9 +72,8 @@ internal class TranslatorImpl private constructor(
     }
 
     override fun toString(): String {
-        return "TranslatorImpl(rootKey=$rootKey, defaultLocale=$defaultLocale, children=$children)"
+        return "Translator(rootKey=$rootKey, defaultLocale=$defaultLocale, children=$children)"
     }
-
 
 }
 

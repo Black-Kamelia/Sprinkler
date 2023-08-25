@@ -82,7 +82,7 @@ class TranslatorBuilder internal constructor(
         val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
         map.forEach { (key, value) ->
             check(KEY_IDENTIFIER_REGEX.matches(key)) {
-                "Invalid key $key" // TODO add more info about the key syntax
+                "Invalid key $key for locale '$locale'. For more details about key syntax, see Translator interface documentation."
             }
             val old = localeMap[key]
             when (duplicateKeyResolutionPolicy) {
@@ -149,5 +149,3 @@ private fun parseLocale(name: String): Locale = Locale
     .Builder()
     .setLanguageTag(name.replace('_', '-'))
     .build()
-
-private val KEY_IDENTIFIER_REGEX = """[a-zA-Z0-9]([a-zA-Z0-9_-]*[a-zA-Z0-9])?""".toRegex()
