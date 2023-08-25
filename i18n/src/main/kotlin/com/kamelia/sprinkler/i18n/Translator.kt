@@ -95,7 +95,7 @@ fun main() {
         .addFile(File("translations"), yamlParser())
         .addMap(Locale.CHINESE, mapOf("color" to "bingchilling"))
         .addMap(Locale.CHINESE, mapOf("color" to "bingchilling2"))
-        .duplicateKeyResolutionPolicy(TranslatorBuilder.DuplicateKeyResolutionPolicy.KEEP_FIRST)
+        .duplicateKeyResolutionPolicy(TranslatorBuilder.DuplicateKeyResolution.KEEP_FIRST)
         .build()
     println(translator.translate("color", Locale.ENGLISH))
 }
