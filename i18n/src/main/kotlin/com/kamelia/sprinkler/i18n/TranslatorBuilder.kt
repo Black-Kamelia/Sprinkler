@@ -28,6 +28,11 @@ class TranslatorBuilder internal constructor(
      */
     private var duplicateKeyResolution = DuplicateKeyResolution.FAIL
 
+    /**
+     * The current locale that will be used to create the translator.
+     */
+    private var currentLocale = defaultLocale
+
     @JvmOverloads
     fun addPath(
         path: Path,
@@ -70,6 +75,10 @@ class TranslatorBuilder internal constructor(
         this.duplicateKeyResolution = duplicateKeyResolution
     }
 
+    fun withCurrentLocale(locale: Locale): TranslatorBuilder = apply {
+        currentLocale = locale
+    }
+
     enum class DuplicateKeyResolution {
         FAIL,
         KEEP_FIRST,
@@ -96,7 +105,7 @@ class TranslatorBuilder internal constructor(
                 is LoadedMap -> addToMap(finalMap, it.locale, it.map)
             }
         }
-        return TranslatorImpl(defaultLocale, finalMap.unsafeCast())
+        return TranslatorImpl(defaultLocale, currentLocale, finalMap.unsafeCast())
     }
 
     private fun addToMap(finalMap: HashMap<Locale, HashMap<String, Any>>, locale: Locale, map: Map<String, Any>) {
@@ -127,7 +136,7 @@ class TranslatorBuilder internal constructor(
         while (toFlatten.isNotEmpty()) {
             val (key, current) = toFlatten.removeFirst()
             when (current) {
-                is Map<*, *> -> current.unsafeCast<Map<String, Any>>().forEach { (subKey, subValue) ->
+                is Map<*, *> -> current.unsafeCast<Map<Any, Any>>().forEach { (subKey, subValue) ->
                     toFlatten.addLast("$key.$subKey" to subValue)
                 }
 
