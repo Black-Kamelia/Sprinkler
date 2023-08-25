@@ -12,6 +12,11 @@ import java.util.*
  * - key syntax
  * - accepted value types (string, map, list)
  * - flattening
+ * - accept a functional interface in builder addPath methods that resolvers the locale using the path name
+ *
+ * - add a property which returns the root translator => reference to the root in subsections
+ * - map method that returns a copy of the inner map ? (does it filter only the keys of the section represented by the
+ *  translator ?)
  */
 interface Translator {
 
@@ -30,6 +35,7 @@ interface Translator {
 
     companion object {
 
+        @JvmStatic
         fun builder(defaultLocale: Locale): TranslatorBuilder = TranslatorBuilder(defaultLocale)
 
     }
