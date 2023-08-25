@@ -10,19 +10,13 @@ import java.util.*
 
 interface Translator {
 
-    var currentLocale: Locale
-
     val defaultLocale: Locale
 
     fun translate(key: String, locale: Locale): String
 
-    fun translate(key: String): String = translate(key, currentLocale)
-
     fun section(key: String): Translator
 
     fun t(key: String, locale: Locale): String = translate(key, locale)
-
-    fun t(key: String): String = translate(key)
 
     companion object {
 
@@ -38,8 +32,6 @@ internal class TranslatorImpl private constructor(
     private val children: Map<Locale, Map<String, Any>>,
 ) : Translator {
 
-    override var currentLocale: Locale = defaultLocale
-
     constructor(defaultLocale: Locale, children: Map<Locale, Map<String, Any>>) : this(null, defaultLocale, children)
 
     override fun section(key: String): Translator = TranslatorImpl(key, defaultLocale, children)
@@ -53,10 +45,7 @@ internal class TranslatorImpl private constructor(
         }
     }
 
-    private fun innerTranslate(
-        key: String,
-        locale: Locale,
-    ): String {
+    private fun innerTranslate(key: String, locale: Locale): String {
         val localeMap = children[locale] ?: return tryFallback(key, locale)
         val fastResult = localeMap[key]
         if (fastResult != null) {
@@ -100,6 +89,5 @@ fun main() {
         .addMap(Locale.CHINESE, mapOf("color" to "bingchilling2"))
         .duplicateKeyResolutionPolicy(TranslatorBuilder.DuplicateKeyResolutionPolicy.KEEP_FIRST)
         .build()
-    translator.currentLocale = Locale.CHINESE
-    println(translator.translate("color"))
+    println(translator.translate("color", Locale.ENGLISH))
 }
