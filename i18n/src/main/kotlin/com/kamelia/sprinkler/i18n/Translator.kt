@@ -59,7 +59,7 @@ internal class TranslatorImpl private constructor(
         val actualKey = rootKey?.let { "$it.$key" } ?: key
         return try {
             innerTranslate(actualKey, locale)
-        } catch (e: IllegalArgumentException) {
+        } catch (e: NotFoundException) {
             illegalArgument("Key '$actualKey' not found for locale '$locale'.")
         }
     }
@@ -70,16 +70,16 @@ internal class TranslatorImpl private constructor(
     }
 
     private fun tryFallback(key: String, locale: Locale): String {
-        require(defaultLocale != locale)
+        if (defaultLocale == locale) throw NotFoundException
         return innerTranslate(key, defaultLocale)
     }
 
-    override fun toString(): String {
-        return "Translator(rootKey=$rootKey, defaultLocale=$defaultLocale, translations=$translations)"
-    }
+    override fun toString(): String =
+        "Translator(rootKey=$rootKey, defaultLocale=$defaultLocale, translations=$translations)"
 
 }
 
+private object NotFoundException : RuntimeException(null, null, false, false)
 
 fun jsonParser(): I18nFileParser = I18nFileParser.from { content ->
     ObjectMapper().readValue(content, HashMap::class.java).unsafeCast()
