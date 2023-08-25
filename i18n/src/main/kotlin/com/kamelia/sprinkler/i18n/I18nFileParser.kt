@@ -19,7 +19,7 @@ import java.nio.file.Path
  * @see Translator
  * @see TranslatorBuilder.addPath
  */
-interface I18nFileParser {
+fun interface I18nFileParser {
 
     /**
      * Parses the file at the given path and returns a map of the parsed data.
@@ -31,9 +31,8 @@ interface I18nFileParser {
     companion object {
 
         @JvmStatic
-        fun from(mapper: (String) -> Map<String, Any>): I18nFileParser = object : I18nFileParser {
-
-            override fun parseFile(path: Path, fromResources: Boolean): Map<String, Any> {
+        fun from(mapper: (String) -> Map<String, Any>): I18nFileParser =
+            I18nFileParser { path, fromResources ->
                 val file = if (fromResources) {
                     val uri = I18nFileParser::class.java.getResource(path.toString())?.toURI()
                         ?: illegalArgument("No file found in resources, at $path.")
@@ -48,10 +47,8 @@ interface I18nFileParser {
                 if (!file.isFile) {
                     illegalArgument("Element at $path is not a file.")
                 }
-                return mapper(file.readText())
+                mapper(file.readText())
             }
-
-        }
 
     }
 
