@@ -34,7 +34,13 @@ internal class TranslatorImpl private constructor(
 
     constructor(defaultLocale: Locale, children: Map<Locale, Map<String, Any>>) : this(null, defaultLocale, children)
 
-    override fun section(key: String): Translator = TranslatorImpl(key, defaultLocale, children)
+    override fun section(key: String): Translator {
+        require(FULL_KEY_REGEX.matches(key)) {
+            "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
+        }
+        val newRootKey = rootKey?.let { "$it.$key" } ?: key
+        return TranslatorImpl(newRootKey, defaultLocale, children)
+    }
 
     override fun translate(key: String, locale: Locale): String {
         require(FULL_KEY_REGEX.matches(key)) {
