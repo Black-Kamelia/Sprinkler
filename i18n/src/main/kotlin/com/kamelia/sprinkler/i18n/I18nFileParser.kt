@@ -7,7 +7,7 @@ interface I18nFileParser {
 
     fun parseFile(path: Path, fromResources: Boolean): Map<String, Any>
 
-    fun parseFile(path: Path): Map<String, Any> = parseFile(path, false)
+    fun parseFile(path: Path): Map<String, Any> = parseFile(path, true)
 
     companion object {
 
