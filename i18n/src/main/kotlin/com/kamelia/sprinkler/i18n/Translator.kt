@@ -8,6 +8,11 @@ import org.yaml.snakeyaml.Yaml
 import java.io.File
 import java.util.*
 
+/**
+ * - key syntax
+ * - accepted value types (string, map, list)
+ * - flattening
+ */
 interface Translator {
 
     val defaultLocale: Locale

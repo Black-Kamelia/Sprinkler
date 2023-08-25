@@ -52,28 +52,33 @@ class TranslatorBuilder internal constructor(
         this.duplicateKeyResolution = duplicateKeyResolution
     }
 
+    enum class DuplicateKeyResolution {
+        FAIL,
+        KEEP_FIRST,
+        KEEP_LAST,
+        ;
+    }
+
     fun build(): Translator {
         val finalMap = HashMap<Locale, HashMap<String, Any>>()
         translatorContent.forEach {
             when (it) { // switch on different types of TranslationResourceInformation
                 // if it is a LoadedFileInfo, we need to load the file or if it is a directory, load all files in it
                 // and add them to the final map
-                is LoadedFileInfo -> loadPath(it).forEach { (locale, map) ->
-                    addToMap(finalMap, locale, map)
+                is LoadedFileInfo -> {
+                    try {
+                        loadPath(it).forEach { (locale, map) ->
+                            addToMap(finalMap, locale, map)
+                        }
+                    } catch (e: IllformedLocaleException) {
+                        error("Invalid locale for file '${it.path}'. File name must be a valid locale.")
+                    }
                 }
-
                 // if it is a LoadedMap, we can directly add it to the final map
                 is LoadedMap -> addToMap(finalMap, it.locale, it.map)
             }
         }
         return TranslatorImpl(defaultLocale, finalMap.unsafeCast())
-    }
-
-    enum class DuplicateKeyResolution {
-        FAIL,
-        KEEP_FIRST,
-        KEEP_LAST,
-        ;
     }
 
     private fun addToMap(finalMap: HashMap<Locale, HashMap<String, Any>>, locale: Locale, map: Map<String, Any>) {
@@ -107,11 +112,9 @@ class TranslatorBuilder internal constructor(
                 is Map<*, *> -> current.unsafeCast<Map<String, Any>>().forEach { (subKey, subValue) ->
                     toFlatten.addLast("$key.$subKey" to subValue)
                 }
-
                 is List<*> -> current.unsafeCast<List<Any>>().forEachIndexed { index, it ->
                     toFlatten.addLast("$key.$index" to it)
                 }
-
                 is String, is Number, is Boolean -> finalMap[key] = current.toString()
                 else -> error("Unsupported type ${current::class.simpleName}. For more details about supported types, see Translator interface documentation.")
             }
