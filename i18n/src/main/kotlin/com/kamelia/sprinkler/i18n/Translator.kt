@@ -39,7 +39,7 @@ interface Translator {
 internal class TranslatorImpl private constructor(
     override val rootKey: String?,
     override val defaultLocale: Locale,
-    private val children: Map<Locale, Map<String, Any>>,
+    private val translations: Map<Locale, Map<String, Any>>,
 ) : Translator {
 
     constructor(defaultLocale: Locale, children: Map<Locale, Map<String, Any>>) : this(null, defaultLocale, children)
@@ -49,7 +49,7 @@ internal class TranslatorImpl private constructor(
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
         val newRootKey = rootKey?.let { "$it.$key" } ?: key
-        return TranslatorImpl(newRootKey, defaultLocale, children)
+        return TranslatorImpl(newRootKey, defaultLocale, translations)
     }
 
     override fun translate(key: String, locale: Locale): String {
@@ -65,21 +65,8 @@ internal class TranslatorImpl private constructor(
     }
 
     private fun innerTranslate(key: String, locale: Locale): String {
-        val localeMap = children[locale] ?: return tryFallback(key, locale)
-        val fastResult = localeMap[key]
-        if (fastResult != null) {
-            return fastResult.castOrNull<String>() ?: return tryFallback(key, locale)
-        }
-
-        val keyParts = key.split('.').iterator()
-
-        var current = localeMap[keyParts.next()] ?: return tryFallback(key, locale)
-        while (keyParts.hasNext()) {
-            current = current.castOrNull<Map<String, Any>>()
-                ?.get(keyParts.next())
-                ?: return tryFallback(key, locale)
-        }
-        return current.castOrNull<String>() ?: tryFallback(key, locale)
+        val localeMap = translations[locale] ?: return tryFallback(key, locale)
+        return localeMap[key].castOrNull<String>() ?: tryFallback(key, locale)
     }
 
     private fun tryFallback(key: String, locale: Locale): String {
@@ -88,7 +75,7 @@ internal class TranslatorImpl private constructor(
     }
 
     override fun toString(): String {
-        return "Translator(rootKey=$rootKey, defaultLocale=$defaultLocale, children=$children)"
+        return "Translator(rootKey=$rootKey, defaultLocale=$defaultLocale, translations=$translations)"
     }
 
 }
