@@ -12,8 +12,6 @@ import java.util.*
  * - accepted value types (string, map, list)
  * - flattening
  *
- *
- * - accept a functional interface in builder addPath methods that resolvers the locale using the path name
  */
 interface Translator {
 

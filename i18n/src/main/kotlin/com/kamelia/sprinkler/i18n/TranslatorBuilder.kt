@@ -28,18 +28,36 @@ class TranslatorBuilder internal constructor(
      */
     private var duplicateKeyResolution = DuplicateKeyResolution.FAIL
 
-    fun addPath(path: Path, parser: I18nFileParser, fromResources: Boolean = false): TranslatorBuilder = apply {
+    @JvmOverloads
+    fun addPath(
+        path: Path,
+        parser: I18nFileParser,
+        fromResources: Boolean = false,
+        localeMapper: (String) -> Locale = ::parseLocale,
+    ): TranslatorBuilder = apply {
         val isNew = addedPaths.add(path to fromResources)
         require(isNew) { "Path $path ${if (fromResources) "(from resources)" else ""} already added" }
-        translatorContent += LoadedFileInfo(path, fromResources, parser)
+        translatorContent += LoadedFileInfo(path, fromResources, parser, localeMapper)
     }
 
-    fun addFile(file: File, parser: I18nFileParser, fromResources: Boolean = false): TranslatorBuilder = apply {
-        addPath(file.toPath(), parser, fromResources)
+    @JvmOverloads
+    fun addFile(
+        file: File,
+        parser: I18nFileParser,
+        fromResources: Boolean = false,
+        localeMapper: (String) -> Locale = ::parseLocale,
+    ): TranslatorBuilder = apply {
+        addPath(file.toPath(), parser, fromResources, localeMapper)
     }
 
     fun addMap(locale: Locale, map: Map<String, Any>): TranslatorBuilder = apply {
         translatorContent += LoadedMap(locale, map)
+    }
+
+    fun addTranslator(translator: Translator): TranslatorBuilder = apply {
+        translator.toMap().forEach { (locale, map) ->
+            addMap(locale, map)
+        }
     }
 
     fun addMaps(maps: Map<Locale, Map<String, Any>>): TranslatorBuilder = apply {
@@ -112,9 +130,11 @@ class TranslatorBuilder internal constructor(
                 is Map<*, *> -> current.unsafeCast<Map<String, Any>>().forEach { (subKey, subValue) ->
                     toFlatten.addLast("$key.$subKey" to subValue)
                 }
+
                 is List<*> -> current.unsafeCast<List<Any>>().forEachIndexed { index, it ->
                     toFlatten.addLast("$key.$index" to it)
                 }
+
                 is String, is Number, is Boolean -> finalMap[key] = current.toString()
                 else -> error("Unsupported type ${current::class.simpleName}. For more details about supported types, see Translator interface documentation.")
             }
@@ -125,12 +145,12 @@ class TranslatorBuilder internal constructor(
         if (info.path.isDirectory()) { // if the path is a directory, load all files in it and return the list
             Files.list(info.path)
                 .map {
-                    val locale = parseLocale(it.nameWithoutExtension)
+                    val locale = info.localeMapper(it.nameWithoutExtension)
                     locale to info.parser.parseFile(it, info.fromResources)
                 }
                 .toList()
         } else { // if the path is a file, load it and store it in a one element list
-            val locale = parseLocale(info.path.nameWithoutExtension)
+            val locale = info.localeMapper(info.path.nameWithoutExtension)
             listOf(locale to info.parser.parseFile(info.path, info.fromResources))
         }
 
@@ -143,6 +163,7 @@ private class LoadedFileInfo(
     val path: Path,
     val fromResources: Boolean,
     val parser: I18nFileParser,
+    val localeMapper: (String) -> Locale,
 ) : TranslationResourceInformation
 
 private class LoadedMap(val locale: Locale, val map: Map<String, Any>) : TranslationResourceInformation
