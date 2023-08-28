@@ -194,11 +194,16 @@ internal class TranslatorImpl private constructor(
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
         val actualKey = prefix?.let { "$it.$key" } ?: key
-        return try {
-            innerTranslate(actualKey, locale)
-        } catch (e: NotFoundException) {
-            illegalArgument("Key '$actualKey' not found for locale '$locale'.")
+
+        val value = translations[locale]?.get(actualKey)
+        if (value != null) return value
+
+        if (defaultLocale != currentLocale) {
+            val fallback = translations[defaultLocale]?.get(actualKey)
+            if (fallback != null) return fallback
         }
+
+        illegalArgument("Key '$actualKey' not found for locale '$locale'.")
     }
 
     override fun section(key: String): Translator {
@@ -255,17 +260,6 @@ internal class TranslatorImpl private constructor(
     override fun withNewCurrentLocale(locale: Locale): Translator =
         TranslatorImpl(prefix, defaultLocale, locale, translations)
 
-
-    private fun innerTranslate(key: String, locale: Locale): String {
-        val localeMap = translations[locale] ?: return tryFallback(key, locale)
-        return localeMap[key] ?: tryFallback(key, locale)
-    }
-
-    private fun tryFallback(key: String, locale: Locale): String {
-        if (defaultLocale == locale) throw NotFoundException
-        return innerTranslate(key, defaultLocale)
-    }
-
     override fun toString(): String {
         val actualTranslations = if (isRoot) {
             translations
@@ -293,8 +287,6 @@ internal class TranslatorImpl private constructor(
     override fun hashCode(): Int = Objects.hash(prefix, defaultLocale, currentLocale, translations)
 
 }
-
-private object NotFoundException : RuntimeException(null, null, false, false)
 
 fun jsonParser(): I18nFileParser = I18nFileParser.from { content ->
     ObjectMapper().readValue(content, HashMap::class.java).unsafeCast()
