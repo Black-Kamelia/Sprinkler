@@ -16,7 +16,7 @@ class TranslatorBuilder internal constructor(
     /**
      * Set of already added path to avoid duplicates.
      */
-    private val addedPaths = HashSet<Pair<Path, Boolean>>()
+    private val addedPaths = HashSet<Path>()
 
     /**
      * List of all data that will be used to build the translator.
@@ -37,22 +37,20 @@ class TranslatorBuilder internal constructor(
     fun addPath(
         path: Path,
         parser: I18nFileParser,
-        fromResources: Boolean = false,
         localeMapper: (String) -> Locale = ::parseLocale,
     ): TranslatorBuilder = apply {
-        val isNew = addedPaths.add(path to fromResources)
-        require(isNew) { "Path $path ${if (fromResources) "(from resources)" else ""} already added" }
-        translatorContent += LoadedFileInfo(path, fromResources, parser, localeMapper)
+        val isNew = addedPaths.add(path)
+        require(isNew) { "Path $path already added" }
+        translatorContent += LoadedFileInfo(path, parser, localeMapper)
     }
 
     @JvmOverloads
     fun addFile(
         file: File,
         parser: I18nFileParser,
-        fromResources: Boolean = false,
         localeMapper: (String) -> Locale = ::parseLocale,
     ): TranslatorBuilder = apply {
-        addPath(file.toPath(), parser, fromResources, localeMapper)
+        addPath(file.toPath(), parser, localeMapper)
     }
 
     fun addMap(locale: Locale, map: Map<String, Any>): TranslatorBuilder = apply {
@@ -155,12 +153,12 @@ class TranslatorBuilder internal constructor(
             Files.list(info.path)
                 .map {
                     val locale = info.localeMapper(it.nameWithoutExtension)
-                    locale to info.parser.parseFile(it, info.fromResources)
+                    locale to info.parser.parseFile(it)
                 }
                 .toList()
         } else { // if the path is a file, load it and store it in a one element list
             val locale = info.localeMapper(info.path.nameWithoutExtension)
-            listOf(locale to info.parser.parseFile(info.path, info.fromResources))
+            listOf(locale to info.parser.parseFile(info.path))
         }
 
 }
@@ -170,7 +168,6 @@ private sealed interface TranslationResourceInformation
 
 private class LoadedFileInfo(
     val path: Path,
-    val fromResources: Boolean,
     val parser: I18nFileParser,
     val localeMapper: (String) -> Locale,
 ) : TranslationResourceInformation

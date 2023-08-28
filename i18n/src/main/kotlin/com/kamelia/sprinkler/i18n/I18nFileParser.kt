@@ -1,8 +1,7 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.util.illegalArgument
-import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.readText
 
 /**
  * Parser for i18n files. This interface serves as an abstraction layer between the library and the file format used.
@@ -22,33 +21,26 @@ import java.nio.file.Path
 fun interface I18nFileParser {
 
     /**
-     * Parses the file at the given path and returns a map of the parsed data.
+     * Parses the file at the given path and returns a map of the parsed data. The returned map must be structured as
+     * stated in this [interface][I18nFileParser] documentation.
+     *
+     * @param path the path to the file to parse
+     * @return the map of the parsed data
      */
-    fun parseFile(path: Path, fromResources: Boolean): Map<String, Any>
-
-    fun parseFile(path: Path): Map<String, Any> = parseFile(path, true)
+    fun parseFile(path: Path): Map<String, Any>
 
     companion object {
 
+        /**
+         * Creates a new [I18nFileParser] that loads the whole file and parses it using the provided mapper. The mapper
+         * is a simple function that takes the file content as a string and returns a map of the parsed data. The
+         * returned map must be structured as stated in this [interface][I18nFileParser] documentation.
+         *
+         * @param mapper the mapper to use to parse the file
+         * @return the created [I18nFileParser]
+         */
         @JvmStatic
-        fun from(mapper: (String) -> Map<String, Any>): I18nFileParser =
-            I18nFileParser { path, fromResources ->
-                val file = if (fromResources) {
-                    val uri = I18nFileParser::class.java.getResource(path.toString())?.toURI()
-                        ?: illegalArgument("No file found in resources, at $path.")
-                    File(uri)
-                } else {
-                    val f = path.toFile()
-                    if (!f.exists()) {
-                        illegalArgument("No file found at $path.")
-                    }
-                    f
-                }
-                if (!file.isFile) {
-                    illegalArgument("Element at $path is not a file.")
-                }
-                mapper(file.readText())
-            }
+        fun from(mapper: (String) -> Map<String, Any>): I18nFileParser = I18nFileParser { mapper(it.readText()) }
 
     }
 
