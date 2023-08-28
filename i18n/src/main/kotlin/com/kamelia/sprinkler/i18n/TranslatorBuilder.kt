@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.unsafeCast
+import com.zwendo.restrikt.annotation.PackagePrivate
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -9,7 +10,7 @@ import kotlin.collections.ArrayDeque
 import kotlin.io.path.isDirectory
 import kotlin.io.path.nameWithoutExtension
 
-class TranslatorBuilder internal constructor(
+class TranslatorBuilder @PackagePrivate internal constructor(
     private val defaultLocale: Locale,
 ) {
 
@@ -162,7 +163,6 @@ class TranslatorBuilder internal constructor(
         }
 
 }
-
 
 private sealed interface TranslationResourceInformation
 

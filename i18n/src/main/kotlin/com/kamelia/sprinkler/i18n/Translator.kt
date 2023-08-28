@@ -1,9 +1,5 @@
 package com.kamelia.sprinkler.i18n
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.kamelia.sprinkler.util.unsafeCast
-import org.yaml.snakeyaml.Yaml
-import java.io.File
 import java.util.*
 
 /**
@@ -170,23 +166,4 @@ interface Translator {
 
     }
 
-}
-
-fun jsonParser(): I18nFileParser = I18nFileParser.from { content ->
-    ObjectMapper().readValue(content, HashMap::class.java).unsafeCast()
-}
-
-fun yamlParser(): I18nFileParser = I18nFileParser.from { Yaml().load(it) }
-
-fun main() {
-    val translator = Translator.builder(Locale.FRANCE)
-        .addFile(File("translations"), yamlParser())
-        .build()
-    val translator2 = TranslatorBuilder(Locale.FRANCE)
-        .addFile(File("foo.json"), jsonParser()) { Locale.ENGLISH }
-        .build()
-    val str = translator.section("pages.login").prettyDisplay(Locale.ENGLISH)
-    val str2 = translator2.prettyDisplay(Locale.ENGLISH)
-    println(translator.toMap() == translator2.toMap())
-    println(str2)
 }
