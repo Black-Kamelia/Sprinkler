@@ -1,6 +1,5 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.util.illegalArgument
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.*
@@ -20,7 +19,7 @@ internal class TranslatorImpl private constructor(
         children
     )
 
-    override fun translate(key: String, locale: Locale): String {
+    override fun translateOrNull(key: String, locale: Locale): String? {
         require(FULL_KEY_REGEX.matches(key)) {
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
@@ -34,7 +33,7 @@ internal class TranslatorImpl private constructor(
             if (fallback != null) return fallback
         }
 
-        illegalArgument("Key '$actualKey' not found for locale '$locale'.")
+        return null
     }
 
     override fun section(key: String): Translator {

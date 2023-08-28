@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.util.illegalArgument
 import java.util.*
 
 /**
@@ -50,6 +51,8 @@ interface Translator {
      */
     val currentLocale: Locale
 
+    fun translateOrNull(key: String, locale: Locale): String?
+
     /**
      * Translates the given key to the given [locale]. If the key is not found for the given [locale] the key will be
      * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
@@ -63,7 +66,8 @@ interface Translator {
      * @throws IllegalArgumentException if the key is not [valid][Translator], or if it does not exist for the [locale]
      * and the [defaultLocale]
      */
-    fun translate(key: String, locale: Locale): String
+    fun translate(key: String, locale: Locale): String =
+        translateOrNull(key, locale) ?: illegalArgument("Key '$key' not found for locale '$locale'.")
 
     /**
      * Translates the given key to the [currentLocale]. If the key is not found for the [currentLocale] the key will be
