@@ -266,9 +266,31 @@ internal class TranslatorImpl private constructor(
         return innerTranslate(key, defaultLocale)
     }
 
-    override fun toString(): String =
-        "Translator(rootKey=$prefix, defaultLocale=$defaultLocale, translations=$translations)"
+    override fun toString(): String {
+        val actualTranslations = if (isRoot) {
+            translations
+        } else {
+            val root = prefix!!
+            translations.mapValues { (_, map) ->
+                map.filter { (key, _) -> key.startsWith(root) }
+            }
+        }
+        return "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, translations=$actualTranslations)"
+    }
 
+    override fun equals(other: Any?): Boolean {
+        if (other !is Translator) return false
+        if (prefix != other.prefix || defaultLocale == other.defaultLocale || currentLocale == other.currentLocale) {
+            return false
+        }
+        return if (other is TranslatorImpl) {
+            translations == other.translations
+        } else {
+            toMap() == other.toMap()
+        }
+    }
+
+    override fun hashCode(): Int = Objects.hash(prefix, defaultLocale, currentLocale, translations)
 
 }
 
