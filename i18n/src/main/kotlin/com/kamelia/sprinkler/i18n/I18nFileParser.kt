@@ -6,9 +6,11 @@ import kotlin.io.path.readText
 /**
  * Parser for i18n files. This interface serves as an abstraction layer between the library and the file format used.
  * Implementations of this interface are responsible for parsing the file and returning a map of the parsed data. The
- * map must be structured as follows:
+ * map returned from [parseFile] must be structured as follows:
  *
- * TODO
+ * - Keys should be valid key identifiers, as defined in [Translator].
+ * - Values must be of type [String], [Number], [Boolean], [List] or [Map].
+ * - Lists and maps can only contain the types listed above.
  *
  * Implementing this interface can be useful when the file format is specific (e.g. only a subset of the file is used).
  * When the whole file is used, it is recommended to use [I18nFileParser.from] instead, which loads the whole file and
@@ -17,6 +19,7 @@ import kotlin.io.path.readText
  * @see I18nFileParser.from
  * @see Translator
  * @see TranslatorBuilder.addPath
+ * @see TranslatorBuilder.addFile
  */
 fun interface I18nFileParser {
 
