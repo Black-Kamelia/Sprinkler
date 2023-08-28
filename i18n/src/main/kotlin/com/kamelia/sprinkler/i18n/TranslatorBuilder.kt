@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicateKeyResolution
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.io.File
@@ -10,8 +11,19 @@ import kotlin.collections.ArrayDeque
 import kotlin.io.path.isDirectory
 import kotlin.io.path.nameWithoutExtension
 
+/**
+ * Builder class used to create a [Translator]. This class provides several methods to add data to the translator from
+ * different sources.
+ *
+ * There is several attention points to take into account when using this class:
+ * - Different added sources will only be queried upon the creation of the translator, when calling [build] ;
+ * - The order in which data is added is important, as it will be used during key duplication resolution, depending on
+ * the [DuplicateKeyResolution] used.
+ *
+ * @see Translator
+ */
 class TranslatorBuilder @PackagePrivate internal constructor(
-    private val defaultLocale: Locale,
+    private var defaultLocale: Locale,
 ) {
 
     /**
@@ -34,6 +46,22 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      */
     private var currentLocale = defaultLocale
 
+    /**
+     * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
+     * will be loaded.
+     *
+     * Content will be converted to a map using the given [parser], and the locale of the file will be determined using
+     * the given [localeMapper]. By default, the file name is parsed using [Locale.forLanguageTag].
+     *
+     * This method will throw an [IllegalArgumentException] if the path is already added.
+     *
+     * @param path the path to load
+     * @param parser the parser to use to load the file
+     * @param localeMapper the mapper to use to map the file name to a locale (by default, the file name is parsed using
+     * [Locale.forLanguageTag])
+     * @return this builder
+     * @throws IllegalArgumentException if the path is already added
+     */
     @JvmOverloads
     fun addPath(
         path: Path,
@@ -45,6 +73,22 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         translatorContent += LoadedFileInfo(path, parser, localeMapper)
     }
 
+    /**
+     * Adds a file to the builder. If the file is a directory, all files in it will be loaded. If the file is a file, it
+     * will be loaded.
+     *
+     * Content will be converted to a map using the given [parser], and the locale of the file will be determined using
+     * the given [localeMapper]. By default, the file name is parsed using [Locale.forLanguageTag].
+     *
+     * This method will throw an [IllegalArgumentException] if the path is already added.
+     *
+     * @param file the file to load
+     * @param parser the parser to use to load the file
+     * @param localeMapper the mapper to use to map the file name to a locale (by default, the file name is parsed using
+     * [Locale.forLanguageTag])
+     * @return this builder
+     * @throws IllegalArgumentException if the file is already added
+     */
     @JvmOverloads
     fun addFile(
         file: File,
@@ -54,37 +98,107 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         addPath(file.toPath(), parser, localeMapper)
     }
 
+    /**
+     * Adds a map for a locale to the builder. The content of the map will be added to the final translator. The
+     * [locale] parameter will be used as the locale of the map.
+     *
+     * **NOTE**: The [map] should follow rules defined in the [I18nFileParser] documentation.
+     *
+     * @param locale the locale of the map
+     * @param map the map to add
+     * @return this builder
+     */
     fun addMap(locale: Locale, map: Map<String, Any>): TranslatorBuilder = apply {
         translatorContent += LoadedMap(locale, map)
     }
 
-    fun addTranslator(translator: Translator): TranslatorBuilder = apply {
-        translator.toMap().forEach { (locale, map) ->
-            addMap(locale, map)
-        }
-    }
-
+    /**
+     * Adds a map of locales to the builder. The content of the maps will be added to the final translator. The keys of
+     * the [maps] will be used as the locales of the maps. The values of the [maps] will be used as the content of the
+     *
+     * **NOTE**: The [maps] should follow rules defined in the [I18nFileParser] documentation.
+     *
+     * @param maps the maps to add
+     * @return this builder
+     */
     fun addMaps(maps: Map<Locale, Map<String, Any>>): TranslatorBuilder = apply {
         maps.forEach { (locale, map) ->
             addMap(locale, map)
         }
     }
 
+    /**
+     * Adds a translator to the builder. The content of the translator will be added to the final translator.
+     *
+     * @param translator the translator to add
+     * @return this builder
+     * @see Translator.toMap
+     */
+    fun addTranslator(translator: Translator): TranslatorBuilder = apply {
+        translator.toMap().forEach { (locale, map) ->
+            addMap(locale, map)
+        }
+    }
+
+    /**
+     * Sets the duplicate key resolution policy to use when adding data to the builder. By default, the policy is set to
+     * [DuplicateKeyResolution.FAIL].
+     *
+     * @param duplicateKeyResolution the duplicate key resolution policy to use
+     * @return this builder
+     * @see DuplicateKeyResolution
+     */
     fun duplicateKeyResolutionPolicy(duplicateKeyResolution: DuplicateKeyResolution): TranslatorBuilder = apply {
         this.duplicateKeyResolution = duplicateKeyResolution
     }
 
+    /**
+     * Sets the default locale that will be set to the translator upon creation.
+     *
+     * @param locale the default locale to set
+     * @return this builder
+     */
+    fun withDefaultLocale(locale: Locale): TranslatorBuilder = apply {
+        defaultLocale = locale
+    }
+
+    /**
+     * Sets the current locale that will be set to the translator upon creation.
+     *
+     * @param locale the current locale to set
+     * @return this builder
+     */
     fun withCurrentLocale(locale: Locale): TranslatorBuilder = apply {
         currentLocale = locale
     }
 
+    /**
+     * Defines how to handle duplicate keys when creating a translator.
+     */
     enum class DuplicateKeyResolution {
+        /**
+         * If a duplicate key is found, the build will fail.
+         */
         FAIL,
+        /**
+         * If a duplicate key is found, the first value will be kept.
+         */
         KEEP_FIRST,
+        /**
+         * If a duplicate key is found, the last value will be kept.
+         */
         KEEP_LAST,
         ;
     }
 
+    /**
+     * Builds the translator using the data added to the builder.
+     *
+     * @return the created translator
+     * @throws IllegalArgumentException if a duplicate key is found and the duplicate key resolution policy is set to
+     * [DuplicateKeyResolution.FAIL], or if a source has been added without following the rules defined in the method
+     * documentation
+     */
     fun build(): Translator {
         val finalMap = HashMap<Locale, HashMap<String, Any>>()
         translatorContent.forEach {

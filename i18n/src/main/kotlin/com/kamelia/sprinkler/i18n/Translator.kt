@@ -51,6 +51,17 @@ interface Translator {
      */
     val currentLocale: Locale
 
+    /**
+     * Translates the given key to the given [locale]. If the key is not found for the given [locale] the key will be
+     * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], null will be returned.
+     *
+     * **NOTE**: If [locale] is the [defaultLocale], the fallback step will be skipped in case the key is not found.
+     *
+     * @param key the key to translate
+     * @param locale the locale to translate the key to
+     * @return the translated key, or null if the key is not found for the [locale] and the [defaultLocale]
+     * @throws IllegalArgumentException if the key is not [valid][Translator]
+     */
     fun translateOrNull(key: String, locale: Locale): String?
 
     /**
@@ -95,36 +106,6 @@ interface Translator {
      * @throws IllegalArgumentException if the key is not [valid][Translator]
      */
     fun section(key: String): Translator
-
-    /**
-     * Translates the given key to the given [locale]. If the key is not found for the given [locale] the key will be
-     * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
-     * will be thrown.
-     *
-     * **NOTE**: If [locale] is the [defaultLocale], the fallback step will be skipped in case the key is not found.
-     *
-     * @param key the key to translate
-     * @param locale the locale to translate the key to
-     * @return the translated key
-     * @throws IllegalArgumentException if the key is not [valid][Translator], or if it does not exist for the [locale]
-     * and the [defaultLocale]
-     */
-    fun t(key: String, locale: Locale): String = translate(key, locale)
-
-    /**
-     * Translates the given key to the [currentLocale]. If the key is not found for the [currentLocale] the key will be
-     * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
-     * will be thrown.
-     *
-     * **NOTE**: If the [currentLocale] is the [defaultLocale], the fallback step will be skipped in case the key is not
-     * found.
-     *
-     * @param key the key to translate
-     * @return the translated key
-     * @throws IllegalArgumentException if the key is not [valid][Translator], or if it does not exist for the
-     * [currentLocale] and the [defaultLocale]
-     */
-    fun t(key: String): String = translate(key)
 
     /**
      * Returns a map containing all translations for all locales.

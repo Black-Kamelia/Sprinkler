@@ -118,7 +118,7 @@ internal class TranslatorImpl private constructor(
 
 }
 
-internal fun Map<*, *>.prettyPrint(): String = buildString {
+private fun Map<*, *>.prettyPrint(): String = buildString {
     append("{\n")
     val queue = ArrayDeque<Triple<Int, String, Map<*, *>>>()
     queue.addFirst(Triple(0, "", this@prettyPrint))
