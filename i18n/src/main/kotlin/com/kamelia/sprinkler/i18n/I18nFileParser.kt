@@ -9,6 +9,7 @@ import kotlin.io.path.readText
  * map returned from [parseFile] must be structured as follows:
  *
  * - Keys should be valid key identifiers, as defined in [Translator].
+ * - Values cannot be null.
  * - Values must be of type [String], [Number], [Boolean], [List] or [Map].
  * - Lists and maps can only contain the types listed above.
  *
