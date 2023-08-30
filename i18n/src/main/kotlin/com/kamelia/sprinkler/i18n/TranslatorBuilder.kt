@@ -55,22 +55,25 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      *
      * This method will throw an [IllegalArgumentException] if the path is already added.
      *
+     * **NOTE**: If the default implementation of [localeMapper] is used, any invalid locale parsed during [build] will
+     * lead to an [IllegalStateException] being thrown.
+     *
      * @param path the path to load
-     * @param parser the parser to use to load the file
      * @param localeMapper the mapper to use to map the file name to a locale (by default, the file name is parsed using
      * [Locale.forLanguageTag])
+     * @param parser the parser to use to load the file
      * @return this builder
      * @throws IllegalArgumentException if the path is already added
      */
     @JvmOverloads
     fun addPath(
         path: Path,
-        parser: I18nFileParser,
         localeMapper: (String) -> Locale = ::parseLocale,
+        parser: I18nFileParser,
     ): TranslatorBuilder = apply {
         val isNew = addedPaths.add(path)
         require(isNew) { "Path $path already added" }
-        translatorContent += LoadedFileInfo(path, parser, localeMapper)
+        translatorContent += FileInfo(path, parser, localeMapper)
     }
 
     /**
@@ -82,20 +85,23 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      *
      * This method will throw an [IllegalArgumentException] if the path is already added.
      *
+     * **NOTE**: If the default implementation of [localeMapper] is used, any invalid locale parsed during [build] will
+     * lead to an [IllegalStateException] being thrown.
+     *
      * @param file the file to load
-     * @param parser the parser to use to load the file
      * @param localeMapper the mapper to use to map the file name to a locale (by default, the file name is parsed using
      * [Locale.forLanguageTag])
+     * @param parser the parser to use to load the file
      * @return this builder
      * @throws IllegalArgumentException if the file is already added
      */
     @JvmOverloads
     fun addFile(
         file: File,
-        parser: I18nFileParser,
         localeMapper: (String) -> Locale = ::parseLocale,
+        parser: I18nFileParser,
     ): TranslatorBuilder = apply {
-        addPath(file.toPath(), parser, localeMapper)
+        addPath(file.toPath(), localeMapper, parser)
     }
 
     /**
@@ -109,7 +115,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @return this builder
      */
     fun addMap(locale: Locale, map: Map<String, Any>): TranslatorBuilder = apply {
-        translatorContent += LoadedMap(locale, map)
+        translatorContent += MapInfo(locale, map)
     }
 
     /**
@@ -203,9 +209,9 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         val finalMap = HashMap<Locale, HashMap<String, Any>>()
         translatorContent.forEach {
             when (it) { // switch on different types of TranslationResourceInformation
-                // if it is a LoadedFileInfo, we need to load the file or if it is a directory, load all files in it
+                // if it is a FileInfo, we need to load the file or if it is a directory, load all files in it
                 // and add them to the final map
-                is LoadedFileInfo -> {
+                is FileInfo -> {
                     try {
                         loadPath(it).forEach { (locale, map) ->
                             addToMap(finalMap, locale, map)
@@ -214,8 +220,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                         error("Invalid locale for file '${it.path}'. File name must be a valid locale.")
                     }
                 }
-                // if it is a LoadedMap, we can directly add it to the final map
-                is LoadedMap -> addToMap(finalMap, it.locale, it.map)
+                // if it is a MapInfo, we can directly add it to the final map
+                is MapInfo -> addToMap(finalMap, it.locale, it.map)
             }
         }
         return TranslatorImpl(defaultLocale, currentLocale, finalMap.unsafeCast())
@@ -228,6 +234,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             check(KEY_IDENTIFIER_REGEX.matches(key)) {
                 "Invalid key $key for locale '$locale'. For more details about key syntax, see Translator interface documentation."
             }
+            // NOTE: we cannot use Map#computeX methods here, because we may add several values in a single call which
+            // can lead to a ConcurrentModificationException being thrown, that is why containsKey + put is used
             when (duplicateKeyResolution) {
                 // if resolution is fail, we need to check that the key is not already present
                 DuplicateKeyResolution.FAIL -> {
@@ -249,21 +257,28 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         while (toFlatten.isNotEmpty()) {
             val (key, current) = toFlatten.removeFirst()
             when (current) {
-                is Map<*, *> -> current.unsafeCast<Map<Any, Any>>().forEach { (subKey, subValue) ->
+                is Map<*, *> -> current.forEach { (subKey, subValue) ->
+                    checkNotNull(subKey) {
+                        "Keys cannot be null. For more details about supported types, see I18nFileParser interface documentation."
+                    }
+                    checkNotNull(subValue) {
+                        "Values cannot be null. For more details about supported types, see I18nFileParser interface documentation."
+                    }
                     toFlatten.addLast("$key.$subKey" to subValue)
                 }
-
-                is List<*> -> current.unsafeCast<List<Any>>().forEachIndexed { index, it ->
-                    toFlatten.addLast("$key.$index" to it)
+                is List<*> -> current.forEachIndexed { index, subValue ->
+                    checkNotNull(subValue) {
+                        "Values cannot be null. For more details about supported types, see I18nFileParser interface documentation."
+                    }
+                    toFlatten.addLast("$key.$index" to subValue)
                 }
-
                 is String, is Number, is Boolean -> finalMap[key] = current.toString()
-                else -> error("Unsupported type ${current::class.simpleName}. For more details about supported types, see Translator interface documentation.")
+                else -> error("Unsupported type ${current::class.simpleName}. For more details about supported types, see I18nFileParser interface documentation.")
             }
         }
     }
 
-    private fun loadPath(info: LoadedFileInfo): List<Pair<Locale, Map<String, Any>>> =
+    private fun loadPath(info: FileInfo): List<Pair<Locale, Map<String, Any>>> =
         if (info.path.isDirectory()) { // if the path is a directory, load all files in it and return the list
             Files.list(info.path)
                 .map {
@@ -280,13 +295,13 @@ class TranslatorBuilder @PackagePrivate internal constructor(
 
 private sealed interface TranslationResourceInformation
 
-private class LoadedFileInfo(
+private class FileInfo(
     val path: Path,
     val parser: I18nFileParser,
     val localeMapper: (String) -> Locale,
 ) : TranslationResourceInformation
 
-private class LoadedMap(val locale: Locale, val map: Map<String, Any>) : TranslationResourceInformation
+private class MapInfo(val locale: Locale, val map: Map<String, Any>) : TranslationResourceInformation
 
 private fun parseLocale(name: String): Locale = Locale
     .Builder()
