@@ -8,6 +8,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.collections.ArrayDeque
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import kotlin.io.path.isDirectory
 import kotlin.io.path.nameWithoutExtension
 
@@ -230,10 +232,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     private fun addToMap(finalMap: HashMap<Locale, HashMap<String, Any>>, locale: Locale, map: Map<String, Any>) {
         val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
         map.forEach { (key, value) ->
-            // first check if the key is valid, if not we can already stop here and throw an exception
-            check(KEY_IDENTIFIER_REGEX.matches(key)) {
-                "Invalid key $key for locale '$locale'. For more details about key syntax, see Translator interface documentation."
-            }
             // NOTE: we cannot use Map#computeX methods here, because we may add several values in a single call which
             // can lead to a ConcurrentModificationException being thrown, that is why containsKey + put is used
             when (duplicateKeyResolution) {
@@ -251,6 +249,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     private fun addValue(finalMap: HashMap<String, Any>, rootKey: String, element: Any) {
+        checkKeyIsValid(rootKey, currentLocale)
+        checkValueIsValid(element, currentLocale)
         val toFlatten = ArrayDeque<Pair<String, Any>>()
         toFlatten.addLast(rootKey to element)
 
@@ -258,22 +258,15 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             val (key, current) = toFlatten.removeFirst()
             when (current) {
                 is Map<*, *> -> current.forEach { (subKey, subValue) ->
-                    checkNotNull(subKey) {
-                        "Keys cannot be null. For more details about supported types, see I18nFileParser interface documentation."
-                    }
-                    checkNotNull(subValue) {
-                        "Values cannot be null. For more details about supported types, see I18nFileParser interface documentation."
-                    }
+                    checkKeyIsValid(subKey, currentLocale)
+                    checkValueIsValid(subValue, currentLocale)
                     toFlatten.addLast("$key.$subKey" to subValue)
                 }
                 is List<*> -> current.forEachIndexed { index, subValue ->
-                    checkNotNull(subValue) {
-                        "Values cannot be null. For more details about supported types, see I18nFileParser interface documentation."
-                    }
+                    checkValueIsValid(subValue, currentLocale)
                     toFlatten.addLast("$key.$index" to subValue)
                 }
-                is String, is Number, is Boolean -> finalMap[key] = current.toString()
-                else -> error("Unsupported type ${current::class.simpleName}. For more details about supported types, see I18nFileParser interface documentation.")
+                else -> finalMap[key] = current.toString() // type is always valid here, because of previous checks
             }
         }
     }
@@ -307,3 +300,28 @@ private fun parseLocale(name: String): Locale = Locale
     .Builder()
     .setLanguageTag(name.replace('_', '-'))
     .build()
+
+private fun checkKeyIsValid(key: Any?, locale: Locale) {
+    checkNotNull(key) {
+        "Keys cannot be null. For more details about key syntax, see Translator interface documentation."
+    }
+    check(key is String) {
+        "Invalid key type ${key::class.simpleName} for locale '$locale', expected String. For more details about keys, see Translator interface documentation."
+    }
+    check(KEY_IDENTIFIER_REGEX.matches(key)) {
+        "Invalid key '$key' for locale '$locale'. For more details about key syntax, see Translator interface documentation."
+    }
+}
+
+@OptIn(ExperimentalContracts::class)
+private fun checkValueIsValid(value: Any?, locale: Locale) {
+    contract {
+        returns() implies (value != null)
+    }
+    checkNotNull(value) {
+        "Values cannot be null. For more details about supported types, see I18nFileParser interface documentation."
+    }
+    check(value is String || value is Number || value is Boolean || value is Map<*, *> || value is List<*>) {
+        "Invalid value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see I18nFileParser interface documentation."
+    }
+}
