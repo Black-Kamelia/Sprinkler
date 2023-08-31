@@ -8,9 +8,9 @@ import kotlin.io.path.readText
  * Implementations of this interface are responsible for parsing the file and returning a map of the parsed data. The
  * map returned from [parseFile] must be structured as follows:
  *
- * - Keys should be valid key identifiers, as defined in [Translator].
- * - Values cannot be null.
- * - Values must be of type [String], [Number], [Boolean], [List] or [Map].
+ * - Keys should be valid key identifiers, as defined in [Translator] ;
+ * - Values cannot be null ;
+ * - Values must be of type [String], [Number], [Boolean], [List] or [Map] ;
  * - Lists and maps can only contain the types listed above.
  *
  * Implementing this interface can be useful when the file format is specific (e.g. only a subset of the file is used).

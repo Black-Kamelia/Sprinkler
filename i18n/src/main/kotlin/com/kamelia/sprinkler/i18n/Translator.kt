@@ -10,7 +10,7 @@ import java.util.*
  * Keys are represented as strings, and must respect the following syntax:
  * - A key is composed of one or more key **identifiers** separated by a **dot** ;
  * - **Identifiers** must be **at least one character long**, **start and end** with an **alphanumeric character**, and can contain
- * **alphanumeric characters**, **dashes** and **underscores** ;
+ * **alphanumeric characters**, **dashes** and **underscores**.
  *
  * For example, the following keys are valid:
  * - `foo`
