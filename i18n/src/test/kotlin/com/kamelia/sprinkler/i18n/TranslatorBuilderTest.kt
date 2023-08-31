@@ -738,6 +738,37 @@ class TranslatorBuilderTest {
         }
     }
 
+    @Test
+    fun `FAIL duplicate policy throws if a key is duplicated`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .withDuplicatedKeyResolutionPolicy(TranslatorBuilder.DuplicatedKeyResolution.FAIL)
+            .addMap(Locale.ENGLISH, mapOf("test" to "test"))
+            .addMap(Locale.ENGLISH, mapOf("test" to "test"))
+        assertThrows<IllegalStateException> {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `KEEP_FIRST duplicate policy keeps the first value`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .withDuplicatedKeyResolutionPolicy(TranslatorBuilder.DuplicatedKeyResolution.KEEP_FIRST)
+            .addMap(Locale.ENGLISH, mapOf("test" to "test"))
+            .addMap(Locale.ENGLISH, mapOf("test" to "test2"))
+        val translator = builder.build()
+        assertEquals("test", translator.translate("test"))
+    }
+
+    @Test
+    fun `KEEP_LAST duplicate policy keeps the last value`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .withDuplicatedKeyResolutionPolicy(TranslatorBuilder.DuplicatedKeyResolution.KEEP_LAST)
+            .addMap(Locale.ENGLISH, mapOf("test" to "test"))
+            .addMap(Locale.ENGLISH, mapOf("test" to "test2"))
+        val translator = builder.build()
+        assertEquals("test2", translator.translate("test"))
+    }
+
 
     private companion object {
 
