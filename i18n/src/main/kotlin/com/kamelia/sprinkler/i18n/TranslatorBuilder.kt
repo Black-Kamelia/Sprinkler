@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicateKeyResolution
+import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.io.File
@@ -20,7 +20,7 @@ import kotlin.io.path.nameWithoutExtension
  * There is several attention points to take into account when using this class:
  * - Different added sources will only be queried upon the creation of the translator, when calling [build] ;
  * - The order in which data is added is important, as it will be used during key duplication resolution, depending on
- * the [DuplicateKeyResolution] used.
+ * the [DuplicatedKeyResolution] used.
  *
  * @see Translator
  */
@@ -41,7 +41,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     /**
      * How to handle duplicate keys.
      */
-    private var duplicateKeyResolution = DuplicateKeyResolution.FAIL
+    private var duplicatedKeyResolution = DuplicatedKeyResolution.FAIL
 
     /**
      * The current locale that will be used to create the translator.
@@ -149,15 +149,15 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     /**
-     * Sets the duplicate key resolution policy to use when adding data to the builder. By default, the policy is set to
-     * [DuplicateKeyResolution.FAIL].
+     * Sets the duplicated key resolution policy to use when adding data to the builder. By default, the policy is set
+     * to [DuplicatedKeyResolution.FAIL].
      *
-     * @param duplicateKeyResolution the duplicate key resolution policy to use
+     * @param duplicatedKeyResolution the duplicated key resolution policy to use
      * @return this builder
-     * @see DuplicateKeyResolution
+     * @see DuplicatedKeyResolution
      */
-    fun duplicateKeyResolutionPolicy(duplicateKeyResolution: DuplicateKeyResolution): TranslatorBuilder = apply {
-        this.duplicateKeyResolution = duplicateKeyResolution
+    fun withDuplicatedKeyResolutionPolicy(duplicatedKeyResolution: DuplicatedKeyResolution): TranslatorBuilder = apply {
+        this.duplicatedKeyResolution = duplicatedKeyResolution
     }
 
     /**
@@ -181,19 +181,19 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     /**
-     * Defines how to handle duplicate keys when creating a translator.
+     * Defines how to handle duplicated keys when creating a translator.
      */
-    enum class DuplicateKeyResolution {
+    enum class DuplicatedKeyResolution {
         /**
-         * If a duplicate key is found, the build will fail.
+         * If a duplicated key is found, the build will fail.
          */
         FAIL,
         /**
-         * If a duplicate key is found, the first value will be kept.
+         * If a duplicated key is found, the first value will be kept.
          */
         KEEP_FIRST,
         /**
-         * If a duplicate key is found, the last value will be kept.
+         * If a duplicated key is found, the last value will be kept.
          */
         KEEP_LAST,
         ;
@@ -204,7 +204,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      *
      * @return the created translator
      * @throws IllegalArgumentException if a duplicate key is found and the duplicate key resolution policy is set to
-     * [DuplicateKeyResolution.FAIL], or if a source has been added without following the rules defined in the method
+     * [DuplicatedKeyResolution.FAIL], or if a source has been added without following the rules defined in the method
      * documentation
      */
     fun build(): Translator {
@@ -234,16 +234,16 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         map.forEach { (key, value) ->
             // NOTE: we cannot use Map#computeX methods here, because we may add several values in a single call which
             // can lead to a ConcurrentModificationException being thrown, that is why containsKey + put is used
-            when (duplicateKeyResolution) {
+            when (duplicatedKeyResolution) {
                 // if resolution is fail, we need to check that the key is not already present
-                DuplicateKeyResolution.FAIL -> {
+                DuplicatedKeyResolution.FAIL -> {
                     check(key !in localeMap) { "Duplicate key '$key' for locale '$locale'" }
                     addValue(localeMap, key, value)
                 }
                 // if resolution is keep first and old is null, we can add the value
-                DuplicateKeyResolution.KEEP_FIRST -> if (key !in localeMap) addValue(localeMap, key, value)
+                DuplicatedKeyResolution.KEEP_FIRST -> if (key !in localeMap) addValue(localeMap, key, value)
                 // if resolution is keep last, we always add the value
-                DuplicateKeyResolution.KEEP_LAST -> addValue(localeMap, key, value)
+                DuplicatedKeyResolution.KEEP_LAST -> addValue(localeMap, key, value)
             }
         }
     }
