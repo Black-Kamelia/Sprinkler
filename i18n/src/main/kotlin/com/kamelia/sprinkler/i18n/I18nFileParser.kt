@@ -14,10 +14,10 @@ import kotlin.io.path.readText
  * - Lists and maps can only contain the types listed above.
  *
  * Implementing this interface can be useful when the file format is specific (e.g. only a subset of the file is used).
- * When the whole file is used, it is recommended to use [I18nFileParser.from] instead, which loads the whole file and
+ * When the whole file is used, it is recommended to use [I18nFileParser.fromString] instead, which loads the whole file and
  * parses it using a provided mapper.
  *
- * @see I18nFileParser.from
+ * @see I18nFileParser.fromString
  * @see Translator
  * @see TranslatorBuilder.addPath
  * @see TranslatorBuilder.addFile
@@ -44,7 +44,7 @@ fun interface I18nFileParser {
          * @return the created [I18nFileParser]
          */
         @JvmStatic
-        fun from(mapper: (String) -> Map<String, Any>): I18nFileParser = I18nFileParser { mapper(it.readText()) }
+        fun fromString(mapper: (String) -> Map<String, Any>): I18nFileParser = I18nFileParser { mapper(it.readText()) }
 
     }
 
