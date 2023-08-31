@@ -3,6 +3,7 @@ package com.kamelia.sprinkler.i18n
 import com.kamelia.sprinkler.util.unsafeCast
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import java.nio.file.Path
 import java.util.*
@@ -529,6 +530,210 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addTranslator(customImpl)
         assertThrows<IllegalStateException> {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `addPath works with list`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addPath(
+                absoluteResource("builder_test", "empty.txt"),
+                { Locale.ENGLISH }) { mapOf("test" to listOf("test")) }
+        val translator = builder.build()
+        assertEquals("test", translator.translate("test.0"))
+    }
+
+    @Test
+    fun `addFile works with list`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(
+                absoluteResource("builder_test", "empty.txt").toFile(),
+                { Locale.ENGLISH }) { mapOf("test" to listOf("test")) }
+        val translator = builder.build()
+        assertEquals("test", translator.translate("test.0"))
+    }
+
+    @Test
+    fun `addMap works with list`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addMap(Locale.ENGLISH, mapOf("test" to listOf("test")))
+        val translator = builder.build()
+        assertEquals("test", translator.translate("test.0"))
+    }
+
+    @Test
+    fun `addMaps works with list`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addMaps(mapOf(Locale.ENGLISH to mapOf("test" to listOf("test"))))
+        val translator = builder.build()
+        assertEquals("test", translator.translate("test.0"))
+    }
+
+    @Test
+    fun `addTranslator works with list`() {
+        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
+            override fun toMap(): Map<Locale, Map<String, String>> =
+                mapOf(Locale.ENGLISH to mapOf("test" to listOf("test")).unsafeCast())
+        }
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addTranslator(customImpl)
+        val translator = builder.build()
+        assertEquals("test", translator.translate("test.0"))
+    }
+
+    @Test
+    fun `addPath works with map`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addPath(
+                absoluteResource("builder_test", "empty.txt"),
+                { Locale.ENGLISH }) { mapOf("test" to mapOf("test" to "test")) }
+        val translator = builder.build()
+        assertEquals("test", translator.translate("test.test"))
+    }
+
+    @Test
+    fun `addFile works with map`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(
+                absoluteResource("builder_test", "empty.txt").toFile(),
+                { Locale.ENGLISH }) { mapOf("test" to mapOf("test" to "test")) }
+        val translator = builder.build()
+        assertEquals("test", translator.translate("test.test"))
+    }
+
+    @Test
+    fun `addMap works with map`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addMap(Locale.ENGLISH, mapOf("test" to mapOf("test" to "test")))
+        val translator = builder.build()
+        assertEquals("test", translator.translate("test.test"))
+    }
+
+    @Test
+    fun `addMaps works with map`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addMaps(mapOf(Locale.ENGLISH to mapOf("test" to mapOf("test" to "test"))))
+        val translator = builder.build()
+        assertEquals("test", translator.translate("test.test"))
+    }
+
+    @Test
+    fun `addTranslator works with map`() {
+        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
+            override fun toMap(): Map<Locale, Map<String, String>> =
+                mapOf(Locale.ENGLISH to mapOf("test" to mapOf("test" to "test")).unsafeCast())
+        }
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addTranslator(customImpl)
+        val translator = builder.build()
+        assertEquals("test", translator.translate("test.test"))
+    }
+
+    @Test
+    fun `addPath does not throw for valid types`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addPath(
+                absoluteResource("builder_test", "empty.txt"),
+                { Locale.ENGLISH }) { mapOf(
+                "test" to "test",
+                "test2" to 0.toByte(),
+                "test3" to 0.toShort(),
+                "test4" to 0,
+                "test5" to 0L,
+                "test6" to 0f,
+                "test7" to .0,
+                "test8" to true,
+                "test9" to listOf("test"),
+                "test10" to mapOf("test" to "test")
+            ) }
+        assertDoesNotThrow {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `addFile does not throw for valid types`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(
+                absoluteResource("builder_test", "empty.txt").toFile(),
+                { Locale.ENGLISH }) { mapOf(
+                "test" to "test",
+                "test2" to 0.toByte(),
+                "test3" to 0.toShort(),
+                "test4" to 0,
+                "test5" to 0L,
+                "test6" to 0f,
+                "test7" to .0,
+                "test8" to true,
+                "test9" to listOf("test"),
+                "test10" to mapOf("test" to "test")
+            ) }
+        assertDoesNotThrow {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `addMap does not throw for valid types`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addMap(Locale.ENGLISH, mapOf(
+                "test" to "test",
+                "test2" to 0.toByte(),
+                "test3" to 0.toShort(),
+                "test4" to 0,
+                "test5" to 0L,
+                "test6" to 0f,
+                "test7" to .0,
+                "test8" to true,
+                "test9" to listOf("test"),
+                "test10" to mapOf("test" to "test")
+            ))
+        assertDoesNotThrow {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `addMaps does not throw for valid types`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addMaps(mapOf(Locale.ENGLISH to mapOf(
+                "test" to "test",
+                "test2" to 0.toByte(),
+                "test3" to 0.toShort(),
+                "test4" to 0,
+                "test5" to 0L,
+                "test6" to 0f,
+                "test7" to .0,
+                "test8" to true,
+                "test9" to listOf("test"),
+                "test10" to mapOf("test" to "test")
+            )))
+        assertDoesNotThrow {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `addTranslator does not throw for valid types`() {
+        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
+            override fun toMap(): Map<Locale, Map<String, String>> =
+                mapOf(Locale.ENGLISH to mapOf(
+                    "test" to "test",
+                    "test2" to 0.toByte(),
+                    "test3" to 0.toShort(),
+                    "test4" to 0,
+                    "test5" to 0L,
+                    "test6" to 0f,
+                    "test7" to .0,
+                    "test8" to true,
+                    "test9" to listOf("test"),
+                    "test10" to mapOf("test" to "test")
+                ).unsafeCast())
+        }
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addTranslator(customImpl)
+        assertDoesNotThrow {
             builder.build()
         }
     }
