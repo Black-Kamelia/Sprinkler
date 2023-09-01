@@ -791,17 +791,61 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath works recursively on files if the path is a directory`() {
         val expected = setOf(
-            "empty.txt",
-            "invalid-locale&.txt",
+            "foo.txt",
+            "bar.txt",
         )
         val actual = mutableSetOf<String>()
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource("builder_test")) {
-                assertTrue(actual.add(it))
-                emptyMap()
-            }
+            .addPath(absoluteResource("builder_test", "valid"), I18nFileParser {
+                assertTrue(actual.add(it.fileName.toString()))
+                I18nFileParser.ParsingResult(Locale.FRANCE, emptyMap())
+            })
         builder.build()
         assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `direct path for which parser returns null is ignored`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addPath(absoluteResource("builder_test", "empty.txt"), I18nFileParser {
+                null
+            })
+        assertEquals(emptyMap<Locale, Map<String, String>>(), builder.build().toMap())
+    }
+
+    @Test
+    fun `path in a folder for which parser returns null is ignored`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addPath(absoluteResource("builder_test", "valid"), I18nFileParser {
+                if (it.fileName.toString() == "foo.txt") {
+                    null
+                } else {
+                    I18nFileParser.ParsingResult(Locale.FRANCE, emptyMap())
+                }
+            })
+        assertEquals(mapOf(Locale.FRANCE to emptyMap<String, String>()), builder.build().toMap())
+    }
+
+    @Test
+    fun `direct file for which parser returns null is ignored`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(absoluteResource("builder_test", "empty.txt").toFile(), I18nFileParser {
+                null
+            })
+        assertEquals(emptyMap<Locale, Map<String, String>>(), builder.build().toMap())
+    }
+
+    @Test
+    fun `file in a folder for which parser returns null is ignored`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(absoluteResource("builder_test", "valid").toFile(), I18nFileParser {
+                if (it.fileName.toString() == "foo.txt") {
+                    null
+                } else {
+                    I18nFileParser.ParsingResult(Locale.FRANCE, emptyMap())
+                }
+            })
+        assertEquals(mapOf(Locale.FRANCE to emptyMap<String, String>()), builder.build().toMap())
     }
 
     private companion object {
