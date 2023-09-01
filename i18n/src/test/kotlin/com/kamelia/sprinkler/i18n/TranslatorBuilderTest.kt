@@ -2,6 +2,7 @@ package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.unsafeCast
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -42,7 +43,7 @@ class TranslatorBuilderTest {
         val locale = Locale.FRANCE
 
         val translator = Translator.builder(Locale.ENGLISH)
-            .addPath(path, { locale }) { mapOf(key to value) }
+            .addPath(path, I18nFileParser.fromString({ locale }) { mapOf(key to value) })
             .build()
         assertEquals(value, translator.translate(key, locale))
     }
@@ -65,7 +66,7 @@ class TranslatorBuilderTest {
         val locale = Locale.FRANCE
 
         val translator = Translator.builder(Locale.ENGLISH)
-            .addFile(path, { locale }) { mapOf(key to value) }
+            .addFile(path, I18nFileParser.fromString({ locale }) { mapOf(key to value) })
             .build()
         assertEquals(value, translator.translate(key, locale))
     }
@@ -539,7 +540,8 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addPath(
                 absoluteResource("builder_test", "empty.txt"),
-                { Locale.ENGLISH }) { mapOf("test" to listOf("test")) }
+                I18nFileParser.fromString({ Locale.ENGLISH }) { mapOf("test" to listOf("test")) }
+            )
         val translator = builder.build()
         assertEquals("test", translator.translate("test.0"))
     }
@@ -549,7 +551,8 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addFile(
                 absoluteResource("builder_test", "empty.txt").toFile(),
-                { Locale.ENGLISH }) { mapOf("test" to listOf("test")) }
+                I18nFileParser.fromString({ Locale.ENGLISH }) { mapOf("test" to listOf("test")) }
+            )
         val translator = builder.build()
         assertEquals("test", translator.translate("test.0"))
     }
@@ -587,7 +590,8 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addPath(
                 absoluteResource("builder_test", "empty.txt"),
-                { Locale.ENGLISH }) { mapOf("test" to mapOf("test" to "test")) }
+                I18nFileParser.fromString({ Locale.ENGLISH }) { mapOf("test" to mapOf("test" to "test")) }
+            )
         val translator = builder.build()
         assertEquals("test", translator.translate("test.test"))
     }
@@ -597,7 +601,8 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addFile(
                 absoluteResource("builder_test", "empty.txt").toFile(),
-                { Locale.ENGLISH }) { mapOf("test" to mapOf("test" to "test")) }
+                I18nFileParser.fromString({ Locale.ENGLISH }) { mapOf("test" to mapOf("test" to "test")) }
+            )
         val translator = builder.build()
         assertEquals("test", translator.translate("test.test"))
     }
@@ -635,18 +640,21 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addPath(
                 absoluteResource("builder_test", "empty.txt"),
-                { Locale.ENGLISH }) { mapOf(
-                "test" to "test",
-                "test2" to 0.toByte(),
-                "test3" to 0.toShort(),
-                "test4" to 0,
-                "test5" to 0L,
-                "test6" to 0f,
-                "test7" to .0,
-                "test8" to true,
-                "test9" to listOf("test"),
-                "test10" to mapOf("test" to "test")
-            ) }
+                I18nFileParser.fromString({ Locale.ENGLISH }) {
+                    mapOf(
+                        "test" to "test",
+                        "test2" to 0.toByte(),
+                        "test3" to 0.toShort(),
+                        "test4" to 0,
+                        "test5" to 0L,
+                        "test6" to 0f,
+                        "test7" to .0,
+                        "test8" to true,
+                        "test9" to listOf("test"),
+                        "test10" to mapOf("test" to "test")
+                    )
+                }
+            )
         assertDoesNotThrow {
             builder.build()
         }
@@ -657,18 +665,21 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addFile(
                 absoluteResource("builder_test", "empty.txt").toFile(),
-                { Locale.ENGLISH }) { mapOf(
-                "test" to "test",
-                "test2" to 0.toByte(),
-                "test3" to 0.toShort(),
-                "test4" to 0,
-                "test5" to 0L,
-                "test6" to 0f,
-                "test7" to .0,
-                "test8" to true,
-                "test9" to listOf("test"),
-                "test10" to mapOf("test" to "test")
-            ) }
+                I18nFileParser.fromString({ Locale.ENGLISH }) {
+                    mapOf(
+                        "test" to "test",
+                        "test2" to 0.toByte(),
+                        "test3" to 0.toShort(),
+                        "test4" to 0,
+                        "test5" to 0L,
+                        "test6" to 0f,
+                        "test7" to .0,
+                        "test8" to true,
+                        "test9" to listOf("test"),
+                        "test10" to mapOf("test" to "test")
+                    )
+                }
+            )
         assertDoesNotThrow {
             builder.build()
         }
@@ -677,48 +688,8 @@ class TranslatorBuilderTest {
     @Test
     fun `addMap does not throw for valid types`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addMap(Locale.ENGLISH, mapOf(
-                "test" to "test",
-                "test2" to 0.toByte(),
-                "test3" to 0.toShort(),
-                "test4" to 0,
-                "test5" to 0L,
-                "test6" to 0f,
-                "test7" to .0,
-                "test8" to true,
-                "test9" to listOf("test"),
-                "test10" to mapOf("test" to "test")
-            ))
-        assertDoesNotThrow {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMaps does not throw for valid types`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMaps(mapOf(Locale.ENGLISH to mapOf(
-                "test" to "test",
-                "test2" to 0.toByte(),
-                "test3" to 0.toShort(),
-                "test4" to 0,
-                "test5" to 0L,
-                "test6" to 0f,
-                "test7" to .0,
-                "test8" to true,
-                "test9" to listOf("test"),
-                "test10" to mapOf("test" to "test")
-            )))
-        assertDoesNotThrow {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addTranslator does not throw for valid types`() {
-        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
-            override fun toMap(): Map<Locale, Map<String, String>> =
-                mapOf(Locale.ENGLISH to mapOf(
+            .addMap(
+                Locale.ENGLISH, mapOf(
                     "test" to "test",
                     "test2" to 0.toByte(),
                     "test3" to 0.toShort(),
@@ -729,7 +700,55 @@ class TranslatorBuilderTest {
                     "test8" to true,
                     "test9" to listOf("test"),
                     "test10" to mapOf("test" to "test")
-                ).unsafeCast())
+                )
+            )
+        assertDoesNotThrow {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `addMaps does not throw for valid types`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addMaps(
+                mapOf(
+                    Locale.ENGLISH to mapOf(
+                        "test" to "test",
+                        "test2" to 0.toByte(),
+                        "test3" to 0.toShort(),
+                        "test4" to 0,
+                        "test5" to 0L,
+                        "test6" to 0f,
+                        "test7" to .0,
+                        "test8" to true,
+                        "test9" to listOf("test"),
+                        "test10" to mapOf("test" to "test")
+                    )
+                )
+            )
+        assertDoesNotThrow {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `addTranslator does not throw for valid types`() {
+        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
+            override fun toMap(): Map<Locale, Map<String, String>> =
+                mapOf(
+                    Locale.ENGLISH to mapOf(
+                        "test" to "test",
+                        "test2" to 0.toByte(),
+                        "test3" to 0.toShort(),
+                        "test4" to 0,
+                        "test5" to 0L,
+                        "test6" to 0f,
+                        "test7" to .0,
+                        "test8" to true,
+                        "test9" to listOf("test"),
+                        "test10" to mapOf("test" to "test")
+                    ).unsafeCast()
+                )
         }
         val builder = Translator.builder(Locale.ENGLISH)
             .addTranslator(customImpl)
@@ -769,6 +788,21 @@ class TranslatorBuilderTest {
         assertEquals("test2", translator.translate("test"))
     }
 
+    @Test
+    fun `addPath works recursively on files if the path is a directory`() {
+        val expected = setOf(
+            "empty.txt",
+            "invalid-locale&.txt",
+        )
+        val actual = mutableSetOf<String>()
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addPath(absoluteResource("builder_test")) {
+                assertTrue(actual.add(it))
+                emptyMap()
+            }
+        builder.build()
+        assertEquals(expected, actual)
+    }
 
     private companion object {
 

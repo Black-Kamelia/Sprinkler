@@ -7,6 +7,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.stream.Stream
 import kotlin.collections.ArrayDeque
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -52,59 +53,65 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
      * will be loaded.
      *
-     * Content will be converted to a map using the given [parser], and the locale of the file will be determined using
-     * the given [localeMapper]. By default, the file name is parsed using [Locale.forLanguageTag].
-     *
      * This method will throw an [IllegalArgumentException] if the path is already added.
      *
-     * **NOTE**: If the default implementation of [localeMapper] is used, any invalid locale parsed during [build] will
-     * lead to an [IllegalStateException] being thrown.
-     *
      * @param path the path to load
-     * @param localeMapper the mapper to use to map the file name to a locale (by default, the file name is parsed using
-     * [Locale.forLanguageTag])
      * @param parser the parser to use to load the file
      * @return this builder
      * @throws IllegalArgumentException if the path is already added
      */
-    @JvmOverloads
-    fun addPath(
-        path: Path,
-        localeMapper: (String) -> Locale = ::parseLocale,
-        parser: I18nFileParser,
-    ): TranslatorBuilder = apply {
+    fun addPath(path: Path, parser: I18nFileParser): TranslatorBuilder = apply {
         val isNew = addedPaths.add(path)
         require(isNew) { "Path $path already added" }
-        translatorContent += FileInfo(path, parser, localeMapper)
+        translatorContent += FileInfo(path, parser)
     }
+
+    /**
+     * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
+     * will be loaded.
+     *
+     * This method will throw an [IllegalArgumentException] if the path is already added.
+     *
+     * This method is a shorthand for [addPath] with a [I18nFileParser.fromString] parser.
+     *
+     * @param path the path to load
+     * @param mapper the mapper to use to load the file
+     * @return this builder
+     * @throws IllegalArgumentException if the path is already added
+     * @see I18nFileParser.fromString
+     */
+    fun addPath(path: Path, mapper: (String) -> Map<String, Any>): TranslatorBuilder =
+        addPath(path, I18nFileParser.fromString { mapper(it) })
 
     /**
      * Adds a file to the builder. If the file is a directory, all files in it will be loaded. If the file is a file, it
      * will be loaded.
      *
-     * Content will be converted to a map using the given [parser], and the locale of the file will be determined using
-     * the given [localeMapper]. By default, the file name is parsed using [Locale.forLanguageTag].
-     *
      * This method will throw an [IllegalArgumentException] if the path is already added.
      *
-     * **NOTE**: If the default implementation of [localeMapper] is used, any invalid locale parsed during [build] will
-     * lead to an [IllegalStateException] being thrown.
-     *
      * @param file the file to load
-     * @param localeMapper the mapper to use to map the file name to a locale (by default, the file name is parsed using
-     * [Locale.forLanguageTag])
      * @param parser the parser to use to load the file
      * @return this builder
      * @throws IllegalArgumentException if the file is already added
      */
-    @JvmOverloads
-    fun addFile(
-        file: File,
-        localeMapper: (String) -> Locale = ::parseLocale,
-        parser: I18nFileParser,
-    ): TranslatorBuilder = apply {
-        addPath(file.toPath(), localeMapper, parser)
-    }
+    fun addFile(file: File, parser: I18nFileParser): TranslatorBuilder = addPath(file.toPath(), parser)
+
+    /**
+     * Adds a file to the builder. If the file is a directory, all files in it will be loaded. If the file is a file, it
+     * will be loaded.
+     *
+     * This method will throw an [IllegalArgumentException] if the path is already added.
+     *
+     * This method is a shorthand for [addFile] with a [I18nFileParser.fromString] parser.
+     *
+     * @param file the file to load
+     * @param mapper the mapper to use to load the file
+     * @return this builder
+     * @throws IllegalArgumentException if the file is already added
+     * @see I18nFileParser.fromString
+     */
+    fun addFile(file: File, mapper: (String) -> Map<String, Any>): TranslatorBuilder =
+        addFile(file, I18nFileParser.fromString { mapper(it) })
 
     /**
      * Adds a map for a locale to the builder. The content of the map will be added to the final translator. The
@@ -218,8 +225,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                         loadPath(it).forEach { (locale, map) ->
                             addToMap(finalMap, locale, map)
                         }
-                    } catch (e: IllformedLocaleException) {
-                        error("Invalid locale for file '${it.path}'. File name must be a valid locale.")
+                    } catch (e: I18nFileParser.I18nParsingException) {
+                        error("Invalid locale for file '${e.path.nameWithoutExtension}' (${e.path}). For more details about locale syntax, see java.util.Locale documentation.")
                     }
                 }
                 // if it is a MapInfo, we can directly add it to the final map
@@ -275,13 +282,18 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         if (info.path.isDirectory()) { // if the path is a directory, load all files in it and return the list
             Files.list(info.path)
                 .map {
-                    val locale = info.localeMapper(it.nameWithoutExtension)
-                    locale to info.parser.parseFile(it)
+                    println("Loading file $it")
+                    val (locale, map) = info.parser.parseFile(it) ?: return@map null
+                    locale to map
                 }
+                .filter { it != null }
+                .unsafeCast<Stream<Pair<Locale, Map<String, Any>>>>() // as we filtered null values, we can safely cast
                 .toList()
         } else { // if the path is a file, load it and store it in a one element list
-            val locale = info.localeMapper(info.path.nameWithoutExtension)
-            listOf(locale to info.parser.parseFile(info.path))
+            info.parser
+                .parseFile(info.path)
+                ?.let { listOf(it.locale to it.map) }
+                ?: emptyList()
         }
 
 }
@@ -291,7 +303,6 @@ private sealed interface TranslationResourceInformation
 private class FileInfo(
     val path: Path,
     val parser: I18nFileParser,
-    val localeMapper: (String) -> Locale,
 ) : TranslationResourceInformation
 
 private class MapInfo(val locale: Locale, val map: Map<String, Any>) : TranslationResourceInformation
