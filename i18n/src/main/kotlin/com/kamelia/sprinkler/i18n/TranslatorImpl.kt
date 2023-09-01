@@ -28,7 +28,7 @@ internal class TranslatorImpl private constructor(
         val value = translations[locale]?.get(actualKey)
         if (value != null) return value
 
-        if (defaultLocale != currentLocale) {
+        if (defaultLocale != locale) {
             val fallback = translations[defaultLocale]?.get(actualKey)
             if (fallback != null) return fallback
         }
@@ -108,7 +108,7 @@ internal class TranslatorImpl private constructor(
             return false
         }
         return if (other is TranslatorImpl) {
-            translations == other.translations
+            translations === other.translations || translations == other.translations
         } else {
             toMap() == other.toMap()
         }
