@@ -21,8 +21,8 @@ object TranslationRequestProxies {
     @JvmStatic
     fun default(value: String): TranslationRequestProxy =
         TranslationRequestProxy { translator, key, locale ->
-        translator.translateOrNull(key, locale) ?: value
-    }
+            translator.translateOrNull(key, locale) ?: value
+        }
 
     @JvmStatic
     @JvmOverloads
@@ -45,7 +45,7 @@ object TranslationRequestProxies {
         }
 
     @JvmStatic
-    fun interpolateIndexed(vararg args: Any): TranslationRequestProxy = mapValue { it.interpolateIndexed(*args) }
+    fun interpolateI(vararg args: Any): TranslationRequestProxy = mapValue { it.interpolateIndexed(*args) }
 
     @JvmStatic
     fun interpolate(args: Map<String, Any>): TranslationRequestProxy = mapValue { it.interpolate(args) }
@@ -54,38 +54,64 @@ object TranslationRequestProxies {
     fun interpolate(vararg args: Pair<String, Any>): TranslationRequestProxy = mapValue { it.interpolate(*args) }
 
     @JvmStatic
+    fun contextualize(context: String): TranslationRequestProxy = mapKey { "$it$CTX_SEP$context" }
+
+    @JvmStatic
     @JvmOverloads
     fun pluralize(count: Int, args: Map<String, Any> = emptyMap()): TranslationRequestProxy =
         TranslationRequestProxy { translator, key, locale ->
-            translator.translate(pluralizeKey(key, count), locale).interpolate(args)
+            val actualKey = "$key$CTX_SEP${pluralizeSuffix(count)}"
+            translator.translate(actualKey, locale).interpolate(args)
         }
 
     @JvmStatic
     fun pluralize(count: Int, vararg args: Pair<String, Any>): TranslationRequestProxy =
         TranslationRequestProxy { translator, key, locale ->
-            translator.translate(pluralizeKey(key, count), locale).interpolate(*args)
+            val actualKey = "$key$CTX_SEP${pluralizeSuffix(count)}"
+            translator.translate(actualKey, locale).interpolate(*args)
         }
 
     @JvmStatic
     fun pluralizeIndexed(count: Int, vararg args: Any): TranslationRequestProxy =
         TranslationRequestProxy { translator, key, locale ->
-            translator.translate(pluralizeKey(key, count), locale).interpolateIndexed(*args)
+            val actualKey = "$key$CTX_SEP${pluralizeSuffix(count)}"
+            translator.translate(actualKey, locale).interpolateIndexed(*args)
         }
 
     @JvmStatic
-    fun contextualize(context: String): TranslationRequestProxy = mapKey { "${it}_$context" }
+    fun contextualizePlural(count: Int, context: String, args: Map<String, Any>): TranslationRequestProxy =
+        TranslationRequestProxy { translator, key, locale ->
+            val actualKey = "$key$CTX_SEP$context$CTX_SEP${pluralizeSuffix(count)}"
+            translator.translate(actualKey, locale).interpolate(args)
+        }
+
+    @JvmStatic
+    fun contextualizePlural(count: Int, context: String, vararg args: Pair<String, Any>): TranslationRequestProxy =
+        TranslationRequestProxy { translator, key, locale ->
+            val actualKey = "$key$CTX_SEP$context$CTX_SEP${pluralizeSuffix(count)}"
+            translator.translate(actualKey, locale).interpolate(*args)
+        }
+
+    @JvmStatic
+    fun contextualizePluralI(count: Int, context: String, vararg args: Any): TranslationRequestProxy =
+        TranslationRequestProxy { translator, key, locale ->
+            val actualKey = "$key$CTX_SEP$context$CTX_SEP${pluralizeSuffix(count)}"
+            translator.translate(actualKey, locale).interpolateIndexed(*args)
+        }
 
     @JvmStatic
     fun gender(isMale: Boolean): TranslationRequestProxy = contextualize(if (isMale) MALE else FEMALE)
 
-    private fun pluralizeKey(key: String, count: Int): String = when (count) {
-        0 -> "${key}_zero"
-        1 -> "${key}_one"
-        else -> "${key}_other"
+    private fun pluralizeSuffix(count: Int): String = when (count) {
+        0 -> "zero"
+        1 -> "one"
+        else -> "other"
     }
 
     private const val MALE = "male"
 
     private const val FEMALE = "female"
+
+    private const val CTX_SEP = "_"
 
 }
