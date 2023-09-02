@@ -1,15 +1,17 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicateKeyResolution
+import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.stream.Stream
 import kotlin.collections.ArrayDeque
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import kotlin.io.path.isDirectory
-import kotlin.io.path.nameWithoutExtension
 
 /**
  * Builder class used to create a [Translator]. This class provides several methods to add data to the translator from
@@ -18,7 +20,9 @@ import kotlin.io.path.nameWithoutExtension
  * There is several attention points to take into account when using this class:
  * - Different added sources will only be queried upon the creation of the translator, when calling [build] ;
  * - The order in which data is added is important, as it will be used during key duplication resolution, depending on
- * the [DuplicateKeyResolution] used.
+ * the [DuplicatedKeyResolution] used.
+ *
+ * **NOTE**: [translators][Translator] created with this builder are immutable and therefore thread-safe.
  *
  * @see Translator
  */
@@ -39,7 +43,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     /**
      * How to handle duplicate keys.
      */
-    private var duplicateKeyResolution = DuplicateKeyResolution.FAIL
+    private var duplicatedKeyResolution = DuplicatedKeyResolution.FAIL
 
     /**
      * The current locale that will be used to create the translator.
@@ -50,59 +54,65 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
      * will be loaded.
      *
-     * Content will be converted to a map using the given [parser], and the locale of the file will be determined using
-     * the given [localeMapper]. By default, the file name is parsed using [Locale.forLanguageTag].
-     *
      * This method will throw an [IllegalArgumentException] if the path is already added.
      *
-     * **NOTE**: If the default implementation of [localeMapper] is used, any invalid locale parsed during [build] will
-     * lead to an [IllegalStateException] being thrown.
-     *
      * @param path the path to load
-     * @param localeMapper the mapper to use to map the file name to a locale (by default, the file name is parsed using
-     * [Locale.forLanguageTag])
      * @param parser the parser to use to load the file
      * @return this builder
      * @throws IllegalArgumentException if the path is already added
      */
-    @JvmOverloads
-    fun addPath(
-        path: Path,
-        localeMapper: (String) -> Locale = ::parseLocale,
-        parser: I18nFileParser,
-    ): TranslatorBuilder = apply {
+    fun addPath(path: Path, parser: I18nFileParser): TranslatorBuilder = apply {
         val isNew = addedPaths.add(path)
         require(isNew) { "Path $path already added" }
-        translatorContent += FileInfo(path, parser, localeMapper)
+        translatorContent += FileInfo(path, parser)
     }
+
+    /**
+     * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
+     * will be loaded.
+     *
+     * This method will throw an [IllegalArgumentException] if the path is already added.
+     *
+     * This method is a shorthand for [addPath] with a [I18nFileParser.fromString] parser.
+     *
+     * @param path the path to load
+     * @param mapper the mapper to use to load the file
+     * @return this builder
+     * @throws IllegalArgumentException if the path is already added
+     * @see I18nFileParser.fromString
+     */
+    fun addPath(path: Path, mapper: (String) -> Map<String, Any>): TranslatorBuilder =
+        addPath(path, I18nFileParser.fromString { mapper(it) })
 
     /**
      * Adds a file to the builder. If the file is a directory, all files in it will be loaded. If the file is a file, it
      * will be loaded.
      *
-     * Content will be converted to a map using the given [parser], and the locale of the file will be determined using
-     * the given [localeMapper]. By default, the file name is parsed using [Locale.forLanguageTag].
-     *
      * This method will throw an [IllegalArgumentException] if the path is already added.
      *
-     * **NOTE**: If the default implementation of [localeMapper] is used, any invalid locale parsed during [build] will
-     * lead to an [IllegalStateException] being thrown.
-     *
      * @param file the file to load
-     * @param localeMapper the mapper to use to map the file name to a locale (by default, the file name is parsed using
-     * [Locale.forLanguageTag])
      * @param parser the parser to use to load the file
      * @return this builder
      * @throws IllegalArgumentException if the file is already added
      */
-    @JvmOverloads
-    fun addFile(
-        file: File,
-        localeMapper: (String) -> Locale = ::parseLocale,
-        parser: I18nFileParser,
-    ): TranslatorBuilder = apply {
-        addPath(file.toPath(), localeMapper, parser)
-    }
+    fun addFile(file: File, parser: I18nFileParser): TranslatorBuilder = addPath(file.toPath(), parser)
+
+    /**
+     * Adds a file to the builder. If the file is a directory, all files in it will be loaded. If the file is a file, it
+     * will be loaded.
+     *
+     * This method will throw an [IllegalArgumentException] if the path is already added.
+     *
+     * This method is a shorthand for [addFile] with a [I18nFileParser.fromString] parser.
+     *
+     * @param file the file to load
+     * @param mapper the mapper to use to load the file
+     * @return this builder
+     * @throws IllegalArgumentException if the file is already added
+     * @see I18nFileParser.fromString
+     */
+    fun addFile(file: File, mapper: (String) -> Map<String, Any>): TranslatorBuilder =
+        addFile(file, I18nFileParser.fromString(mapper = mapper))
 
     /**
      * Adds a map for a locale to the builder. The content of the map will be added to the final translator. The
@@ -147,15 +157,15 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     /**
-     * Sets the duplicate key resolution policy to use when adding data to the builder. By default, the policy is set to
-     * [DuplicateKeyResolution.FAIL].
+     * Sets the duplicated key resolution policy to use when adding data to the builder. By default, the policy is set
+     * to [DuplicatedKeyResolution.FAIL].
      *
-     * @param duplicateKeyResolution the duplicate key resolution policy to use
+     * @param duplicatedKeyResolution the duplicated key resolution policy to use
      * @return this builder
-     * @see DuplicateKeyResolution
+     * @see DuplicatedKeyResolution
      */
-    fun duplicateKeyResolutionPolicy(duplicateKeyResolution: DuplicateKeyResolution): TranslatorBuilder = apply {
-        this.duplicateKeyResolution = duplicateKeyResolution
+    fun withDuplicatedKeyResolutionPolicy(duplicatedKeyResolution: DuplicatedKeyResolution): TranslatorBuilder = apply {
+        this.duplicatedKeyResolution = duplicatedKeyResolution
     }
 
     /**
@@ -179,19 +189,22 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     /**
-     * Defines how to handle duplicate keys when creating a translator.
+     * Defines how to handle duplicated keys when creating a translator.
      */
-    enum class DuplicateKeyResolution {
+    enum class DuplicatedKeyResolution {
+
         /**
-         * If a duplicate key is found, the build will fail.
+         * If a duplicated key is found, the build will fail.
          */
         FAIL,
+
         /**
-         * If a duplicate key is found, the first value will be kept.
+         * If a duplicated key is found, the first value will be kept.
          */
         KEEP_FIRST,
+
         /**
-         * If a duplicate key is found, the last value will be kept.
+         * If a duplicated key is found, the last value will be kept.
          */
         KEEP_LAST,
         ;
@@ -202,11 +215,11 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      *
      * @return the created translator
      * @throws IllegalArgumentException if a duplicate key is found and the duplicate key resolution policy is set to
-     * [DuplicateKeyResolution.FAIL], or if a source has been added without following the rules defined in the method
+     * [DuplicatedKeyResolution.FAIL], or if a source has been added without following the rules defined in the method
      * documentation
      */
     fun build(): Translator {
-        val finalMap = HashMap<Locale, HashMap<String, Any>>()
+        val finalMap = HashMap<Locale, HashMap<String, String>>()
         translatorContent.forEach {
             when (it) { // switch on different types of TranslationResourceInformation
                 // if it is a FileInfo, we need to load the file or if it is a directory, load all files in it
@@ -216,65 +229,72 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                         loadPath(it).forEach { (locale, map) ->
                             addToMap(finalMap, locale, map)
                         }
-                    } catch (e: IllformedLocaleException) {
-                        error("Invalid locale for file '${it.path}'. File name must be a valid locale.")
+                    } catch (e: I18nFileParser.I18nParsingException) {
+                        error("Error while parsing file ${e.path}: ${e.message}")
                     }
                 }
                 // if it is a MapInfo, we can directly add it to the final map
                 is MapInfo -> addToMap(finalMap, it.locale, it.map)
             }
         }
-        return TranslatorImpl(defaultLocale, currentLocale, finalMap.unsafeCast())
+
+        // once all data is added to the final map, we need to sort it
+        val sortedMap = finalMap.mapValues { (_, map) ->
+            map.asSequence()
+                .map { (key, value) -> key.split('.') to value }
+                .sortedWith { (first, _), (second, _) ->
+                    stringListComparator(first, second)
+                }
+                .map { (key, value) -> key.joinToString(".") to value }
+                .toMap()
+        }
+
+        return TranslatorImpl(defaultLocale, currentLocale, sortedMap)
     }
 
-    private fun addToMap(finalMap: HashMap<Locale, HashMap<String, Any>>, locale: Locale, map: Map<String, Any>) {
+    private fun addToMap(finalMap: HashMap<Locale, HashMap<String, String>>, locale: Locale, map: Map<String, Any>) {
         val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
         map.forEach { (key, value) ->
-            // first check if the key is valid, if not we can already stop here and throw an exception
-            check(KEY_IDENTIFIER_REGEX.matches(key)) {
-                "Invalid key $key for locale '$locale'. For more details about key syntax, see Translator interface documentation."
-            }
-            // NOTE: we cannot use Map#computeX methods here, because we may add several values in a single call which
-            // can lead to a ConcurrentModificationException being thrown, that is why containsKey + put is used
-            when (duplicateKeyResolution) {
-                // if resolution is fail, we need to check that the key is not already present
-                DuplicateKeyResolution.FAIL -> {
-                    check(key !in localeMap) { "Duplicate key '$key' for locale '$locale'" }
-                    addValue(localeMap, key, value)
+            // we must check the validity here in case the value is a leaf (string, number or boolean), because we do
+            // not check the validity of the value nor the key in before adding it to the map
+            checkKeyIsValid(key, currentLocale)
+            checkValueIsValid(value, currentLocale)
+
+            val toFlatten = ArrayDeque<Pair<String, Any>>()
+            toFlatten.addLast(key to value)
+
+            while (toFlatten.isNotEmpty()) {
+                val (currentKey, currentValue) = toFlatten.removeFirst()
+                when (currentValue) {
+                    is Map<*, *> -> currentValue.forEach { (subKey, subValue) ->
+                        checkKeyIsValid(subKey, currentLocale)
+                        checkValueIsValid(subValue, currentLocale)
+                        toFlatten.addLast("$currentKey.$subKey" to subValue)
+                    }
+                    is List<*> -> currentValue.forEachIndexed { index, subValue ->
+                        checkValueIsValid(subValue, currentLocale)
+                        toFlatten.addLast("$currentKey.$index" to subValue)
+                    }
+                    // type of value is always valid here (string, number or boolean), because of previous checks
+                    else -> addValue(locale, localeMap, currentKey, currentValue)
                 }
-                // if resolution is keep first and old is null, we can add the value
-                DuplicateKeyResolution.KEEP_FIRST -> if (key !in localeMap) addValue(localeMap, key, value)
-                // if resolution is keep last, we always add the value
-                DuplicateKeyResolution.KEEP_LAST -> addValue(localeMap, key, value)
             }
         }
     }
 
-    private fun addValue(finalMap: HashMap<String, Any>, rootKey: String, element: Any) {
-        val toFlatten = ArrayDeque<Pair<String, Any>>()
-        toFlatten.addLast(rootKey to element)
-
-        while (toFlatten.isNotEmpty()) {
-            val (key, current) = toFlatten.removeFirst()
-            when (current) {
-                is Map<*, *> -> current.forEach { (subKey, subValue) ->
-                    checkNotNull(subKey) {
-                        "Keys cannot be null. For more details about supported types, see I18nFileParser interface documentation."
-                    }
-                    checkNotNull(subValue) {
-                        "Values cannot be null. For more details about supported types, see I18nFileParser interface documentation."
-                    }
-                    toFlatten.addLast("$key.$subKey" to subValue)
+    private fun addValue(locale: Locale, finalMap: HashMap<String, String>, key: String, value: Any) {
+        when (duplicatedKeyResolution) {
+            // if resolution is FAIL, we need to check that the key is not already present
+            DuplicatedKeyResolution.FAIL -> {
+                finalMap.compute(key) { _, old ->
+                    check(old == null) { "Duplicate key '$key' for locale '$locale'" }
+                    value.toString()
                 }
-                is List<*> -> current.forEachIndexed { index, subValue ->
-                    checkNotNull(subValue) {
-                        "Values cannot be null. For more details about supported types, see I18nFileParser interface documentation."
-                    }
-                    toFlatten.addLast("$key.$index" to subValue)
-                }
-                is String, is Number, is Boolean -> finalMap[key] = current.toString()
-                else -> error("Unsupported type ${current::class.simpleName}. For more details about supported types, see I18nFileParser interface documentation.")
             }
+            // if resolution is KEEP_FIRST and old is null, we can add the value
+            DuplicatedKeyResolution.KEEP_FIRST -> finalMap.computeIfAbsent(key) { value.toString() }
+            // if resolution is KEEP_LAST, we always add the value
+            DuplicatedKeyResolution.KEEP_LAST -> finalMap[key] = value.toString()
         }
     }
 
@@ -282,13 +302,17 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         if (info.path.isDirectory()) { // if the path is a directory, load all files in it and return the list
             Files.list(info.path)
                 .map {
-                    val locale = info.localeMapper(it.nameWithoutExtension)
-                    locale to info.parser.parseFile(it)
+                    val (locale, map) = info.parser.parseFile(it) ?: return@map null
+                    locale to map
                 }
+                .filter { it != null }
+                .unsafeCast<Stream<Pair<Locale, Map<String, Any>>>>() // as we filtered null values, we can safely cast
                 .toList()
         } else { // if the path is a file, load it and store it in a one element list
-            val locale = info.localeMapper(info.path.nameWithoutExtension)
-            listOf(locale to info.parser.parseFile(info.path))
+            info.parser
+                .parseFile(info.path)
+                ?.let { listOf(it.locale to it.map) }
+                ?: emptyList()
         }
 
 }
@@ -298,12 +322,31 @@ private sealed interface TranslationResourceInformation
 private class FileInfo(
     val path: Path,
     val parser: I18nFileParser,
-    val localeMapper: (String) -> Locale,
 ) : TranslationResourceInformation
 
 private class MapInfo(val locale: Locale, val map: Map<String, Any>) : TranslationResourceInformation
 
-private fun parseLocale(name: String): Locale = Locale
-    .Builder()
-    .setLanguageTag(name.replace('_', '-'))
-    .build()
+private fun checkKeyIsValid(key: Any?, locale: Locale) {
+    checkNotNull(key) {
+        "Keys cannot be null. For more details about key syntax, see Translator interface documentation."
+    }
+    check(key is String) {
+        "Invalid key type ${key::class.simpleName} for locale '$locale', expected String. For more details about keys, see Translator interface documentation."
+    }
+    check(FULL_KEY_REGEX.matches(key)) {
+        "Invalid key '$key' for locale '$locale'. For more details about key syntax, see Translator interface documentation."
+    }
+}
+
+@OptIn(ExperimentalContracts::class)
+private fun checkValueIsValid(value: Any?, locale: Locale) {
+    contract {
+        returns() implies (value != null)
+    }
+    checkNotNull(value) {
+        "Values cannot be null. For more details about supported types, see I18nFileParser interface documentation."
+    }
+    check(value is String || value is Number || value is Boolean || value is Map<*, *> || value is List<*>) {
+        "Invalid value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see I18nFileParser interface documentation."
+    }
+}
