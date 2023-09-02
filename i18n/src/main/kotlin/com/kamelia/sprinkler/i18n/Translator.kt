@@ -52,15 +52,19 @@ interface Translator {
     val currentLocale: Locale
 
     /**
-     * Translates the given key to the given [locale]. If the key is not found for the given [locale] the key will be
-     * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], null will be returned.
+     * Translates the given key to the given [locale]. If the key is not found for the given [locale] and the
+     * [fallbackOnDefault] parameter is true, the key will be translated to the [defaultLocale]. If the key is not found
+     * for the [defaultLocale], or if the [fallbackOnDefault] parameter is false, null will be returned.
      *
      * @param key the key to translate
      * @param locale the locale to translate the key to
+     * @param fallbackOnDefault whether to fallback on the [defaultLocale] if the key is not found for the [locale]
      * @return the translated key, or null if the key is not found for the [locale] and the [defaultLocale]
      * @throws IllegalArgumentException if the key is not [valid][Translator]
      */
-    fun translateOrNull(key: String, locale: Locale): String?
+    fun translateOrNull(key: String, locale: Locale, fallbackOnDefault: Boolean): String?
+
+    fun translateOrNull(key: String, locale: Locale): String? = translateOrNull(key, locale, true)
 
     fun translateOrNull(key: String, locale: Locale, proxy: TranslationRequestProxy): String? =
         proxy.translate(this, key, locale)

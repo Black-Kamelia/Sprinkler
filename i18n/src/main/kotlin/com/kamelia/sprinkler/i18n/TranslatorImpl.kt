@@ -18,7 +18,7 @@ internal class TranslatorImpl private constructor(
         children
     )
 
-    override fun translateOrNull(key: String, locale: Locale): String? {
+    override fun translateOrNull(key: String, locale: Locale, fallbackOnDefault: Boolean): String? {
         require(FULL_KEY_REGEX.matches(key)) {
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
@@ -27,7 +27,7 @@ internal class TranslatorImpl private constructor(
         val value = translations[locale]?.get(actualKey)
         if (value != null) return value
 
-        if (defaultLocale != locale) { // to avoid a second lookup with the same key
+        if (fallbackOnDefault && defaultLocale != locale) { // to avoid a second lookup with the same key
             val fallback = translations[defaultLocale]?.get(actualKey)
             if (fallback != null) return fallback
         }
