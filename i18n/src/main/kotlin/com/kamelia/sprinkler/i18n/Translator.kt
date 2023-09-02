@@ -96,6 +96,14 @@ interface Translator {
 
     fun translate(key: String, proxy: TranslationRequestProxy): String = translate(key, currentLocale, proxy)
 
+    fun t(key: String, locale: Locale): String = translate(key, locale)
+
+    fun t(key: String, locale: Locale, proxy: TranslationRequestProxy): String = translate(key, locale, proxy)
+
+    fun t(key: String): String = translate(key)
+
+    fun t(key: String, proxy: TranslationRequestProxy): String = translate(key, proxy)
+
     /**
      * Returns a new [Translator] with the given [key] as root key. The [key] will be prepended to all keys used to
      * translate values.
