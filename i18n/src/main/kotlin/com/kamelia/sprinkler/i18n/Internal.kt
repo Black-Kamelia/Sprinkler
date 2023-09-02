@@ -6,8 +6,6 @@ import com.zwendo.restrikt.annotation.PackagePrivate
 import org.intellij.lang.annotations.Language
 
 @Language("RegExp")
-internal const val KEY_IDENTIFIER_REGEX_STRING = """[a-zA-Z0-9](?:[\w-]*[a-zA-Z0-9])?"""
-
-internal val KEY_IDENTIFIER_REGEX = KEY_IDENTIFIER_REGEX_STRING.toRegex()
+private const val KEY_IDENTIFIER_REGEX_STRING = """[a-zA-Z0-9](?:[\w-]*[a-zA-Z0-9])?"""
 
 internal val FULL_KEY_REGEX = """$KEY_IDENTIFIER_REGEX_STRING(?:\.$KEY_IDENTIFIER_REGEX_STRING)*""".toRegex()
