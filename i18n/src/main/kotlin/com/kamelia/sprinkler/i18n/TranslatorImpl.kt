@@ -52,7 +52,9 @@ internal class TranslatorImpl private constructor(
         } else {
             translations.mapValues { (_, map) -> // deep copy with filtering and key prefix removal
                 map.asSequence()
-                    .filter { (key, _) -> key.startsWith(root) && key != root }
+                    // we must check that the char at root.length is a dot to avoid removing keys that start with the
+                    // same prefix but are not direct children of the root e.g. prefix='a' and key='ab'
+                    .filter { (key, _) -> key.startsWith(root) && root != key && key[root.length] == '.' }
                     .map { (key, value) -> key.substring(root.length + 1) to value } // + 1 to remove the dot
                     .toMap()
             }
