@@ -12,7 +12,6 @@ import kotlin.collections.ArrayDeque
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.io.path.isDirectory
-import kotlin.io.path.nameWithoutExtension
 
 /**
  * Builder class used to create a [Translator]. This class provides several methods to add data to the translator from
@@ -229,7 +228,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                             addToMap(finalMap, locale, map)
                         }
                     } catch (e: I18nFileParser.I18nParsingException) {
-                        error("Invalid locale for file '${e.path.nameWithoutExtension}' (${e.path}). For more details about locale syntax, see java.util.Locale documentation.")
+                        error("Error while parsing file ${e.path}: ${e.message}")
                     }
                 }
                 // if it is a MapInfo, we can directly add it to the final map

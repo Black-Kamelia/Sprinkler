@@ -60,9 +60,11 @@ fun interface I18nFileParser {
      * Exception thrown when an error occurs while parsing a file.
      *
      * @constructor Creates a new [I18nParsingException] with the provided message.
+     * @param message the message of the exception
      * @param path the path to the file that caused the exception
+     * @property path The path to the file that caused the exception.
      */
-    class I18nParsingException(val path: Path) : IllegalArgumentException()
+    class I18nParsingException(message: String, val path: Path) : IllegalArgumentException(message)
 
     companion object {
 
@@ -72,8 +74,8 @@ fun interface I18nFileParser {
          * returned map must be structured as stated in this [interface][I18nFileParser] documentation.
          *
          * This method also takes an optional parser to parse the locale from the file name. This parser is a single
-         * parameter function which accepts the file name as a string and returns the parsed locale. By default, this
-         * method uses [parseLocale] to parse the locale from the file name.
+         * parameter function which accepts the file name (without its extension) as a string and returns the parsed
+         * locale. By default, this method uses [parseLocale] to parse the locale from the file name.
          *
          * @param localeParser the parser to use to parse the locale from the file name (defaults to [parseLocale])
          * @param mapper the mapper to use to parse the file
@@ -88,7 +90,7 @@ fun interface I18nFileParser {
             val locale = try {
                 localeParser(it.nameWithoutExtension)
             } catch (e: IllformedLocaleException) {
-                throw I18nParsingException(it)
+                throw I18nParsingException("Invalid locale '${it.nameWithoutExtension}'. For more details about locale syntax, see java.util.Locale documentation.", it)
             }
             val map = mapper(it.readText())
             ParsingResult(locale, map)
