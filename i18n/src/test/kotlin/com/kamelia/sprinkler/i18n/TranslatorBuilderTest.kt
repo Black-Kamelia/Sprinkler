@@ -864,6 +864,31 @@ class TranslatorBuilderTest {
         assertEquals("test", translator.translate("test.test", Locale.FRANCE))
     }
 
+    @Test
+    fun `stringListComparator works with empty lists`() {
+        assertEquals(0, stringListComparator(emptyList(), emptyList()))
+    }
+
+    @Test
+    fun `stringListComparator works with lists of same size`() {
+        assertEquals(0, stringListComparator(listOf("test"), listOf("test")))
+    }
+
+    @Test
+    fun `stringListComparator works with lists of different size (first is smaller)`() {
+        assertEquals(-1, stringListComparator(emptyList(), listOf("test")))
+    }
+
+    @Test
+    fun `stringListComparator works with lists of different size (first is bigger)`() {
+        assertEquals(1, stringListComparator(listOf("test"), emptyList()))
+    }
+
+    @Test
+    fun `stringListComparator works with lists of same size but different content`() {
+        assertEquals(-1, stringListComparator(listOf("test"), listOf("test2")))
+    }
+
     private companion object {
 
         const val ROOT = "builder_test"

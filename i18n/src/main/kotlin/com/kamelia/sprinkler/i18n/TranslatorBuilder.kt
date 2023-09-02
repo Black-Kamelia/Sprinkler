@@ -350,21 +350,21 @@ private fun checkValueIsValid(value: Any?, locale: Locale) {
     }
 }
 
-private fun stringListComparator(first: List<String>, second: List<String>): Int {
-    val firstIterator = first.iterator()
-    val secondIterator = second.iterator()
+internal fun stringListComparator(first: List<String>, second: List<String>): Int {
+    val it1 = first.iterator()
+    val it2 = second.iterator()
 
-    while (firstIterator.hasNext() && secondIterator.hasNext()) {
-        val firstElement = firstIterator.next()
-        val secondElement = secondIterator.next()
+    while (true) {
+        val firstElement = if (it1.hasNext()) it1.next() else {
+            return if (it2.hasNext()) {
+                -1
+            } else {
+                0
+            }
+        }
+        val secondElement = if (it2.hasNext()) it2.next() else return 1
 
         val comparison = firstElement.compareTo(secondElement)
         if (comparison != 0) return comparison
-    }
-
-    return when {
-        firstIterator.hasNext() -> 1
-        secondIterator.hasNext() -> -1
-        else -> 0
     }
 }
