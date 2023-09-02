@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    parameters {
+        booleanParam(name: 'skip_test', defaultValue: false, description: 'Set to true to skip the test stage')
+    }
     options {
         timestamps()
         ansiColor('xterm')
@@ -45,6 +48,11 @@ pipeline {
                         sh 'gradle binary-transcoders:test'
                     }
                 }
+                stage('JVM Bridge') {
+                    steps {
+                        sh 'gradle jvm-bridge:test'
+                    }
+                }
             }
             post {
                 always {
@@ -55,26 +63,13 @@ pipeline {
                         [path: 'utils/src/main/kotlin'],
                         [path: 'utils/src/main/java'],
                         [path: 'binary-transcoders/src/main/kotlin'],
-                        [path: 'binary-transcoders/src/main/java']
+                        [path: 'binary-transcoders/src/main/java'],
+                        [path: 'jvm-bridge/src/main/kotlin'],
+                        [path: 'jvm-bridge/src/main/java']
                     ],
                     tools: [
                         [pattern: '**/build/reports/kover/report.xml']
                     ]
-                }
-            }
-        }
-        stage('Deploy') {
-            when {
-                branch 'master'
-            }
-            steps {
-                withCredentials([
-                        usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
-                        usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass'),
-                ]) {
-                    sh 'gradle utils:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
-                    sh 'gradle readonly-collections:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
-                    sh 'gradle binary-transcoders:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
                 }
             }
         }
