@@ -1,8 +1,5 @@
 pipeline {
     agent any
-    parameters {
-        booleanParam(name: 'skip_test', defaultValue: false, description: 'Set to true to skip the test stage')
-    }
     options {
         timestamps()
         ansiColor('xterm')
@@ -85,20 +82,22 @@ pipeline {
             // }
             parallel {
                 stage('Utils') {
-                    steps {
-                        script {
-                            try {
-                                input 'Publish to Maven Central?'
-                            } catch(err) {
-                               currentBuild.result = 'SUCCESS'
-                               return
+                    stages {
+                        stage('Confirmation') {
+                            steps {
+                                input message: 'Want to skip the test stage?', parameters: [booleanParam(name: 'skip_test', defaultValue: false)]
                             }
                         }
-                        withCredentials([
-                                usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
-                                usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass'),
-                        ]) {
-                            sh 'gradle utils:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
+                        stage('Publish') {
+                            when { expression { params.skip_test != true } }
+                            steps {
+                                withCredentials([
+                                        usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
+                                        usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass'),
+                                ]) {
+                                    sh 'gradle utils:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
+                                }
+                            }
                         }
                     }
                 }
