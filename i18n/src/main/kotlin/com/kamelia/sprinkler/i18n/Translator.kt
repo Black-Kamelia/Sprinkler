@@ -62,6 +62,9 @@ interface Translator {
      */
     fun translateOrNull(key: String, locale: Locale): String?
 
+    fun translateOrNull(key: String, locale: Locale, proxy: TranslationRequestProxy): String? =
+        proxy.translate(this, key, locale)
+
     /**
      * Translates the given key to the given [locale]. If the key is not found for the given [locale] the key will be
      * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
@@ -76,6 +79,9 @@ interface Translator {
     fun translate(key: String, locale: Locale): String =
         translateOrNull(key, locale) ?: illegalArgument("Key '$key' not found for locale '$locale'.")
 
+    fun translate(key: String, locale: Locale, proxy: TranslationRequestProxy): String =
+        translateOrNull(key, locale, proxy) ?: illegalArgument("Key '$key' not found for locale '$locale'.")
+
     /**
      * Translates the given key to the [currentLocale]. If the key is not found for the [currentLocale] the key will be
      * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
@@ -87,6 +93,8 @@ interface Translator {
      * [currentLocale] and the [defaultLocale]
      */
     fun translate(key: String): String = translate(key, currentLocale)
+
+    fun translate(key: String, proxy: TranslationRequestProxy): String = translate(key, currentLocale, proxy)
 
     /**
      * Returns a new [Translator] with the given [key] as root key. The [key] will be prepended to all keys used to
