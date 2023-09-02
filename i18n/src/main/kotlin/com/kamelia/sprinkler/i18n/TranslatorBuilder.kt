@@ -191,14 +191,17 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * Defines how to handle duplicated keys when creating a translator.
      */
     enum class DuplicatedKeyResolution {
+
         /**
          * If a duplicated key is found, the build will fail.
          */
         FAIL,
+
         /**
          * If a duplicated key is found, the first value will be kept.
          */
         KEEP_FIRST,
+
         /**
          * If a duplicated key is found, the last value will be kept.
          */
@@ -239,42 +242,46 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     private fun addToMap(finalMap: HashMap<Locale, HashMap<String, Any>>, locale: Locale, map: Map<String, Any>) {
         val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
         map.forEach { (key, value) ->
-            // NOTE: we cannot use Map#computeX methods here, because we may add several values in a single call which
-            // can lead to a ConcurrentModificationException being thrown, that is why containsKey + put is used
-            when (duplicatedKeyResolution) {
-                // if resolution is fail, we need to check that the key is not already present
-                DuplicatedKeyResolution.FAIL -> {
-                    check(key !in localeMap) { "Duplicate key '$key' for locale '$locale'" }
-                    addValue(localeMap, key, value)
+            // we must check the validity here in case the value is a leaf (string, number or boolean), because we do
+            // not check the validity of the value nor the key in before adding it to the map
+            checkKeyIsValid(key, currentLocale)
+            checkValueIsValid(value, currentLocale)
+
+            val toFlatten = ArrayDeque<Pair<String, Any>>()
+            toFlatten.addLast(key to value)
+
+            while (toFlatten.isNotEmpty()) {
+                val (currentKey, currentValue) = toFlatten.removeFirst()
+                when (currentValue) {
+                    is Map<*, *> -> currentValue.forEach { (subKey, subValue) ->
+                        checkKeyIsValid(subKey, currentLocale)
+                        checkValueIsValid(subValue, currentLocale)
+                        toFlatten.addLast("$currentKey.$subKey" to subValue)
+                    }
+                    is List<*> -> currentValue.forEachIndexed { index, subValue ->
+                        checkValueIsValid(subValue, currentLocale)
+                        toFlatten.addLast("$currentKey.$index" to subValue)
+                    }
+                    // type of value is always valid here (string, number or boolean), because of previous checks
+                    else -> addValue(locale, localeMap, currentKey, currentValue)
                 }
-                // if resolution is keep first and old is null, we can add the value
-                DuplicatedKeyResolution.KEEP_FIRST -> if (key !in localeMap) addValue(localeMap, key, value)
-                // if resolution is keep last, we always add the value
-                DuplicatedKeyResolution.KEEP_LAST -> addValue(localeMap, key, value)
             }
         }
     }
 
-    private fun addValue(finalMap: HashMap<String, Any>, rootKey: String, element: Any) {
-        checkKeyIsValid(rootKey, currentLocale)
-        checkValueIsValid(element, currentLocale)
-        val toFlatten = ArrayDeque<Pair<String, Any>>()
-        toFlatten.addLast(rootKey to element)
-
-        while (toFlatten.isNotEmpty()) {
-            val (key, current) = toFlatten.removeFirst()
-            when (current) {
-                is Map<*, *> -> current.forEach { (subKey, subValue) ->
-                    checkKeyIsValid(subKey, currentLocale)
-                    checkValueIsValid(subValue, currentLocale)
-                    toFlatten.addLast("$key.$subKey" to subValue)
+    private fun addValue(locale: Locale, finalMap: HashMap<String, Any>, key: String, value: Any) {
+        when (duplicatedKeyResolution) {
+            // if resolution is FAIL, we need to check that the key is not already present
+            DuplicatedKeyResolution.FAIL -> {
+                finalMap.compute(key) { _, old ->
+                    check(old == null) { "Duplicate key '$key' for locale '$locale'" }
+                    value.toString()
                 }
-                is List<*> -> current.forEachIndexed { index, subValue ->
-                    checkValueIsValid(subValue, currentLocale)
-                    toFlatten.addLast("$key.$index" to subValue)
-                }
-                else -> finalMap[key] = current.toString() // type is always valid here, because of previous checks
             }
+            // if resolution is KEEP_FIRST and old is null, we can add the value
+            DuplicatedKeyResolution.KEEP_FIRST -> finalMap.computeIfAbsent(key) { value.toString() }
+            // if resolution is KEEP_LAST, we always add the value
+            DuplicatedKeyResolution.KEEP_LAST -> finalMap[key] = value.toString()
         }
     }
 
@@ -307,11 +314,6 @@ private class FileInfo(
 
 private class MapInfo(val locale: Locale, val map: Map<String, Any>) : TranslationResourceInformation
 
-private fun parseLocale(name: String): Locale = Locale
-    .Builder()
-    .setLanguageTag(name.replace('_', '-'))
-    .build()
-
 private fun checkKeyIsValid(key: Any?, locale: Locale) {
     checkNotNull(key) {
         "Keys cannot be null. For more details about key syntax, see Translator interface documentation."
@@ -319,7 +321,7 @@ private fun checkKeyIsValid(key: Any?, locale: Locale) {
     check(key is String) {
         "Invalid key type ${key::class.simpleName} for locale '$locale', expected String. For more details about keys, see Translator interface documentation."
     }
-    check(KEY_IDENTIFIER_REGEX.matches(key)) {
+    check(FULL_KEY_REGEX.matches(key)) {
         "Invalid key '$key' for locale '$locale'. For more details about key syntax, see Translator interface documentation."
     }
 }
