@@ -5,12 +5,17 @@
 ## Summary
 
 - [Intentions](#intentions)
+- [String interpolation](#string-interpolation)
+  - [String syntax](#string-syntax)
+  - [Interpolation](#interpolation)
+  - [Custom Variable Resolvers](#custom-variable-resolvers)
 - [CloseableScope](#closeablescope)
 - [Box Delegate](#box-delegate)
 - [Collector Factories](#collector-factories)
 - [ByteArrayDecoding](#bytearraydecoding)
 - [ByteAccess](#byteaccess)
-- [unsafeCast](#unsafecast)
+- [Casts](#casts)
+- [Exceptions](#exceptions)
 - [Changelog](#changelog)
 
 ## Intentions
@@ -19,6 +24,77 @@ The purpose of this module is to provide a set of utilities that are useful for 
 enough to deserve their own module.
 
 You may see it as a "stdlib++".
+
+## String interpolation
+
+Kotlin's string interpolation is great, but can only be used in the context of string literals. This module provides a
+few extension functions to allow dynamic string interpolation with any object.
+
+### String syntax
+
+A string that can be interpolated is a string that contains variables, which are delimited by `{}`. The name of the
+variable is the content of the braces and must be an alphanumeric string identifier that can contain underscores and
+dashes. `"Hello {name}, I'm {my-name} and I'm {my_age} years old."` is a valid string that contains 3 variables.
+
+Any opened brace must be closed, and opening braces can be escaped using a backslash (`\{`). For example, the string
+`"Hello {name"` is invalid but `"Hello \{name"` is valid because the opening brace is escaped.
+
+Failure to respect these rules will result in an exception being thrown.
+
+### Interpolation
+
+To interpolate a string, one must use the `interpolate` extension function on a `String`. It exists in several variants.
+
+The first ones are `interpolate(vararg args: Pair<String, Any>)` and `interpolate(args: Map<String, Any>)`. They take a
+list of pairs of variable names associated with their values or a map with the same semantics. The variable names must
+be valid identifiers, and the values can be of any type. The function will replace all variables in the string with
+their associated value.
+
+```kt
+val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(
+    "name" to "John",
+    "age" to 42,
+)
+print(string) // prints "Hello I'm John, and I'm 42 years old."
+```
+
+Both of these functions accepts an optional `fallback` parameter, which is a string that will be used as a fallback
+value if a variable is not found in the given arguments. If no fallback is provided, an exception will be thrown.
+
+```kt
+val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(
+    "name" to "John",
+    fallback = "unknown"
+)
+print(string) // prints "Hello I'm John, and I'm unknown years old."
+```
+
+The second variant comes in two flavors: `interpolate(vararg args: Any)` and `interpolate(args: List<Any>)`. They take
+a vararg or a list of values, and will replace the variables in the string using their index in the list. The variable
+names in the string must be integers, and in the range of the list. If a variable name is not an integer, or is out of
+bounds, an exception will be thrown.
+
+```kt
+val string = "'Hello I'm {0}, and I'm {1} years old.' said {0}.".interpolate(
+    "John",
+    42,
+)
+print(string) // prints "'Hello I'm John, and I'm 42 years old.' said John"
+```
+
+### Custom Variable Resolvers
+
+The previously introduced functions are all using under the hood the default interpolation function
+`interpolate(VariableResolver)`. This function takes a `VariableResolver` as a parameter, which is a functional
+interface representing a function that takes a variable name and returns its value.
+
+Here is a dumb but simple example of how to use it:
+
+```kt
+val myResolver = VariableResolver { variableName -> variableName.reversed() }
+val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(myResolver)
+print(string) // prints "Hello I'm eman, and I'm ega years old."
+```
 
 ## CloseableScope
 
@@ -217,7 +293,11 @@ Of course, `Byte` has only the `bit` function, which doesn't accept an `endianne
 
 To simplify casting and type inference, a few extensions are provided.
 
-## unsafeCast
+## Casts
+
+Sprinkler offers several functions to cast values to other types.
+
+### unsafeCast
 
 A simple extension function on `Any?`, that allows to cast it to any type without any check. It is defined as follows:
 
@@ -253,7 +333,7 @@ fun countA(value: Any): Int =
     .count { 'a' == it }
 ```
 
-## castOrNull
+### castOrNull
 
 A simple extension function on `Any?`, that allows to cast it to any type, and returns `null` if the cast fails (this
 function is the equivalent of `as?`). It is defined as follows:
@@ -264,6 +344,15 @@ inline fun <reified T> Any?.castOrNull(): T? = this as? T
 ```
 
 In the same way as `unsafeCast`, it is useful when it comes to chaining operations to avoid nested `as?` calls.
+
+## Exceptions
+
+The library provides a few methods to throw exceptions with a message. The reason for this is that the standard library
+provides the `error` function to throw an IllegalStateException, but nothing else. To complement this, the following
+functions are provided:
+
+- `illegalArgument(message: String): Nothing` throws an `IllegalArgumentException` with the given message.
+- `assertionError(message: String): Nothing` throws an `AssertionError` with the given message.
 
 ## Changelog
 
