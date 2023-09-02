@@ -112,7 +112,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @see I18nFileParser.fromString
      */
     fun addFile(file: File, mapper: (String) -> Map<String, Any>): TranslatorBuilder =
-        addFile(file, I18nFileParser.fromString { mapper(it) })
+        addFile(file, I18nFileParser.fromString(mapper = mapper))
 
     /**
      * Adds a map for a locale to the builder. The content of the map will be added to the final translator. The
@@ -302,7 +302,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         if (info.path.isDirectory()) { // if the path is a directory, load all files in it and return the list
             Files.list(info.path)
                 .map {
-                    println("Loading file $it")
                     val (locale, map) = info.parser.parseFile(it) ?: return@map null
                     locale to map
                 }
