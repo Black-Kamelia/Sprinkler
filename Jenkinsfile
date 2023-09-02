@@ -124,7 +124,7 @@ pipeline {
                                 input 'Publish to Maven Central?'
                             } catch(err) {
                                currentBuild.result = 'SUCCESS'
-                               return
+                               error()
                             }
                         }
                         withCredentials([
