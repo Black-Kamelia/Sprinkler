@@ -53,7 +53,7 @@ internal class TranslatorImpl private constructor(
             translations.mapValues { (_, map) -> // deep copy with filtering and key prefix removal
                 map.asSequence()
                     .filter { (key, _) -> key.startsWith(root) && key != root }
-                    .map { (key, value) -> key.substring(root.length) to value }
+                    .map { (key, value) -> key.substring(root.length + 1) to value } // + 1 to remove the dot
                     .toMap()
             }
         }
