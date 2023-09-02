@@ -351,22 +351,3 @@ private fun checkValueIsValid(value: Any?, locale: Locale) {
         "Invalid value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see I18nFileParser interface documentation."
     }
 }
-
-internal fun stringListComparator(first: List<String>, second: List<String>): Int {
-    val it1 = first.iterator()
-    val it2 = second.iterator()
-
-    while (true) {
-        val firstElement = if (it1.hasNext()) it1.next() else {
-            return if (it2.hasNext()) {
-                -1
-            } else {
-                0
-            }
-        }
-        val secondElement = if (it2.hasNext()) it2.next() else return 1
-
-        val comparison = firstElement.compareTo(secondElement)
-        if (comparison != 0) return comparison
-    }
-}
