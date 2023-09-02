@@ -101,6 +101,7 @@ pipeline {
                         }
                     }
                 }
+                /*
                 stage('Readonly Collections') {
                     steps {
                         script {
@@ -155,6 +156,7 @@ pipeline {
                         }
                     }
                 }
+                */
             }
         }
     }
