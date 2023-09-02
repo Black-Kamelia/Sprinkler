@@ -14,11 +14,7 @@ pipeline {
         stage('Deploy') {
             parallel {
                 stage('Utils') {
-                    when {
-                        expression {
-                            params."Utils" == true
-                        }
-                    }
+                    when { expression { params."Utils" == true } }
                     steps {
                         withCredentials([
                                 usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
@@ -29,11 +25,7 @@ pipeline {
                     }
                 }
                 stage('Readonly Collections') {
-                    when {
-                        expression {
-                            params."Readonly Collections" == true
-                        }
-                    }
+                    when { expression { params."Utils" == true } }
                     steps {
                         withCredentials([
                                 usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
@@ -44,11 +36,7 @@ pipeline {
                     }
                 }
                 stage('Binary Transcoders') {
-                    when {
-                        expression {
-                            params."Binary Transcoders" == true
-                        }
-                    }
+                    when { expression { params."Utils" == true } }
                     steps {
                         withCredentials([
                                 usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
@@ -59,11 +47,7 @@ pipeline {
                     }
                 }
                 stage('JVM Bridge') {
-                    when {
-                        expression {
-                            params."JVM Bridge" == true
-                        }
-                    }
+                    when { expression { params."Utils" == true } }
                     steps {
                         withCredentials([
                                 usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),

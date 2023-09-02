@@ -27,17 +27,11 @@ pipeline {
             }
         }
         stage('Build') {
-            when {
-                branch 'master'
-            }
             steps {
                 sh 'gradle --parallel assemble'
             }
         }
         stage('Test') {
-            when {
-                branch 'master'
-            }
             parallel {
                 stage('Utils') {
                     steps {
