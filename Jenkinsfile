@@ -53,6 +53,11 @@ pipeline {
                         sh 'gradle jvm-bridge:test'
                     }
                 }
+                stage('I18N') {
+                    steps {
+                        sh 'gradle i18n:test'
+                    }
+                }
             }
             post {
                 always {
@@ -65,7 +70,8 @@ pipeline {
                         [path: 'binary-transcoders/src/main/kotlin'],
                         [path: 'binary-transcoders/src/main/java'],
                         [path: 'jvm-bridge/src/main/kotlin'],
-                        [path: 'jvm-bridge/src/main/java']
+                        [path: 'jvm-bridge/src/main/java'],
+                        [path: 'i18n/src/main/kotlin']
                     ],
                     tools: [
                         [pattern: '**/build/reports/kover/report.xml']
