@@ -1,0 +1,79 @@
+pipeline {
+    agent any
+    options {
+        timestamps()
+        ansiColor('xterm')
+        timeout(time: 15, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+    tools {
+        gradle 'gradle-7.5.0'
+    }
+
+    stages {
+        stage('Deploy') {
+            parallel {
+                stage('Utils') {
+                    when {
+                        expression {
+                            params."Utils" == true
+                        }
+                    }
+                    steps {
+                        withCredentials([
+                                usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
+                                usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass'),
+                        ]) {
+                            sh 'gradle utils:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
+                        }
+                    }
+                }
+                stage('Readonly Collections') {
+                    when {
+                        expression {
+                            params."Readonly Collections" == true
+                        }
+                    }
+                    steps {
+                        withCredentials([
+                                usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
+                                usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass'),
+                        ]) {
+                            sh 'gradle readonly-collections:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
+                        }
+                    }
+                }
+                stage('Binary Transcoders') {
+                    when {
+                        expression {
+                            params."Binary Transcoders" == true
+                        }
+                    }
+                    steps {
+                        withCredentials([
+                                usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
+                                usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass'),
+                        ]) {
+                            sh 'gradle binary-transcoders:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
+                        }
+                    }
+                }
+                stage('JVM Bridge') {
+                    when {
+                        expression {
+                            params."JVM Bridge" == true
+                        }
+                    }
+                    steps {
+                        withCredentials([
+                                usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
+                                usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass'),
+                        ]) {
+                            sh 'gradle jvm-bridge:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
