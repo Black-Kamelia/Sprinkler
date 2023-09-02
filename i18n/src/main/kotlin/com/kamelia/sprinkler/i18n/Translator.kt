@@ -55,8 +55,6 @@ interface Translator {
      * Translates the given key to the given [locale]. If the key is not found for the given [locale] the key will be
      * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], null will be returned.
      *
-     * **NOTE**: If [locale] is the [defaultLocale], the fallback step will be skipped in case the key is not found.
-     *
      * @param key the key to translate
      * @param locale the locale to translate the key to
      * @return the translated key, or null if the key is not found for the [locale] and the [defaultLocale]
@@ -68,8 +66,6 @@ interface Translator {
      * Translates the given key to the given [locale]. If the key is not found for the given [locale] the key will be
      * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
      * will be thrown.
-     *
-     * **NOTE**: If [locale] is the [defaultLocale], the fallback step will be skipped in case the key is not found.
      *
      * @param key the key to translate
      * @param locale the locale to translate the key to
@@ -84,9 +80,6 @@ interface Translator {
      * Translates the given key to the [currentLocale]. If the key is not found for the [currentLocale] the key will be
      * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
      * will be thrown.
-     *
-     * **NOTE**: If the [currentLocale] is the [defaultLocale], the fallback step will be skipped in case the key is not
-     * found.
      *
      * @param key the key to translate
      * @return the translated key
@@ -116,14 +109,6 @@ interface Translator {
      * @return a map containing all translations for all locales
      */
     fun toMap(): Map<Locale, Map<String, String>>
-
-    /**
-     * Returns a pretty-printed string representation of this [Translator] for the given [locale].
-     *
-     * @param locale the locale to use to translate the keys
-     * @return a pretty-printed string representation of this [Translator]
-     */
-    fun prettyDisplay(locale: Locale): String
 
     /**
      * Returns a new [Translator] with the given [locale] as current locale. This operation is lightweight (it simply

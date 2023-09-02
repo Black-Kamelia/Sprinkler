@@ -218,7 +218,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * documentation
      */
     fun build(): Translator {
-        val finalMap = HashMap<Locale, HashMap<String, Any>>()
+        val finalMap = HashMap<Locale, HashMap<String, String>>()
         translatorContent.forEach {
             when (it) { // switch on different types of TranslationResourceInformation
                 // if it is a FileInfo, we need to load the file or if it is a directory, load all files in it
@@ -236,10 +236,22 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 is MapInfo -> addToMap(finalMap, it.locale, it.map)
             }
         }
-        return TranslatorImpl(defaultLocale, currentLocale, finalMap.unsafeCast())
+
+        // once all data is added to the final map, we need to sort it
+        val sortedMap = finalMap.mapValues { (_, map) ->
+            map.asSequence()
+                .map { (key, value) -> key.split('.') to value }
+                .sortedWith { (first, _), (second, _) ->
+                    stringListComparator(first, second)
+                }
+                .map { (key, value) -> key.joinToString(".") to value }
+                .toMap()
+        }
+
+        return TranslatorImpl(defaultLocale, currentLocale, sortedMap)
     }
 
-    private fun addToMap(finalMap: HashMap<Locale, HashMap<String, Any>>, locale: Locale, map: Map<String, Any>) {
+    private fun addToMap(finalMap: HashMap<Locale, HashMap<String, String>>, locale: Locale, map: Map<String, Any>) {
         val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
         map.forEach { (key, value) ->
             // we must check the validity here in case the value is a leaf (string, number or boolean), because we do
@@ -269,7 +281,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
     }
 
-    private fun addValue(locale: Locale, finalMap: HashMap<String, Any>, key: String, value: Any) {
+    private fun addValue(locale: Locale, finalMap: HashMap<String, String>, key: String, value: Any) {
         when (duplicatedKeyResolution) {
             // if resolution is FAIL, we need to check that the key is not already present
             DuplicatedKeyResolution.FAIL -> {
@@ -336,5 +348,24 @@ private fun checkValueIsValid(value: Any?, locale: Locale) {
     }
     check(value is String || value is Number || value is Boolean || value is Map<*, *> || value is List<*>) {
         "Invalid value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see I18nFileParser interface documentation."
+    }
+}
+
+private fun stringListComparator(first: List<String>, second: List<String>): Int {
+    val firstIterator = first.iterator()
+    val secondIterator = second.iterator()
+
+    while (firstIterator.hasNext() && secondIterator.hasNext()) {
+        val firstElement = firstIterator.next()
+        val secondElement = secondIterator.next()
+
+        val comparison = firstElement.compareTo(secondElement)
+        if (comparison != 0) return comparison
+    }
+
+    return when {
+        firstIterator.hasNext() -> 1
+        secondIterator.hasNext() -> -1
+        else -> 0
     }
 }
