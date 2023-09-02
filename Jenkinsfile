@@ -87,6 +87,11 @@ pipeline {
                             sh 'gradle utils:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
                         }
                     }
+                    post {
+                        aborted {
+                            currentBuild.result = 'SUCCESS'
+                        }
+                    }
                 }
                 stage('Readonly Collections') {
                     input {
@@ -98,6 +103,11 @@ pipeline {
                                 usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass'),
                         ]) {
                             sh 'gradle readonly-collections:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
+                        }
+                    }
+                    post {
+                        aborted {
+                            currentBuild.result = 'SUCCESS'
                         }
                     }
                 }
@@ -113,6 +123,11 @@ pipeline {
                             sh 'gradle binary-transcoders:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
                         }
                     }
+                    post {
+                        aborted {
+                            currentBuild.result = 'SUCCESS'
+                        }
+                    }
                 }
                 stage('JVM Bridge') {
                     input {
@@ -126,11 +141,11 @@ pipeline {
                             sh 'gradle jvm-bridge:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
                         }
                     }
-                }
-            }
-            post {
-                aborted {
-                    currentBuild.result = 'SUCCESS'
+                    post {
+                        aborted {
+                            currentBuild.result = 'SUCCESS'
+                        }
+                    }
                 }
             }
         }
