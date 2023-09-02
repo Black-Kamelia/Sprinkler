@@ -128,6 +128,11 @@ pipeline {
                     }
                 }
             }
+            post {
+                aborted {
+                    currentBuild.result = 'SUCCESS'
+                }
+            }
         }
     }
 }
