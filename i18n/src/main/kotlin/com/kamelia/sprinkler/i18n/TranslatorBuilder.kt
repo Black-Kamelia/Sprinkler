@@ -22,6 +22,8 @@ import kotlin.io.path.isDirectory
  * - The order in which data is added is important, as it will be used during key duplication resolution, depending on
  * the [DuplicatedKeyResolution] used.
  *
+ * **NOTE**: [translators][Translator] created with this builder are immutable and therefore thread-safe.
+ *
  * @see Translator
  */
 class TranslatorBuilder @PackagePrivate internal constructor(
