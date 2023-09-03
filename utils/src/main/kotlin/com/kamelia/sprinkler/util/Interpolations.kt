@@ -7,15 +7,17 @@ package com.kamelia.sprinkler.util
  * `{variable}` with the value of the variable returned by [VariableResolver.value].
  *
  * Strings that are valid for interpolation are defined as follows:
- * - String may contain **zero**, **one** or **more** variables delimited by **curly braces** (`{}`) ;
+ * - String may contain **zero**, **one** or **more** variables delimited by a start character and an end character
+ * defined by the [delimitation] parameter ;
  * - Variable names must only contain **alphanumeric** characters, **underscores** (`_`) and **dashes** (`-`) ;
- * - **Escaping** of curly braces is possible using a **backslash** (`\`), and **only the opening** curly brace (`{`)
+ * - **Escaping** [delimitation] characters is possible using a **backslash** (`\`), and **only the opening character**
  * needs to be escaped ;
- * - Any **non-escaped curly brace** is considered the start of a variable and **must be closed** before the end of the
- * string ;
+ * - Any **non-escaped start character** is considered the start of a variable and **must be closed** before the end of
+ * the string ;
  * - If a variable **name is empty**, the variable is resolved by using the **count of variables** encountered so far.
  * The first variable has index 0, the second index 1, and so on. Note that even variables with a **non-empty name are**
- * **also counted** (e.g. in `"Hello {name}, I'm {}"`, the `{}` has the index 1 because the variable `name` is counted).
+ * **also counted** (e.g. with '{' and '}' as start and end characters, `"Hello {name}, I'm {}"`, the `{}` has the index
+ * 1 because the variable `name` is counted).
  *
  * Any string that does not conform to these rules is considered invalid, a call to this function with an invalid string
  * will result in an [IllegalArgumentException] being thrown.
@@ -31,12 +33,16 @@ package com.kamelia.sprinkler.util
  * ```
  *
  * @param resolver the [VariableResolver] to use for resolving variable names
+ * @param delimitation the delimitation of the variable (defaults to [VariableDelimitation.DEFAULT])
  * @return the interpolated string
  * @throws IllegalArgumentException if the string is invalid, or if a variable name is invalid for the given
  * [VariableResolver]
  * @see [VariableResolver]
  */
-fun String.interpolate(resolver: VariableResolver): String {
+fun String.interpolate(
+    resolver: VariableResolver,
+    delimitation: VariableDelimitation = VariableDelimitation.DEFAULT,
+): String {
     val builder = StringBuilder() // final string builder
     var state = State.DEFAULT // current state of the parser
     var keyBuilder = StringBuilder() // builder used to build the key of the variable
@@ -46,7 +52,7 @@ fun String.interpolate(resolver: VariableResolver): String {
         when (state) {
             State.DEFAULT -> {
                 when (char) {
-                    '{' -> state = State.IN_CURLY // start of a variable
+                    delimitation.variableStart -> state = State.IN_VARIABLE // start of a variable
                     '\\' -> state = State.BACKSLASH // start of an escape sequence
                     else -> builder.append(char) // any other character is appended to the final string
                 }
@@ -55,8 +61,8 @@ fun String.interpolate(resolver: VariableResolver): String {
                 builder.append(char)
                 state = State.DEFAULT
             }
-            State.IN_CURLY -> {
-                if ('}' == char) { // end of the variable
+            State.IN_VARIABLE -> {
+                if (delimitation.variableEnd == char) { // end of the variable
                     val key = if (keyBuilder.isEmpty()) { // if the key is empty, use the variable count
                         variableCount.toString()
                     } else {
@@ -64,7 +70,7 @@ fun String.interpolate(resolver: VariableResolver): String {
                     }
 
                     val value = try { // try to resolve the variable
-                        resolver.value(key)
+                        resolver.value(key, delimitation)
                     } catch (e: VariableResolver.ResolutionException) {
                         illegalArgument("Error while resolving variable '$key': ${e.message!!}")
                     }
@@ -82,7 +88,7 @@ fun String.interpolate(resolver: VariableResolver): String {
             }
         }
     }
-    require(State.IN_CURLY !== state) { // ensure that the string does not end in the middle of a variable
+    require(State.IN_VARIABLE !== state) { // ensure that the string does not end in the middle of a variable
         "Unexpected end of string in interpolated value"
     }
 
@@ -118,7 +124,8 @@ fun String.interpolate(resolver: VariableResolver): String {
  * defined above
  * @see [VariableResolver.fromVararg]
  */
-fun String.interpolateIndexed(vararg args: Any): String = interpolate(VariableResolver.fromVararg(*args))
+fun String.interpolateIndexed(vararg args: Any): String =
+    interpolate(VariableResolver.fromVararg(*args))
 
 /**
  * Interpolates variables in this string using the given list [args].
@@ -147,12 +154,18 @@ fun String.interpolateIndexed(vararg args: Any): String = interpolate(VariableRe
  * ```
  *
  * @param args the list of values
+ * @param delimitation the delimitation of the variable (defaults to [VariableDelimitation.DEFAULT])
  * @return the interpolated string
  * @throws IllegalArgumentException if the string is invalid, or if a variable name does not conform to the rules
  * defined above
  * @see [VariableResolver.fromList]
  */
-fun String.interpolateIndexed(args: List<Any>): String = interpolate(VariableResolver.fromList(args))
+@JvmOverloads
+fun String.interpolateIndexed(
+    args: List<Any>,
+    delimitation: VariableDelimitation = VariableDelimitation.DEFAULT,
+): String =
+    interpolate(VariableResolver.fromList(args), delimitation)
 
 /**
  * Interpolates variables in this string using the given map of [args].
@@ -171,14 +184,19 @@ fun String.interpolateIndexed(args: List<Any>): String = interpolate(VariableRes
  *
  * @param args the map of values
  * @param fallback the fallback value (defaults to `null`)
+ * @param delimitation the delimitation of the variable (defaults to [VariableDelimitation.DEFAULT])
  * @return the interpolated string
  * @throws IllegalArgumentException if the string is invalid, or if a variable name is unknown and the [fallback] value
  * is `null`
  * @see [VariableResolver.fromMap]
  */
 @JvmOverloads
-fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String =
-    interpolate(VariableResolver.fromMap(args, fallback))
+fun String.interpolate(
+    args: Map<String, Any>,
+    fallback: String? = null,
+    delimitation: VariableDelimitation = VariableDelimitation.DEFAULT,
+): String =
+    interpolate(VariableResolver.fromMap(args, fallback), delimitation)
 
 /**
  * Interpolates variables in this string using the given [Pair] array [args]. The array of pairs is converted to a
@@ -199,14 +217,19 @@ fun String.interpolate(args: Map<String, Any>, fallback: String? = null): String
  *
  * @param args the array of pairs
  * @param fallback the fallback value (defaults to `null`)
+ * @param delimitation the delimitation of the variable (defaults to [VariableDelimitation.DEFAULT])
  * @return the interpolated string
  * @throws IllegalArgumentException if the string is invalid, or if a variable name is unknown and the [fallback] value
  * is `null`
  * @see [VariableResolver.fromPairs]
  */
 @JvmOverloads
-fun String.interpolate(vararg args: Pair<String, Any>, fallback: String? = null): String =
-    interpolate(VariableResolver.fromMap(args.toMap(), fallback))
+fun String.interpolate(
+    vararg args: Pair<String, Any>,
+    fallback: String? = null,
+    delimitation: VariableDelimitation = VariableDelimitation.DEFAULT,
+): String =
+    interpolate(VariableResolver.fromMap(args.toMap(), fallback), delimitation)
 
 /**
  * Interface for resolving variables during string interpolation. This interface maps variable names to their
@@ -220,10 +243,11 @@ fun interface VariableResolver {
      * Implementations may throw an [ResolutionException] if the variable is unknown, or return a default value.
      *
      * @param name the name of the variable
+     * @param delimitation the delimitation of the variable, can be useful for some implementations
      * @return the value of the variable
      * @throws ResolutionException if the variable is unknown
      */
-    fun value(name: String): String
+    fun value(name: String, delimitation: VariableDelimitation): String
 
     /**
      * Exception thrown by [VariableResolver] implementations when a variable name cannot be resolved.
@@ -255,7 +279,7 @@ fun interface VariableResolver {
          */
         @JvmStatic
         fun fromList(args: List<Any>): VariableResolver =
-            VariableResolver { name ->
+            VariableResolver { name, _ ->
                 val index = name.toIntOrNull()
                     ?: throw ResolutionException("index must be a parsable integer, but was'$name'")
                 if (index !in args.indices) {
@@ -305,7 +329,7 @@ fun interface VariableResolver {
         @JvmStatic
         @JvmOverloads
         fun fromMap(args: Map<String, Any>, fallback: String? = null): VariableResolver =
-            VariableResolver { name ->
+            VariableResolver { name, _ ->
                 args[name]?.toString() ?: fallback ?: throw ResolutionException("unknown variable name '$name'")
             }
 
@@ -337,9 +361,39 @@ fun interface VariableResolver {
 
 }
 
+/**
+ * Represents the delimitation of a variable in an interpolated string.
+ *
+ * @constructor Creates a new [VariableDelimitation] with the given [variableStart] and [variableEnd].
+ * @param variableStart the start character of a variable
+ * @param variableEnd the end character of a variable
+ * @throws IllegalArgumentException if [variableStart] and [variableEnd] are equal
+ * @see VariableResolver
+ */
+class VariableDelimitation(
+    internal val variableStart: Char,
+    internal val variableEnd: Char,
+) {
+
+    init {
+        require(variableStart != variableEnd) { "variableStart and variableEnd must not be equal" }
+    }
+
+    companion object {
+
+        /**
+         * The default [VariableDelimitation] used by [String.interpolate]. It uses the characters `'{'` and `'}'` as
+         * delimiters.
+         */
+        @JvmField
+        val DEFAULT = VariableDelimitation('{', '}')
+
+    }
+
+}
 
 private enum class State {
     DEFAULT,
     BACKSLASH,
-    IN_CURLY,
+    IN_VARIABLE,
 }

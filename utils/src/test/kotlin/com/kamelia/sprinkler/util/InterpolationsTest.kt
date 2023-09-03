@@ -9,7 +9,7 @@ class InterpolationsTest {
     @Test
     fun `empty variables are substituted by the current count of variable`() {
         var index = 0
-        val resolver = VariableResolver {
+        val resolver = VariableResolver { it, _ ->
             assertEquals(index.toString(), it)
             index++
             it
@@ -20,7 +20,7 @@ class InterpolationsTest {
     @Test
     fun `variable count also count non-empty variables`() {
         var index = 0
-        val resolver = VariableResolver {
+        val resolver = VariableResolver { it, _ ->
             assertEquals(index.toString(), it)
             index++
             it
