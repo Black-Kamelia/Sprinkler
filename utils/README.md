@@ -6,9 +6,9 @@
 
 - [Intentions](#intentions)
 - [String interpolation](#string-interpolation)
-  - [String syntax](#string-syntax)
-  - [Interpolation](#interpolation)
-  - [Custom Variable Resolvers](#custom-variable-resolvers)
+    - [String syntax](#string-syntax)
+    - [Interpolation](#interpolation)
+    - [Custom Variable Resolvers](#custom-variable-resolvers)
 - [CloseableScope](#closeablescope)
 - [Box Delegate](#box-delegate)
 - [Collector Factories](#collector-factories)
@@ -20,7 +20,7 @@
 
 ## Intentions
 
-The purpose of this module is to provide a set of utilities that are useful for any project, but are not complex 
+The purpose of this module is to provide a set of utilities that are useful for any project, but are not complex
 enough to deserve their own module.
 
 You may see it as a "stdlib++".
@@ -33,16 +33,19 @@ few extension functions to allow dynamic string interpolation with any object.
 ### String syntax
 
 Strings that are valid for interpolation are defined as follows:
-- String may contain zero, one or more variables delimited by curly braces (`{}`) ;
+
+- String may contain zero, one or more variables delimited by a start character and an end character (these characters
+  can be specified but for the examples, we will use curly braces `{` and `}` as start and end characters) ;
 - Variable names must only contain alphanumeric characters, underscores (`_`) and dashes (`-`) ;
-- Escaping of curly braces is possible using a backslash (`\ `), and only the opening curly brace (`{`) needs to be
-escaped ;
-- Any non-escaped curly brace is considered the start of a variable and must be closed before the end of the string ;
+- Escaping of start character is possible using a backslash (`\`), and only the start character needs to be escaped ;
+- Any non-escaped start character is considered as the start of a variable and must be closed before the end of the
+  string ;
 - If a variable name is empty, the variable is resolved by using the count of variables encountered so far. The first
-variable has index 0, the second index 1, and so on. Note that even variables with a non-empty name are also counted
-(e.g. in `"Hello {name}, I'm {}"`, the `{}` has the index 1 because the variable `name` is counted).
+  variable has index 0, the second index 1, and so on. Note that even variables with a non-empty name are also counted
+  (e.g. in `"Hello {name}, I'm {}"`, the `{}` has the index 1 because the variable `name` is counted).
 
 Here are a few examples of valid strings:
+
 - `"Hello {Name}, I'm {my-NAME} and I'm {myAge} years old."`
 - `"I like {0} and {1}."`
 - `"I ate \{"`
@@ -52,6 +55,10 @@ Here are a few examples of valid strings:
 Failure to respect the previously defined rules will result in an exception being thrown.
 
 ### Interpolation
+
+As stated previously, each overloads that will be presented here (except for the `interpolate(vararg args: Any`) will
+accept an optional `delimiters` parameter which allow to specify the start and end characters of the variables. In the
+whole section, we will use curly braces `{` `}` as start and end characters.
 
 To interpolate a string, one must use the `interpolate` extension function on a `String`. It exists in several variants.
 The strings to interpolate must respect the previously defined syntax, as well a different one depending on the variant.
@@ -122,7 +129,7 @@ provide a more meaningful error message.
 
 ## CloseableScope
 
-Similarly to Java's `try-with-resouces` statement, in Kotlin we can use the `Closeable::use` and `AutoCloseable::use` 
+Similarly to Java's `try-with-resouces` statement, in Kotlin we can use the `Closeable::use` and `AutoCloseable::use`
 methods to automatically handle the closing of a resource, even in case of exceptions during usage.
 
 But one might see that they are not entirely symmetrical in their usage as soon as we want to use multiple resources:
@@ -177,7 +184,7 @@ that adds a new resource to the scope (and returns the resource itself).
 closeableScope { // this: CloseableScope
     val resource1 = using(MyCloseable()) // will autoclose at the end of the scope
     val resource2 = using(MyOtherCloseable()) // will autoclose at the end of the scope
-    
+
     resource1.doSomething()
     resource2.trySomething()
 }
@@ -190,7 +197,7 @@ closeableScope { // this: CloseableScope
     val resource = File("someFile.txt")
         .inputStream().usingSelf() // will autoclose at the end of the scope
         .buffered()
-    
+
     println(resource.readAllBytes())
 }
 ```
@@ -207,7 +214,8 @@ val content = closeableScope { // this: CloseableScope
 `CloseableScope` is an inline class which only contains the list of resources to close. Coupled with the fact that
 `closeableScope` is inlined too, this means that it is basically free of cost.
 
-`closeableScope` may also accept one or several optional resources as parameters to add them to the scope (and close them at the end)
+`closeableScope` may also accept one or several optional resources as parameters to add them to the scope (and close
+them at the end)
 
 ```kt
 val someCloseable = MyCloseable()
@@ -220,10 +228,11 @@ closeableScope(someCloseable, someOtherCloseable) { // will autoclose these at t
 ```
 
 > The semantics of `closeableScope` in regard to exceptions are the exact same as Java's `try-with-resources` statement:
-> - If an exception is thrown during the execution of the scope, all resources will be closed in the reverse order of their
->   declaration, and the exception will be caught and cached.
+> - If an exception is thrown during the execution of the scope, all resources will be closed in the reverse order of
+    their
+    > declaration, and the exception will be caught and cached.
 > - If the actual closing of one of the resources throws an exception, it will be added as a suppressed exception to the
->   original one.
+    > original one.
 > - The original exception will be rethrown.
 
 ## Box Delegate
@@ -236,22 +245,24 @@ losing a lot of control and encapsulation.
 The `Box<T>` delegate is a property delegate that allows to do just that.
 
 It is an interface with several methods and properties:
+
 - the `value` property of type `T`. Trying to get it before it is set will throw an `IllegalStateException`.
 - the `isFilled` property of type `Boolean`. It is `false` before the value is set, and `true` after.
 - the `getValue` method which allows one to use a `Box` as a property delegate. Trying to read the delegated property
   before the value is set will throw an `IllegalStateException`.
 
-Moreover, it has a sub-interface `Box.Mutable<T>` which adds a `fill` method that allows to set the inner value of the 
+Moreover, it has a sub-interface `Box.Mutable<T>` which adds a `fill` method that allows to set the inner value of the
 box, and returns whether it was empty or not, or in other words, if the fill was successful or not (`true` if it was,
 `false` if it wasn't). It also features a `setValue` method which allows one to use a `Box.Mutable` as a property.
 
 One may want to implement them, but the real goal is to use the provided factories:
+
 - `Box.empty<T>()` returns an empty box. It is not mutable, and cannot ever be filled.
 - `Box.prefilled(value: T)` returns a box that is already filled with the given value. It is not mutable and will always
   be filled.
 - `Box.singleWrite<T>()` returns a mutable box that can be filled once, and only once. Trying to fill it a second time
   will do nothing and yield `false`.
-- `Box.rewritable<T>()` return a mutable box that can be filled multiple times and starts empty. The `fill` method will 
+- `Box.rewritable<T>()` return a mutable box that can be filled multiple times and starts empty. The `fill` method will
   always return `true`.
 - `Box.rewritable(value: T)` returns a mutable box that can be filled multiple times and starts filled with the given
   value. The `fill` method will always return `true`.
@@ -264,13 +275,13 @@ class Foo(intBox: Box<Int>) {
 }
 
 fun main() {
-   val box = Box.singleWrite<Int>()
-   val foo = Foo(box)
-   runCatching {
-     println(foo.i) // Throws an exception
-   }
-   foo.i = 1
-   println(foo.i) // Prints 1
+    val box = Box.singleWrite<Int>()
+    val foo = Foo(box)
+    runCatching {
+        println(foo.i) // Throws an exception
+    }
+    foo.i = 1
+    println(foo.i) // Prints 1
 }
 ```
 
@@ -290,6 +301,7 @@ This file provides a few extension functions to decode and read a `ByteArray`'s 
 a `ByteBuffer`'s.
 
 The extensions are:
+
 - `readByte` which requires a start index and returns the byte at that index.
 - `readShort` which requires a start index and returns the short from that index, and an optional endianness.
 - `readInt` which requires a start index and returns the int from that index, and an optional endianness.
@@ -306,8 +318,11 @@ Sometimes, we want to interpret a `Number` not as a number, but as a sequence of
 file allows. It provides a few extension functions to read bytes and bits from a `Number`.
 
 Except for `Byte`, every `Number` type has two new extension functions:
-- `bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int` which returns the bit at the given index, and an optional endianness.
-- `byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte` which returns the byte at the given index, and an optional endianness.
+
+- `bit(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Int` which returns the bit at the given index, and an
+  optional endianness.
+- `byte(index: Int, endianness: ByteOrder = ByteOrder.BIG_ENDIAN): Byte` which returns the byte at the given index, and
+  an optional endianness.
 
 The `endianness` is used to signify if the `Number` should be interpreted as if it was written in big endian or not.
 
@@ -331,7 +346,8 @@ inline fun <T> Any?.unsafeCast(): T = this as T
 ```
 
 It is useful when you know that a value is of a certain type, but the compiler doesn't, and you would need to add
-a `Suppress` annotation to avoid a warning. It's also useful when chaining operations. It is mostly a convenience function
+a `Suppress` annotation to avoid a warning. It's also useful when chaining operations. It is mostly a convenience
+function
 that should only be used in exceptional cases in library code.
 
 It also offers a cleaner syntax to chain operations on a value of an unknown type:
@@ -351,10 +367,10 @@ instead of:
 ```kt
 class Foo(val value: Any)
 
-fun countA(value: Any): Int = 
+fun countA(value: Any): Int =
     ((value as Foo)
-    .value as String)
-    .count { 'a' == it }
+        .value as String)
+        .count { 'a' == it }
 ```
 
 ### castOrNull

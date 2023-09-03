@@ -106,6 +106,6 @@ class VariableResolverTest {
         assertEquals("fallback", resolver.value("d"))
     }
 
-    private fun VariableResolver.value(key: String): String = this.value(key, VariableDelimitation.DEFAULT)
+    private fun VariableResolver.value(key: String): String = this.value(key, VariableDelimiter.DEFAULT)
 
 }
