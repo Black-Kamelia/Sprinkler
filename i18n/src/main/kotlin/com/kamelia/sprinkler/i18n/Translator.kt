@@ -4,7 +4,7 @@ import com.kamelia.sprinkler.util.illegalArgument
 import java.util.*
 
 /**
- * Interface representing an object that can be used to translate strings. Through [translate] method (and its
+ * Interface representing an object that can be used to translate strings. Through [t] method (and its
  * shorthand [t]), a key can be translated using a [Locale].
  *
  * Keys are represented as strings, and must respect the following syntax:
@@ -20,7 +20,7 @@ import java.util.*
  *
  * Any other key is invalid and will throw an [IllegalArgumentException] when used to translate a value.
  *
- * If a valid key is passed to the [translate] method, the [Translator] will try to find a translation for the given
+ * If a valid key is passed to the [t] method, the [Translator] will try to find a translation for the given
  * key and the given locale (depending on the chosen overload it can be the [currentLocale] or the provided locale
  * parameter). If no translation is found for the given locale, the [defaultLocale] will be used as a fallback. If no
  * translation is found for the [defaultLocale], an [IllegalArgumentException] will be thrown.
@@ -51,62 +51,44 @@ interface Translator {
      */
     val currentLocale: Locale
 
-    /**
-     * Translates the given key to the given [locale]. If the key is not found for the given [locale] and the
-     * [fallbackOnDefault] parameter is true, the key will be translated to the [defaultLocale]. If the key is not found
-     * for the [defaultLocale], or if the [fallbackOnDefault] parameter is false, null will be returned.
-     *
-     * @param key the key to translate
-     * @param locale the locale to translate the key to
-     * @param fallbackOnDefault whether to fallback on the [defaultLocale] if the key is not found for the [locale]
-     * @return the translated key, or null if the key is not found for the [locale] and the [defaultLocale]
-     * @throws IllegalArgumentException if the key is not [valid][Translator]
-     */
-    fun translateOrNull(key: String, locale: Locale, fallbackOnDefault: Boolean): String?
+    fun tn(
+        key: String,
+        options: Map<String, Any>,
+        locale: Locale,
+        fallbackLocale: Locale?,
+        vararg fallbacks: String,
+    ): String?
 
-    fun translateOrNull(key: String, locale: Locale): String? = translateOrNull(key, locale, true)
+    fun tn(key: String, options: Map<String, Any>, locale: Locale, vararg fallbacks: String): String? =
+        tn(key, options, locale, defaultLocale, *fallbacks)
 
-    fun translateOrNull(key: String, locale: Locale, proxy: TranslationRequestProxy): String? =
-        proxy.translate(this, key, locale)
+    fun tn(key: String, options: Map<String, Any>, vararg fallbacks: String): String? =
+        tn(key, options, currentLocale, defaultLocale, *fallbacks)
 
-    /**
-     * Translates the given key to the given [locale]. If the key is not found for the given [locale] the key will be
-     * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
-     * will be thrown.
-     *
-     * @param key the key to translate
-     * @param locale the locale to translate the key to
-     * @return the translated key
-     * @throws IllegalArgumentException if the key is not [valid][Translator], or if it does not exist for the [locale]
-     * and the [defaultLocale]
-     */
-    fun translate(key: String, locale: Locale): String =
-        translateOrNull(key, locale) ?: illegalArgument("Key '$key' not found for locale '$locale'.")
+    fun tn(key: String, vararg fallbacks: String): String? =
+        tn(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)
 
-    fun translate(key: String, locale: Locale, proxy: TranslationRequestProxy): String =
-        translateOrNull(key, locale, proxy) ?: illegalArgument("Key '$key' not found for locale '$locale'.")
+    fun tn(key: String): String? = tn(key, emptyMap(), currentLocale, defaultLocale)
 
-    /**
-     * Translates the given key to the [currentLocale]. If the key is not found for the [currentLocale] the key will be
-     * translated to the [defaultLocale]. If the key is not found for the [defaultLocale], an [IllegalArgumentException]
-     * will be thrown.
-     *
-     * @param key the key to translate
-     * @return the translated key
-     * @throws IllegalArgumentException if the key is not [valid][Translator], or if it does not exist for the
-     * [currentLocale] and the [defaultLocale]
-     */
-    fun translate(key: String): String = translate(key, currentLocale)
+    fun t(
+        key: String,
+        options: Map<String, Any>,
+        locale: Locale,
+        fallbackLocale: Locale?,
+        vararg fallbacks: String,
+    ): String =
+        tn(key, options, locale, fallbackLocale, *fallbacks)
+            ?: illegalArgument("Key '$key' not found for locale '$locale'.")
 
-    fun translate(key: String, proxy: TranslationRequestProxy): String = translate(key, currentLocale, proxy)
+    fun t(key: String, options: Map<String, Any>, locale: Locale, vararg fallbacks: String): String =
+        t(key, options, locale, defaultLocale, *fallbacks)
 
-    fun t(key: String, locale: Locale): String = translate(key, locale)
+    fun t(key: String, options: Map<String, Any>, vararg fallbacks: String): String =
+        t(key, options, currentLocale, defaultLocale, *fallbacks)
 
-    fun t(key: String, locale: Locale, proxy: TranslationRequestProxy): String = translate(key, locale, proxy)
+    fun t(key: String, vararg fallbacks: String): String = t(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)
 
-    fun t(key: String): String = translate(key)
-
-    fun t(key: String, proxy: TranslationRequestProxy): String = translate(key, proxy)
+    fun t(key: String): String = t(key, emptyMap(), currentLocale, defaultLocale)
 
     /**
      * Returns a new [Translator] with the given [key] as root key. The [key] will be prepended to all keys used to
@@ -141,6 +123,8 @@ interface Translator {
      * @return a new [Translator] with the given [locale] as current locale
      */
     fun withNewCurrentLocale(locale: Locale): Translator
+
+    fun baseTranslateOrNull(key: String, locale: Locale): String?
 
     companion object {
 

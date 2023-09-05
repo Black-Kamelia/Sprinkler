@@ -50,6 +50,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      */
     private var currentLocale = defaultLocale
 
+    private var optionsProcessor: OptionsProcessor = OptionsProcessor.noOp
+
     /**
      * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
      * will be loaded.
@@ -189,6 +191,17 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     /**
+     * Sets the options processor that will be set to the translator upon creation.
+     *
+     * @param optionsProcessor the options processor to set
+     * @return this builder
+     * @see OptionsProcessor
+     */
+    fun withOptionsProcessor(optionsProcessor: OptionsProcessor): TranslatorBuilder = apply {
+        this.optionsProcessor = optionsProcessor
+    }
+
+    /**
      * Defines how to handle duplicated keys when creating a translator.
      */
     enum class DuplicatedKeyResolution {
@@ -249,7 +262,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 .toMap()
         }
 
-        return TranslatorImpl(defaultLocale, currentLocale, sortedMap)
+        return TranslatorImpl(defaultLocale, currentLocale, sortedMap, optionsProcessor)
     }
 
     private fun addToMap(finalMap: HashMap<Locale, HashMap<String, String>>, locale: Locale, map: Map<String, Any>) {

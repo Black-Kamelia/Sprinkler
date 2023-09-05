@@ -9,27 +9,44 @@ internal class TranslatorImpl private constructor(
     override val defaultLocale: Locale,
     override val currentLocale: Locale,
     private val translations: Map<Locale, Map<String, String>>,
+    private val optionProcessor: OptionsProcessor,
 ) : Translator {
 
-    constructor(defaultLocale: Locale, currentLocale: Locale, children: Map<Locale, Map<String, String>>) : this(
+    constructor(
+        defaultLocale: Locale,
+        currentLocale: Locale,
+        children: Map<Locale, Map<String, String>>,
+        optionProcessor: OptionsProcessor,
+    ) : this(
         null,
         defaultLocale,
         currentLocale,
-        children
+        children,
+        optionProcessor,
     )
 
-    override fun translateOrNull(key: String, locale: Locale, fallbackOnDefault: Boolean): String? {
+    override fun tn(
+        key: String,
+        options: Map<String, Any>,
+        locale: Locale,
+        fallbackLocale: Locale?,
+        vararg fallbacks: String,
+    ): String? {
         require(FULL_KEY_REGEX.matches(key)) {
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
         val actualKey = prefix?.let { "$it.$key" } ?: key
 
-        val value = translations[locale]?.get(actualKey)
-        if (value != null) return value
+        val actualProcessor = if (options.isEmpty()) {
+            OptionsProcessor.noOp
+        } else {
+            optionProcessor
+        }
 
-        if (fallbackOnDefault && defaultLocale != locale) { // to avoid a second lookup with the same key
-            val fallback = translations[defaultLocale]?.get(actualKey)
-            if (fallback != null) return fallback
+        innerTranslate(actualKey, actualProcessor, locale, options, fallbacks)?.let { return it }
+
+        if (fallbackLocale != null && defaultLocale != fallbackLocale) { // to avoid a second lookup with the same key
+            innerTranslate(actualKey, actualProcessor, fallbackLocale, options, fallbacks)?.let { return it }
         }
 
         return null
@@ -40,13 +57,13 @@ internal class TranslatorImpl private constructor(
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
         val newRootKey = prefix?.let { "$it.$key" } ?: key
-        return TranslatorImpl(newRootKey, currentLocale, defaultLocale, translations)
+        return TranslatorImpl(newRootKey, currentLocale, defaultLocale, translations, optionProcessor)
     }
 
     override fun toMap(): Map<Locale, Map<String, String>> {
         val root = prefix
         return if (root == null) {
-            translations.mapValues { (_ , map) -> // simple deep copy
+            translations.mapValues { (_, map) -> // simple deep copy
                 map.toMap()
             }
         } else {
@@ -62,9 +79,27 @@ internal class TranslatorImpl private constructor(
     }
 
     override fun withNewCurrentLocale(locale: Locale): Translator =
-        TranslatorImpl(prefix, defaultLocale, locale, translations)
+        TranslatorImpl(prefix, defaultLocale, locale, translations, optionProcessor)
+
+    override fun baseTranslateOrNull(key: String, locale: Locale): String? = translations[locale]?.get(key)
 
     override fun toString(): String =
         "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, translations=${toMap()})"
+
+    private fun innerTranslate(
+        key: String,
+        optionProcessor: OptionsProcessor,
+        locale: Locale,
+        options: Map<String, Any>,
+        fallbacks: Array<out String>,
+    ): String? {
+        optionProcessor.translate(this, key, options, locale)?.let { return it }
+
+        fallbacks.forEach {fallback ->
+            optionProcessor.translate(this, fallback, options, locale)?.let { return it }
+        }
+
+        return null
+    }
 
 }

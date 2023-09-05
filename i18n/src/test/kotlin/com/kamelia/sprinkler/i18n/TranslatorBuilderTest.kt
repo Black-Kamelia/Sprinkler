@@ -45,7 +45,7 @@ class TranslatorBuilderTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addPath(path, I18nFileParser.fromString({ locale }) { mapOf(key to value) })
             .build()
-        assertEquals(value, translator.translate(key, locale))
+        assertEquals(value, translator.t(key, locale))
     }
 
     @Test
@@ -68,7 +68,7 @@ class TranslatorBuilderTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addFile(path, I18nFileParser.fromString({ locale }) { mapOf(key to value) })
             .build()
-        assertEquals(value, translator.translate(key, locale))
+        assertEquals(value, translator.t(key, locale))
     }
 
     @Test
@@ -80,7 +80,7 @@ class TranslatorBuilderTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addMap(locale, mapOf(key to value))
             .build()
-        assertEquals(value, translator.translate(key, locale))
+        assertEquals(value, translator.t(key, locale))
     }
 
     @Test
@@ -92,7 +92,7 @@ class TranslatorBuilderTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addMaps(mapOf(locale to mapOf(key to value)))
             .build()
-        assertEquals(value, translator.translate(key, locale))
+        assertEquals(value, translator.t(key, locale))
     }
 
     @Test
@@ -107,7 +107,7 @@ class TranslatorBuilderTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addTranslator(source)
             .build()
-        assertEquals(value, translator.translate(key, locale))
+        assertEquals(value, translator.t(key, locale))
     }
 
     @Test
@@ -543,7 +543,7 @@ class TranslatorBuilderTest {
                 I18nFileParser.fromString({ Locale.ENGLISH }) { mapOf("test" to listOf("test")) }
             )
         val translator = builder.build()
-        assertEquals("test", translator.translate("test.0"))
+        assertEquals("test", translator.t("test.0"))
     }
 
     @Test
@@ -554,7 +554,7 @@ class TranslatorBuilderTest {
                 I18nFileParser.fromString({ Locale.ENGLISH }) { mapOf("test" to listOf("test")) }
             )
         val translator = builder.build()
-        assertEquals("test", translator.translate("test.0"))
+        assertEquals("test", translator.t("test.0"))
     }
 
     @Test
@@ -562,7 +562,7 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("test" to listOf("test")))
         val translator = builder.build()
-        assertEquals("test", translator.translate("test.0"))
+        assertEquals("test", translator.t("test.0"))
     }
 
     @Test
@@ -570,7 +570,7 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addMaps(mapOf(Locale.ENGLISH to mapOf("test" to listOf("test"))))
         val translator = builder.build()
-        assertEquals("test", translator.translate("test.0"))
+        assertEquals("test", translator.t("test.0"))
     }
 
     @Test
@@ -582,7 +582,7 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addTranslator(customImpl)
         val translator = builder.build()
-        assertEquals("test", translator.translate("test.0"))
+        assertEquals("test", translator.t("test.0"))
     }
 
     @Test
@@ -593,7 +593,7 @@ class TranslatorBuilderTest {
                 I18nFileParser.fromString({ Locale.ENGLISH }) { mapOf("test" to mapOf("test" to "test")) }
             )
         val translator = builder.build()
-        assertEquals("test", translator.translate("test.test"))
+        assertEquals("test", translator.t("test.test"))
     }
 
     @Test
@@ -604,7 +604,7 @@ class TranslatorBuilderTest {
                 I18nFileParser.fromString({ Locale.ENGLISH }) { mapOf("test" to mapOf("test" to "test")) }
             )
         val translator = builder.build()
-        assertEquals("test", translator.translate("test.test"))
+        assertEquals("test", translator.t("test.test"))
     }
 
     @Test
@@ -612,7 +612,7 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("test" to mapOf("test" to "test")))
         val translator = builder.build()
-        assertEquals("test", translator.translate("test.test"))
+        assertEquals("test", translator.t("test.test"))
     }
 
     @Test
@@ -620,7 +620,7 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addMaps(mapOf(Locale.ENGLISH to mapOf("test" to mapOf("test" to "test"))))
         val translator = builder.build()
-        assertEquals("test", translator.translate("test.test"))
+        assertEquals("test", translator.t("test.test"))
     }
 
     @Test
@@ -632,7 +632,7 @@ class TranslatorBuilderTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addTranslator(customImpl)
         val translator = builder.build()
-        assertEquals("test", translator.translate("test.test"))
+        assertEquals("test", translator.t("test.test"))
     }
 
     @Test
@@ -775,7 +775,7 @@ class TranslatorBuilderTest {
             .addMap(Locale.ENGLISH, mapOf("test" to "test"))
             .addMap(Locale.ENGLISH, mapOf("test" to "test2"))
         val translator = builder.build()
-        assertEquals("test", translator.translate("test"))
+        assertEquals("test", translator.t("test"))
     }
 
     @Test
@@ -785,7 +785,7 @@ class TranslatorBuilderTest {
             .addMap(Locale.ENGLISH, mapOf("test" to "test"))
             .addMap(Locale.ENGLISH, mapOf("test" to "test2"))
         val translator = builder.build()
-        assertEquals("test2", translator.translate("test"))
+        assertEquals("test2", translator.t("test"))
     }
 
     @Test
@@ -853,7 +853,7 @@ class TranslatorBuilderTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addMap(Locale.FRANCE, mapOf("test.test" to "test"))
             .build()
-        assertEquals("test", translator.translate("test.test", Locale.FRANCE))
+        assertEquals("test", translator.t("test.test", Locale.FRANCE))
     }
 
     @Test
@@ -861,7 +861,7 @@ class TranslatorBuilderTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addMaps(mapOf(Locale.FRANCE to mapOf("test.test" to "test")))
             .build()
-        assertEquals("test", translator.translate("test.test", Locale.FRANCE))
+        assertEquals("test", translator.t("test.test", Locale.FRANCE))
     }
 
     @Test

@@ -55,7 +55,7 @@ class TranslatorTest {
     fun `translateOrNull throws if the key is invalid`() {
         val translator = Translator.builder(Locale.FRANCE).build()
         assertThrows<IllegalArgumentException> {
-            translator.translateOrNull("(", Locale.FRANCE)
+            translator.tn("(", Locale.FRANCE)
         }
     }
 
@@ -65,7 +65,7 @@ class TranslatorTest {
             .addMap(Locale.ENGLISH, mapOf("key" to "value"))
             .addMap(Locale.FRANCE, mapOf("key" to "valeur"))
             .build()
-        assertEquals("valeur", translator.translateOrNull("key", Locale.FRANCE))
+        assertEquals("valeur", translator.tn("key", Locale.FRANCE))
     }
 
     @Test
@@ -73,19 +73,19 @@ class TranslatorTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("key" to "value"))
             .build()
-        assertEquals("value", translator.translateOrNull("key", Locale.FRANCE))
+        assertEquals("value", translator.tn("key", Locale.FRANCE))
     }
 
     @Test
     fun `translateOrNull returns null if the translation doesnt exist`() {
         val translator = Translator.builder(Locale.ENGLISH).build()
-        assertNull(translator.translateOrNull("key", Locale.FRANCE))
+        assertNull(translator.tn("key", Locale.FRANCE))
     }
 
     @Test
     fun `translateOrNull returns null if the translation doesnt exist and locale is default locale`() {
         val translator = Translator.builder(Locale.ENGLISH).build()
-        assertNull(translator.translateOrNull("key", Locale.ENGLISH))
+        assertNull(translator.tn("key", Locale.ENGLISH))
     }
 
     @Test
@@ -93,14 +93,14 @@ class TranslatorTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("foo" to mapOf("key" to "value")))
             .build()
-        assertEquals("value", translator.section("foo").translateOrNull("key", Locale.ENGLISH))
+        assertEquals("value", translator.section("foo").tn("key", Locale.ENGLISH))
     }
 
     @Test
     fun `translate(String, Locale) throws if the key is invalid`() {
         val translator = Translator.builder(Locale.FRANCE).build()
         assertThrows<IllegalArgumentException> {
-            translator.translate("(", Locale.FRANCE)
+            translator.t("(", Locale.FRANCE)
         }
     }
 
@@ -110,7 +110,7 @@ class TranslatorTest {
             .addMap(Locale.ENGLISH, mapOf("key" to "value"))
             .addMap(Locale.FRANCE, mapOf("key" to "valeur"))
             .build()
-        assertEquals("valeur", translator.translate("key", Locale.FRANCE))
+        assertEquals("valeur", translator.t("key", Locale.FRANCE))
     }
 
     @Test
@@ -118,14 +118,14 @@ class TranslatorTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("key" to "value"))
             .build()
-        assertEquals("value", translator.translate("key", Locale.FRANCE))
+        assertEquals("value", translator.t("key", Locale.FRANCE))
     }
 
     @Test
     fun `translate(String, Locale) throws if the translation for the default locale does not exist`() {
         val translator = Translator.builder(Locale.ENGLISH).build()
         assertThrows<IllegalArgumentException> {
-            translator.translate("key", Locale.FRANCE)
+            translator.t("key", Locale.FRANCE)
         }
     }
 
@@ -133,7 +133,7 @@ class TranslatorTest {
     fun `translate(String, Locale) throws if the translation for the default locale does not exist and locale is default locale`() {
         val translator = Translator.builder(Locale.ENGLISH).build()
         assertThrows<IllegalArgumentException> {
-            translator.translate("key", Locale.ENGLISH)
+            translator.t("key", Locale.ENGLISH)
         }
     }
 
@@ -142,14 +142,14 @@ class TranslatorTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("foo" to mapOf("key" to "value")))
             .build()
-        assertEquals("value", translator.section("foo").translate("key", Locale.ENGLISH))
+        assertEquals("value", translator.section("foo").t("key", Locale.ENGLISH))
     }
 
     @Test
     fun `translate(String) throws if the key is invalid`() {
         val translator = Translator.builder(Locale.FRANCE).build()
         assertThrows<IllegalArgumentException> {
-            translator.translate("(")
+            translator.t("(")
         }
     }
 
@@ -160,9 +160,9 @@ class TranslatorTest {
             .addMap(Locale.FRANCE, mapOf("key" to "valeur"))
             .withCurrentLocale(Locale.FRANCE)
             .build()
-        assertEquals("valeur", translator.translate("key"))
+        assertEquals("valeur", translator.t("key"))
         val currentEnglish = translator.withNewCurrentLocale(Locale.ENGLISH)
-        assertEquals("value", currentEnglish.translate("key"))
+        assertEquals("value", currentEnglish.t("key"))
     }
 
     @Test
@@ -171,7 +171,7 @@ class TranslatorTest {
             .withCurrentLocale(Locale.FRANCE)
             .build()
         assertThrows<IllegalArgumentException> {
-            translator.translate("key")
+            translator.t("key")
         }
     }
 
@@ -179,7 +179,7 @@ class TranslatorTest {
     fun `translate(String) throws if the translation for the currentLocale does not exist and locale is defaultLocale`() {
         val translator = Translator.builder(Locale.ENGLISH).build()
         assertThrows<IllegalArgumentException> {
-            translator.translate("key")
+            translator.t("key")
         }
     }
 
