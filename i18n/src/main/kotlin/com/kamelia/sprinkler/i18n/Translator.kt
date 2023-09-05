@@ -62,6 +62,9 @@ interface Translator {
     fun tn(key: String, options: Map<String, Any>, locale: Locale, vararg fallbacks: String): String? =
         tn(key, options, locale, defaultLocale, *fallbacks)
 
+    fun tn(key: String, locale: Locale, vararg fallbacks: String): String? =
+        tn(key, emptyMap(), locale, defaultLocale, *fallbacks)
+
     fun tn(key: String, options: Map<String, Any>, vararg fallbacks: String): String? =
         tn(key, options, currentLocale, defaultLocale, *fallbacks)
 
@@ -82,6 +85,9 @@ interface Translator {
 
     fun t(key: String, options: Map<String, Any>, locale: Locale, vararg fallbacks: String): String =
         t(key, options, locale, defaultLocale, *fallbacks)
+
+    fun t(key: String, locale: Locale, vararg fallbacks: String): String =
+        t(key, emptyMap(), locale, defaultLocale, *fallbacks)
 
     fun t(key: String, options: Map<String, Any>, vararg fallbacks: String): String =
         t(key, options, currentLocale, defaultLocale, *fallbacks)

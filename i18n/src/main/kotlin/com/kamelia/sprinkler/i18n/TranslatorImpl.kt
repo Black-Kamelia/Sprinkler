@@ -45,7 +45,7 @@ internal class TranslatorImpl private constructor(
 
         innerTranslate(actualKey, actualProcessor, locale, options, fallbacks)?.let { return it }
 
-        if (fallbackLocale != null && defaultLocale != fallbackLocale) { // to avoid a second lookup with the same key
+        if (fallbackLocale != null && locale != fallbackLocale) { // to avoid a second lookup with the same key
             innerTranslate(actualKey, actualProcessor, fallbackLocale, options, fallbacks)?.let { return it }
         }
 
