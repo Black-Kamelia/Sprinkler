@@ -3,6 +3,9 @@ package com.kamelia.sprinkler.i18n
 import com.kamelia.sprinkler.i18n.I18nFileParser.ParsingResult
 import java.nio.file.Path
 import java.util.*
+import org.json.JSONObject
+import org.yaml.snakeyaml.Yaml
+import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
 
@@ -113,6 +116,21 @@ fun interface I18nFileParser {
             Locale.Builder()
                 .setLanguageTag(languageTag.replace('_', '-'))
                 .build()
+
+        @JvmStatic
+        fun json(): I18nFileParser = fromString { JSONObject(it).toMap() }
+
+        @JvmStatic
+        fun yaml(): I18nFileParser = fromString { Yaml().load(it) }
+
+        @JvmStatic
+        fun basicParser(): I18nFileParser = I18nFileParser {
+            when (val extension = it.extension) {
+                "json" -> json().parseFile(it)
+                "yaml", "yml" -> yaml().parseFile(it)
+                else -> throw I18nParsingException("Unsupported file extension '$extension'.", it)
+            }
+        }
 
     }
 
