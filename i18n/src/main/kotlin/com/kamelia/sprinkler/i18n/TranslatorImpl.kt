@@ -9,14 +9,14 @@ internal class TranslatorImpl private constructor(
     override val defaultLocale: Locale,
     override val currentLocale: Locale,
     private val translations: Map<Locale, Map<String, String>>,
-    private val optionProcessor: OptionsProcessor,
+    private val optionProcessor: OptionProcessor,
 ) : Translator {
 
     constructor(
         defaultLocale: Locale,
         currentLocale: Locale,
         children: Map<Locale, Map<String, String>>,
-        optionProcessor: OptionsProcessor,
+        optionProcessor: OptionProcessor,
     ) : this(
         null,
         defaultLocale,
@@ -38,7 +38,7 @@ internal class TranslatorImpl private constructor(
         val actualKey = prefix?.let { "$it.$key" } ?: key
 
         val actualProcessor = if (options.isEmpty()) {
-            OptionsProcessor.noOp
+            OptionProcessor.noOp
         } else {
             optionProcessor
         }
@@ -88,7 +88,7 @@ internal class TranslatorImpl private constructor(
 
     private fun innerTranslate(
         key: String,
-        optionProcessor: OptionsProcessor,
+        optionProcessor: OptionProcessor,
         locale: Locale,
         options: Map<String, Any>,
         fallbacks: Array<out String>,

@@ -50,7 +50,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      */
     private var currentLocale = defaultLocale
 
-    private var optionsProcessor: OptionsProcessor = OptionsProcessor.noOp
+    private var optionProcessor: OptionProcessor = OptionProcessor.noOp
 
     /**
      * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
@@ -59,62 +59,29 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * This method will throw an [IllegalArgumentException] if the path is already added.
      *
      * @param path the path to load
-     * @param parser the parser to use to load the file
+     * @param parser the parser to use to load the file (default is [I18nFileParser.basicParser])
      * @return this builder
      * @throws IllegalArgumentException if the path is already added
      */
-    fun addPath(path: Path, parser: I18nFileParser): TranslatorBuilder = apply {
+    @JvmOverloads
+    fun addPath(path: Path, parser: I18nFileParser = I18nFileParser.basicParser()): TranslatorBuilder = apply {
         val isNew = addedPaths.add(path)
         require(isNew) { "Path $path already added" }
         translatorContent += FileInfo(path, parser)
     }
 
     /**
-     * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
-     * will be loaded.
-     *
-     * This method will throw an [IllegalArgumentException] if the path is already added.
-     *
-     * This method is a shorthand for [addPath] with a [I18nFileParser.fromString] parser.
-     *
-     * @param path the path to load
-     * @param mapper the mapper to use to load the file
-     * @return this builder
-     * @throws IllegalArgumentException if the path is already added
-     * @see I18nFileParser.fromString
-     */
-    fun addPath(path: Path, mapper: (String) -> Map<String, TranslatorSourceData>): TranslatorBuilder =
-        addPath(path, I18nFileParser.fromString { mapper(it) })
-
-    /**
      * Adds a file to the builder. If the file is a directory, all files in it will be loaded. If the file is a file, it
      * will be loaded.
      *
      * This method will throw an [IllegalArgumentException] if the path is already added.
      *
      * @param file the file to load
-     * @param parser the parser to use to load the file
+     * @param parser the parser to use to load the file (default is [I18nFileParser.basicParser])
      * @return this builder
      * @throws IllegalArgumentException if the file is already added
      */
-    fun addFile(file: File, parser: I18nFileParser): TranslatorBuilder = addPath(file.toPath(), parser)
-
-    /**
-     * Adds a file to the builder. If the file is a directory, all files in it will be loaded. If the file is a file, it
-     * will be loaded.
-     *
-     * This method will throw an [IllegalArgumentException] if the path is already added.
-     *
-     * This method is a shorthand for [addFile] with a [I18nFileParser.fromString] parser.
-     *
-     * @param file the file to load
-     * @param mapper the mapper to use to load the file
-     * @return this builder
-     * @throws IllegalArgumentException if the file is already added
-     * @see I18nFileParser.fromString
-     */
-    fun addFile(file: File, mapper: (String) -> Map<String, TranslatorSourceData>): TranslatorBuilder =
-        addFile(file, I18nFileParser.fromString(mapper = mapper))
+    fun addFile(file: File, parser: I18nFileParser = I18nFileParser.basicParser()): TranslatorBuilder = addPath(file.toPath(), parser)
 
     /**
      * Adds a map for a locale to the builder. The content of the map will be added to the final translator. The
@@ -193,12 +160,12 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     /**
      * Sets the options processor that will be set to the translator upon creation.
      *
-     * @param optionsProcessor the options processor to set
+     * @param optionProcessor the options processor to set
      * @return this builder
-     * @see OptionsProcessor
+     * @see OptionProcessor
      */
-    fun withOptionsProcessor(optionsProcessor: OptionsProcessor): TranslatorBuilder = apply {
-        this.optionsProcessor = optionsProcessor
+    fun withOptionsProcessor(optionProcessor: OptionProcessor): TranslatorBuilder = apply {
+        this.optionProcessor = optionProcessor
     }
 
     /**
@@ -262,7 +229,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 .toMap()
         }
 
-        return TranslatorImpl(defaultLocale, currentLocale, sortedMap, optionsProcessor)
+        return TranslatorImpl(defaultLocale, currentLocale, sortedMap, optionProcessor)
     }
 
     private fun addToMap(finalMap: HashMap<Locale, HashMap<String, String>>, locale: Locale, map: Map<String, TranslatorSourceData>) {

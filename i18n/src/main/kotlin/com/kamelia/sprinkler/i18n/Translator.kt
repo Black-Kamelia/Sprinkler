@@ -81,7 +81,9 @@ interface Translator {
         vararg fallbacks: String,
     ): String =
         tn(key, options, locale, fallbackLocale, *fallbacks)
-            ?: illegalArgument("Key '$key' not found for locale '$locale'.")
+            ?: illegalArgument(
+                "No translation found for parameters: key='$key', locale='$locale', fallbackLocale='$fallbackLocale', fallbacks='${fallbacks.joinToString(", ", "[", "]")}', options='$options'"
+            )
 
     fun t(key: String, options: Map<String, TranslationOption>, locale: Locale, vararg fallbacks: String): String =
         t(key, options, locale, defaultLocale, *fallbacks)

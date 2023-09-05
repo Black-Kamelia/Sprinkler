@@ -2,7 +2,7 @@ package com.kamelia.sprinkler.i18n
 
 import java.util.*
 
-fun interface OptionsProcessor {
+fun interface OptionProcessor {
 
     fun translate(
         translator: Translator,
@@ -14,7 +14,7 @@ fun interface OptionsProcessor {
     companion object {
 
         @JvmField
-        val noOp = OptionsProcessor { translator, key, _, locale ->
+        val noOp = OptionProcessor { translator, key, _, locale ->
             translator.baseTranslateOrNull(key, locale)
         }
 
