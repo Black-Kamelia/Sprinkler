@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
+import com.kamelia.sprinkler.util.assertionFailed
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.io.File
@@ -8,10 +9,17 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.stream.Stream
+import org.json.JSONException
+import org.json.JSONObject
+import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.error.YAMLException
 import kotlin.collections.ArrayDeque
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.readText
 
 /**
  * Builder class used to create a [Translator]. This class provides several methods to add data to the translator from
@@ -56,32 +64,44 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
      * will be loaded.
      *
-     * This method will throw an [IllegalArgumentException] if the path is already added.
+     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml` and `yml`.
+     *
+     * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
+     * name is not a valid locale, an [IllegalStateException] will be thrown when building the translator.
+     *
+     * This method will throw an [IllegalArgumentException] if the path is already added or if the file extension is not
+     * supported.
      *
      * @param path the path to load
-     * @param parser the parser to use to load the file (default is [I18nFileParser.basicParser])
-     * @return this builder
-     * @throws IllegalArgumentException if the path is already added
+     * @throws IllegalArgumentException if the path is already added or if the file extension is not supported
      */
-    @JvmOverloads
-    fun addPath(path: Path, parser: I18nFileParser = I18nFileParser.basicParser()): TranslatorBuilder = apply {
+    fun addPath(path: Path): TranslatorBuilder = apply {
+        val extension = path.extension
+        require(extension == "json" || extension == "yaml" || extension == "yml") {
+            "Unsupported file extension '$extension' for path '$path'. Supported extensions are 'json', 'yaml' and 'yml'."
+        }
         val isNew = addedPaths.add(path)
         require(isNew) { "Path $path already added" }
-        translatorContent += FileInfo(path, parser)
+        translatorContent += FileInfo(path)
     }
 
     /**
      * Adds a file to the builder. If the file is a directory, all files in it will be loaded. If the file is a file, it
      * will be loaded.
      *
-     * This method will throw an [IllegalArgumentException] if the path is already added.
+     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml` and `yml`.
+     *
+     * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
+     * name is not a valid locale, an [IllegalStateException] will be thrown when building the translator.
+     *
+     * This method will throw an [IllegalArgumentException] if the file is already added or if the file extension is not
+     * supported.
      *
      * @param file the file to load
-     * @param parser the parser to use to load the file (default is [I18nFileParser.basicParser])
      * @return this builder
      * @throws IllegalArgumentException if the file is already added
      */
-    fun addFile(file: File, parser: I18nFileParser = I18nFileParser.basicParser()): TranslatorBuilder = addPath(file.toPath(), parser)
+    fun addFile(file: File): TranslatorBuilder = addPath(file.toPath())
 
     /**
      * Adds a map for a locale to the builder. The content of the map will be added to the final translator. The
@@ -209,7 +229,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                         loadPath(it).forEach { (locale, map) ->
                             addToMap(finalMap, locale, map)
                         }
-                    } catch (e: I18nFileParser.I18nParsingException) {
+                    } catch (e: I18nParsingException) {
                         error("Error while parsing file ${e.path}: ${e.message}")
                     }
                 }
@@ -232,7 +252,11 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         return TranslatorImpl(defaultLocale, currentLocale, sortedMap, optionProcessor)
     }
 
-    private fun addToMap(finalMap: HashMap<Locale, HashMap<String, String>>, locale: Locale, map: Map<String, TranslatorSourceData>) {
+    private fun addToMap(
+        finalMap: HashMap<Locale, HashMap<String, String>>,
+        locale: Locale,
+        map: Map<String, TranslatorSourceData>,
+    ) {
         val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
         map.forEach { (key, value) ->
             // we must check the validity here in case the value is a leaf (string, number or boolean), because we do
@@ -282,7 +306,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         if (info.path.isDirectory()) { // if the path is a directory, load all files in it and return the list
             Files.list(info.path)
                 .map {
-                    val (locale, map) = info.parser.parseFile(it) ?: return@map null
+                    val map = parseFile(it)
+                    val locale = parseLocale(it)
                     locale to map
                 }
                 .filter { it != null }
@@ -290,20 +315,16 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 .unsafeCast<Stream<Pair<Locale, Map<String, TranslatorSourceData>>>>()
                 .toList()
         } else { // if the path is a file, load it and store it in a one element list
-            info.parser
-                .parseFile(info.path)
-                ?.let { listOf(it.locale to it.map) }
-                ?: emptyList()
+            val map = parseFile(info.path)
+            val locale = parseLocale(info.path)
+            listOf(locale to map)
         }
 
 }
 
 private sealed interface TranslationResourceInformation
 
-private class FileInfo(
-    val path: Path,
-    val parser: I18nFileParser,
-) : TranslationResourceInformation
+private class FileInfo(val path: Path) : TranslationResourceInformation
 
 private class MapInfo(val locale: Locale, val map: Map<String, TranslatorSourceData>) : TranslationResourceInformation
 
@@ -331,3 +352,38 @@ private fun checkValueIsValid(value: Any?, locale: Locale) {
         "Invalid value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see I18nFileParser interface documentation."
     }
 }
+
+private fun parseFile(path: Path): TranslationSourceMap =
+    when (val extension = path.extension) {
+        "json" -> {
+            try {
+                JSONObject(path.readText()).toMap()
+            } catch (_: JSONException) {
+                throw I18nParsingException("Invalid JSON file.", path)
+            }
+        }
+        "yaml", "yml" -> {
+            try {
+                Yaml().load(path.readText())
+            } catch (_: YAMLException) {
+                throw I18nParsingException("Invalid YAML file.", path)
+            }
+        }
+        else -> assertionFailed("File extension '$extension' should have been checked before.")
+    }
+
+fun parseLocale(path: Path): Locale {
+    val locale = path.nameWithoutExtension
+    return try {
+        Locale.Builder()
+            .setLanguageTag(locale.replace('_', '-'))
+            .build()
+    } catch (_: IllformedLocaleException) {
+        throw I18nParsingException(
+            "Invalid locale '$locale'. For more details about locale syntax, see java.util.Locale documentation.",
+            path
+        )
+    }
+}
+
+private class I18nParsingException(message: String, val path: Path) : Throwable(message, null, false, false)
