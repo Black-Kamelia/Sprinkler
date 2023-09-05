@@ -54,7 +54,7 @@ fun interface I18nFileParser {
      * @see I18nFileParser.parseFile
      */
     @JvmRecord
-    data class ParsingResult(val locale: Locale, val map: Map<String, Any>)
+    data class ParsingResult(val locale: Locale, val map: Map<String, TranslatorSourceData>)
 
     /**
      * Exception thrown when an error occurs while parsing a file.
@@ -85,7 +85,7 @@ fun interface I18nFileParser {
         @JvmOverloads
         fun fromString(
             localeParser: (String) -> Locale = ::parseLocale,
-            mapper: (String) -> Map<String, Any>,
+            mapper: (String) -> Map<String, TranslatorSourceData>,
         ): I18nFileParser = I18nFileParser {
             val locale = try {
                 localeParser(it.nameWithoutExtension)

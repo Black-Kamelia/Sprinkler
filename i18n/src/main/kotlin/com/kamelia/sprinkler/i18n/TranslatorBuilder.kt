@@ -83,7 +83,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @throws IllegalArgumentException if the path is already added
      * @see I18nFileParser.fromString
      */
-    fun addPath(path: Path, mapper: (String) -> Map<String, Any>): TranslatorBuilder =
+    fun addPath(path: Path, mapper: (String) -> Map<String, TranslatorSourceData>): TranslatorBuilder =
         addPath(path, I18nFileParser.fromString { mapper(it) })
 
     /**
@@ -113,7 +113,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @throws IllegalArgumentException if the file is already added
      * @see I18nFileParser.fromString
      */
-    fun addFile(file: File, mapper: (String) -> Map<String, Any>): TranslatorBuilder =
+    fun addFile(file: File, mapper: (String) -> Map<String, TranslatorSourceData>): TranslatorBuilder =
         addFile(file, I18nFileParser.fromString(mapper = mapper))
 
     /**
@@ -126,7 +126,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @param map the map to add
      * @return this builder
      */
-    fun addMap(locale: Locale, map: Map<String, Any>): TranslatorBuilder = apply {
+    fun addMap(locale: Locale, map: Map<String, TranslatorSourceData>): TranslatorBuilder = apply {
         translatorContent += MapInfo(locale, map)
     }
 
@@ -139,7 +139,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @param maps the maps to add
      * @return this builder
      */
-    fun addMaps(maps: Map<Locale, Map<String, Any>>): TranslatorBuilder = apply {
+    fun addMaps(maps: Map<Locale, Map<String, TranslatorSourceData>>): TranslatorBuilder = apply {
         maps.forEach { (locale, map) ->
             addMap(locale, map)
         }
@@ -265,7 +265,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         return TranslatorImpl(defaultLocale, currentLocale, sortedMap, optionsProcessor)
     }
 
-    private fun addToMap(finalMap: HashMap<Locale, HashMap<String, String>>, locale: Locale, map: Map<String, Any>) {
+    private fun addToMap(finalMap: HashMap<Locale, HashMap<String, String>>, locale: Locale, map: Map<String, TranslatorSourceData>) {
         val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
         map.forEach { (key, value) ->
             // we must check the validity here in case the value is a leaf (string, number or boolean), because we do
@@ -273,7 +273,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             checkKeyIsValid(key, currentLocale)
             checkValueIsValid(value, currentLocale)
 
-            val toFlatten = ArrayDeque<Pair<String, Any>>()
+            val toFlatten = ArrayDeque<Pair<String, TranslatorSourceData>>()
             toFlatten.addLast(key to value)
 
             while (toFlatten.isNotEmpty()) {
@@ -295,7 +295,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
     }
 
-    private fun addValue(locale: Locale, finalMap: HashMap<String, String>, key: String, value: Any) {
+    private fun addValue(locale: Locale, finalMap: HashMap<String, String>, key: String, value: TranslatorSourceData) {
         when (duplicatedKeyResolution) {
             // if resolution is FAIL, we need to check that the key is not already present
             DuplicatedKeyResolution.FAIL -> {
@@ -311,7 +311,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
     }
 
-    private fun loadPath(info: FileInfo): List<Pair<Locale, Map<String, Any>>> =
+    private fun loadPath(info: FileInfo): List<Pair<Locale, Map<String, TranslatorSourceData>>> =
         if (info.path.isDirectory()) { // if the path is a directory, load all files in it and return the list
             Files.list(info.path)
                 .map {
@@ -319,7 +319,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                     locale to map
                 }
                 .filter { it != null }
-                .unsafeCast<Stream<Pair<Locale, Map<String, Any>>>>() // as we filtered null values, we can safely cast
+                // as we filtered null values, we can safely cast
+                .unsafeCast<Stream<Pair<Locale, Map<String, TranslatorSourceData>>>>()
                 .toList()
         } else { // if the path is a file, load it and store it in a one element list
             info.parser
@@ -337,7 +338,7 @@ private class FileInfo(
     val parser: I18nFileParser,
 ) : TranslationResourceInformation
 
-private class MapInfo(val locale: Locale, val map: Map<String, Any>) : TranslationResourceInformation
+private class MapInfo(val locale: Locale, val map: Map<String, TranslatorSourceData>) : TranslationResourceInformation
 
 private fun checkKeyIsValid(key: Any?, locale: Locale) {
     checkNotNull(key) {

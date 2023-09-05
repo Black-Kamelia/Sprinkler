@@ -53,19 +53,19 @@ interface Translator {
 
     fun tn(
         key: String,
-        options: Map<String, Any>,
+        options: Map<String, TranslationOption>,
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,
     ): String?
 
-    fun tn(key: String, options: Map<String, Any>, locale: Locale, vararg fallbacks: String): String? =
+    fun tn(key: String, options: Map<String, TranslationOption>, locale: Locale, vararg fallbacks: String): String? =
         tn(key, options, locale, defaultLocale, *fallbacks)
 
     fun tn(key: String, locale: Locale, vararg fallbacks: String): String? =
         tn(key, emptyMap(), locale, defaultLocale, *fallbacks)
 
-    fun tn(key: String, options: Map<String, Any>, vararg fallbacks: String): String? =
+    fun tn(key: String, options: Map<String, TranslationOption>, vararg fallbacks: String): String? =
         tn(key, options, currentLocale, defaultLocale, *fallbacks)
 
     fun tn(key: String, vararg fallbacks: String): String? =
@@ -75,7 +75,7 @@ interface Translator {
 
     fun t(
         key: String,
-        options: Map<String, Any>,
+        options: Map<String, TranslationOption>,
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,
@@ -83,13 +83,13 @@ interface Translator {
         tn(key, options, locale, fallbackLocale, *fallbacks)
             ?: illegalArgument("Key '$key' not found for locale '$locale'.")
 
-    fun t(key: String, options: Map<String, Any>, locale: Locale, vararg fallbacks: String): String =
+    fun t(key: String, options: Map<String, TranslationOption>, locale: Locale, vararg fallbacks: String): String =
         t(key, options, locale, defaultLocale, *fallbacks)
 
     fun t(key: String, locale: Locale, vararg fallbacks: String): String =
         t(key, emptyMap(), locale, defaultLocale, *fallbacks)
 
-    fun t(key: String, options: Map<String, Any>, vararg fallbacks: String): String =
+    fun t(key: String, options: Map<String, TranslationOption>, vararg fallbacks: String): String =
         t(key, options, currentLocale, defaultLocale, *fallbacks)
 
     fun t(key: String, vararg fallbacks: String): String = t(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)
