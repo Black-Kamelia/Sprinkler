@@ -372,7 +372,7 @@ private fun parseFile(path: Path): TranslationSourceMap =
         else -> assertionFailed("File extension '$extension' should have been checked before.")
     }
 
-fun parseLocale(path: Path): Locale {
+private fun parseLocale(path: Path): Locale {
     val locale = path.nameWithoutExtension
     return try {
         Locale.Builder()
