@@ -113,7 +113,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @param map the map to add
      * @return this builder
      */
-    fun addMap(locale: Locale, map: Map<String, TranslatorSourceData>): TranslatorBuilder = apply {
+    fun addMap(locale: Locale, map: Map<String, TranslationSourceData>): TranslatorBuilder = apply {
         translatorContent += MapInfo(locale, map)
     }
 
@@ -126,7 +126,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @param maps the maps to add
      * @return this builder
      */
-    fun addMaps(maps: Map<Locale, Map<String, TranslatorSourceData>>): TranslatorBuilder = apply {
+    fun addMaps(maps: Map<Locale, Map<String, TranslationSourceData>>): TranslatorBuilder = apply {
         maps.forEach { (locale, map) ->
             addMap(locale, map)
         }
@@ -255,7 +255,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     private fun addToMap(
         finalMap: HashMap<Locale, HashMap<String, String>>,
         locale: Locale,
-        map: Map<String, TranslatorSourceData>,
+        map: Map<String, TranslationSourceData>,
     ) {
         val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
         map.forEach { (key, value) ->
@@ -264,7 +264,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             checkKeyIsValid(key, currentLocale)
             checkValueIsValid(value, currentLocale)
 
-            val toFlatten = ArrayDeque<Pair<String, TranslatorSourceData>>()
+            val toFlatten = ArrayDeque<Pair<String, TranslationSourceData>>()
             toFlatten.addLast(key to value)
 
             while (toFlatten.isNotEmpty()) {
@@ -286,7 +286,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
     }
 
-    private fun addValue(locale: Locale, finalMap: HashMap<String, String>, key: String, value: TranslatorSourceData) {
+    private fun addValue(locale: Locale, finalMap: HashMap<String, String>, key: String, value: TranslationSourceData) {
         when (duplicatedKeyResolution) {
             // if resolution is FAIL, we need to check that the key is not already present
             DuplicatedKeyResolution.FAIL -> {
@@ -302,7 +302,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
     }
 
-    private fun loadPath(info: FileInfo): List<Pair<Locale, Map<String, TranslatorSourceData>>> =
+    private fun loadPath(info: FileInfo): List<Pair<Locale, Map<String, TranslationSourceData>>> =
         if (info.path.isDirectory()) { // if the path is a directory, load all files in it and return the list
             Files.list(info.path)
                 .map {
@@ -312,7 +312,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 }
                 .filter { it != null }
                 // as we filtered null values, we can safely cast
-                .unsafeCast<Stream<Pair<Locale, Map<String, TranslatorSourceData>>>>()
+                .unsafeCast<Stream<Pair<Locale, Map<String, TranslationSourceData>>>>()
                 .toList()
         } else { // if the path is a file, load it and store it in a one element list
             val map = parseFile(info.path)
@@ -326,7 +326,7 @@ private sealed interface TranslationResourceInformation
 
 private class FileInfo(val path: Path) : TranslationResourceInformation
 
-private class MapInfo(val locale: Locale, val map: Map<String, TranslatorSourceData>) : TranslationResourceInformation
+private class MapInfo(val locale: Locale, val map: Map<String, TranslationSourceData>) : TranslationResourceInformation
 
 private fun checkKeyIsValid(key: Any?, locale: Locale) {
     checkNotNull(key) {
