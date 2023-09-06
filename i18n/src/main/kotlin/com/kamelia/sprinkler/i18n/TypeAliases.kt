@@ -18,7 +18,10 @@ typealias TranslationOption = Any
  * given value respects the rules above. Any value that does not respect these rules will result in an exception being
  * thrown (the type of the exception will depend on the function).
  *
- * **NOTE**: the regex of [TranslationKeyPart] is `[a-zA-Z\d]+(-|_[a-zA-Z\d]+)*`.
+ * **NOTE**: the regex of [TranslationKeyPart] is `[a-zA-Z\d]+(?:-|_[a-zA-Z\d]+)*`.
+ *
+ * @see TranslationKey
+ * @see Translator
  */
 typealias TranslationKeyPart = String
 
@@ -30,7 +33,7 @@ typealias TranslationKeyPart = String
  * value respects the rules above. Any value that does not respect these rules will result in an exception being thrown
  * (the type of the exception will depend on the function).
  *
- * **NOTE**: the regex of [TranslationKey] is `[a-zA-Z\d]+(-|_[a-zA-Z\d]+)*(\.[a-zA-Z\d]+(-|_[a-zA-Z\d]+)*)*`, as
+ * **NOTE**: the regex of [TranslationKey] is `[a-zA-Z\d]+(?:-|_[a-zA-Z\d]+)*(?:\.[a-zA-Z\d]+(?:-|_[a-zA-Z\d]+)*)*`. as
  * defined in [TranslationKeyPart].
  *
  * @see TranslationKeyPart

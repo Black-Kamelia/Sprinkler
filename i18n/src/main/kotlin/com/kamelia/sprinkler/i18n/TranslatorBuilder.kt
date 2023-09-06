@@ -4,15 +4,15 @@ import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
 import com.kamelia.sprinkler.util.assertionFailed
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
+import org.json.JSONException
+import org.json.JSONObject
+import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.error.YAMLException
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.stream.Stream
-import org.json.JSONException
-import org.json.JSONObject
-import org.yaml.snakeyaml.Yaml
-import org.yaml.snakeyaml.error.YAMLException
 import kotlin.collections.ArrayDeque
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -335,7 +335,7 @@ private fun checkKeyIsValid(key: Any?, locale: Locale) {
     check(key is String) {
         "Invalid key type ${key::class.simpleName} for locale '$locale', expected String. For more details about keys, see Translator interface documentation."
     }
-    check(FULL_KEY_REGEX.matches(key)) {
+    check(KEY_REGEX.matches(key)) {
         "Invalid key '$key' for locale '$locale'. For more details about key syntax, see Translator interface documentation."
     }
 }
@@ -364,7 +364,7 @@ private fun parseFile(path: Path): TranslationSourceMap =
         }
         "yaml", "yml" -> {
             try {
-                Yaml().load(path.readText())
+                Yaml().load<Map<TranslationKeyPart, TranslationSourceData>>(path.readText())
             } catch (_: YAMLException) {
                 throw I18nParsingException("Invalid YAML file.", path)
             }
