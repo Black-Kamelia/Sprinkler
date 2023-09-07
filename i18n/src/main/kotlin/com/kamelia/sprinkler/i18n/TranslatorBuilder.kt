@@ -4,15 +4,15 @@ import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
 import com.kamelia.sprinkler.util.assertionFailed
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
-import org.json.JSONException
-import org.json.JSONObject
-import org.yaml.snakeyaml.Yaml
-import org.yaml.snakeyaml.error.YAMLException
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.stream.Stream
+import org.json.JSONException
+import org.json.JSONObject
+import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.error.YAMLException
 import kotlin.collections.ArrayDeque
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -58,8 +58,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      */
     private var currentLocale = defaultLocale
 
-    private var optionProcessor: OptionProcessor = OptionProcessor.noOp
-
     /**
      * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
      * will be loaded.
@@ -75,7 +73,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @param path the path to load
      * @throws IllegalArgumentException if the path is already added or if the file extension is not supported
      */
-    fun addPath(path: Path): TranslatorBuilder = apply {
+    fun addFile(path: Path): TranslatorBuilder = apply {
         val extension = path.extension
         require(extension == "json" || extension == "yaml" || extension == "yml") {
             "Unsupported file extension '$extension' for path '$path'. Supported extensions are 'json', 'yaml' and 'yml'."
@@ -101,19 +99,20 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @return this builder
      * @throws IllegalArgumentException if the file is already added
      */
-    fun addFile(file: File): TranslatorBuilder = addPath(file.toPath())
+    fun addFile(file: File): TranslatorBuilder = addFile(file.toPath())
 
     /**
      * Adds a map for a locale to the builder. The content of the map will be added to the final translator. The
      * [locale] parameter will be used as the locale of the map.
      *
-     * **NOTE**: The [map] should follow rules defined in the [I18nFileParser] documentation.
+     * **NOTE**: The [map] should follow rules defined in the [TranslationSourceMap] documentation. Any map that does
+     * not follow these rules will result in an [IllegalArgumentException] being thrown when building the translator.
      *
      * @param locale the locale of the map
      * @param map the map to add
      * @return this builder
      */
-    fun addMap(locale: Locale, map: Map<String, TranslationSourceData>): TranslatorBuilder = apply {
+    fun addMap(locale: Locale, map: TranslationSourceMap): TranslatorBuilder = apply {
         translatorContent += MapInfo(locale, map)
     }
 
@@ -121,7 +120,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * Adds a map of locales to the builder. The content of the maps will be added to the final translator. The keys of
      * the [maps] will be used as the locales of the maps. The values of the [maps] will be used as the content of the
      *
-     * **NOTE**: The [maps] should follow rules defined in the [I18nFileParser] documentation.
+     * **NOTE**: The [maps] should follow rules defined in the [TranslationSourceMap] documentation. Any map that does
+     * not follow these rules will result in an [IllegalArgumentException] being thrown when building the translator.
      *
      * @param maps the maps to add
      * @return this builder
@@ -134,6 +134,10 @@ class TranslatorBuilder @PackagePrivate internal constructor(
 
     /**
      * Adds a translator to the builder. The content of the translator will be added to the final translator.
+     *
+     * **NOTE**: This method uses the [Translator.toMap] method to get the content of the translator. Therefore, the
+     * [Translator] should return a valid map, as defined in the [Translator.toMap] documentation. Any map that does not
+     * follow these rules will result in an [IllegalArgumentException] being thrown when building the translator.
      *
      * @param translator the translator to add
      * @return this builder
@@ -178,17 +182,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     /**
-     * Sets the options processor that will be set to the translator upon creation.
-     *
-     * @param optionProcessor the options processor to set
-     * @return this builder
-     * @see OptionProcessor
-     */
-    fun withOptionsProcessor(optionProcessor: OptionProcessor): TranslatorBuilder = apply {
-        this.optionProcessor = optionProcessor
-    }
-
-    /**
      * Defines how to handle duplicated keys when creating a translator.
      */
     enum class DuplicatedKeyResolution {
@@ -207,7 +200,9 @@ class TranslatorBuilder @PackagePrivate internal constructor(
          * If a duplicated key is found, the last value will be kept.
          */
         KEEP_LAST,
+
         ;
+
     }
 
     /**
@@ -249,7 +244,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 .toMap()
         }
 
-        return TranslatorImpl(defaultLocale, currentLocale, sortedMap, optionProcessor)
+        return TranslatorImpl(defaultLocale, currentLocale, sortedMap)
     }
 
     private fun addToMap(

@@ -1,12 +1,12 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.unsafeCast
+import java.nio.file.Path
+import java.util.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import java.nio.file.Path
-import java.util.*
 
 
 class TranslatorBuilderTest {
@@ -29,9 +29,9 @@ class TranslatorBuilderTest {
     fun `adding several time the same path throws an IAE`() {
         val builder = Translator.builder(Locale.ENGLISH)
         val path = Path.of("test", "test.yml")
-        builder.addPath(path)
+        builder.addFile(path)
         assertThrows<IllegalArgumentException> {
-            builder.addPath(path)
+            builder.addFile(path)
         }
     }
 
@@ -103,7 +103,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath throws an ISE on build call if the default localeParser is used and the file name is not a valid locale`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, "invalid-locale&.json"))
+            .addFile(absoluteResource(ROOT, "invalid-locale&.json"))
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -121,7 +121,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath throws an ISE on build if the parser returns a map containing invalid key`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, INVALID_CONTENT))
+            .addFile(absoluteResource(ROOT, INVALID_CONTENT))
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -201,7 +201,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath throws an ISE on build if a value is null`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, NULL_VALUE))
+            .addFile(absoluteResource(ROOT, NULL_VALUE))
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -250,7 +250,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath throws an ISE on build if the map contains a map containing an invalid key`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, INVALID_NESTED_KEY))
+            .addFile(absoluteResource(ROOT, INVALID_NESTED_KEY))
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -332,7 +332,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath throws an ISE on build if the map contains a map containing a null value`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, NESTED_NULL_VALUE))
+            .addFile(absoluteResource(ROOT, NESTED_NULL_VALUE))
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -443,7 +443,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath works with list`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, LIST))
+            .addFile(absoluteResource(ROOT, LIST))
         val translator = builder.build()
         assertEquals("test", translator.t("test.0"))
     }
@@ -487,7 +487,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath works with nested value`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, NESTED_VALUE))
+            .addFile(absoluteResource(ROOT, NESTED_VALUE))
         val translator = builder.build()
         assertEquals("test", translator.t("test.test"))
     }

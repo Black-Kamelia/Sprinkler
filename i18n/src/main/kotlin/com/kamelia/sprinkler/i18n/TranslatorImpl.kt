@@ -9,20 +9,17 @@ internal class TranslatorImpl private constructor(
     override val defaultLocale: Locale,
     override val currentLocale: Locale,
     private val translations: Map<Locale, Map<String, String>>,
-    private val optionProcessor: OptionProcessor,
 ) : Translator {
 
     constructor(
         defaultLocale: Locale,
         currentLocale: Locale,
         children: Map<Locale, Map<String, String>>,
-        optionProcessor: OptionProcessor,
     ) : this(
         null,
         defaultLocale,
         currentLocale,
         children,
-        optionProcessor,
     )
 
     override fun tn(
@@ -37,16 +34,10 @@ internal class TranslatorImpl private constructor(
         }
         val actualKey = prefix?.let { "$it.$key" } ?: key
 
-        val actualProcessor = if (options.isEmpty()) {
-            OptionProcessor.noOp
-        } else {
-            optionProcessor
-        }
-
-        innerTranslate(actualKey, actualProcessor, locale, options, fallbacks)?.let { return it }
+        innerTranslate(actualKey, locale, options, fallbacks)?.let { return it }
 
         if (fallbackLocale != null && locale != fallbackLocale) { // to avoid a second lookup with the same key
-            innerTranslate(actualKey, actualProcessor, fallbackLocale, options, fallbacks)?.let { return it }
+            innerTranslate(actualKey, fallbackLocale, options, fallbacks)?.let { return it }
         }
 
         return null
@@ -57,7 +48,7 @@ internal class TranslatorImpl private constructor(
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
         val newRootKey = prefix?.let { "$it.$key" } ?: key
-        return TranslatorImpl(newRootKey, currentLocale, defaultLocale, translations, optionProcessor)
+        return TranslatorImpl(newRootKey, currentLocale, defaultLocale, translations)
     }
 
     override fun toMap(): Map<Locale, Map<String, String>> {
@@ -79,27 +70,27 @@ internal class TranslatorImpl private constructor(
     }
 
     override fun withNewCurrentLocale(locale: Locale): Translator =
-        TranslatorImpl(prefix, defaultLocale, locale, translations, optionProcessor)
-
-    override fun baseTranslateOrNull(key: String, locale: Locale): String? = translations[locale]?.get(key)
+        TranslatorImpl(prefix, defaultLocale, locale, translations)
 
     override fun toString(): String =
         "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, translations=${toMap()})"
 
     private fun innerTranslate(
         key: String,
-        optionProcessor: OptionProcessor,
         locale: Locale,
         options: Map<String, Any>,
         fallbacks: Array<out String>,
     ): String? {
-        optionProcessor.translate(this, key, options, locale)?.let { return it }
+        OptionProcessor.translate(this, key, options, locale)?.let { return it }
 
         fallbacks.forEach {fallback ->
-            optionProcessor.translate(this, fallback, options, locale)?.let { return it }
+            OptionProcessor.translate(this, fallback, options, locale)?.let { return it }
         }
 
         return null
     }
+
+    @PackagePrivate
+    internal fun baseTranslateOrNull(key: String, locale: Locale): String? = translations[locale]?.get(key)
 
 }

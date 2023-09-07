@@ -52,51 +52,63 @@ interface Translator {
     val currentLocale: Locale
 
     fun tn(
-        key: String,
-        options: Map<String, TranslationOption>,
+        key: TranslationKey,
+        options: Map<TranslationOption, Any>,
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,
     ): String?
 
-    fun tn(key: String, options: Map<String, TranslationOption>, locale: Locale, vararg fallbacks: String): String? =
+    fun tn(
+        key: TranslationKey,
+        options: Map<TranslationOption, Any>,
+        locale: Locale,
+        vararg fallbacks: String,
+    ): String? =
         tn(key, options, locale, defaultLocale, *fallbacks)
 
-    fun tn(key: String, locale: Locale, vararg fallbacks: String): String? =
+    fun tn(key: TranslationKey, locale: Locale, vararg fallbacks: String): String? =
         tn(key, emptyMap(), locale, defaultLocale, *fallbacks)
 
-    fun tn(key: String, options: Map<String, TranslationOption>, vararg fallbacks: String): String? =
+    fun tn(key: TranslationKey, options: Map<TranslationOption, Any>, vararg fallbacks: String): String? =
         tn(key, options, currentLocale, defaultLocale, *fallbacks)
 
-    fun tn(key: String, vararg fallbacks: String): String? =
+    fun tn(key: TranslationKey, vararg fallbacks: String): String? =
         tn(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)
 
-    fun tn(key: String): String? = tn(key, emptyMap(), currentLocale, defaultLocale)
+    fun tn(key: TranslationKey): String? = tn(key, emptyMap(), currentLocale, defaultLocale)
 
     fun t(
-        key: String,
-        options: Map<String, TranslationOption>,
+        key: TranslationKey,
+        options: Map<TranslationOption, Any>,
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,
     ): String =
         tn(key, options, locale, fallbackLocale, *fallbacks)
             ?: illegalArgument(
-                "No translation found for parameters: key='$key', locale='$locale', fallbackLocale='$fallbackLocale', fallbacks='${fallbacks.joinToString(", ", "[", "]")}', options='$options'"
+                "No translation found for parameters: key='$key', locale='$locale', fallbackLocale='$fallbackLocale', fallbacks='${
+                    fallbacks.joinToString(
+                        ", ",
+                        "[",
+                        "]"
+                    )
+                }', options='$options'"
             )
 
-    fun t(key: String, options: Map<String, TranslationOption>, locale: Locale, vararg fallbacks: String): String =
+    fun t(key: TranslationKey, options: Map<TranslationOption, Any>, locale: Locale, vararg fallbacks: String): String =
         t(key, options, locale, defaultLocale, *fallbacks)
 
-    fun t(key: String, locale: Locale, vararg fallbacks: String): String =
+    fun t(key: TranslationKey, locale: Locale, vararg fallbacks: String): String =
         t(key, emptyMap(), locale, defaultLocale, *fallbacks)
 
-    fun t(key: String, options: Map<String, TranslationOption>, vararg fallbacks: String): String =
+    fun t(key: TranslationKey, options: Map<TranslationOption, Any>, vararg fallbacks: String): String =
         t(key, options, currentLocale, defaultLocale, *fallbacks)
 
-    fun t(key: String, vararg fallbacks: String): String = t(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)
+    fun t(key: TranslationKey, vararg fallbacks: String): String =
+        t(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)
 
-    fun t(key: String): String = t(key, emptyMap(), currentLocale, defaultLocale)
+    fun t(key: TranslationKey): String = t(key, emptyMap(), currentLocale, defaultLocale)
 
     /**
      * Returns a new [Translator] with the given [key] as root key. The [key] will be prepended to all keys used to
@@ -108,7 +120,7 @@ interface Translator {
      * @return a new [Translator] with the given [key] as root key
      * @throws IllegalArgumentException if the key is not [valid][Translator]
      */
-    fun section(key: String): Translator
+    fun section(key: TranslationKey): Translator
 
     /**
      * Returns a map containing all translations for all locales.
@@ -118,7 +130,7 @@ interface Translator {
      *
      * @return a map containing all translations for all locales
      */
-    fun toMap(): Map<Locale, Map<String, String>>
+    fun toMap(): Map<Locale, Map<TranslationKey, String>>
 
     /**
      * Returns a new [Translator] with the given [locale] as current locale. This operation is lightweight (it simply
@@ -131,8 +143,6 @@ interface Translator {
      * @return a new [Translator] with the given [locale] as current locale
      */
     fun withNewCurrentLocale(locale: Locale): Translator
-
-    fun baseTranslateOrNull(key: String, locale: Locale): String?
 
     companion object {
 

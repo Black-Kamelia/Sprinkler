@@ -3,7 +3,7 @@ package com.kamelia.sprinkler.i18n
 /**
  * Represents a translation option. It can be used to provide additional information to a translation.
  */
-typealias TranslationOption = Any
+typealias TranslationOption = String
 
 /**
  * Represents a part of a translation key. It composes a [TranslationKey].
