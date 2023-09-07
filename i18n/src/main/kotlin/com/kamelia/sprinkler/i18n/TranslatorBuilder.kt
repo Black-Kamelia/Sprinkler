@@ -133,23 +133,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     /**
-     * Adds a translator to the builder. The content of the translator will be added to the final translator.
-     *
-     * **NOTE**: This method uses the [Translator.toMap] method to get the content of the translator. Therefore, the
-     * [Translator] should return a valid map, as defined in the [Translator.toMap] documentation. Any map that does not
-     * follow these rules will result in an [IllegalArgumentException] being thrown when building the translator.
-     *
-     * @param translator the translator to add
-     * @return this builder
-     * @see Translator.toMap
-     */
-    fun addTranslator(translator: Translator): TranslatorBuilder = apply {
-        translator.toMap().forEach { (locale, map) ->
-            addMap(locale, map)
-        }
-    }
-
-    /**
      * Sets the duplicated key resolution policy to use when adding data to the builder. By default, the policy is set
      * to [DuplicatedKeyResolution.FAIL].
      *

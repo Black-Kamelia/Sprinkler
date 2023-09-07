@@ -70,21 +70,6 @@ class TranslatorBuilderTest {
     }
 
     @Test
-    fun `addTranslator adds the translator to the translator`() {
-        val key = "test"
-        val value = "this is a test"
-        val locale = Locale.FRANCE
-        val source = Translator.builder(Locale.ENGLISH)
-            .addMap(locale, mapOf(key to value))
-            .build()
-
-        val translator = Translator.builder(Locale.ENGLISH)
-            .addTranslator(source)
-            .build()
-        assertEquals(value, translator.t(key, locale))
-    }
-
-    @Test
     fun `withDefaultLocale changes the final default locale`() {
         val translator = Translator.builder(Locale.ENGLISH)
             .withDefaultLocale(Locale.FRANCE)
@@ -154,18 +139,6 @@ class TranslatorBuilderTest {
         }
     }
 
-    @Test
-    fun `addTranslator throws an ISE on build if the translator contains invalid key`() {
-        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
-            override fun toMap(): Map<Locale, Map<String, String>> = mapOf(Locale.FRANCE to mapOf("invalid#" to "5"))
-        }
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addTranslator(customImpl)
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
 
     @Test
     fun `addMap throws an ISE on build if a key is null`() {
@@ -180,19 +153,6 @@ class TranslatorBuilderTest {
     fun `addMaps throws an ISE on build if a key is null`() {
         val builder = Translator.builder(Locale.ENGLISH)
             .addMaps(mapOf(Locale.FRANCE to mapOf(null to 5).unsafeCast()))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addTranslator throws an ISE on build if a key is null`() {
-        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
-            override fun toMap(): Map<Locale, Map<String, String>> =
-                mapOf(Locale.FRANCE to mapOf(null to "5").unsafeCast())
-        }
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addTranslator(customImpl)
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -234,18 +194,6 @@ class TranslatorBuilderTest {
         }
     }
 
-    @Test
-    fun `addTranslator throws an ISE on build if a value is null`() {
-        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
-            override fun toMap(): Map<Locale, Map<String, String>> =
-                mapOf(Locale.FRANCE to mapOf("test" to null).unsafeCast())
-        }
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addTranslator(customImpl)
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
 
     @Test
     fun `addPath throws an ISE on build if the map contains a map containing an invalid key`() {
@@ -283,18 +231,6 @@ class TranslatorBuilderTest {
         }
     }
 
-    @Test
-    fun `addTranslator throws an ISE on build if the map contains a map containing an invalid key`() {
-        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
-            override fun toMap(): Map<Locale, Map<String, String>> =
-                mapOf(Locale.FRANCE to mapOf("test" to mapOf("invalid#" to "5"))).unsafeCast()
-        }
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addTranslator(customImpl)
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
 
 
 
@@ -316,18 +252,6 @@ class TranslatorBuilderTest {
         }
     }
 
-    @Test
-    fun `addTranslator throws an ISE on build if the map contains a map containing a null key`() {
-        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
-            override fun toMap(): Map<Locale, Map<String, String>> =
-                mapOf(Locale.FRANCE to mapOf("test" to mapOf(null to "5")).unsafeCast())
-        }
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addTranslator(customImpl)
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
 
     @Test
     fun `addPath throws an ISE on build if the map contains a map containing a null value`() {
@@ -366,19 +290,6 @@ class TranslatorBuilderTest {
     }
 
     @Test
-    fun `addTranslator throws an ISE on build if the map contains a map containing a null value`() {
-        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
-            override fun toMap(): Map<Locale, Map<String, String>> =
-                mapOf(Locale.FRANCE to mapOf("test" to mapOf("test" to null)).unsafeCast())
-        }
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addTranslator(customImpl)
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
     fun `addMap throws an ISE on build if the map contains a list containing an invalid value`() {
         val builder = Translator.builder(Locale.ENGLISH)
             .addMap(Locale.FRANCE, mapOf("test" to listOf(Any())))
@@ -396,18 +307,6 @@ class TranslatorBuilderTest {
         }
     }
 
-    @Test
-    fun `addTranslator throws an ISE on build if the map contains a list containing an invalid value`() {
-        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
-            override fun toMap(): Map<Locale, Map<String, String>> =
-                mapOf(Locale.FRANCE to mapOf("test" to listOf(Any())).unsafeCast())
-        }
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addTranslator(customImpl)
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
 
     @Test
     fun `addMap throws an ISE on build if the map contains a map containing a key that is not a string`() {
@@ -422,19 +321,6 @@ class TranslatorBuilderTest {
     fun `addMaps throws an ISE on build if the map contains a map containing a key that is not a string`() {
         val builder = Translator.builder(Locale.ENGLISH)
             .addMaps(mapOf(Locale.FRANCE to mapOf("test" to mapOf(5 to "test"))))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addTranslator throws an ISE on build if the map contains a map containing a key that is not a string`() {
-        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
-            override fun toMap(): Map<Locale, Map<String, String>> =
-                mapOf(Locale.FRANCE to mapOf("test" to mapOf(5 to "test")).unsafeCast())
-        }
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addTranslator(customImpl)
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -473,18 +359,6 @@ class TranslatorBuilderTest {
     }
 
     @Test
-    fun `addTranslator works with list`() {
-        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
-            override fun toMap(): Map<Locale, Map<String, String>> =
-                mapOf(Locale.ENGLISH to mapOf("test" to listOf("test")).unsafeCast())
-        }
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addTranslator(customImpl)
-        val translator = builder.build()
-        assertEquals("test", translator.t("test.0"))
-    }
-
-    @Test
     fun `addPath works with nested value`() {
         val builder = Translator.builder(Locale.ENGLISH)
             .addFile(absoluteResource(ROOT, NESTED_VALUE))
@@ -515,19 +389,6 @@ class TranslatorBuilderTest {
         val translator = builder.build()
         assertEquals("test", translator.t("test.test"))
     }
-
-    @Test
-    fun `addTranslator works with map`() {
-        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
-            override fun toMap(): Map<Locale, Map<String, String>> =
-                mapOf(Locale.ENGLISH to mapOf("test" to mapOf("test" to "test")).unsafeCast())
-        }
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addTranslator(customImpl)
-        val translator = builder.build()
-        assertEquals("test", translator.t("test.test"))
-    }
-
 
     @Test
     fun `addMap does not throw for valid types`() {
@@ -570,32 +431,6 @@ class TranslatorBuilderTest {
                     )
                 )
             )
-        assertDoesNotThrow {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addTranslator does not throw for valid types`() {
-        val customImpl = object : Translator by Translator.builder(Locale.ENGLISH).build() {
-            override fun toMap(): Map<Locale, Map<String, String>> =
-                mapOf(
-                    Locale.ENGLISH to mapOf(
-                        "test" to "test",
-                        "test2" to 0.toByte(),
-                        "test3" to 0.toShort(),
-                        "test4" to 0,
-                        "test5" to 0L,
-                        "test6" to 0f,
-                        "test7" to .0,
-                        "test8" to true,
-                        "test9" to listOf("test"),
-                        "test10" to mapOf("test" to "test")
-                    ).unsafeCast()
-                )
-        }
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addTranslator(customImpl)
         assertDoesNotThrow {
             builder.build()
         }
