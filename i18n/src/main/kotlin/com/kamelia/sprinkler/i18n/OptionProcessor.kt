@@ -12,8 +12,11 @@ internal object OptionProcessor {
         options: Map<String, Any>,
         locale: Locale,
     ): String? {
+        if (key.isEmpty()) return translator.baseTranslateOrNull(key, locale)
+
         val actualKey = buildKey(key, options)
         val value = translator.baseTranslateOrNull(actualKey, locale)
+
         return value?.interpolate(options)
     }
 
@@ -43,7 +46,7 @@ internal object OptionProcessor {
 
 }
 
-val countMapper = { count: Int ->
+private val countMapper = { count: Int ->
     when (count) {
         0 -> "zero"
         1 -> "one"
