@@ -2,8 +2,10 @@ package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.interpolate
 import com.kamelia.sprinkler.util.unsafeCast
+import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.*
 
+@PackagePrivate
 internal object OptionProcessor {
 
     fun translate(
