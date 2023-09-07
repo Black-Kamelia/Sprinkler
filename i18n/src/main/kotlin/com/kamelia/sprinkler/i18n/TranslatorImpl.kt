@@ -32,7 +32,7 @@ internal class TranslatorImpl private constructor(
         fallbackLocale: Locale?,
         vararg fallbacks: String,
     ): String? {
-        require(FULL_KEY_REGEX.matches(key)) {
+        require(KEY_REGEX.matches(key)) {
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
         val actualKey = prefix?.let { "$it.$key" } ?: key
@@ -53,7 +53,7 @@ internal class TranslatorImpl private constructor(
     }
 
     override fun section(key: String): Translator {
-        require(FULL_KEY_REGEX.matches(key)) {
+        require(KEY_REGEX.matches(key)) {
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
         val newRootKey = prefix?.let { "$it.$key" } ?: key

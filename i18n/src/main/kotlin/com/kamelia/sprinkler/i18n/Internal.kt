@@ -6,9 +6,9 @@ import com.zwendo.restrikt.annotation.PackagePrivate
 import org.intellij.lang.annotations.Language
 
 @Language("RegExp")
-private const val KEY_IDENTIFIER_REGEX_STRING = """[a-zA-Z0-9](?:[\w-]*[a-zA-Z0-9])?"""
+private const val KEY_IDENTIFIER_REGEX_STRING = """[a-zA-Z\d]+(?:[-_][a-zA-Z\d]+)*"""
 
-internal val FULL_KEY_REGEX = """$KEY_IDENTIFIER_REGEX_STRING(?:\.$KEY_IDENTIFIER_REGEX_STRING)*""".toRegex()
+internal val KEY_REGEX = """$KEY_IDENTIFIER_REGEX_STRING(?:\.$KEY_IDENTIFIER_REGEX_STRING)*""".toRegex()
 
 internal fun stringListComparator(first: List<String>, second: List<String>): Int {
     val it1 = first.iterator()

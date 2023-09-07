@@ -1,13 +1,13 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.unsafeCast
-import java.nio.file.Path
-import java.util.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import java.nio.file.Path
+import java.util.*
+
 
 class TranslatorBuilderTest {
 
@@ -28,47 +28,21 @@ class TranslatorBuilderTest {
     @Test
     fun `adding several time the same path throws an IAE`() {
         val builder = Translator.builder(Locale.ENGLISH)
-        val path = Path.of("test", "test")
-        builder.addPath(path, I18nFileParser.from { emptyMap() })
+        val path = Path.of("test", "test.yml")
+        builder.addPath(path)
         assertThrows<IllegalArgumentException> {
-            builder.addPath(path, I18nFileParser.from { emptyMap() })
+            builder.addPath(path)
         }
-    }
-
-    @Test
-    fun `addPath LocaleMapper determines the locale of a file`() {
-        val path = absoluteResource(ROOT, "empty.txt")
-        val key = "test"
-        val value = "this is a test"
-        val locale = Locale.FRANCE
-
-        val translator = Translator.builder(Locale.ENGLISH)
-            .addPath(path, I18nFileParser.from({ locale }) { mapOf(key to value) })
-            .build()
-        assertEquals(value, translator.t(key, locale))
     }
 
     @Test
     fun `adding several time the same file throws an IAE`() {
         val builder = Translator.builder(Locale.ENGLISH)
-        val path = Path.of("test", "test").toFile()
-        builder.addFile(path, I18nFileParser.from { emptyMap() })
+        val file = Path.of("test", "test.yml").toFile()
+        builder.addFile(file)
         assertThrows<IllegalArgumentException> {
-            builder.addFile(path, I18nFileParser.from { emptyMap() })
+            builder.addFile(file)
         }
-    }
-
-    @Test
-    fun `addFile LocaleMapper determines the locale of a file`() {
-        val path = absoluteResource(ROOT, "empty.txt").toFile()
-        val key = "test"
-        val value = "this is a test"
-        val locale = Locale.FRANCE
-
-        val translator = Translator.builder(Locale.ENGLISH)
-            .addFile(path, I18nFileParser.from({ locale }) { mapOf(key to value) })
-            .build()
-        assertEquals(value, translator.t(key, locale))
     }
 
     @Test
@@ -129,7 +103,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath throws an ISE on build call if the default localeParser is used and the file name is not a valid locale`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, "invalid-locale&.txt"), I18nFileParser.from { emptyMap() })
+            .addPath(absoluteResource(ROOT, "invalid-locale&.json"))
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -138,7 +112,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addFile throws an ISE on build call if the default localeParser is used and the file name is not a valid locale`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, "invalid-locale&.txt").toFile(), I18nFileParser.from { emptyMap() })
+            .addFile(absoluteResource(ROOT, "invalid-locale&.json").toFile())
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -147,7 +121,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath throws an ISE on build if the parser returns a map containing invalid key`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, "empty.txt"), I18nFileParser.from { mapOf("invalid#" to 5) })
+            .addPath(absoluteResource(ROOT, INVALID_CONTENT))
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -156,7 +130,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addFile throws an ISE on build if the parser returns a map containing invalid key`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, "empty.txt").toFile(), I18nFileParser.from { mapOf("invalid#" to 5) })
+            .addFile(absoluteResource(ROOT, INVALID_CONTENT).toFile())
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -192,26 +166,6 @@ class TranslatorBuilderTest {
         }
     }
 
-    @Test
-    fun `addPath throws an ISE on build if a key is null`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, "empty.txt"), I18nFileParser.from { mapOf(null to 5).unsafeCast() })
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addFile throws an ISE on build if a key is null`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(
-                absoluteResource(ROOT, "empty.txt").toFile(),
-                I18nFileParser.from { mapOf(null to 5).unsafeCast() }
-            )
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
 
     @Test
     fun `addMap throws an ISE on build if a key is null`() {
@@ -247,9 +201,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath throws an ISE on build if a value is null`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(
-                absoluteResource(ROOT, "empty.txt"),
-                I18nFileParser.from { mapOf("test" to null).unsafeCast() })
+            .addPath(absoluteResource(ROOT, NULL_VALUE))
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -258,10 +210,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addFile throws an ISE on build if a value is null`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(
-                absoluteResource(ROOT, "empty.txt").toFile(),
-                I18nFileParser.from { mapOf("test" to null).unsafeCast() }
-            )
+            .addFile(absoluteResource(ROOT, NULL_VALUE).toFile())
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -301,10 +250,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath throws an ISE on build if the map contains a map containing an invalid key`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(
-                absoluteResource(ROOT, "empty.txt"),
-                I18nFileParser.from { mapOf("test" to mapOf("invalid#" to 5)) }
-            )
+            .addPath(absoluteResource(ROOT, INVALID_NESTED_KEY))
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -313,10 +259,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addFile throws an ISE on build if the map contains a map containing an invalid key`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(
-                absoluteResource(ROOT, "empty.txt").toFile(),
-                I18nFileParser.from { mapOf("test" to mapOf("invalid#" to 5)) }
-            )
+            .addFile(absoluteResource(ROOT, "fr_FR.json").toFile())
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -353,29 +296,7 @@ class TranslatorBuilderTest {
         }
     }
 
-    @Test
-    fun `addPath throws an ISE on build if the map contains a map containing a null key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(
-                absoluteResource(ROOT, "empty.txt"),
-                I18nFileParser.from { mapOf("test" to mapOf(null to 5)) }
-            )
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
 
-    @Test
-    fun `addFile throws an ISE on build if the map contains a map containing a null key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(
-                absoluteResource(ROOT, "empty.txt").toFile(),
-                I18nFileParser.from { mapOf("test" to mapOf(null to 5)) }
-            )
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
 
     @Test
     fun `addMap throws an ISE on build if the map contains a map containing a null key`() {
@@ -411,10 +332,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath throws an ISE on build if the map contains a map containing a null value`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(
-                absoluteResource(ROOT, "empty.txt"),
-                I18nFileParser.from { mapOf("test" to mapOf("test" to null)) }
-            )
+            .addPath(absoluteResource(ROOT, NESTED_NULL_VALUE))
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -423,10 +341,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addFile throws an ISE on build if the map contains a map containing a null value`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(
-                absoluteResource(ROOT, "empty.txt").toFile(),
-                I18nFileParser.from { mapOf("test" to mapOf("test" to null)) }
-            )
+            .addFile(absoluteResource(ROOT, NESTED_NULL_VALUE).toFile())
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -464,27 +379,6 @@ class TranslatorBuilderTest {
     }
 
     @Test
-    fun `addPath throws an ISE on build if the map contains a list containing an invalid value`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, "empty.txt"), I18nFileParser.from { mapOf("test" to listOf(Any())) })
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addFile throws an ISE on build if the map contains a list containing an invalid value`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(
-                absoluteResource(ROOT, "empty.txt").toFile(),
-                I18nFileParser.from { mapOf("test" to listOf(Any())) }
-            )
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
     fun `addMap throws an ISE on build if the map contains a list containing an invalid value`() {
         val builder = Translator.builder(Locale.ENGLISH)
             .addMap(Locale.FRANCE, mapOf("test" to listOf(Any())))
@@ -510,30 +404,6 @@ class TranslatorBuilderTest {
         }
         val builder = Translator.builder(Locale.ENGLISH)
             .addTranslator(customImpl)
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addPath throws an ISE on build if the map contains a map containing a key that is not a string`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(
-                absoluteResource(ROOT, "empty.txt"),
-                I18nFileParser.from { mapOf("test" to mapOf(5 to "test")) }
-            )
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addFile throws an ISE on build if the map contains a map containing a key that is not a string`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(
-                absoluteResource(ROOT, "empty.txt").toFile(),
-                I18nFileParser.from { mapOf("test" to mapOf(5 to "test")) }
-            )
         assertThrows<IllegalStateException> {
             builder.build()
         }
@@ -573,10 +443,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addPath works with list`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(
-                absoluteResource(ROOT, "empty.txt"),
-                I18nFileParser.from({ Locale.ENGLISH }) { mapOf("test" to listOf("test")) }
-            )
+            .addPath(absoluteResource(ROOT, LIST))
         val translator = builder.build()
         assertEquals("test", translator.t("test.0"))
     }
@@ -584,10 +451,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addFile works with list`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(
-                absoluteResource(ROOT, "empty.txt").toFile(),
-                I18nFileParser.from({ Locale.ENGLISH }) { mapOf("test" to listOf("test")) }
-            )
+            .addFile(absoluteResource(ROOT, LIST).toFile())
         val translator = builder.build()
         assertEquals("test", translator.t("test.0"))
     }
@@ -621,12 +485,9 @@ class TranslatorBuilderTest {
     }
 
     @Test
-    fun `addPath works with map`() {
+    fun `addPath works with nested value`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(
-                absoluteResource(ROOT, "empty.txt"),
-                I18nFileParser.from({ Locale.ENGLISH }) { mapOf("test" to mapOf("test" to "test")) }
-            )
+            .addPath(absoluteResource(ROOT, NESTED_VALUE))
         val translator = builder.build()
         assertEquals("test", translator.t("test.test"))
     }
@@ -634,10 +495,7 @@ class TranslatorBuilderTest {
     @Test
     fun `addFile works with map`() {
         val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(
-                absoluteResource(ROOT, "empty.txt").toFile(),
-                I18nFileParser.from({ Locale.ENGLISH }) { mapOf("test" to mapOf("test" to "test")) }
-            )
+            .addFile(absoluteResource(ROOT, NESTED_VALUE).toFile())
         val translator = builder.build()
         assertEquals("test", translator.t("test.test"))
     }
@@ -670,55 +528,6 @@ class TranslatorBuilderTest {
         assertEquals("test", translator.t("test.test"))
     }
 
-    @Test
-    fun `addPath does not throw for valid types`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(
-                absoluteResource(ROOT, "empty.txt"),
-                I18nFileParser.from({ Locale.ENGLISH }) {
-                    mapOf(
-                        "test" to "test",
-                        "test2" to 0.toByte(),
-                        "test3" to 0.toShort(),
-                        "test4" to 0,
-                        "test5" to 0L,
-                        "test6" to 0f,
-                        "test7" to .0,
-                        "test8" to true,
-                        "test9" to listOf("test"),
-                        "test10" to mapOf("test" to "test")
-                    )
-                }
-            )
-        assertDoesNotThrow {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addFile does not throw for valid types`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(
-                absoluteResource(ROOT, "empty.txt").toFile(),
-                I18nFileParser.from({ Locale.ENGLISH }) {
-                    mapOf(
-                        "test" to "test",
-                        "test2" to 0.toByte(),
-                        "test3" to 0.toShort(),
-                        "test4" to 0,
-                        "test5" to 0L,
-                        "test6" to 0f,
-                        "test7" to .0,
-                        "test8" to true,
-                        "test9" to listOf("test"),
-                        "test10" to mapOf("test" to "test")
-                    )
-                }
-            )
-        assertDoesNotThrow {
-            builder.build()
-        }
-    }
 
     @Test
     fun `addMap does not throw for valid types`() {
@@ -822,62 +631,55 @@ class TranslatorBuilderTest {
         val translator = builder.build()
         assertEquals("test2", translator.t("test"))
     }
+//
+//    @Test
+//    fun `addPath works recursively on files if the path is a directory`() {
+//        val expected = setOf(
+//            "foo.txt",
+//            "bar.txt",
+//        )
+//        val actual = mutableSetOf<String>()
+//        val builder = Translator.builder(Locale.ENGLISH)
+//            .addPath(absoluteResource(ROOT, "valid")) {
+//                assertTrue(actual.add(it.fileName.toString()))
+//                I18nFileParser.ParsingResult(Locale.FRANCE, emptyMap())
+//            }
+//        builder.build()
+//        assertEquals(expected, actual)
+//    }
+//
+//    @Test
+//    fun `direct path for which parser returns null is ignored`() {
+//        val builder = Translator.builder(Locale.ENGLISH)
+//            .addPath(absoluteResource(ROOT, "fr_FR.json")) { null }
+//        assertEquals(emptyMap<Locale, Map<String, String>>(), builder.build().toMap())
+//    }
+//
+//    @Test
+//    fun `path in a folder for which parser returns null is ignored`() {
+//        val builder = Translator.builder(Locale.ENGLISH)
+//            .addPath(absoluteResource(ROOT, "valid")) {
+//                if (it.fileName.toString() == "foo.txt") {
+//                    null
+//                } else {
+//                    I18nFileParser.ParsingResult(Locale.FRANCE, emptyMap())
+//                }
+//            }
+//        assertEquals(mapOf(Locale.FRANCE to emptyMap<String, String>()), builder.build().toMap())
+//    }
 
-    @Test
-    fun `addPath works recursively on files if the path is a directory`() {
-        val expected = setOf(
-            "foo.txt",
-            "bar.txt",
-        )
-        val actual = mutableSetOf<String>()
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, "valid")) {
-                assertTrue(actual.add(it.fileName.toString()))
-                I18nFileParser.ParsingResult(Locale.FRANCE, emptyMap())
-            }
-        builder.build()
-        assertEquals(expected, actual)
-    }
-
-    @Test
-    fun `direct path for which parser returns null is ignored`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, "empty.txt")) { null }
-        assertEquals(emptyMap<Locale, Map<String, String>>(), builder.build().toMap())
-    }
-
-    @Test
-    fun `path in a folder for which parser returns null is ignored`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addPath(absoluteResource(ROOT, "valid")) {
-                if (it.fileName.toString() == "foo.txt") {
-                    null
-                } else {
-                    I18nFileParser.ParsingResult(Locale.FRANCE, emptyMap())
-                }
-            }
-        assertEquals(mapOf(Locale.FRANCE to emptyMap<String, String>()), builder.build().toMap())
-    }
-
-    @Test
-    fun `direct file for which parser returns null is ignored`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, "empty.txt").toFile()) { null }
-        assertEquals(emptyMap<Locale, Map<String, String>>(), builder.build().toMap())
-    }
-
-    @Test
-    fun `file in a folder for which parser returns null is ignored`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, "valid").toFile()) {
-                if (it.fileName.toString() == "foo.txt") {
-                    null
-                } else {
-                    I18nFileParser.ParsingResult(Locale.FRANCE, emptyMap())
-                }
-            }
-        assertEquals(mapOf(Locale.FRANCE to emptyMap<String, String>()), builder.build().toMap())
-    }
+//    @Test
+//    fun `file in a folder for which parser returns null is ignored`() {
+//        val builder = Translator.builder(Locale.ENGLISH)
+//            .addFile(absoluteResource(ROOT, "valid").toFile()) {
+//                if (it.fileName.toString() == "foo.txt") {
+//                    null
+//                } else {
+//                    I18nFileParser.ParsingResult(Locale.FRANCE, emptyMap())
+//                }
+//            }
+//        assertEquals(mapOf(Locale.FRANCE to emptyMap<String, String>()), builder.build().toMap())
+//    }
 
     @Test
     fun `addMap with dotted key correctly nest the value in the translator`() {
@@ -923,6 +725,18 @@ class TranslatorBuilderTest {
     private companion object {
 
         const val ROOT = "builder_test"
+
+        const val INVALID_CONTENT = "fr_FR.json"
+
+        const val NULL_VALUE = "fr_FR.yml"
+
+        const val INVALID_NESTED_KEY = "fr_FR.json"
+
+        const val NESTED_NULL_VALUE = "fr.json"
+
+        const val LIST = "en.yml"
+
+        const val NESTED_VALUE = "en.yaml"
 
     }
 
