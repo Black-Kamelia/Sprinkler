@@ -4,15 +4,15 @@ import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
 import com.kamelia.sprinkler.util.assertionFailed
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
+import org.json.JSONException
+import org.json.JSONObject
+import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.error.YAMLException
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.stream.Stream
-import org.json.JSONException
-import org.json.JSONObject
-import org.yaml.snakeyaml.Yaml
-import org.yaml.snakeyaml.error.YAMLException
 import kotlin.collections.ArrayDeque
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -253,6 +253,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                         checkValueIsValid(subValue, currentLocale)
                         toFlatten.addLast("$currentKey.$subKey" to subValue)
                     }
+
                     is List<*> -> currentValue.forEachIndexed { index, subValue ->
                         checkValueIsValid(subValue, currentLocale)
                         toFlatten.addLast("$currentKey.$index" to subValue)
@@ -340,6 +341,7 @@ private fun parseFile(path: Path): TranslationSourceMap =
                 throw I18nParsingException("Invalid JSON file.", path)
             }
         }
+
         "yaml", "yml" -> {
             try {
                 Yaml().load<Map<TranslationKeyPart, TranslationSourceData>>(path.readText())
@@ -347,6 +349,7 @@ private fun parseFile(path: Path): TranslationSourceMap =
                 throw I18nParsingException("Invalid YAML file.", path)
             }
         }
+
         else -> assertionFailed("File extension '$extension' should have been checked before.")
     }
 
