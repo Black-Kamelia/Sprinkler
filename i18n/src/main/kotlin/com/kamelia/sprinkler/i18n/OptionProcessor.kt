@@ -1,7 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.util.interpolate
-import com.kamelia.sprinkler.util.unsafeCast
+import com.kamelia.sprinkler.util.*
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.*
 
@@ -11,30 +10,42 @@ internal object OptionProcessor {
     fun translate(
         translator: TranslatorImpl,
         key: String,
-        options: Map<String, Any>,
+        prefix: String?,
+        options: Map<TranslationOption, Any>,
         locale: Locale,
     ): String? {
-        if (key.isEmpty()) return translator.baseTranslateOrNull(key, locale)
+        // first, we get the translations for the given locale
+        val translations = translator.translations[locale] ?: return null
 
+        // if there is no options, we can return the value directly
+        if (key.isEmpty()) return translations[key]
+
+        // we build the actual key with the options
         val actualKey = buildKey(key, options)
-        val value = translator.baseTranslateOrNull(actualKey, locale)
 
-        return value?.interpolate(options)
+        // we get the value for the actual key or return null if it doesn't exist
+        val value = translations[actualKey] ?: return null
+
+        // we interpolate the value with the options
+        var interpolated = value.interpolate(options)
+
+        // if the nesting option is true, we try to interpolate the value with the nestingVariableResolver
+        if (options.safeType<Boolean>(Options.NESTING) == true) {
+            interpolated = interpolated.interpolate(nestingVariableResolver(translations, prefix), NESTING_DELIMITER)
+        }
+
+        return interpolated
     }
 
     private fun buildKey(key: String, options: Map<String, Any>): String {
-        val builder = StringBuilder(key)
-
-        options.safeType<String>(Options.CONTEXT)?.let {
-            builder.append("_")
-            builder.append(it)
+        val context = options.safeType<String>(Options.CONTEXT)
+        val count = options.safeType<Int>(Options.COUNT)?.let { countMapper(it).representation }
+        return when {
+            count == null && context == null -> key
+            count == null -> "${key}_$context"
+            context == null -> "${key}_$count"
+            else -> "${key}_${context}_$count" // maybe use a StringBuilder?
         }
-        options.safeType<Int>(Options.COUNT)?.let {
-            builder.append("_")
-            builder.append(countMapper(it))
-        }
-
-        return builder.toString()
     }
 
     private inline fun <reified T> Map<TranslationOption, Any>.safeType(key: String): T? {
@@ -45,33 +56,36 @@ internal object OptionProcessor {
         return value.unsafeCast()
     }
 
+    private val NESTING_DELIMITER = VariableDelimiter('[', ']')
 
 }
 
-private val countMapper = { count: Int ->
+private val countMapper: (Int) -> Options.Plurals = { count: Int ->
     when (count) {
-        0 -> "zero"
-        1 -> "one"
-        else -> "other"
+        0 -> Options.Plurals.ZERO
+        1 -> Options.Plurals.ONE
+        else -> Options.Plurals.OTHER
     }
 }
 
+private fun nestingVariableResolver(
+    map: Map<TranslationKey, String>,
+    prefix: TranslationKey?,
+): VariableResolver {
+    val inner = VariableResolver { name, _ -> getValue(map, name, prefix) }
 
-private fun main() {
-    val translator = Translator.builder(Locale.ENGLISH)
-        .addMap(
-            Locale.ENGLISH,
-            mapOf(
-                "greetings" to "Hello {name}!",
-                "child_male_one" to "He is my son",
-                "child_male_other" to "They are my sons",
-                "child_female_one" to "She is my daughter",
-                "child_female_other" to "They are my daughters",
-            )
-        )
-        .build()
-    with(translator) {
-        val value = t("child", mapOf("context" to "male", "count" to 2))
-        println(value)
+    return VariableResolver { name, delimitation ->
+        var lastResult = getValue(map, name, prefix)
+        var current = lastResult.interpolate(inner, delimitation)
+        while (current != lastResult) {
+            lastResult = current
+            current = lastResult.interpolate(inner, delimitation)
+        }
+        current
     }
+}
+
+private fun getValue(map: Map<TranslationKey, String>, key: TranslationKey, prefix: TranslationKey?): String {
+    val actualKey = prefix?.let { "$it.$prefix" } ?: key
+    return map[actualKey] ?: illegalArgument("Invalid key '$key'.")
 }

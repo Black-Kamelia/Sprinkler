@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
+
 import java.util.*
 
 object Options {
@@ -10,6 +11,8 @@ object Options {
 
     const val COUNT = "count"
 
+    const val NESTING = "nesting"
+
     enum class Plurals {
         ZERO,
         ONE,
@@ -19,8 +22,7 @@ object Options {
         OTHER,
         ;
 
-        internal val representation: String
-            get() = name.lowercase(Locale.ENGLISH)
+        internal val representation: String = name.lowercase(Locale.ENGLISH)
 
     }
 

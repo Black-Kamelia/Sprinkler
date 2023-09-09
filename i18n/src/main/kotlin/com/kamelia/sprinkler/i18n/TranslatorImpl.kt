@@ -8,7 +8,8 @@ internal class TranslatorImpl private constructor(
     override val prefix: String?,
     override val defaultLocale: Locale,
     override val currentLocale: Locale,
-    private val translations: Map<Locale, Map<String, String>>,
+    @PackagePrivate
+    internal val translations: Map<Locale, Map<String, String>>,
 ) : Translator {
 
     constructor(
@@ -82,16 +83,13 @@ internal class TranslatorImpl private constructor(
         options: Map<String, Any>,
         fallbacks: Array<out String>,
     ): String? {
-        OptionProcessor.translate(this, key, options, locale)?.let { return it }
+        OptionProcessor.translate(this, key, prefix, options, locale)?.let { return it }
 
         fallbacks.forEach {fallback ->
-            OptionProcessor.translate(this, fallback, options, locale)?.let { return it }
+            OptionProcessor.translate(this, fallback, prefix, options, locale)?.let { return it }
         }
 
         return null
     }
-
-    @PackagePrivate
-    internal fun baseTranslateOrNull(key: String, locale: Locale): String? = translations[locale]?.get(key)
 
 }
