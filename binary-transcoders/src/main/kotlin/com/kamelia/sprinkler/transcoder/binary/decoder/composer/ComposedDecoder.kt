@@ -2,6 +2,7 @@
 
 package com.kamelia.sprinkler.transcoder.binary.decoder.composer
 
+import com.kamelia.sprinkler.transcoder.binary.decoder.IntDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.UTF8StringDecoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.Decoder
 import com.kamelia.sprinkler.transcoder.binary.decoder.core.DecoderInput
@@ -32,7 +33,8 @@ import java.nio.ByteOrder
  * inside the lambda.
  *
  * @param endianness the endianness of the decoder (defaults to [ByteOrder.BIG_ENDIAN])
- * @param stringDecoder the decoder to use for [String] objects (defaults to the default [UTF8StringDecoder])
+ * @param stringDecoder the decoder to use for [String] objects (defaults to [UTF8StringDecoder] with the same
+ *                      endianness as the [endianness] parameter)
  * @param block the block that will decode the object
  * @return the created decoder of type [T]
  * @see DecodingScope
@@ -40,7 +42,7 @@ import java.nio.ByteOrder
 @JvmOverloads
 fun <T> composedDecoder(
     endianness: ByteOrder = ByteOrder.BIG_ENDIAN,
-    stringDecoder: Decoder<String> = UTF8StringDecoder(),
+    stringDecoder: Decoder<String> = UTF8StringDecoder(IntDecoder(endianness)),
     block: DecodingScope<T>.() -> T,
 ): Decoder<T> {
     val cache = HashMap<Class<*>, Decoder<*>>().apply {
