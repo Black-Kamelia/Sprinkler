@@ -26,7 +26,7 @@ class OptionConfiguration @PackagePrivate internal constructor(
 
         var interpolationDelimiter: VariableDelimiter = VariableDelimiter.DEFAULT
 
-        var pluralMapper: (Locale, Int) -> Options.Plurals = Options.Plurals.Companion::defaultMapper
+        var pluralMapper: (Locale, Int) -> Options.Plurals = Options.Plurals.Companion::defaultCountMapper
 
         @PublishedApi
         internal fun build(): OptionConfiguration = OptionConfiguration(

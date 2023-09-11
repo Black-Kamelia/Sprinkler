@@ -13,6 +13,8 @@ object Options {
 
     const val NESTING = "nesting"
 
+    const val COUNT_MAPPER = "countMapper"
+
     enum class Plurals {
         ZERO,
         ONE,
@@ -23,6 +25,18 @@ object Options {
         ;
 
         internal val representation: String = name.lowercase(Locale.ENGLISH)
+
+        companion object {
+
+            @JvmStatic
+            fun defaultCountMapper(locale: Locale, count: Int): Plurals =
+                when (count) {
+                    0 -> ZERO
+                    1 -> ONE
+                    else -> OTHER
+                }
+
+        }
 
     }
 
