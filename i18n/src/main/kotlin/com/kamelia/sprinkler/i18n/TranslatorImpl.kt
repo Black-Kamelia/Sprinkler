@@ -10,17 +10,21 @@ internal class TranslatorImpl private constructor(
     override val currentLocale: Locale,
     @PackagePrivate
     internal val translations: Map<Locale, Map<String, String>>,
+    @PackagePrivate
+    internal val optionConfiguration: OptionConfiguration,
 ) : Translator {
 
     constructor(
         defaultLocale: Locale,
         currentLocale: Locale,
         children: Map<Locale, Map<String, String>>,
+        optionConfiguration: OptionConfiguration,
     ) : this(
         null,
         defaultLocale,
         currentLocale,
         children,
+        optionConfiguration,
     )
 
     override fun tn(
@@ -49,7 +53,7 @@ internal class TranslatorImpl private constructor(
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
         val newRootKey = prefix?.let { "$it.$key" } ?: key
-        return TranslatorImpl(newRootKey, currentLocale, defaultLocale, translations)
+        return TranslatorImpl(newRootKey, currentLocale, defaultLocale, translations, optionConfiguration)
     }
 
     override fun toMap(): Map<Locale, Map<String, String>> {
@@ -72,7 +76,7 @@ internal class TranslatorImpl private constructor(
     }
 
     override fun withNewCurrentLocale(locale: Locale): Translator =
-        TranslatorImpl(prefix, defaultLocale, locale, translations)
+        TranslatorImpl(prefix, defaultLocale, locale, translations, optionConfiguration)
 
     override fun toString(): String =
         "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, translations=${toMap()})"

@@ -58,6 +58,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      */
     private var currentLocale = defaultLocale
 
+    private var options: OptionConfiguration = OptionConfiguration.create { }
+
     /**
      * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
      * will be loaded.
@@ -164,6 +166,10 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         currentLocale = locale
     }
 
+    fun withOptions(options: OptionConfiguration): TranslatorBuilder = apply {
+        this.options = options
+    }
+
     /**
      * Defines how to handle duplicated keys when creating a translator.
      */
@@ -227,7 +233,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 .toMap()
         }
 
-        return TranslatorImpl(defaultLocale, currentLocale, sortedMap)
+        return TranslatorImpl(defaultLocale, currentLocale, sortedMap, options)
     }
 
     private fun addToMap(
