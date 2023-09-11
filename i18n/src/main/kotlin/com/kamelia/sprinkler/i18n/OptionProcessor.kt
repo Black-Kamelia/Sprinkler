@@ -1,6 +1,9 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.util.*
+import com.kamelia.sprinkler.util.VariableResolver
+import com.kamelia.sprinkler.util.illegalArgument
+import com.kamelia.sprinkler.util.interpolate
+import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.*
 
@@ -20,26 +23,36 @@ internal object OptionProcessor {
         // if there is no options, we can return the value directly
         if (key.isEmpty()) return translations[key]
 
+        val config = translator.optionConfiguration
+
         // we build the actual key with the options
-        val actualKey = buildKey(key, options)
+        val actualKey = buildKey(key, options, locale, config)
 
         // we get the value for the actual key or return null if it doesn't exist
         val value = translations[actualKey] ?: return null
 
         // we interpolate the value with the options
-        var interpolated = value.interpolate(options)
+        var interpolated = value.interpolate(VariableResolver.fromMap(options), config.interpolationDelimiter)
 
         // if the nesting option is true, we try to interpolate the value with the nestingVariableResolver
-        if (options.safeType<Boolean>(Options.NESTING) == true) {
-            interpolated = interpolated.interpolate(nestingVariableResolver(translations, prefix), NESTING_DELIMITER)
+        if (config.alwaysEnableNestedParsing || options.safeType<Boolean>(Options.NESTING) == true) {
+            interpolated = interpolated.interpolate(
+                nestingVariableResolver(translations, prefix),
+                config.nestingVariableDelimiter
+            )
         }
 
         return interpolated
     }
 
-    private fun buildKey(key: String, options: Map<String, Any>): String {
+    private fun buildKey(key: String, options: Map<String, Any>, locale: Locale, config: OptionConfiguration): String {
         val context = options.safeType<String>(Options.CONTEXT)
-        val count = options.safeType<Int>(Options.COUNT)?.let { countMapper(it).representation }
+        val count = options.safeType<Int>(Options.COUNT)?.let { count ->
+            options.safeType<(Locale, Int) -> Options.Plurals>(Options.COUNT_MAPPER)?.let {
+                it(locale, count)
+            } ?: config.pluralMapper(locale, count).representation
+        }
+
         return when {
             count == null && context == null -> key
             count == null -> "${key}_$context"
@@ -56,17 +69,8 @@ internal object OptionProcessor {
         return value.unsafeCast()
     }
 
-    private val NESTING_DELIMITER = VariableDelimiter('[', ']')
-
 }
 
-private val countMapper: (Int) -> Options.Plurals = { count: Int ->
-    when (count) {
-        0 -> Options.Plurals.ZERO
-        1 -> Options.Plurals.ONE
-        else -> Options.Plurals.OTHER
-    }
-}
 
 private fun nestingVariableResolver(
     map: Map<TranslationKey, String>,
