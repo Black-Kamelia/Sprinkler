@@ -9,9 +9,9 @@ package com.kamelia.sprinkler.util
  * Strings that are valid for interpolation are defined as follows:
  * - String may contain **zero**, **one** or **more** variables delimited by a start character and an end character
  * defined by the [delimiters] parameter ;
- * - Variable names must only contain **alphanumeric** characters, **underscores** (`_`) and **dashes** (`-`) ;
+ * - Variable names can contain any character except the end character, which is reserved for closing the variable ;
  * - **Escaping** [delimiters] characters is possible using a **backslash** (`\`), and **only the opening character**
- * needs to be escaped ;
+ * can be escaped ;
  * - Any **non-escaped start character** is considered as the start of a variable and **must be closed** before the end
  * of the string ;
  * - If a variable **name is empty**, the variable is resolved by using the **count of variables** encountered so far.
@@ -80,9 +80,6 @@ fun String.interpolate(
                     state = State.DEFAULT
                     variableCount++
                 } else { // append the current character to the key
-                    require(char.isLetterOrDigit() || '_' == char || '-' == char) {
-                        "Unexpected character '$char' in interpolated value near character ${index + 1}"
-                    }
                     keyBuilder.append(char)
                 }
             }
@@ -243,11 +240,11 @@ fun interface VariableResolver {
      * Implementations may throw an [ResolutionException] if the variable is unknown, or return a default value.
      *
      * @param name the name of the variable
-     * @param delimitation the delimitation of the variable, can be useful for some implementations
+     * @param delimiter the delimitation of the variable, can be useful for some implementations
      * @return the value of the variable
      * @throws ResolutionException if the variable is unknown
      */
-    fun value(name: String, delimitation: VariableDelimiter): String
+    fun value(name: String, delimiter: VariableDelimiter): String
 
     /**
      * Exception thrown by [VariableResolver] implementations when a variable name cannot be resolved.
