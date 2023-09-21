@@ -20,13 +20,14 @@ internal object OptionProcessor {
         // first, we get the translations for the given locale
         val translations = translator.translations[locale] ?: return null
 
-        // if there is no options, we can return the value directly
-        if (key.isEmpty()) return translations[key]
-
         val config = translator.optionConfiguration
 
         // we build the actual key with the options
-        val actualKey = buildKey(key, options, locale, config)
+        val actualKey = if (options.isNotEmpty()) {
+            buildKey(key, options, locale, config)
+        } else {
+            key
+        }
 
         // we get the value for the actual key or return null if it doesn't exist
         val value = translations[actualKey] ?: return null
@@ -78,12 +79,12 @@ private fun nestingVariableResolver(
 ): VariableResolver {
     val inner = VariableResolver { name, _ -> getValue(map, name, prefix) }
 
-    return VariableResolver { name, delimitation ->
+    return VariableResolver { name, delimiter ->
         var lastResult = getValue(map, name, prefix)
-        var current = lastResult.interpolate(inner, delimitation)
+        var current = lastResult.interpolate(inner, delimiter)
         while (current != lastResult) {
             lastResult = current
-            current = lastResult.interpolate(inner, delimitation)
+            current = lastResult.interpolate(inner, delimiter)
         }
         current
     }
@@ -91,5 +92,5 @@ private fun nestingVariableResolver(
 
 private fun getValue(map: Map<TranslationKey, String>, key: TranslationKey, prefix: TranslationKey?): String {
     val actualKey = prefix?.let { "$it.$prefix" } ?: key
-    return map[actualKey] ?: illegalArgument("Invalid key '$key'.")
+    return map[actualKey] ?: illegalArgument("Invalid key '$actualKey'.")
 }
