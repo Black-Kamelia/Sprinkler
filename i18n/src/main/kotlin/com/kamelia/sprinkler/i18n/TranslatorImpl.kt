@@ -39,10 +39,15 @@ internal class TranslatorImpl private constructor(
         }
         val actualKey = prefix?.let { "$it.$key" } ?: key
 
-        innerTranslate(actualKey, locale, options, fallbacks)?.let { return it }
+        try {
+            innerTranslate(actualKey, locale, options, fallbacks)?.let { return it }
 
-        if (fallbackLocale != null && locale != fallbackLocale) { // to avoid a second lookup with the same key
-            innerTranslate(actualKey, fallbackLocale, options, fallbacks)?.let { return it }
+            if (fallbackLocale != null && locale != fallbackLocale) { // to avoid a second lookup with the same key
+                innerTranslate(actualKey, fallbackLocale, options, fallbacks)?.let { return it }
+            }
+        } catch (e: I18nException) {
+            TODO()
+            //throw IllegalArgumentException("")
         }
 
         return null
@@ -89,7 +94,7 @@ internal class TranslatorImpl private constructor(
     ): String? {
         OptionProcessor.translate(this, key, prefix, options, locale)?.let { return it }
 
-        fallbacks.forEach {fallback ->
+        fallbacks.forEach { fallback ->
             OptionProcessor.translate(this, fallback, prefix, options, locale)?.let { return it }
         }
 

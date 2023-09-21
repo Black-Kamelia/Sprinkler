@@ -22,3 +22,12 @@ internal fun stringListComparator(first: List<String>, second: List<String>): In
         if (comparison != 0) return comparison
     }
 }
+
+@PackagePrivate
+internal class I18nException(message: String) : Throwable(message, null, false, false)
+
+internal const val KEY_DOCUMENTATION =
+    "For more details about translation keys, see TranslationKey typealias documentation."
+
+internal const val SOURCE_DATA_DOCUMENTATION =
+    "For more details about translation source data, see TranslationSourceData typealias documentation."

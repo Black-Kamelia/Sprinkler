@@ -16,10 +16,7 @@ import java.util.stream.Stream
 import kotlin.collections.ArrayDeque
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
-import kotlin.io.path.extension
-import kotlin.io.path.isDirectory
-import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.readText
+import kotlin.io.path.*
 
 /**
  * Builder class used to create a [Translator]. This class provides several methods to add data to the translator from
@@ -204,22 +201,26 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      */
     fun build(): Translator {
         val finalMap = HashMap<Locale, HashMap<String, String>>()
-        translatorContent.forEach {
-            when (it) { // switch on different types of TranslationResourceInformation
-                // if it is a FileInfo, we need to load the file or if it is a directory, load all files in it
-                // and add them to the final map
-                is FileInfo -> {
-                    try {
-                        loadPath(it).forEach { (locale, map) ->
-                            addToMap(finalMap, locale, map)
+        try {
+            translatorContent.forEach {
+                when (it) { // switch on different types of TranslationResourceInformation
+                    // if it is a FileInfo, we need to load the file or if it is a directory, load all files in it
+                    // and add them to the final map
+                    is FileInfo -> {
+                        try {
+                            loadPath(it).forEach { (locale, map) ->
+                                addToMap(finalMap, locale, map)
+                            }
+                        } catch (e: I18nException) { // catch and rethrow to add the path to the error message
+                            throw I18nException("Error while loading file ${it.path}: ${e.message}")
                         }
-                    } catch (e: I18nParsingException) {
-                        error("Error while parsing file ${e.path}: ${e.message}")
                     }
+                    // if it is a MapInfo, we can directly add it to the final map
+                    is MapInfo -> addToMap(finalMap, it.locale, it.map)
                 }
-                // if it is a MapInfo, we can directly add it to the final map
-                is MapInfo -> addToMap(finalMap, it.locale, it.map)
             }
+        } catch (e: I18nException) {
+            error(e.message!!)
         }
 
         // once all data is added to the final map, we need to sort it
@@ -239,14 +240,16 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     private fun addToMap(
         finalMap: HashMap<Locale, HashMap<String, String>>,
         locale: Locale,
-        map: Map<String, TranslationSourceData>,
+        map: Map<*, *>,
     ) {
         val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
-        map.forEach { (key, value) ->
+        map.forEach { (k, v) ->
             // we must check the validity here in case the value is a leaf (string, number or boolean), because we do
             // not check the validity of the value nor the key in before adding it to the map
-            checkKeyIsValid(key, currentLocale)
-            checkValueIsValid(value, currentLocale)
+            checkKeyIsValid(k, currentLocale, map)
+            checkValueIsValid(v, currentLocale, map)
+            val key = k as TranslationKey
+            val value = v as TranslationSourceData
 
             val toFlatten = ArrayDeque<Pair<String, TranslationSourceData>>()
             toFlatten.addLast(key to value)
@@ -255,13 +258,13 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 val (currentKey, currentValue) = toFlatten.removeFirst()
                 when (currentValue) {
                     is Map<*, *> -> currentValue.forEach { (subKey, subValue) ->
-                        checkKeyIsValid(subKey, currentLocale)
-                        checkValueIsValid(subValue, currentLocale)
+                        checkKeyIsValid(subKey, currentLocale, map)
+                        checkValueIsValid(subValue, currentLocale, map)
                         toFlatten.addLast("$currentKey.$subKey" to subValue)
                     }
 
                     is List<*> -> currentValue.forEachIndexed { index, subValue ->
-                        checkValueIsValid(subValue, currentLocale)
+                        checkValueIsValid(subValue, currentLocale, map)
                         toFlatten.addLast("$currentKey.$index" to subValue)
                     }
                     // type of value is always valid here (string, number or boolean), because of previous checks
@@ -288,89 +291,101 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     private fun loadPath(info: FileInfo): List<Pair<Locale, Map<String, TranslationSourceData>>> =
-        if (info.path.isDirectory()) { // if the path is a directory, load all files in it and return the list
-            Files.list(info.path)
-                .map {
-                    val map = parseFile(it)
-                    val locale = parseLocale(it)
-                    locale to map
+        when {
+            !info.path.exists() -> throw I18nException("Path ${info.path} does not exist")
+            info.path.isDirectory() -> { // if the path is a directory, load all files in it and return the list
+                Files.list(info.path)
+                    .map {
+                        val map = parseFile(it)
+                        val locale = parseLocale(it)
+                        locale to map
+                    }
+                    .filter { it != null }
+                    // as we filtered null values, we can safely cast
+                    .unsafeCast<Stream<Pair<Locale, Map<String, TranslationSourceData>>>>()
+                    .toList()
+            }
+            else -> { // if the path is a file, load it and store it in a one element list
+                val map = parseFile(info.path)
+                val locale = parseLocale(info.path)
+                listOf(locale to map)
+            }
+        }
+
+    private sealed interface TranslationResourceInformation
+
+    private class FileInfo(val path: Path) : TranslationResourceInformation
+
+    private class MapInfo(val locale: Locale, val map: Map<String, TranslationSourceData>) :
+        TranslationResourceInformation
+
+    private fun checkKeyIsValid(key: Any?, locale: Locale, map: Map<*, *>) {
+        if (key == null) {
+            throw I18nException(
+                "Error in map $map:\nInvalid translation key for locale '$locale', key cannot be null. For more details about key syntax, see Translator interface documentation."
+            )
+        }
+        if (key !is String) {
+            throw I18nException(
+                "Error in map $map:\nInvalid translation key '$key' of type ${key::class.simpleName} for locale '$locale', expected String. $KEY_DOCUMENTATION"
+            )
+        }
+        if (!KEY_REGEX.matches(key)) {
+            throw I18nException(
+                "Error in map $map:\nInvalid translation key '$key' for locale '$locale', format is not valid. $KEY_DOCUMENTATION"
+            )
+        }
+    }
+
+    @OptIn(ExperimentalContracts::class)
+    private fun checkValueIsValid(value: Any?, locale: Locale, map: Map<*, *>) {
+        contract {
+            returns() implies (value != null)
+        }
+        if (value == null) {
+            throw I18nException(
+                "Error in map $map:\nInvalid translation value for locale '$locale', value cannot be null. $SOURCE_DATA_DOCUMENTATION"
+            )
+        }
+        if (value !is String && value !is Number && value !is Boolean && value !is Map<*, *> && value !is List<*>) {
+            throw I18nException(
+                "Error in map $map:\nInvalid translation value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see I18nFileParser interface documentation."
+            )
+        }
+    }
+
+    private fun parseFile(path: Path): TranslationSourceMap =
+        when (val extension = path.extension) {
+            "json" -> {
+                try {
+                    JSONObject(path.readText()).toMap()
+                } catch (e: JSONException) {
+                    throw I18nException("Invalid JSON file: ${e.message}")
                 }
-                .filter { it != null }
-                // as we filtered null values, we can safely cast
-                .unsafeCast<Stream<Pair<Locale, Map<String, TranslationSourceData>>>>()
-                .toList()
-        } else { // if the path is a file, load it and store it in a one element list
-            val map = parseFile(info.path)
-            val locale = parseLocale(info.path)
-            listOf(locale to map)
-        }
-
-}
-
-private sealed interface TranslationResourceInformation
-
-private class FileInfo(val path: Path) : TranslationResourceInformation
-
-private class MapInfo(val locale: Locale, val map: Map<String, TranslationSourceData>) : TranslationResourceInformation
-
-private fun checkKeyIsValid(key: Any?, locale: Locale) {
-    checkNotNull(key) {
-        "Keys cannot be null. For more details about key syntax, see Translator interface documentation."
-    }
-    check(key is String) {
-        "Invalid key type ${key::class.simpleName} for locale '$locale', expected String. For more details about keys, see Translator interface documentation."
-    }
-    check(KEY_REGEX.matches(key)) {
-        "Invalid key '$key' for locale '$locale'. For more details about key syntax, see Translator interface documentation."
-    }
-}
-
-@OptIn(ExperimentalContracts::class)
-private fun checkValueIsValid(value: Any?, locale: Locale) {
-    contract {
-        returns() implies (value != null)
-    }
-    checkNotNull(value) {
-        "Values cannot be null. For more details about supported types, see I18nFileParser interface documentation."
-    }
-    check(value is String || value is Number || value is Boolean || value is Map<*, *> || value is List<*>) {
-        "Invalid value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see I18nFileParser interface documentation."
-    }
-}
-
-private fun parseFile(path: Path): TranslationSourceMap =
-    when (val extension = path.extension) {
-        "json" -> {
-            try {
-                JSONObject(path.readText()).toMap()
-            } catch (_: JSONException) {
-                throw I18nParsingException("Invalid JSON file.", path)
             }
-        }
 
-        "yaml", "yml" -> {
-            try {
-                Yaml().load<Map<TranslationKeyPart, TranslationSourceData>>(path.readText())
-            } catch (_: YAMLException) {
-                throw I18nParsingException("Invalid YAML file.", path)
+            "yaml", "yml" -> {
+                try {
+                    Yaml().load<Map<TranslationKeyPart, TranslationSourceData>>(path.readText())
+                } catch (e: YAMLException) {
+                    throw I18nException("Invalid YAML file: ${e.message}")
+                }
             }
+
+            else -> assertionFailed("File extension '$extension' should have been checked before.")
         }
 
-        else -> assertionFailed("File extension '$extension' should have been checked before.")
+    private fun parseLocale(path: Path): Locale {
+        val locale = path.nameWithoutExtension
+        return try {
+            Locale.Builder()
+                .setLanguageTag(locale.replace('_', '-'))
+                .build()
+        } catch (_: IllformedLocaleException) {
+            throw I18nException(
+                "Invalid locale '$locale'. For more details about locale syntax, see java.util.Locale documentation.",
+            )
+        }
     }
 
-private fun parseLocale(path: Path): Locale {
-    val locale = path.nameWithoutExtension
-    return try {
-        Locale.Builder()
-            .setLanguageTag(locale.replace('_', '-'))
-            .build()
-    } catch (_: IllformedLocaleException) {
-        throw I18nParsingException(
-            "Invalid locale '$locale'. For more details about locale syntax, see java.util.Locale documentation.",
-            path
-        )
-    }
 }
-
-private class I18nParsingException(message: String, val path: Path) : Throwable(message, null, false, false)
