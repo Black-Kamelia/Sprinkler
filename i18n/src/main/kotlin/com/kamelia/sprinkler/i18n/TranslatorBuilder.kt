@@ -363,7 +363,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                     throw I18nException("Invalid JSON file: ${e.message}")
                 }
             }
-
             "yaml", "yml" -> {
                 try {
                     Yaml().load<Map<TranslationKeyPart, TranslationSourceData>>(path.readText())
@@ -371,7 +370,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                     throw I18nException("Invalid YAML file: ${e.message}")
                 }
             }
-
             else -> assertionFailed("File extension '$extension' should have been checked before.")
         }
 
