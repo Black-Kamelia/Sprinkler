@@ -78,7 +78,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      */
     fun addFile(path: Path): TranslatorBuilder = apply {
         val extension = path.extension
-        require(extension == "json" || extension == "yaml" || extension == "yml") {
+        require("json" == extension || "yaml" == extension || "yml" == extension) {
             "Unsupported file extension '$extension' for path '$path'. Supported extensions are 'json', 'yaml' and 'yml'."
         }
         val isNew = addedPaths.add(path)
