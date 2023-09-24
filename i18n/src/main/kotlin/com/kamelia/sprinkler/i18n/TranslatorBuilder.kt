@@ -4,19 +4,23 @@ import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
 import com.kamelia.sprinkler.util.assertionFailed
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
-import org.json.JSONException
-import org.json.JSONObject
-import org.yaml.snakeyaml.Yaml
-import org.yaml.snakeyaml.error.YAMLException
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.stream.Stream
+import org.json.JSONException
+import org.json.JSONObject
+import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.error.YAMLException
 import kotlin.collections.ArrayDeque
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.readText
 
 /**
  * Builder class used to create a [Translator]. This class provides several methods to add data to the translator from
@@ -243,13 +247,12 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         map: Map<*, *>,
     ) {
         val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
-        map.forEach { (k, v) ->
+        map.forEach { (k, value) ->
             // we must check the validity here in case the value is a leaf (string, number or boolean), because we do
             // not check the validity of the value nor the key in before adding it to the map
             checkKeyIsValid(k, currentLocale, map)
-            checkValueIsValid(v, currentLocale, map)
+            checkValueIsValid(value, currentLocale, map)
             val key = k as TranslationKey
-            val value = v as TranslationSourceData
 
             val toFlatten = ArrayDeque<Pair<String, TranslationSourceData>>()
             toFlatten.addLast(key to value)
