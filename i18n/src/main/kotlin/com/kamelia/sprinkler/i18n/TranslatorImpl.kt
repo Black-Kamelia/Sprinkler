@@ -69,6 +69,12 @@ internal class TranslatorImpl private constructor(
 
     override fun withNewCurrentLocale(locale: Locale): Translator = TranslatorImpl(prefix, locale, data)
 
+    override fun asRoot(): Translator = if (isRoot) {
+        this
+    } else {
+        TranslatorImpl(null, currentLocale, data)
+    }
+
     override fun toString(): String =
         "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, translations=${toMap()})"
 

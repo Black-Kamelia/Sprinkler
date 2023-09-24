@@ -144,6 +144,8 @@ interface Translator {
      */
     fun withNewCurrentLocale(locale: Locale): Translator
 
+    fun asRoot(): Translator
+
     companion object {
 
         /**
