@@ -86,15 +86,7 @@ interface Translator {
         vararg fallbacks: String,
     ): String =
         tn(key, options, locale, fallbackLocale, *fallbacks)
-            ?: illegalArgument(
-                "No translation found for parameters: key='$key', locale='$locale', fallbackLocale='$fallbackLocale', fallbacks='${
-                    fallbacks.joinToString(
-                        ", ",
-                        "[",
-                        "]"
-                    )
-                }', options='$options'"
-            )
+            ?: keyNotFound(key, options, locale, fallbackLocale, fallbacks)
 
     fun t(key: TranslationKey, options: Map<TranslationOption, Any>, locale: Locale, vararg fallbacks: String): String =
         t(key, options, locale, defaultLocale, *fallbacks)
@@ -157,6 +149,30 @@ interface Translator {
          */
         @JvmStatic
         fun builder(defaultLocale: Locale): TranslatorBuilder = TranslatorBuilder(defaultLocale)
+
+        private fun keyNotFound(
+            key: TranslationKey,
+            options: Map<TranslationOption, Any>,
+            locale: Locale,
+            fallbackLocale: Locale?,
+            fallbacks: Array<out String>,
+        ): Nothing {
+            val builder = StringBuilder()
+            builder.append("No translation found for parameters: key='")
+                .append(key)
+                .append("', locale='")
+                .append(locale)
+                .append("', fallbackLocale='")
+                .append(fallbackLocale)
+                .append("', fallbacks='")
+
+            fallbacks.joinTo(builder, ", ", "[", "]")
+
+            builder.append("', options='")
+                .append(options)
+
+            illegalArgument(builder.toString())
+        }
 
     }
 
