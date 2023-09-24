@@ -238,7 +238,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 .toMap()
         }
 
-        return TranslatorImpl(defaultLocale, currentLocale, sortedMap, options)
+        val data = TranslatorData(defaultLocale, sortedMap, options)
+        return TranslatorImpl(currentLocale, data)
     }
 
     private fun addToMap(

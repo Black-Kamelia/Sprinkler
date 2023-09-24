@@ -8,19 +8,20 @@ import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.*
 
 @PackagePrivate
-internal object OptionProcessor {
+internal class OptionProcessor(
+    private val data: TranslatorData
+) {
 
     fun translate(
-        translator: TranslatorImpl,
         key: String,
         prefix: String?,
         options: Map<TranslationOption, Any>,
         locale: Locale,
     ): String? {
         // first, we get the translations for the given locale
-        val translations = translator.translations[locale] ?: return null
+        val translations = data.translations[locale] ?: return null
 
-        val config = translator.optionConfiguration
+        val config = data.optionConfiguration
 
         // we build the actual key with the options
         val actualKey = if (options.isNotEmpty()) {

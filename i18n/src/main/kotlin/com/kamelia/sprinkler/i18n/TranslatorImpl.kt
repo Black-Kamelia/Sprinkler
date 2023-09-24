@@ -6,26 +6,14 @@ import java.util.*
 @PackagePrivate
 internal class TranslatorImpl private constructor(
     override val prefix: String?,
-    override val defaultLocale: Locale,
     override val currentLocale: Locale,
-    @PackagePrivate
-    internal val translations: Map<Locale, Map<String, String>>,
-    @PackagePrivate
-    internal val optionConfiguration: OptionConfiguration,
+    private val data: TranslatorData,
 ) : Translator {
 
-    constructor(
-        defaultLocale: Locale,
-        currentLocale: Locale,
-        children: Map<Locale, Map<String, String>>,
-        optionConfiguration: OptionConfiguration,
-    ) : this(
-        null,
-        defaultLocale,
-        currentLocale,
-        children,
-        optionConfiguration,
-    )
+    constructor(currentLocale: Locale, data: TranslatorData) : this(null, currentLocale, data)
+
+    override val defaultLocale: Locale
+        get() = data.defaultLocale
 
     override fun tn(
         key: String,
@@ -46,8 +34,7 @@ internal class TranslatorImpl private constructor(
                 innerTranslate(actualKey, fallbackLocale, options, fallbacks)?.let { return it }
             }
         } catch (e: I18nException) {
-            TODO()
-            //throw IllegalArgumentException("")
+            throw IllegalArgumentException(e.message)
         }
 
         return null
@@ -58,17 +45,17 @@ internal class TranslatorImpl private constructor(
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
         val newRootKey = prefix?.let { "$it.$key" } ?: key
-        return TranslatorImpl(newRootKey, currentLocale, defaultLocale, translations, optionConfiguration)
+        return TranslatorImpl(newRootKey, currentLocale, data)
     }
 
     override fun toMap(): Map<Locale, Map<String, String>> {
         val root = prefix
         return if (root == null) {
-            translations.mapValues { (_, map) -> // simple deep copy
+            data.translations.mapValues { (_, map) -> // simple deep copy
                 map.toMap()
             }
         } else {
-            translations.mapValues { (_, map) -> // deep copy with filtering and key prefix removal
+            data.translations.mapValues { (_, map) -> // deep copy with filtering and key prefix removal
                 map.asSequence()
                     // we must check that the char at root.length is a dot to avoid removing keys that start with the
                     // same prefix but are not direct children of the root e.g. prefix='a' and key='ab'
@@ -80,8 +67,7 @@ internal class TranslatorImpl private constructor(
         }
     }
 
-    override fun withNewCurrentLocale(locale: Locale): Translator =
-        TranslatorImpl(prefix, defaultLocale, locale, translations, optionConfiguration)
+    override fun withNewCurrentLocale(locale: Locale): Translator = TranslatorImpl(prefix, locale, data)
 
     override fun toString(): String =
         "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, translations=${toMap()})"
@@ -92,13 +78,14 @@ internal class TranslatorImpl private constructor(
         options: Map<String, Any>,
         fallbacks: Array<out String>,
     ): String? {
-        OptionProcessor.translate(this, key, prefix, options, locale)?.let { return it }
+        data.optionProcessor.translate(key, prefix, options, locale)?.let { return it }
 
         fallbacks.forEach { fallback ->
-            OptionProcessor.translate(this, fallback, prefix, options, locale)?.let { return it }
+            data.optionProcessor.translate(fallback, prefix, options, locale)?.let { return it }
         }
 
         return null
     }
 
 }
+
