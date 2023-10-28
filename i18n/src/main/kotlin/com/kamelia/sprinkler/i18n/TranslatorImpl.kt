@@ -84,10 +84,10 @@ internal class TranslatorImpl private constructor(
         options: Map<String, Any>,
         fallbacks: Array<out String>,
     ): String? {
-        data.optionProcessor.translate(key, prefix, options, locale)?.let { return it }
+        data.optionProcessor.translate(key, options, locale)?.let { return it }
 
         fallbacks.forEach { fallback ->
-            data.optionProcessor.translate(fallback, prefix, options, locale)?.let { return it }
+            data.optionProcessor.translate(fallback, options, locale)?.let { return it }
         }
 
         return null

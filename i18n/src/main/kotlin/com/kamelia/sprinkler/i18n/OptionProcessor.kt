@@ -1,7 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.VariableResolver
-import com.kamelia.sprinkler.util.illegalArgument
 import com.kamelia.sprinkler.util.interpolate
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
@@ -14,40 +13,27 @@ internal class OptionProcessor(
 
     fun translate(
         key: String,
-        prefix: String?,
         options: Map<TranslationOption, Any>,
         locale: Locale,
     ): String? {
-        // first, we get the translations for the given locale
+        // first, we get the translations for the given locale, or return null if they don't exist
         val translations = data.translations[locale] ?: return null
 
         val config = data.optionConfiguration
 
         // we build the actual key with the options
-        val actualKey = if (options.isNotEmpty()) {
-            buildKey(key, options, locale, config)
-        } else {
-            key
-        }
+        val actualKey = buildKey(key, options, locale, config)
 
         // we get the value for the actual key or return null if it doesn't exist
         val value = translations[actualKey] ?: return null
 
         // we interpolate the value with the options
-        var interpolated = value.interpolate(VariableResolver.fromMap(options), config.interpolationDelimiter)
-
-        // if the nesting option is true, we try to interpolate the value with the nestingVariableResolver
-        if (config.alwaysEnableNestedParsing || options.safeType<Boolean>(Options.NESTING) == true) {
-            interpolated = interpolated.interpolate(
-                nestingVariableResolver(translations, prefix),
-                config.nestingVariableDelimiter
-            )
-        }
-
-        return interpolated
+        return value.interpolate(VariableResolver.fromMap(options), config.interpolationDelimiter)
     }
 
     private fun buildKey(key: String, options: Map<String, Any>, locale: Locale, config: OptionConfiguration): String {
+        if (options.isEmpty()) return key
+
         val context = options.safeType<String>(Options.CONTEXT)
         val count = options.safeType<Int>(Options.COUNT)?.let { count ->
             options.safeType<(Locale, Int) -> Options.Plurals>(Options.COUNT_MAPPER)?.let {
@@ -59,7 +45,7 @@ internal class OptionProcessor(
             count == null && context == null -> key
             count == null -> "${key}_$context"
             context == null -> "${key}_$count"
-            else -> "${key}_${context}_$count" // maybe use a StringBuilder?
+            else -> "${key}_${context}_$count"
         }
     }
 
@@ -74,24 +60,20 @@ internal class OptionProcessor(
 }
 
 
-private fun nestingVariableResolver(
-    map: Map<TranslationKey, String>,
-    prefix: TranslationKey?,
-): VariableResolver {
-    val inner = VariableResolver { name, _ -> getValue(map, name, prefix) }
+fun main() {
+    val translator = Translator.builder(Locale.ENGLISH)
+        .addMap(
+            Locale.FRANCE,
+            mapOf(
+                "child_male_one" to "voici mon fils",
+                "child_male_other" to "voici mes {count} fils",
+                "child_female_one" to "voici ma fille",
+                "child_female_other" to "voici mes {count} filles",
+                "child_zero" to "je n'ai pas d'enfant"
+            )
+        )
+        .build()
 
-    return VariableResolver { name, delimiter ->
-        var lastResult = getValue(map, name, prefix)
-        var current = lastResult.interpolate(inner, delimiter)
-        while (current != lastResult) {
-            lastResult = current
-            current = lastResult.interpolate(inner, delimiter)
-        }
-        current
-    }
-}
-
-private fun getValue(map: Map<TranslationKey, String>, key: TranslationKey, prefix: TranslationKey?): String {
-    val actualKey = prefix?.let { "$it.$prefix" } ?: key
-    return map[actualKey] ?: illegalArgument("Invalid key '$actualKey'.")
+    val t = translator.t("child", mapOf("count" to 4, "context" to "male"), Locale.FRANCE)
+    println(t)
 }

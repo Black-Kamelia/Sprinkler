@@ -11,8 +11,6 @@ object Options {
 
     const val COUNT = "count"
 
-    const val NESTING = "nesting"
-
     const val COUNT_MAPPER = "countMapper"
 
     enum class Plurals {
