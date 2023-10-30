@@ -48,7 +48,7 @@ fun String.interpolate(
     var keyBuilder = StringBuilder() // builder used to build the key of the variable
     var variableCount = 0 // number of variables encountered to resolve empty names
 
-    forEachIndexed { index, char ->
+    forEach { char ->
         when (state) {
             State.DEFAULT -> {
                 when (char) {

@@ -16,19 +16,22 @@ internal class OptionProcessor(
         options: Map<TranslationOption, Any>,
         locale: Locale,
     ): String? {
-        // first, we get the translations for the given locale, or return null if they don't exist
+        // first, get the translations for the given locale, or return null if they don't exist
         val translations = data.translations[locale] ?: return null
 
         val config = data.optionConfiguration
 
-        // we build the actual key with the options
+        // build the actual key with the options
         val actualKey = buildKey(key, options, locale, config)
 
-        // we get the value for the actual key or return null if it doesn't exist
+        // get the value for the actual key or return null if it doesn't exist
         val value = translations[actualKey] ?: return null
 
-        // we interpolate the value with the options
-        return value.interpolate(VariableResolver.fromMap(options), config.interpolationDelimiter)
+        return if (options.isEmpty()) {
+            value
+        } else { // interpolate the value with the options
+            value.interpolate(VariableResolver.fromMap(options), config.interpolationDelimiter)
+        }
     }
 
     private fun buildKey(key: String, options: Map<String, Any>, locale: Locale, config: OptionConfiguration): String {
