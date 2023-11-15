@@ -361,6 +361,8 @@ fun interface VariableResolver {
 /**
  * Represents the delimitation of a variable in an interpolated string.
  *
+ * @property variableStart The start character of a variable.
+ * @property variableEnd The end character of a variable.
  * @constructor Creates a new [VariableDelimiter] with the given [variableStart] and [variableEnd].
  * @param variableStart the start character of a variable
  * @param variableEnd the end character of a variable
@@ -368,8 +370,8 @@ fun interface VariableResolver {
  * @see VariableResolver
  */
 class VariableDelimiter(
-    internal val variableStart: Char,
-    internal val variableEnd: Char,
+    val variableStart: Char,
+    val variableEnd: Char,
 ) {
 
     init {

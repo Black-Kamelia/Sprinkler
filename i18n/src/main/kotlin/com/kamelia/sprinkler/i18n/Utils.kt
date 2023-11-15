@@ -2,7 +2,9 @@
 
 package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.util.illegalArgument
 import com.zwendo.restrikt.annotation.PackagePrivate
+import java.util.*
 import org.intellij.lang.annotations.Language
 
 @Language("RegExp")
@@ -23,7 +25,30 @@ internal fun stringListComparator(first: List<String>, second: List<String>): In
     }
 }
 
-@PackagePrivate
+internal fun keyNotFound(
+    key: TranslationKey,
+    options: Map<TranslationOption, Any>,
+    locale: Locale,
+    fallbackLocale: Locale?,
+    fallbacks: Array<out String>,
+): Nothing {
+    val builder = StringBuilder()
+    builder.append("No translation found for parameters: key='")
+        .append(key)
+        .append("', locale='")
+        .append(locale)
+        .append("', fallbackLocale='")
+        .append(fallbackLocale)
+        .append("', fallbacks='")
+
+    fallbacks.joinTo(builder, ", ", "[", "]")
+
+    builder.append("', options='")
+        .append(options)
+
+    illegalArgument(builder.toString())
+}
+
 internal class I18nException(message: String) : Throwable(message, null, false, false)
 
 internal const val KEY_DOCUMENTATION =

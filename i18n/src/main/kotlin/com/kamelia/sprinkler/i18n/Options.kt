@@ -13,8 +13,6 @@ object Options {
 
     const val COUNT_MAPPER = "countMapper"
 
-    const val FORMAT = "format"
-
     enum class Plurals {
         ZERO,
         ONE,
