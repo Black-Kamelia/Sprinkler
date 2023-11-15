@@ -9,10 +9,26 @@ import java.time.format.FormatStyle
 import java.time.temporal.TemporalAccessor
 import java.util.*
 
+/**
+ * Represents an object that can format specific values depending on the locale.
+ */
 fun interface VariableFormatter {
 
+    /**
+     * Formats the given [value] using the given [locale] and [extraArgs].
+     *
+     * **NOTE**: any unrecognized [extraArgs] is ignored.
+     *
+     * @param value the value to format
+     * @param locale the locale to use
+     * @param extraArgs the extra arguments to use
+     * @return the formatted value
+     */
     fun format(value: Any, locale: Locale, extraArgs: List<String>): String
 
+    /**
+     * The built-in [VariableFormatters][VariableFormatter].
+     */
     object Builtins {
 
         object Currency : VariableFormatter {
@@ -98,33 +114,33 @@ fun interface VariableFormatter {
 
                 // please do the trick
                 val inner = NumberFormat.getInstance(locale)
-                parseParams(inner, extraArgs)
+                parseNumberFormatParams(inner, extraArgs)
                 return inner.format(number)
             }
 
-            private fun parseParams(formatter: NumberFormat, params: List<String>) {
-                params.forEach {
-                    val tokens = it.split(":")
-                    require(tokens.size == 2) { "Invalid number format parameter: $it" }
-                    val (key, value) = tokens
-                    when (key) {
-                        "minIntDigits" -> formatter.minimumIntegerDigits = value.toIntOrException(it)
-                        "maxIntDigits" -> formatter.maximumIntegerDigits = value.toIntOrException(it)
-                        "minFracDigits" -> formatter.minimumFractionDigits = value.toIntOrException(it)
-                        "maxFracDigits" -> formatter.maximumFractionDigits = value.toIntOrException(it)
-                        "groupingUsed" -> formatter.isGroupingUsed = value.toBooleanStrictOrNull()
-                            ?: illegalArgument("Invalid parameter, expected 'true' or 'false', got '$value'.")
-                        "roundingMode" -> formatter.roundingMode = RoundingMode.valueOf(value)
-                        // ignore unknown parameters
-                    }
+        }
+
+        private fun parseNumberFormatParams(formatter: NumberFormat, params: List<String>) {
+            params.forEach {
+                val tokens = it.split(":")
+                require(tokens.size == 2) { "Invalid number format parameter: $it" }
+                val (key, value) = tokens
+                when (key) {
+                    "minIntDigits" -> formatter.minimumIntegerDigits = value.toIntOrException(it)
+                    "maxIntDigits" -> formatter.maximumIntegerDigits = value.toIntOrException(it)
+                    "minFracDigits" -> formatter.minimumFractionDigits = value.toIntOrException(it)
+                    "maxFracDigits" -> formatter.maximumFractionDigits = value.toIntOrException(it)
+                    "groupingUsed" -> formatter.isGroupingUsed = value.toBooleanStrictOrNull()
+                        ?: illegalArgument("Invalid parameter, expected 'true' or 'false', got '$value'.")
+                    "roundingMode" -> formatter.roundingMode = RoundingMode.valueOf(value)
+                    // ignore unknown parameters
                 }
             }
+        }
 
-            @Suppress("NOTHING_TO_INLINE")
-            private inline fun String.toIntOrException(token: String): Int {
-                return toIntOrNull() ?: illegalArgument("Invalid number format parameter: $token")
-            }
-
+        @Suppress("NOTHING_TO_INLINE")
+        private inline fun String.toIntOrException(token: String): Int {
+            return toIntOrNull() ?: illegalArgument("Invalid number format parameter: $token")
         }
 
         @Suppress("NOTHING_TO_INLINE")
