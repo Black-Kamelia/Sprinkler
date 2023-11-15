@@ -101,54 +101,9 @@ internal class OptionProcessor(
 
 }
 
-// (\w+)((?:,\s*\w+(?:\(\w+(?:,\s*\w+)*\))?)*)
-
 @Language("RegExp")
 private val FORMAT_REGEX = """,\s*(\w+)(?:\(([\w:]+(?:,\s*[\w:]+)*)\))?"""
 
 private val VARIABLE_REGEX = """(\w+)(?:$FORMAT_REGEX)?""".toRegex()
 
 private val FORMAT_PARAM_SPLIT_REGEX = """,\s*""".toRegex()
-
-fun main() {
-    val translator = Translator.builder(Locale.US)
-        .addMap(
-            Locale.FRANCE,
-            mapOf(
-                "sandwich" to "Des sandwichs ? J'en ai {qty, number(minIntDigits:3)}.",
-                "date" to "aujourd'hui, c'est le {date, date(short)}."
-            )
-        )
-        .addMap(
-            Locale.US,
-            mapOf(
-                "sandwich" to "this sandwich costs {price, currency}.",
-                "date" to "today is {date, datetime}."
-            )
-        )
-        .build()
-
-    println(translator.t("sandwich", mapOf("qty" to 4.53), Locale.FRANCE))
-
-//    val t = translator.t("sandwich", mapOf("price" to 4.53), Locale.FRANCE)
-//    println(t)
-//    val t2 = translator.t("sandwich", mapOf("price" to 4))
-//    println(t)
-//    println(t2)
-//
-//    val now = LocalDate.now()
-//    val t3 = translator.t("date", mapOf("date" to now), Locale.FRANCE)
-//    val t4 = translator.t("date", mapOf("date" to now))
-//    println(t3)
-//    println(t4)
-}
-
-
-
-
-
-
-
-
-
-
