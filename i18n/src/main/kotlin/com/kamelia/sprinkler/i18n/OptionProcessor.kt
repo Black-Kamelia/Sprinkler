@@ -102,7 +102,7 @@ internal class OptionProcessor(
 }
 
 @Language("RegExp")
-private val FORMAT_REGEX = """,\s*(\w+)(?:\(([\w:]+(?:,\s*[\w:]+)*)\))?"""
+private val FORMAT_REGEX = """,\s*(\w+)(?:\(([^,()]+(?:,\s*[^,()]+)*)\))?"""
 
 private val VARIABLE_REGEX = """(\w+)(?:$FORMAT_REGEX)?""".toRegex()
 
