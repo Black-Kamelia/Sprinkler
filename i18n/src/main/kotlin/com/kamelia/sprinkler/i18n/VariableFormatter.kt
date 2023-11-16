@@ -17,8 +17,6 @@ fun interface VariableFormatter {
     /**
      * Formats the given [value] using the given [locale] and [extraArgs].
      *
-     * **NOTE**: any unrecognized [extraArgs] is ignored.
-     *
      * @param value the value to format
      * @param locale the locale to use
      * @param extraArgs the extra arguments to use
@@ -38,6 +36,7 @@ fun interface VariableFormatter {
             override fun format(value: Any, locale: Locale, extraArgs: List<String>): String {
                 val amount = (value as? KotlinNumber)?.toDouble() ?: castException(KotlinNumber::class.java, value)
                 val inner = NumberFormat.getCurrencyInstance(locale)
+                parseNumberFormatParams(inner, extraArgs)
                 return inner.format(amount)
             }
 
@@ -123,7 +122,7 @@ fun interface VariableFormatter {
         private fun parseNumberFormatParams(formatter: NumberFormat, params: List<String>) {
             params.forEach {
                 val tokens = it.split(":")
-                require(tokens.size == 2) { "Invalid number format parameter: $it" }
+                if (tokens.size != 2) return
                 val (key, value) = tokens
                 when (key) {
                     "minIntDigits" -> formatter.minimumIntegerDigits = value.toIntOrException(it)

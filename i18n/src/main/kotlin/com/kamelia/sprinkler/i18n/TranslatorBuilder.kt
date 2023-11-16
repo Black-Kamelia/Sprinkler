@@ -224,7 +224,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 }
             }
         } catch (e: I18nException) {
-            error(e.message!!)
+            throw IllegalStateException(e)
         }
 
         // once all data is added to the final map, we need to sort it

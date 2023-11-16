@@ -67,7 +67,7 @@ internal class OptionProcessor(
             return value
         }
 
-        val customResolver = VariableResolver { name, delimiter ->
+        val customResolver = VariableResolver { name, _ ->
             val tokens = VARIABLE_REGEX.matchEntire(name) ?: TODO("Throw name $name")
 
             val values = if (tokens.groupValues.last().isEmpty()) {

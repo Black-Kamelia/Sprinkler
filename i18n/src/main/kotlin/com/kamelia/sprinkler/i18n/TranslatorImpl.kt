@@ -1,6 +1,5 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.util.illegalArgument
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.*
 
@@ -35,7 +34,7 @@ internal class TranslatorImpl private constructor(
                 innerTranslate(actualKey, fallbackLocale, options, fallbacks)?.let { return it }
             }
         } catch (e: I18nException) {
-            illegalArgument(e.message)
+            throw IllegalArgumentException(e)
         }
 
         return null
