@@ -8,11 +8,10 @@ import java.util.*
 import org.intellij.lang.annotations.Language
 
 @PackagePrivate
-internal class OptionProcessor(
-    private val data: TranslatorData,
-) {
+internal object OptionProcessor {
 
     fun translate(
+        data: TranslatorData,
         key: String,
         options: Map<TranslationOption, Any>,
         locale: Locale,
