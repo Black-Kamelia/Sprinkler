@@ -70,11 +70,10 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale, an [IllegalStateException] will be thrown when building the translator.
      *
-     * This method will throw an [IllegalArgumentException] if the path is already added or if the file extension is not
-     * supported.
+     * This method will throw an [IllegalArgumentException] if the file extension is not supported.
      *
      * @param path the path to load
-     * @throws IllegalArgumentException if the path is already added or if the file extension is not supported
+     * @throws IllegalArgumentException if the file extension is not supported
      */
     fun addFile(path: Path): TranslatorBuilder = apply {
         val extension = path.extension
@@ -82,7 +81,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             "Unsupported file extension '$extension' for path '$path'. Supported extensions are 'json', 'yaml' and 'yml'."
         }
         val isNew = addedPaths.add(path)
-        require(isNew) { "Path $path already added" }
+        if (!isNew) return@apply // if the path is already added, we do not need to append it to the list
         translatorContent += FileInfo(path)
     }
 
@@ -95,12 +94,11 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale, an [IllegalStateException] will be thrown when building the translator.
      *
-     * This method will throw an [IllegalArgumentException] if the file is already added or if the file extension is not
-     * supported.
+     * This method will throw an [IllegalArgumentException] if the file extension is not supported.
      *
      * @param file the file to load
      * @return this builder
-     * @throws IllegalArgumentException if the file is already added
+     * @throws IllegalArgumentException if the file extension is not supported
      */
     fun addFile(file: File): TranslatorBuilder = addFile(file.toPath())
 
@@ -167,6 +165,12 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         currentLocale = locale
     }
 
+    /**
+     * Sets the options that will be used for the created translator.
+     *
+     * @param options the options to set
+     * @return this builder
+     */
     fun withOptions(options: OptionConfiguration): TranslatorBuilder = apply {
         this.options = options
     }
@@ -230,7 +234,9 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         // once all data is added to the final map, we need to sort it
         val sortedMap = finalMap.mapValues { (_, map) ->
             map.asSequence()
+                // the sort is done on each key part, so we need to split the key
                 .map { (key, value) -> key.split('.') to value }
+                // TODO try to sort without the split
                 .sortedWith { (first, _), (second, _) ->
                     stringListComparator(first, second)
                 }
@@ -266,7 +272,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                         checkValueIsValid(subValue, currentLocale, map)
                         toFlatten.addLast("$currentKey.$subKey" to subValue)
                     }
-
                     is List<*> -> currentValue.forEachIndexed { index, subValue ->
                         checkValueIsValid(subValue, currentLocale, map)
                         toFlatten.addLast("$currentKey.$index" to subValue)
@@ -320,13 +325,15 @@ class TranslatorBuilder @PackagePrivate internal constructor(
 
     private class FileInfo(val path: Path) : TranslationResourceInformation
 
-    private class MapInfo(val locale: Locale, val map: Map<String, TranslationSourceData>) :
-        TranslationResourceInformation
+    private class MapInfo(
+        val locale: Locale,
+        val map: Map<String, TranslationSourceData>
+    ) : TranslationResourceInformation
 
     private fun checkKeyIsValid(key: Any?, locale: Locale, map: Map<*, *>) {
         if (key == null) {
             throw I18nException(
-                "Error in map $map:\nInvalid translation key for locale '$locale', key cannot be null. For more details about key syntax, see Translator interface documentation."
+                "Error in map $map:\nInvalid translation key for locale '$locale', key cannot be null. For more details about key syntax, see TranslationKey typealias documentation."
             )
         }
         if (key !is String) {
@@ -353,7 +360,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
         if (value !is String && value !is Number && value !is Boolean && value !is Map<*, *> && value !is List<*>) {
             throw I18nException(
-                "Error in map $map:\nInvalid translation value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see I18nFileParser interface documentation."
+                "Error in map $map:\nInvalid translation value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see TranslationSourceData typealias documentation."
             )
         }
     }
