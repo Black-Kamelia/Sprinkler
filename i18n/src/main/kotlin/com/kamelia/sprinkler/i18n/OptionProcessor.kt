@@ -81,7 +81,7 @@ internal object OptionProcessor {
 
             if (values.size > 2) { // there is a format
                 val formatName = values[2]
-                val format = config.formats[formatName] ?: TODO("Throw formatName $formatName")
+                val format = config.formats[formatName] ?: error("Unknown format '$formatName'")
 
                 val params = if (values.size > 3) { // there are format parameters
                     values[3].split(FORMAT_PARAM_SPLIT_REGEX)
@@ -98,11 +98,11 @@ internal object OptionProcessor {
         return value.interpolate(customResolver, config.interpolationDelimiter)
     }
 
+    @Language("RegExp")
+    private val FORMAT_REGEX = """,\s*(\w+)(?:\(([^,()]+(?:,\s*[^,()]+)*)\))?"""
+
+    private val VARIABLE_REGEX = """(\w+)(?:$FORMAT_REGEX)?""".toRegex()
+
+    private val FORMAT_PARAM_SPLIT_REGEX = """,\s*""".toRegex()
+
 }
-
-@Language("RegExp")
-private val FORMAT_REGEX = """,\s*(\w+)(?:\(([^,()]+(?:,\s*[^,()]+)*)\))?"""
-
-private val VARIABLE_REGEX = """(\w+)(?:$FORMAT_REGEX)?""".toRegex()
-
-private val FORMAT_PARAM_SPLIT_REGEX = """,\s*""".toRegex()

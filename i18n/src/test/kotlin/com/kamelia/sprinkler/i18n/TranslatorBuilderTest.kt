@@ -1,7 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.unsafeCast
-import java.nio.file.Path
 import java.util.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -23,26 +22,6 @@ class TranslatorBuilderTest {
         val locale = Locale.FRANCE
         val translator = Translator.builder(locale).build()
         assertEquals(locale, translator.currentLocale)
-    }
-
-    @Test
-    fun `adding several time the same path throws an IAE`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-        val path = Path.of("test", "test.yml")
-        builder.addFile(path)
-        assertThrows<IllegalArgumentException> {
-            builder.addFile(path)
-        }
-    }
-
-    @Test
-    fun `adding several time the same file throws an IAE`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-        val file = Path.of("test", "test.yml").toFile()
-        builder.addFile(file)
-        assertThrows<IllegalArgumentException> {
-            builder.addFile(file)
-        }
     }
 
     @Test
@@ -466,55 +445,6 @@ class TranslatorBuilderTest {
         val translator = builder.build()
         assertEquals("test2", translator.t("test"))
     }
-//
-//    @Test
-//    fun `addPath works recursively on files if the path is a directory`() {
-//        val expected = setOf(
-//            "foo.txt",
-//            "bar.txt",
-//        )
-//        val actual = mutableSetOf<String>()
-//        val builder = Translator.builder(Locale.ENGLISH)
-//            .addPath(absoluteResource(ROOT, "valid")) {
-//                assertTrue(actual.add(it.fileName.toString()))
-//                I18nFileParser.ParsingResult(Locale.FRANCE, emptyMap())
-//            }
-//        builder.build()
-//        assertEquals(expected, actual)
-//    }
-//
-//    @Test
-//    fun `direct path for which parser returns null is ignored`() {
-//        val builder = Translator.builder(Locale.ENGLISH)
-//            .addPath(absoluteResource(ROOT, "fr_FR.json")) { null }
-//        assertEquals(emptyMap<Locale, Map<String, String>>(), builder.build().toMap())
-//    }
-//
-//    @Test
-//    fun `path in a folder for which parser returns null is ignored`() {
-//        val builder = Translator.builder(Locale.ENGLISH)
-//            .addPath(absoluteResource(ROOT, "valid")) {
-//                if (it.fileName.toString() == "foo.txt") {
-//                    null
-//                } else {
-//                    I18nFileParser.ParsingResult(Locale.FRANCE, emptyMap())
-//                }
-//            }
-//        assertEquals(mapOf(Locale.FRANCE to emptyMap<String, String>()), builder.build().toMap())
-//    }
-
-//    @Test
-//    fun `file in a folder for which parser returns null is ignored`() {
-//        val builder = Translator.builder(Locale.ENGLISH)
-//            .addFile(absoluteResource(ROOT, "valid").toFile()) {
-//                if (it.fileName.toString() == "foo.txt") {
-//                    null
-//                } else {
-//                    I18nFileParser.ParsingResult(Locale.FRANCE, emptyMap())
-//                }
-//            }
-//        assertEquals(mapOf(Locale.FRANCE to emptyMap<String, String>()), builder.build().toMap())
-//    }
 
     @Test
     fun `addMap with dotted key correctly nest the value in the translator`() {

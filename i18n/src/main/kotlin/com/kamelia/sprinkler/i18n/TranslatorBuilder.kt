@@ -341,6 +341,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 "Error in map $map:\nInvalid translation key '$key' of type ${key::class.simpleName} for locale '$locale', expected String. $KEY_DOCUMENTATION"
             )
         }
+
         if (!KEY_REGEX.matches(key)) {
             throw I18nException(
                 "Error in map $map:\nInvalid translation key '$key' for locale '$locale', format is not valid. $KEY_DOCUMENTATION"
