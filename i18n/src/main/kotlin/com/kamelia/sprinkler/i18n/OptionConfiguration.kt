@@ -2,7 +2,6 @@ package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.bridge.KotlinDslAdapter
 import com.kamelia.sprinkler.util.VariableDelimiter
-import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.*
 
 /**
@@ -12,7 +11,7 @@ import java.util.*
  * @see Translator
  * @see TranslatorBuilder
  */
-class OptionConfiguration @PackagePrivate internal constructor(
+class OptionConfiguration internal constructor(
     internal val interpolationDelimiter: VariableDelimiter,
     internal val pluralMapper: (Locale, Int) -> Options.Plurals,
     internal val formats: Map<String, VariableFormatter>,
