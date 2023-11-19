@@ -333,7 +333,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     private fun checkKeyIsValid(key: Any?, locale: Locale, map: Map<*, *>) {
         if (key == null) {
             throw I18nException(
-                "Error in map $map:\nInvalid translation key for locale '$locale', key cannot be null. For more details about key syntax, see TranslationKey typealias documentation."
+                "Error in map $map:\nInvalid translation key for locale '$locale', key cannot be null. $KEY_DOCUMENTATION"
             )
         }
         if (key !is String) {
