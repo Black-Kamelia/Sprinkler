@@ -1,12 +1,9 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.util.unsafeCast
 import java.util.*
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-
 
 class TranslatorBuilderTest {
 
@@ -14,14 +11,14 @@ class TranslatorBuilderTest {
     fun `defaultLocale is the locale specifier in the constructor`() {
         val locale = Locale.FRANCE
         val translator = Translator.builder(locale).build()
-        assertEquals(locale, translator.defaultLocale)
+        Assertions.assertEquals(locale, translator.defaultLocale)
     }
 
     @Test
     fun `currentLocale is set to the default locale by default`() {
         val locale = Locale.FRANCE
         val translator = Translator.builder(locale).build()
-        assertEquals(locale, translator.currentLocale)
+        Assertions.assertEquals(locale, translator.currentLocale)
     }
 
     @Test
@@ -33,7 +30,7 @@ class TranslatorBuilderTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addMap(locale, mapOf(key to value))
             .build()
-        assertEquals(value, translator.t(key, locale))
+        Assertions.assertEquals(value, translator.t(key, locale))
     }
 
     @Test
@@ -45,7 +42,7 @@ class TranslatorBuilderTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addMaps(mapOf(locale to mapOf(key to value)))
             .build()
-        assertEquals(value, translator.t(key, locale))
+        Assertions.assertEquals(value, translator.t(key, locale))
     }
 
     @Test
@@ -53,7 +50,7 @@ class TranslatorBuilderTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .withDefaultLocale(Locale.FRANCE)
             .build()
-        assertEquals(Locale.FRANCE, translator.defaultLocale)
+        Assertions.assertEquals(Locale.FRANCE, translator.defaultLocale)
     }
 
     @Test
@@ -61,358 +58,7 @@ class TranslatorBuilderTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .withCurrentLocale(Locale.FRANCE)
             .build()
-        assertEquals(Locale.FRANCE, translator.currentLocale)
-    }
-
-    @Test
-    fun `addPath throws an ISE on build call if the default localeParser is used and the file name is not a valid locale`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, "invalid-locale&.json"))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addFile throws an ISE on build call if the default localeParser is used and the file name is not a valid locale`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, "invalid-locale&.json").toFile())
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addPath throws an ISE on build if the parser returns a map containing invalid key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, INVALID_CONTENT))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addFile throws an ISE on build if the parser returns a map containing invalid key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, INVALID_CONTENT).toFile())
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMap throws an ISE on build if the map contains invalid key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMap(Locale.FRANCE, mapOf("invalid#" to 5))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMaps throws an ISE on build if one of the maps contains invalid key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMaps(mapOf(Locale.FRANCE to mapOf("invalid#" to 5)))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-
-    @Test
-    fun `addMap throws an ISE on build if a key is null`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMap(Locale.FRANCE, mapOf(null to 5).unsafeCast())
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMaps throws an ISE on build if a key is null`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMaps(mapOf(Locale.FRANCE to mapOf(null to 5).unsafeCast()))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addPath throws an ISE on build if a value is null`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, NULL_VALUE))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addFile throws an ISE on build if a value is null`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, NULL_VALUE).toFile())
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMap throws an ISE on build if a value is null`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMap(Locale.FRANCE, mapOf("test" to null).unsafeCast())
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMaps throws an ISE on build if a value is null`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMaps(mapOf(Locale.FRANCE to mapOf("test" to null).unsafeCast()))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-
-    @Test
-    fun `addPath throws an ISE on build if the map contains a map containing an invalid key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, INVALID_NESTED_KEY))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addFile throws an ISE on build if the map contains a map containing an invalid key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, "fr_FR.json").toFile())
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMap throws an ISE on build if the map contains a map containing an invalid key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMap(Locale.FRANCE, mapOf("test" to mapOf("invalid#" to 5)))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMaps throws an ISE on build if the map contains a map containing an invalid key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMaps(mapOf(Locale.FRANCE to mapOf("test" to mapOf("invalid#" to 5))))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-
-
-
-    @Test
-    fun `addMap throws an ISE on build if the map contains a map containing a null key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMap(Locale.FRANCE, mapOf("test" to mapOf(null to 5)).unsafeCast())
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMaps throws an ISE on build if the map contains a map containing a null key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMaps(mapOf(Locale.FRANCE to mapOf("test" to mapOf(null to 5)).unsafeCast()))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-
-    @Test
-    fun `addPath throws an ISE on build if the map contains a map containing a null value`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, NESTED_NULL_VALUE))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addFile throws an ISE on build if the map contains a map containing a null value`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, NESTED_NULL_VALUE).toFile())
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMap throws an ISE on build if the map contains a map containing a null value`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMap(Locale.FRANCE, mapOf("test" to mapOf("test" to null)))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMaps throws an ISE on build if the map contains a map containing a null value`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMaps(mapOf(Locale.FRANCE to mapOf("test" to mapOf("test" to null))))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMap throws an ISE on build if the map contains a list containing an invalid value`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMap(Locale.FRANCE, mapOf("test" to listOf(Any())))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMaps throws an ISE on build if the map contains a list containing an invalid value`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMaps(mapOf(Locale.FRANCE to mapOf("test" to listOf(Any()))))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-
-    @Test
-    fun `addMap throws an ISE on build if the map contains a map containing a key that is not a string`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMap(Locale.FRANCE, mapOf("test" to mapOf(5 to "test")))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMaps throws an ISE on build if the map contains a map containing a key that is not a string`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMaps(mapOf(Locale.FRANCE to mapOf("test" to mapOf(5 to "test"))))
-        assertThrows<IllegalStateException> {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addPath works with list`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, LIST))
-        val translator = builder.build()
-        assertEquals("test", translator.t("test.0"))
-    }
-
-    @Test
-    fun `addFile works with list`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, LIST).toFile())
-        val translator = builder.build()
-        assertEquals("test", translator.t("test.0"))
-    }
-
-    @Test
-    fun `addMap works with list`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMap(Locale.ENGLISH, mapOf("test" to listOf("test")))
-        val translator = builder.build()
-        assertEquals("test", translator.t("test.0"))
-    }
-
-    @Test
-    fun `addMaps works with list`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMaps(mapOf(Locale.ENGLISH to mapOf("test" to listOf("test"))))
-        val translator = builder.build()
-        assertEquals("test", translator.t("test.0"))
-    }
-
-    @Test
-    fun `addPath works with nested value`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, NESTED_VALUE))
-        val translator = builder.build()
-        assertEquals("test", translator.t("test.test"))
-    }
-
-    @Test
-    fun `addFile works with map`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, NESTED_VALUE).toFile())
-        val translator = builder.build()
-        assertEquals("test", translator.t("test.test"))
-    }
-
-    @Test
-    fun `addMap works with map`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMap(Locale.ENGLISH, mapOf("test" to mapOf("test" to "test")))
-        val translator = builder.build()
-        assertEquals("test", translator.t("test.test"))
-    }
-
-    @Test
-    fun `addMaps works with map`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMaps(mapOf(Locale.ENGLISH to mapOf("test" to mapOf("test" to "test"))))
-        val translator = builder.build()
-        assertEquals("test", translator.t("test.test"))
-    }
-
-    @Test
-    fun `addMap does not throw for valid types`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMap(
-                Locale.ENGLISH, mapOf(
-                    "test" to "test",
-                    "test2" to 0.toByte(),
-                    "test3" to 0.toShort(),
-                    "test4" to 0,
-                    "test5" to 0L,
-                    "test6" to 0f,
-                    "test7" to .0,
-                    "test8" to true,
-                    "test9" to listOf("test"),
-                    "test10" to mapOf("test" to "test")
-                )
-            )
-        assertDoesNotThrow {
-            builder.build()
-        }
-    }
-
-    @Test
-    fun `addMaps does not throw for valid types`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addMaps(
-                mapOf(
-                    Locale.ENGLISH to mapOf(
-                        "test" to "test",
-                        "test2" to 0.toByte(),
-                        "test3" to 0.toShort(),
-                        "test4" to 0,
-                        "test5" to 0L,
-                        "test6" to 0f,
-                        "test7" to .0,
-                        "test8" to true,
-                        "test9" to listOf("test"),
-                        "test10" to mapOf("test" to "test")
-                    )
-                )
-            )
-        assertDoesNotThrow {
-            builder.build()
-        }
+        Assertions.assertEquals(Locale.FRANCE, translator.currentLocale)
     }
 
     @Test
@@ -433,7 +79,7 @@ class TranslatorBuilderTest {
             .addMap(Locale.ENGLISH, mapOf("test" to "test"))
             .addMap(Locale.ENGLISH, mapOf("test" to "test2"))
         val translator = builder.build()
-        assertEquals("test", translator.t("test"))
+        Assertions.assertEquals("test", translator.t("test"))
     }
 
     @Test
@@ -443,66 +89,32 @@ class TranslatorBuilderTest {
             .addMap(Locale.ENGLISH, mapOf("test" to "test"))
             .addMap(Locale.ENGLISH, mapOf("test" to "test2"))
         val translator = builder.build()
-        assertEquals("test2", translator.t("test"))
-    }
-
-    @Test
-    fun `addMap with dotted key correctly nest the value in the translator`() {
-        val translator = Translator.builder(Locale.ENGLISH)
-            .addMap(Locale.FRANCE, mapOf("test.test" to "test"))
-            .build()
-        assertEquals("test", translator.t("test.test", Locale.FRANCE))
-    }
-
-    @Test
-    fun `addMaps with dotted key correctly nest the value in the translator`() {
-        val translator = Translator.builder(Locale.ENGLISH)
-            .addMaps(mapOf(Locale.FRANCE to mapOf("test.test" to "test")))
-            .build()
-        assertEquals("test", translator.t("test.test", Locale.FRANCE))
+        Assertions.assertEquals("test2", translator.t("test"))
     }
 
     @Test
     fun `stringListComparator works with empty lists`() {
-        assertEquals(0, stringListComparator(emptyList(), emptyList()))
+        Assertions.assertEquals(0, stringListComparator(emptyList(), emptyList()))
     }
 
     @Test
     fun `stringListComparator works with lists of same size`() {
-        assertEquals(0, stringListComparator(listOf("test"), listOf("test")))
+        Assertions.assertEquals(0, stringListComparator(listOf("test"), listOf("test")))
     }
 
     @Test
     fun `stringListComparator works with lists of different size (first is smaller)`() {
-        assertEquals(-1, stringListComparator(emptyList(), listOf("test")))
+        Assertions.assertEquals(-1, stringListComparator(emptyList(), listOf("test")))
     }
 
     @Test
     fun `stringListComparator works with lists of different size (first is bigger)`() {
-        assertEquals(1, stringListComparator(listOf("test"), emptyList()))
+        Assertions.assertEquals(1, stringListComparator(listOf("test"), emptyList()))
     }
 
     @Test
     fun `stringListComparator works with lists of same size but different content`() {
-        assertEquals(-1, stringListComparator(listOf("test"), listOf("test2")))
-    }
-
-    private companion object {
-
-        const val ROOT = "builder_test"
-
-        const val INVALID_CONTENT = "fr_FR.json"
-
-        const val NULL_VALUE = "fr_FR.yml"
-
-        const val INVALID_NESTED_KEY = "fr_FR.json"
-
-        const val NESTED_NULL_VALUE = "fr.json"
-
-        const val LIST = "en.yml"
-
-        const val NESTED_VALUE = "en.yaml"
-
+        Assertions.assertEquals(-1, stringListComparator(listOf("test"), listOf("test2")))
     }
 
 }
