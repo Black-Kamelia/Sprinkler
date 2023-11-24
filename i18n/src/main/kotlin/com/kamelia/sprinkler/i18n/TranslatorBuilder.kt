@@ -77,7 +77,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      */
     fun addFile(path: Path): TranslatorBuilder = apply {
         val extension = path.extension
-        require("json" == extension || "yaml" == extension || "yml" == extension) {
+        require("json" == extension || "yaml" == extension || "yml" == extension || path.isDirectory()) {
             "Unsupported file extension '$extension' for path '$path'. Supported extensions are 'json', 'yaml' and 'yml'."
         }
         val isNew = addedPaths.add(path)
@@ -203,32 +203,34 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * Builds the translator using the data added to the builder.
      *
      * @return the created translator
-     * @throws IllegalArgumentException if a duplicate key is found and the duplicate key resolution policy is set to
+     * @throws IllegalStateException if a duplicate key is found and the duplicate key resolution policy is set to
      * [DuplicatedKeyResolution.FAIL], or if a source has been added without following the rules defined in the method
      * documentation
      */
     fun build(): Translator {
         val finalMap = HashMap<Locale, HashMap<String, String>>()
-        try {
-            translatorContent.forEach {
-                when (it) { // switch on different types of TranslationResourceInformation
-                    // if it is a FileInfo, we need to load the file or if it is a directory, load all files in it
-                    // and add them to the final map
-                    is FileInfo -> {
-                        try {
-                            loadPath(it).forEach { (locale, map) ->
-                                addToMap(finalMap, locale, map)
-                            }
-                        } catch (e: I18nException) { // catch and rethrow to add the path to the error message
-                            throw I18nException("Error while loading file ${it.path}: ${e.message}")
+        translatorContent.forEach {
+            when (it) { // switch on different types of TranslationResourceInformation
+                // if it is a FileInfo, we need to load the file or if it is a directory, load all files in it
+                // and add them to the final map
+                is FileInfo -> {
+                    try {
+                        loadPath(it).forEach { (locale, map) ->
+                            addToMap(finalMap, locale, map)
                         }
+                    } catch (e: I18nException) { // catch and rethrow to add the path to the error message
+                        throw IllegalStateException("Error while loading file ${it.path}", e)
                     }
-                    // if it is a MapInfo, we can directly add it to the final map
-                    is MapInfo -> addToMap(finalMap, it.locale, it.map)
+                }
+                // if it is a MapInfo, we can directly add it to the final map
+                is MapInfo -> {
+                    try {
+                        addToMap(finalMap, it.locale, it.map)
+                    } catch (e: I18nException) {
+                        throw IllegalStateException(e)
+                    }
                 }
             }
-        } catch (e: I18nException) {
-            throw IllegalStateException(e)
         }
 
         // once all data is added to the final map, we need to sort it
@@ -305,12 +307,10 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             info.path.isDirectory() -> { // if the path is a directory, load all files in it and return the list
                 Files.list(info.path)
                     .map {
-                        val map = parseFile(it)
                         val locale = parseLocale(it)
+                        val map = parseFile(it)
                         locale to map
                     }
-                    .filter { it != null }
-                    // as we filtered null values, we can safely cast
                     .unsafeCast<Stream<Pair<Locale, Map<String, TranslationSourceData>>>>()
                     .toList()
             }
@@ -320,15 +320,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 listOf(locale to map)
             }
         }
-
-    private sealed interface TranslationResourceInformation
-
-    private class FileInfo(val path: Path) : TranslationResourceInformation
-
-    private class MapInfo(
-        val locale: Locale,
-        val map: Map<String, TranslationSourceData>
-    ) : TranslationResourceInformation
 
     private fun checkKeyIsValid(key: Any?, locale: Locale, map: Map<*, *>) {
         if (key == null) {
@@ -397,5 +388,14 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             )
         }
     }
+
+    private sealed interface TranslationResourceInformation
+
+    private class FileInfo(val path: Path) : TranslationResourceInformation
+
+    private class MapInfo(
+        val locale: Locale,
+        val map: Map<String, TranslationSourceData>,
+    ) : TranslationResourceInformation
 
 }

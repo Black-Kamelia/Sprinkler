@@ -116,5 +116,4 @@ class TranslatorBuilderTest {
     fun `stringListComparator works with lists of same size but different content`() {
         Assertions.assertEquals(-1, stringListComparator(listOf("test"), listOf("test2")))
     }
-
 }

@@ -1,5 +1,7 @@
 package com.kamelia.sprinkler.i18n
 
+import java.nio.file.Path as JavaPath
+import com.kamelia.sprinkler.util.unsafeCast
 import java.io.File
 import java.util.*
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -76,7 +78,7 @@ class TranslatorBuilderFileTest {
     }
 
     @Test
-    fun `addPath throws an ISE on build call if the default localeParser is used and the file name is not a valid locale`() {
+    fun `addPath throws an ISE on build call if the file name is not a valid locale`() {
         val builder = Translator.builder(Locale.ENGLISH)
             .addFile(absoluteResource(ROOT, "invalid-locale&.json"))
         assertThrows<IllegalStateException> {
@@ -85,7 +87,7 @@ class TranslatorBuilderFileTest {
     }
 
     @Test
-    fun `addFile throws an ISE on build call if the default localeParser is used and the file name is not a valid locale`() {
+    fun `addFile throws an ISE on build call if the file name is not a valid locale`() {
         val builder = Translator.builder(Locale.ENGLISH)
             .addFile(absoluteResource(ROOT, "invalid-locale&.json").toFile())
         assertThrows<IllegalStateException> {
@@ -197,9 +199,92 @@ class TranslatorBuilderFileTest {
         assertEquals("test", translator.t("test.test"))
     }
 
+    @Test
+    fun `addFile works with folder`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(absoluteResource(ROOT, GROUP_FOLDER).toFile())
+        val translator = builder.build()
+        assertEquals("this is a test", translator.t("test.test"))
+    }
+
+    @Test
+    fun `addPath works with folder`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(absoluteResource(ROOT, GROUP_FOLDER))
+        val translator = builder.build()
+        assertEquals("this is a test", translator.t("test.test"))
+    }
+
+    @Test
+    fun `addFile throws an ISE if the file does not exist`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(File("does-not-exist.json"))
+        assertThrows<IllegalStateException> {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `addPath throws an ISE if the file does not exist`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(Path("does-not-exist.json"))
+        assertThrows<IllegalStateException> {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `throws an AssertionError if a file with an invalid extension is added`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+        val fileInfo = Class.forName("com.kamelia.sprinkler.i18n.TranslatorBuilder\$FileInfo")
+            .getDeclaredConstructor(JavaPath::class.java)
+            .apply { isAccessible = true }
+            .newInstance(absoluteResource(ROOT, "invalid-extension.txt"))
+        val list = TranslatorBuilder::class.java.getDeclaredField("translatorContent")
+            .apply { isAccessible = true }
+            .get(builder)
+            .unsafeCast<MutableList<Any>>()
+        list.add(fileInfo)
+        assertThrows<AssertionError> {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `throws an exception if the content of the file of a json file is not a valid json`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(absoluteResource(ROOT, INVALID_JSON))
+        assertThrows<IllegalStateException> {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `throws an exception if the content of the file of a yaml file is not a valid yaml`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(absoluteResource(ROOT, INVALID_YAML))
+        assertThrows<IllegalStateException> {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `addFile with the same file more than once does not add the file more than once`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(absoluteResource(ROOT, LIST).toFile())
+            .addFile(absoluteResource(ROOT, LIST).toFile())
+            // to ensure that it should fail in case of the file is added more than once
+            .withDuplicatedKeyResolutionPolicy(TranslatorBuilder.DuplicatedKeyResolution.FAIL)
+        assertDoesNotThrow {
+            builder.build()
+        }
+    }
+
     private companion object {
 
         const val ROOT = "builder_test"
+
+        const val GROUP_FOLDER = "group"
 
         const val INVALID_CONTENT = "fr_FR.json"
 
@@ -208,6 +293,10 @@ class TranslatorBuilderFileTest {
         const val INVALID_NESTED_KEY = "fr_FR.json"
 
         const val NESTED_NULL_VALUE = "fr.json"
+
+        const val INVALID_JSON = "invalid.json"
+
+        const val INVALID_YAML = "invalid.yaml"
 
         const val LIST = "en.yml"
 
