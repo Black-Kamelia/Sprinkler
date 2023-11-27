@@ -26,9 +26,10 @@ import kotlin.io.path.readText
  * Builder class used to create a [Translator]. This class provides several methods to add data to the translator from
  * different sources.
  *
- * There is several attention points to take into account when using this class:
- * - Different added sources will only be queried upon the creation of the translator, when calling [build] ;
- * - The order in which data is added is important, as it will be used during key duplication resolution, depending on
+ * There are several points of attention to take into account when using this class:
+ * - The sources which are added will only be queried upon the creation of the translator, when calling [build]. That is
+ * to say that the construction is lazy;
+ * - The order in which data is added is significant, as it will be used during key duplication resolution, depending on
  * the [DuplicatedKeyResolution] used.
  *
  * **NOTE**: [translators][Translator] created with this builder are immutable and therefore thread-safe.
@@ -62,13 +63,14 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     private var config: TranslatorConfiguration = TranslatorConfiguration.create { }
 
     /**
-     * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
-     * will be loaded.
+     * Adds a path to the builder.
+     * If the path is a directory, all files in it will be loaded (one level of depth, inner directories are ignored).
+     * If the path is a file, it will be loaded.
      *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml` and `yml`.
+     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
      *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
-     * name is not a valid locale, an [IllegalStateException] will be thrown when building the translator.
+     * name is not a valid locale identifier, an [IllegalStateException] will be thrown when building the translator.
      *
      * This method will throw an [IllegalArgumentException] if the file extension is not supported.
      *
@@ -86,13 +88,14 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     /**
-     * Adds a file to the builder. If the file is a directory, all files in it will be loaded. If the file is a file, it
-     * will be loaded.
+     * Adds a path to the builder.
+     * If the path is a directory, all files in it will be loaded (one level of depth, inner directories are ignored).
+     * If the path is a file, it will be loaded.
      *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml` and `yml`.
+     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
      *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
-     * name is not a valid locale, an [IllegalStateException] will be thrown when building the translator.
+     * name is not a valid locale identifier, an [IllegalStateException] will be thrown when building the translator.
      *
      * This method will throw an [IllegalArgumentException] if the file extension is not supported.
      *
@@ -120,6 +123,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     /**
      * Adds a map of locales to the builder. The content of the maps will be added to the final translator. The keys of
      * the [maps] will be used as the locales of the maps. The values of the [maps] will be used as the content of the
+     * translation maps for the corresponding locales.
      *
      * **NOTE**: The [maps] should follow rules defined in the [TranslationSourceMap] documentation. Any map that does
      * not follow these rules will result in an [IllegalArgumentException] being thrown when building the translator.
@@ -182,7 +186,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     enum class DuplicatedKeyResolution {
 
         /**
-         * If a duplicated key is found, the build will fail.
+         * If a duplicated key is found, the build will fail. This policy will cause an [IllegalStateException] to be
+         * thrown when [building][build] the [Translator].
          */
         FAIL,
 
