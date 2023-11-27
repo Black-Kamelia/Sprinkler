@@ -32,7 +32,7 @@ class TranslatorConfiguration internal constructor(
         THROW_EXCEPTION,
 
         /**
-         * Return the key itself when a key is not found.
+         * Return the given key itself when a key is not found.
          */
         RETURN_KEY,
 
@@ -43,7 +43,7 @@ class TranslatorConfiguration internal constructor(
     companion object {
 
         /**
-         * Create an [TranslatorConfiguration] using the given [block] applied to a [Builder].
+         * Creates a [TranslatorConfiguration] using the given [block] applied to a [Builder].
          *
          * @param block the block to apply to the [Builder]
          * @return the created [TranslatorConfiguration]
@@ -61,7 +61,8 @@ class TranslatorConfiguration internal constructor(
         var interpolationDelimiter: VariableDelimiter = VariableDelimiter.DEFAULT
 
         /**
-         * The mapper function to use for pluralization.
+         * The mapper function to use for the pluralization strategy.
+         * Said strategy can use a given [Locale] and count to return a [Options.Plurals] value.
          */
         var pluralMapper: (locale: Locale, count: Int) -> Options.Plurals = Options.Plurals.Companion::defaultCountMapper
 
