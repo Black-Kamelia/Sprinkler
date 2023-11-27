@@ -27,7 +27,7 @@ internal fun stringListComparator(first: List<String>, second: List<String>): In
 
 internal fun keyNotFound(
     key: TranslationKey,
-    options: Map<TranslationExtraArgs, Any>,
+    options: Map<String, Any>,
     locale: Locale,
     fallbackLocale: Locale?,
     fallbacks: Array<out String>,

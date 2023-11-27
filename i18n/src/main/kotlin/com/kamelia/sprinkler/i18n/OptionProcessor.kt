@@ -13,14 +13,14 @@ internal object OptionProcessor {
     fun translate(
         data: TranslatorData,
         key: String,
-        options: Map<TranslationExtraArgs, Any>,
+        options: Map<String, Any>,
         locale: Locale,
     ): String? {
         // first, get the translations for the given locale, or return null if they don't exist
         val translations = data.translations[locale] ?: return null
 
         val config = data.translatorConfiguration
-        val optionMap = options.safeType<Map<TranslationExtraArgs, Any>>(Options.OPTIONS)
+        val optionMap = options.safeType<Map<String, Any>>(Options.OPTIONS)
             ?: emptyMap()
 
         // build the actual key with the options
@@ -34,7 +34,7 @@ internal object OptionProcessor {
 
     private fun buildKey(
         key: String,
-        optionMap: Map<TranslationExtraArgs, Any>,
+        optionMap: Map<String, Any>,
         locale: Locale,
         config: TranslatorConfiguration,
     ): String {
@@ -53,7 +53,7 @@ internal object OptionProcessor {
         }
     }
 
-    private inline fun <reified T> Map<TranslationExtraArgs, Any>.safeType(key: String): T? {
+    private inline fun <reified T> Map<String, Any>.safeType(key: String): T? {
         val value = get(key) ?: return null
         require(value is T) {
             "Expected ${T::class.simpleName}, got '$value' (${value::class.simpleName})."
@@ -65,7 +65,7 @@ internal object OptionProcessor {
         value: String,
         locale: Locale,
         options: Map<String, Any>,
-        optionMap: Map<TranslationExtraArgs, Any>,
+        optionMap: Map<String, Any>,
         config: TranslatorConfiguration,
     ): String {
         if (options.isEmpty() && config.interpolationDelimiter.variableStart !in value) {

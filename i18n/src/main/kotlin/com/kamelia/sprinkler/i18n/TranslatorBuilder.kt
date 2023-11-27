@@ -32,9 +32,20 @@ import kotlin.io.path.readText
  * - The order in which data is added is significant, as it will be used during key duplication resolution, depending on
  * the [DuplicatedKeyResolution] used.
  *
- * **NOTE**: [translators][Translator] created with this builder are immutable and therefore thread-safe.
+ * The translators created with this builder will have the following properties:
+ * - the `extraArgs` argument passed to the [t][Translator.t] methods will be used to
+ * [interpolate][com.kamelia.sprinkler.util.interpolate] the translation, all keys in the map will be replaced by their
+ * corresponding values in the translation, except for the [Options.OPTIONS] key, which will contain a map of options as
+ * defined in the [Options] class;
+ * - the [Translator.t] method will behave according to the [TranslatorConfiguration.missingKeyPolicy] chosen when
+ * creating the translator, in case the key is not found;
+ * - the returned map of [Translator.toMap] will be sorted according to the lexical order of the
+ * [key parts][TranslationKeyPart] of the keys (the map is created every time the method is called);
+ * - [toString] will use [toMap] under the hood to create the string representation of the translator;
+ * - the created translators are immutable and therefore `thread-safe`.
  *
  * @see Translator
+ * @see java.util.concurrent.ConcurrentHashMap
  */
 class TranslatorBuilder @PackagePrivate internal constructor(
     private var defaultLocale: Locale,

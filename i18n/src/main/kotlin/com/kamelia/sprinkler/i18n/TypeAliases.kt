@@ -1,11 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
 /**
- * Represents a translation option. It can be used to provide additional information to a translation.
- */
-typealias TranslationExtraArgs = String
-
-/**
  * Represents a part of a translation key. It composes a [TranslationKey].
  *
  * It should respect the following rules:
@@ -13,6 +8,12 @@ typealias TranslationExtraArgs = String
  * - It must start and end with an alphanumeric character
  * - It can contain alphanumeric characters, dashes and underscores
  * - It cannot contain two consecutive dashes or underscores (or a dash followed by an underscore or vice-versa).
+ *
+ * Here are some examples of valid [TranslationKeyPart]s:
+ * - `my-key`
+ * - `my_key`
+ * - `myKey`
+ * - `1`
  *
  * Whenever a function accepts a [TranslationKeyPart], it is the responsibility of the caller to ensure that the
  * given value respects the rules above. Any value that does not respect these rules will result in an exception being
@@ -28,6 +29,12 @@ typealias TranslationKeyPart = String
 /**
  * Represents a translation key. It is used to identify a translation in a [Translator]. It is composed of one or more
  * [TranslationKeyPart]s separated by a dot.
+ *
+ * Here are some examples of valid [TranslationKey]s:
+ * - `my-root.my-node.my-key`
+ * - `my_root.my_node.my_key`
+ * - `myRoot.myNode.myKey`
+ * - `my-root.my-node.my-table.1`
  *
  * Whenever a function accepts a [TranslationKey], it is the responsibility of the caller to ensure that the given
  * value respects the rules above. Any value that does not respect these rules will result in an exception being thrown

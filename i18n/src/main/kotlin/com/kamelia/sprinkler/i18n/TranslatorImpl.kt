@@ -42,7 +42,7 @@ internal class TranslatorImpl private constructor(
 
     override fun t(
         key: TranslationKey,
-        extraArgs: Map<TranslationExtraArgs, Any>,
+        extraArgs: Map<String, Any>,
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,

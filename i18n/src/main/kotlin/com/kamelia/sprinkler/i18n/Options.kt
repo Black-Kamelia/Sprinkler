@@ -203,4 +203,4 @@ object Options {
  * @return the created pair
  */
 @Suppress("NOTHING_TO_INLINE")
-inline fun options(vararg pairs: Pair<String, Any>): Pair<String, Map<TranslationExtraArgs, Any>> = OPTIONS to mapOf(*pairs)
+inline fun options(vararg pairs: Pair<String, Any>): Pair<String, Map<String, Any>> = OPTIONS to mapOf(*pairs)

@@ -65,7 +65,7 @@ interface Translator {
      */
     fun tn(
         key: TranslationKey,
-        extraArgs: Map<TranslationExtraArgs, Any>,
+        extraArgs: Map<String, Any>,
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,
@@ -88,7 +88,7 @@ interface Translator {
      */
     fun tn(
         key: TranslationKey,
-        extraArgs: Map<TranslationExtraArgs, Any>,
+        extraArgs: Map<String, Any>,
         locale: Locale,
         vararg fallbacks: String,
     ): String? =
@@ -127,7 +127,7 @@ interface Translator {
      * @return the translation using the provided information, or null if the translation is not found
      * @throws IllegalArgumentException if the key is not [valid][TranslationKey] or if the [extraArgs] are not valid
      */
-    fun tn(key: TranslationKey, extraArgs: Map<TranslationExtraArgs, Any>, vararg fallbacks: String): String? =
+    fun tn(key: TranslationKey, extraArgs: Map<String, Any>, vararg fallbacks: String): String? =
         tn(key, extraArgs, currentLocale, defaultLocale, *fallbacks)
 
     /**
@@ -190,7 +190,7 @@ interface Translator {
      */
     fun t(
         key: TranslationKey,
-        extraArgs: Map<TranslationExtraArgs, Any>,
+        extraArgs: Map<String, Any>,
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,
@@ -215,7 +215,7 @@ interface Translator {
      */
     fun t(
         key: TranslationKey,
-        extraArgs: Map<TranslationExtraArgs, Any>,
+        extraArgs: Map<String, Any>,
         locale: Locale,
         vararg fallbacks: String,
     ): String = t(key, extraArgs, locale, defaultLocale, *fallbacks)
@@ -257,7 +257,7 @@ interface Translator {
      * @throws IllegalArgumentException if the key is not [valid][TranslationKey], if the [extraArgs] are not valid, or
      * if the implementation throws an exception when a translation is not found
      */
-    fun t(key: TranslationKey, extraArgs: Map<TranslationExtraArgs, Any>, vararg fallbacks: String): String =
+    fun t(key: TranslationKey, extraArgs: Map<String, Any>, vararg fallbacks: String): String =
         t(key, extraArgs, currentLocale, defaultLocale, *fallbacks)
 
     /**
