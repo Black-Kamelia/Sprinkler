@@ -42,9 +42,7 @@ internal object OptionProcessor {
 
         val context = optionMap.safeType<String>(Options.CONTEXT)
         val count = optionMap.safeType<Int>(Options.COUNT)?.let { count ->
-            optionMap.safeType<(Locale, Int) -> Options.Plurals>(Options.COUNT_MAPPER)?.let {
-                it(locale, count)
-            } ?: config.pluralMapper(locale, count).representation
+            config.pluralMapper(locale, count).representation
         }
 
         return when {
@@ -94,7 +92,11 @@ internal object OptionProcessor {
                         ?: error("Unknown format '$formatName' (${values.joinToString { "'$it'" }}})")
 
                 val params = if (values.size > 3) { // there are format parameters
-                    values[3].split(FORMAT_PARAM_SPLIT_REGEX)
+                    if (values[3].isEmpty()) {
+                        emptyList()
+                    } else {
+                        values[3].split(FORMAT_PARAM_SPLIT_REGEX)
+                    }
                 } else {
                     emptyList()
                 }
