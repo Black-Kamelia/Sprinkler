@@ -231,7 +231,6 @@ class TranslatorTest {
         val translator = Translator.builder(Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("a-b" to "4", "a.b" to "2", "a.b.c" to "3", "a" to "1"))
             .build()
-        println(translator.toMap())
         assertEquals(
             mapOf(
                 Locale.ENGLISH to mapOf("b" to "2", "b.c" to "3")

@@ -47,13 +47,3 @@ class TranslatorConfigurationTest {
     }
 
 }
-
-fun main() {
-    val translator = Translator.builder(Locale.ENGLISH)
-        .addMap(Locale.ENGLISH, mapOf("test_male_other" to "This is {value} {count}."))
-        .build()
-    println(translator)
-    val value = translator.t("test", mapOf("value" to "John", "count" to "aaa", options(Options.COUNT to "aaaaa", Options.CONTEXT to "male")))
-    println(value)
-}
-
