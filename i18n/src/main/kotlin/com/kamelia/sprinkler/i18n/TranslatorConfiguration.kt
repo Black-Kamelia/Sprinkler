@@ -57,25 +57,32 @@ class TranslatorConfiguration internal constructor(
 
         /**
          * The delimiter to use for interpolation in translations.
+         *
+         * default: [VariableDelimiter.DEFAULT]
          */
         var interpolationDelimiter: VariableDelimiter = VariableDelimiter.DEFAULT
 
         /**
          * The mapper function to use for the pluralization strategy.
          * Said strategy can use a given [Locale] and count to return a [Options.Plurals] value.
+         *
+         * default: [Options.Plurals.Companion.defaultCountMapper]
          */
         var pluralMapper: (locale: Locale, count: Int) -> Options.Plurals = Options.Plurals.Companion::defaultCountMapper
 
         /**
          * Map used to find formatters using their name during variable interpolation.
          *
+         * default: [VariableFormatter.builtins]
+         *
          * @see VariableFormatter
          */
-        var formats: Map<String, VariableFormatter> = BuiltinVariableFormatters.builtins()
-            .associateBy(BuiltinVariableFormatters::name)
+        var formats: Map<String, VariableFormatter> = VariableFormatter.builtins()
 
         /**
          * The policy to use when a key is not found.
+         *
+         * default: [MissingKeyPolicy.THROW_EXCEPTION]
          *
          * @see MissingKeyPolicy
          */
