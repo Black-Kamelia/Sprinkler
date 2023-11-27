@@ -87,6 +87,8 @@ internal object OptionProcessor {
 
             if (values.size > 2 && values[2].isNotEmpty()) { // there is a format
                 val formatName = values[2]
+
+                // try to get the format from its name, or throw an exception if it doesn't exist
                 val format =
                     config.formats[formatName]
                         ?: error("Unknown format '$formatName' (${values.joinToString { "'$it'" }}})")
