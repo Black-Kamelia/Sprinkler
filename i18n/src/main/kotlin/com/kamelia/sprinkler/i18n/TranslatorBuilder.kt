@@ -45,7 +45,6 @@ import kotlin.io.path.readText
  * - the created translators are immutable and therefore `thread-safe`.
  *
  * @see Translator
- * @see java.util.concurrent.ConcurrentHashMap
  */
 class TranslatorBuilder @PackagePrivate internal constructor(
     private var defaultLocale: Locale,
