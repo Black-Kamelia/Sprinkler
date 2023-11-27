@@ -7,5 +7,5 @@ import java.util.*
 internal class TranslatorData(
     val defaultLocale: Locale,
     val translations: Map<Locale, Map<String, String>>,
-    val optionConfiguration: OptionConfiguration,
+    val translatorConfiguration: TranslatorConfiguration,
 )

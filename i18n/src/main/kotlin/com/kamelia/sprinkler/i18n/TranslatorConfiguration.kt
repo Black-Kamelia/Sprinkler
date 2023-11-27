@@ -1,17 +1,20 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.bridge.KotlinDslAdapter
+import com.kamelia.sprinkler.i18n.TranslatorConfiguration.Companion.create
 import com.kamelia.sprinkler.util.VariableDelimiter
 import java.util.*
 
 /**
- * Configuration of a [Translator].
+ * Configuration of a [Translator]. This class defines rules applied to a [Translator] and all [Translator]s created
+ * from it.
  *
- * @see OptionConfiguration.Builder
- * @see Translator
+ * @see create
+ * @see TranslatorConfiguration.Builder
  * @see TranslatorBuilder
+ * @see Translator
  */
-class OptionConfiguration internal constructor(
+class TranslatorConfiguration internal constructor(
     internal val interpolationDelimiter: VariableDelimiter,
     internal val pluralMapper: (Locale, Int) -> Options.Plurals,
     internal val formats: Map<String, VariableFormatter>,
@@ -40,13 +43,13 @@ class OptionConfiguration internal constructor(
     companion object {
 
         /**
-         * Create an [OptionConfiguration] using the given [block] applied to a [Builder].
+         * Create an [TranslatorConfiguration] using the given [block] applied to a [Builder].
          *
          * @param block the block to apply to the [Builder]
-         * @return the created [OptionConfiguration]
+         * @return the created [TranslatorConfiguration]
          */
         @JvmStatic
-        inline fun create(block: Builder.() -> Unit): OptionConfiguration = Builder().apply(block).build()
+        inline fun create(block: Builder.() -> Unit): TranslatorConfiguration = Builder().apply(block).build()
 
     }
 
@@ -67,13 +70,8 @@ class OptionConfiguration internal constructor(
          *
          * @see VariableFormatter
          */
-        var formats: Map<String, VariableFormatter> = mapOf(
-            VariableFormatter.Builtins.Currency.NAME to VariableFormatter.Builtins.Currency,
-            VariableFormatter.Builtins.Date.NAME to VariableFormatter.Builtins.Date,
-            VariableFormatter.Builtins.Time.NAME to VariableFormatter.Builtins.Time,
-            VariableFormatter.Builtins.DateTime.NAME to VariableFormatter.Builtins.DateTime,
-            VariableFormatter.Builtins.Number.NAME to VariableFormatter.Builtins.Number,
-        )
+        var formats: Map<String, VariableFormatter> = BuiltinVariableFormatters.builtins()
+            .associateBy(BuiltinVariableFormatters::name)
 
         /**
          * The policy to use when a key is not found.
@@ -83,7 +81,7 @@ class OptionConfiguration internal constructor(
         var missingKeyPolicy: MissingKeyPolicy = MissingKeyPolicy.THROW_EXCEPTION
 
         @PublishedApi
-        internal fun build(): OptionConfiguration = OptionConfiguration(
+        internal fun build(): TranslatorConfiguration = TranslatorConfiguration(
             interpolationDelimiter,
             pluralMapper,
             formats,

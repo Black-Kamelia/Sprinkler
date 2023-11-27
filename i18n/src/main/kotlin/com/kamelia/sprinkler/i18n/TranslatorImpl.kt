@@ -17,7 +17,7 @@ internal class TranslatorImpl private constructor(
 
     override fun tn(
         key: String,
-        options: Map<String, Any>,
+        extraArgs: Map<String, Any>,
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,
@@ -28,10 +28,10 @@ internal class TranslatorImpl private constructor(
         val actualKey = prefix?.let { "$it.$key" } ?: key
 
         try {
-            innerTranslate(actualKey, locale, options, fallbacks)?.let { return it }
+            innerTranslate(actualKey, locale, extraArgs, fallbacks)?.let { return it }
 
             if (fallbackLocale != null && locale != fallbackLocale) { // to avoid a second lookup with the same key
-                innerTranslate(actualKey, fallbackLocale, options, fallbacks)?.let { return it }
+                innerTranslate(actualKey, fallbackLocale, extraArgs, fallbacks)?.let { return it }
             }
         } catch (e: I18nException) {
             throw IllegalArgumentException(e)
@@ -42,20 +42,20 @@ internal class TranslatorImpl private constructor(
 
     override fun t(
         key: TranslationKey,
-        options: Map<TranslationOption, Any>,
+        extraArgs: Map<TranslationExtraArgs, Any>,
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,
-    ): String = tn(key, options, locale, fallbackLocale, *fallbacks)
-        ?: when (data.optionConfiguration.missingKeyPolicy) {
-            OptionConfiguration.MissingKeyPolicy.THROW_EXCEPTION -> keyNotFound(
+    ): String = tn(key, extraArgs, locale, fallbackLocale, *fallbacks)
+        ?: when (data.translatorConfiguration.missingKeyPolicy) {
+            TranslatorConfiguration.MissingKeyPolicy.THROW_EXCEPTION -> keyNotFound(
                 key,
-                options,
+                extraArgs,
                 locale,
                 fallbackLocale,
                 fallbacks
             )
-            OptionConfiguration.MissingKeyPolicy.RETURN_KEY -> key
+            TranslatorConfiguration.MissingKeyPolicy.RETURN_KEY -> key
         }
 
     override fun section(key: String): Translator {

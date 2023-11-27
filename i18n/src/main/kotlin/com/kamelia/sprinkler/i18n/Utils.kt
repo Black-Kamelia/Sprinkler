@@ -27,7 +27,7 @@ internal fun stringListComparator(first: List<String>, second: List<String>): In
 
 internal fun keyNotFound(
     key: TranslationKey,
-    options: Map<TranslationOption, Any>,
+    options: Map<TranslationExtraArgs, Any>,
     locale: Locale,
     fallbackLocale: Locale?,
     fallbacks: Array<out String>,
@@ -43,8 +43,9 @@ internal fun keyNotFound(
 
     fallbacks.joinTo(builder, ", ", "[", "]")
 
-    builder.append("', options='")
+    builder.append("', extraArgs='")
         .append(options)
+        .append("'. ")
 
     illegalArgument(builder.toString())
 }

@@ -1,12 +1,5 @@
 package com.kamelia.sprinkler.i18n
 
-import kotlin.Number as KotlinNumber
-import com.kamelia.sprinkler.util.illegalArgument
-import java.math.RoundingMode
-import java.text.NumberFormat
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import java.time.temporal.TemporalAccessor
 import java.util.*
 
 /**
@@ -24,136 +17,31 @@ fun interface VariableFormatter {
      */
     fun format(value: Any, locale: Locale, extraArgs: List<String>): String
 
-    /**
-     * The built-in [VariableFormatters][VariableFormatter].
-     */
-    object Builtins {
+    companion object {
 
-        object Currency : VariableFormatter {
+        @JvmStatic
+        fun currency(): VariableFormatter = BuiltinVariableFormatters.Currency
 
-            const val NAME = "currency"
+        @JvmStatic
+        fun date(): VariableFormatter = BuiltinVariableFormatters.Date
 
-            override fun format(value: Any, locale: Locale, extraArgs: List<String>): String {
-                val amount = (value as? KotlinNumber)?.toDouble() ?: castException(KotlinNumber::class.java, value)
-                val inner = NumberFormat.getCurrencyInstance(locale)
-                parseNumberFormatParams(inner, extraArgs)
-                return inner.format(amount)
-            }
+        @JvmStatic
+        fun time(): VariableFormatter = BuiltinVariableFormatters.Time
 
-        }
+        @JvmStatic
+        fun datetime(): VariableFormatter = BuiltinVariableFormatters.DateTime
 
-        object Date : VariableFormatter {
+        @JvmStatic
+        fun number(): VariableFormatter = BuiltinVariableFormatters.Number
 
-            const val NAME = "date"
-
-            override fun format(value: Any, locale: Locale, extraArgs: List<String>): String {
-                val date = value as? TemporalAccessor ?: castException(TemporalAccessor::class.java, value)
-
-                val formatStyle = if (extraArgs.isEmpty()) {
-                    DEFAULT_FORMAT_STYLE
-                } else {
-                    formatStyle(extraArgs[0])
-                }
-
-                val inner = DateTimeFormatter.ofLocalizedDate(formatStyle).localizedBy(locale)
-                return inner.format(date)
-            }
-
-        }
-
-        object Time : VariableFormatter {
-
-            const val NAME = "time"
-
-            override fun format(value: Any, locale: Locale, extraArgs: List<String>): String {
-                val time = value as? TemporalAccessor ?: castException(TemporalAccessor::class.java, value)
-
-                val formatStyle = if (extraArgs.isEmpty()) {
-                    DEFAULT_FORMAT_STYLE
-                } else {
-                    formatStyle(extraArgs[0])
-                }
-
-                val inner = DateTimeFormatter.ofLocalizedTime(formatStyle).localizedBy(locale)
-                return inner.format(time)
-            }
-
-        }
-
-        object DateTime : VariableFormatter {
-
-            const val NAME = "datetime"
-
-            override fun format(value: Any, locale: Locale, extraArgs: List<String>): String {
-                val dateTime = value as? TemporalAccessor ?: castException(TemporalAccessor::class.java, value)
-
-                val dateStyle = if (extraArgs.isEmpty()) {
-                    DEFAULT_FORMAT_STYLE
-                } else {
-                    formatStyle(extraArgs[0])
-                }
-                val timeStyle = if (extraArgs.size < 2) {
-                    DEFAULT_FORMAT_STYLE
-                } else {
-                    formatStyle(extraArgs[1])
-                }
-
-                val inner = DateTimeFormatter.ofLocalizedDateTime(dateStyle, timeStyle).localizedBy(locale)
-                return inner.format(dateTime)
-            }
-
-        }
-
-        object Number : VariableFormatter {
-
-            const val NAME = "number"
-
-            override fun format(value: Any, locale: Locale, extraArgs: List<String>): String {
-                val number = (value as? KotlinNumber) ?: castException(KotlinNumber::class.java, value)
-
-                // please do the trick
-                val inner = NumberFormat.getInstance(locale)
-                parseNumberFormatParams(inner, extraArgs)
-                return inner.format(number)
-            }
-
-        }
-
-        private fun parseNumberFormatParams(formatter: NumberFormat, params: List<String>) {
-            params.forEach {
-                val tokens = it.split(":")
-                if (tokens.size != 2) return
-                val (key, value) = tokens
-                when (key) {
-                    "minIntDigits" -> formatter.minimumIntegerDigits = value.toIntOrException(it)
-                    "maxIntDigits" -> formatter.maximumIntegerDigits = value.toIntOrException(it)
-                    "minFracDigits" -> formatter.minimumFractionDigits = value.toIntOrException(it)
-                    "maxFracDigits" -> formatter.maximumFractionDigits = value.toIntOrException(it)
-                    "groupingUsed" -> formatter.isGroupingUsed = value.toBooleanStrictOrNull()
-                        ?: illegalArgument("Invalid parameter, expected 'true' or 'false', got '$value'.")
-                    "roundingMode" -> formatter.roundingMode = RoundingMode.valueOf(value)
-                    // ignore unknown parameters
-                }
-            }
-        }
-
-        @Suppress("NOTHING_TO_INLINE")
-        private inline fun String.toIntOrException(token: String): Int {
-            return toIntOrNull() ?: illegalArgument("Invalid number format parameter: $token")
-        }
-
-        @Suppress("NOTHING_TO_INLINE")
-        private inline fun castException(expected: Class<*>, actual: Any?): Nothing {
-            throw IllegalArgumentException("Expected ${expected.simpleName}, got '$actual'.")
-        }
-
-        private fun formatStyle(string: String): FormatStyle = try {
-            FormatStyle.valueOf(string.uppercase(Locale.ENGLISH))
-        } catch (e: IllegalArgumentException) {
-            illegalArgument("Invalid format style: $string")
-        }
-
-        private val DEFAULT_FORMAT_STYLE = FormatStyle.MEDIUM
+        @JvmStatic
+        fun builtins(): List<VariableFormatter> = listOf(
+            currency(),
+            date(),
+            time(),
+            datetime(),
+            number(),
+        )
 
     }
 

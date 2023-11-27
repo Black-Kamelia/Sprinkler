@@ -48,20 +48,20 @@ interface Translator {
      * the [fallbackLocale] instead of the [locale].
      * - Finally, if no translation is found, null is returned.
      *
-     * **NOTE**: During all the steps above, the [options] parameter remains the same for each translation attempt.
+     * **NOTE**: During all the steps above, the [extraArgs] parameter remains the same for each translation attempt.
      *
      * @param key the key to translate
-     * @param options the options to use
+     * @param extraArgs the extra arguments to use
      * @param locale the locale to use for the translation
      * @param fallbackLocale the fallback locale to use if the translation is not found for the given [locale]
      * @param fallbacks the fallback keys to use if the translation is not found for the given [locale] and
      * [fallbackLocale]
      * @return the translation using the provided information, or null if the translation is not found
-     * @throws IllegalArgumentException if the key is not [valid][TranslationKey] or if the [options] are not valid
+     * @throws IllegalArgumentException if the key is not [valid][TranslationKey] or if the [extraArgs] are not valid
      */
     fun tn(
         key: TranslationKey,
-        options: Map<TranslationOption, Any>,
+        extraArgs: Map<TranslationExtraArgs, Any>,
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,
@@ -70,25 +70,32 @@ interface Translator {
     /**
      * Returns the translation using the provided information. If the translation is not found, it will return null.
      *
+     * Method default values:
+     * - The fallback locale is the [defaultLocale]
+     *
      * This method is an overload, see the documentation of the base method [tn] for more details.
      *
      * @param key the key to translate
-     * @param options the options to use
+     * @param extraArgs the extra arguments to use
      * @param locale the locale to use for the translation
      * @param fallbacks the fallback keys to use if the translation is not found for the given [locale]
      * @return the translation using the provided information, or null if the translation is not found
-     * @throws IllegalArgumentException if the key is not [valid][TranslationKey] or if the [options] are not valid
+     * @throws IllegalArgumentException if the key is not [valid][TranslationKey] or if the [extraArgs] are not valid
      */
     fun tn(
         key: TranslationKey,
-        options: Map<TranslationOption, Any>,
+        extraArgs: Map<TranslationExtraArgs, Any>,
         locale: Locale,
         vararg fallbacks: String,
     ): String? =
-        tn(key, options, locale, defaultLocale, *fallbacks)
+        tn(key, extraArgs, locale, defaultLocale, *fallbacks)
 
     /**
      * Returns the translation using the provided information. If the translation is not found, it will return null.
+     *
+     * Method default values:
+     * - The fallback locale is the [defaultLocale]
+     * - The extraArgs parameter is an empty map
      *
      * This method is an overload, see the documentation of the base method [tn] for more details.
      *
@@ -104,19 +111,28 @@ interface Translator {
     /**
      * Returns the translation using the provided information. If the translation is not found, it will return null.
      *
+     * Method default values:
+     * - The fallback locale is the [defaultLocale]
+     * - The locale parameter is the [currentLocale]
+     *
      * This method is an overload, see the documentation of the base method [tn] for more details.
      *
      * @param key the key to translate
-     * @param options the options to use
-     * @param fallbacks the fallback keys to use if the translation is not found for the given [locale]
+     * @param extraArgs the extra arguments to use
+     * @param fallbacks the fallback keys to use if the translation
      * @return the translation using the provided information, or null if the translation is not found
-     * @throws IllegalArgumentException if the key is not [valid][TranslationKey] or if the [options] are not valid
+     * @throws IllegalArgumentException if the key is not [valid][TranslationKey] or if the [extraArgs] are not valid
      */
-    fun tn(key: TranslationKey, options: Map<TranslationOption, Any>, vararg fallbacks: String): String? =
-        tn(key, options, currentLocale, defaultLocale, *fallbacks)
+    fun tn(key: TranslationKey, extraArgs: Map<TranslationExtraArgs, Any>, vararg fallbacks: String): String? =
+        tn(key, extraArgs, currentLocale, defaultLocale, *fallbacks)
 
     /**
      * Returns the translation using the provided information. If the translation is not found, it will return null.
+     *
+     * Method default values:
+     * - The fallback locale is the [defaultLocale]
+     * - The extraArgs parameter is an empty map
+     * - The locale parameter is the [currentLocale]
      *
      * This method is an overload, see the documentation of the base method [tn] for more details.
      *
@@ -130,6 +146,12 @@ interface Translator {
     /**
      * Returns the translation using the provided information. If the translation is not found, it will return null.
      *
+     * Method default values:
+     * - The fallback locale is the [defaultLocale]
+     * - The extraArgs parameter is an empty map
+     * - The locale parameter is the [currentLocale]
+     * - The fallbacks parameter is an empty array
+     *
      * This method is an overload, see the documentation of the base method [tn] for more details.
      *
      * @param key the key to translate
@@ -139,20 +161,24 @@ interface Translator {
 
     fun t(
         key: TranslationKey,
-        options: Map<TranslationOption, Any>,
+        extraArgs: Map<TranslationExtraArgs, Any>,
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,
     ): String
 
-    fun t(key: TranslationKey, options: Map<TranslationOption, Any>, locale: Locale, vararg fallbacks: String): String =
-        t(key, options, locale, defaultLocale, *fallbacks)
+    fun t(
+        key: TranslationKey,
+        extraArgs: Map<TranslationExtraArgs, Any>,
+        locale: Locale,
+        vararg fallbacks: String,
+    ): String = t(key, extraArgs, locale, defaultLocale, *fallbacks)
 
     fun t(key: TranslationKey, locale: Locale, vararg fallbacks: String): String =
         t(key, emptyMap(), locale, defaultLocale, *fallbacks)
 
-    fun t(key: TranslationKey, options: Map<TranslationOption, Any>, vararg fallbacks: String): String =
-        t(key, options, currentLocale, defaultLocale, *fallbacks)
+    fun t(key: TranslationKey, extraArgs: Map<TranslationExtraArgs, Any>, vararg fallbacks: String): String =
+        t(key, extraArgs, currentLocale, defaultLocale, *fallbacks)
 
     fun t(key: TranslationKey, vararg fallbacks: String): String =
         t(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)

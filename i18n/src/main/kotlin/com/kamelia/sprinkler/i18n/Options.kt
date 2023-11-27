@@ -1,3 +1,4 @@
+@file:JvmName("OptionUtils")
 package com.kamelia.sprinkler.i18n
 
 
@@ -5,9 +6,9 @@ import java.util.*
 
 object Options {
 
-    const val CONTEXT = "context"
+    const val OPTIONS = "options"
 
-    const val INTERPOLATION = "interpolation"
+    const val CONTEXT = "context"
 
     const val COUNT = "count"
 
@@ -27,15 +28,21 @@ object Options {
         companion object {
 
             @JvmStatic
-            fun defaultCountMapper(locale: Locale, count: Int): Plurals =
-                when (count) {
+            fun defaultCountMapper(locale: Locale, count: Int): Plurals {
+                require(count >= 0) { "count must be >= 0, but was $count" }
+                return when (count) {
                     0 -> ZERO
                     1 -> ONE
                     else -> OTHER
                 }
+            }
 
         }
 
     }
 
 }
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun options(vararg pairs: Pair<String, Any>): Pair<String, Map<TranslationExtraArgs, Any>> =
+    Options.OPTIONS to mapOf(*pairs)

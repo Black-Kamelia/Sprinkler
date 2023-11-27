@@ -13,29 +13,36 @@ internal object OptionProcessor {
     fun translate(
         data: TranslatorData,
         key: String,
-        options: Map<TranslationOption, Any>,
+        options: Map<TranslationExtraArgs, Any>,
         locale: Locale,
     ): String? {
         // first, get the translations for the given locale, or return null if they don't exist
         val translations = data.translations[locale] ?: return null
 
-        val config = data.optionConfiguration
+        val config = data.translatorConfiguration
+        val optionMap = options.safeType<Map<TranslationExtraArgs, Any>>(Options.OPTIONS)
+            ?: emptyMap()
 
         // build the actual key with the options
-        val actualKey = buildKey(key, options, locale, config)
+        val actualKey = buildKey(key, optionMap, locale, config)
 
         // get the value for the actual key or return null if it doesn't exist
         val value = translations[actualKey] ?: return null
 
-        return interpolate(value, locale, options, config)
+        return interpolate(value, locale, options, optionMap, config)
     }
 
-    private fun buildKey(key: String, options: Map<String, Any>, locale: Locale, config: OptionConfiguration): String {
-        if (options.isEmpty()) return key
+    private fun buildKey(
+        key: String,
+        optionMap: Map<TranslationExtraArgs, Any>,
+        locale: Locale,
+        config: TranslatorConfiguration,
+    ): String {
+        if (optionMap.isEmpty()) return key
 
-        val context = options.safeType<String>(Options.CONTEXT)
-        val count = options.safeType<Int>(Options.COUNT)?.let { count ->
-            options.safeType<(Locale, Int) -> Options.Plurals>(Options.COUNT_MAPPER)?.let {
+        val context = optionMap.safeType<String>(Options.CONTEXT)
+        val count = optionMap.safeType<Int>(Options.COUNT)?.let { count ->
+            optionMap.safeType<(Locale, Int) -> Options.Plurals>(Options.COUNT_MAPPER)?.let {
                 it(locale, count)
             } ?: config.pluralMapper(locale, count).representation
         }
@@ -48,10 +55,10 @@ internal object OptionProcessor {
         }
     }
 
-    private inline fun <reified T> Map<TranslationOption, Any>.safeType(key: String): T? {
+    private inline fun <reified T> Map<TranslationExtraArgs, Any>.safeType(key: String): T? {
         val value = get(key) ?: return null
         require(value is T) {
-            "Expected ${T::class.simpleName}, got ${value::class.simpleName}, if you want to use a reserved name for interpolation, use the '${Options.INTERPOLATION}' option."
+            "Expected ${T::class.simpleName}, got '$value' (${value::class.simpleName})."
         }
         return value.unsafeCast()
     }
@@ -59,8 +66,9 @@ internal object OptionProcessor {
     private fun interpolate(
         value: String,
         locale: Locale,
-        options: Map<TranslationOption, Any>,
-        config: OptionConfiguration,
+        options: Map<String, Any>,
+        optionMap: Map<TranslationExtraArgs, Any>,
+        config: TranslatorConfiguration,
     ): String {
         if (options.isEmpty() && config.interpolationDelimiter.variableStart !in value) {
             return value
@@ -69,19 +77,21 @@ internal object OptionProcessor {
         val customResolver = VariableResolver { name, _ ->
             val tokens = VARIABLE_REGEX.matchEntire(name) ?: TODO("Throw name $name")
 
-            val values = if (tokens.groupValues.last().isEmpty()) {
-                tokens.groupValues.subList(0, tokens.groupValues.size - 1)
-            } else {
-                tokens.groupValues
+            val values = tokens.groupValues
+
+            val variableName = values[1] // the variable name is always the first group as 0 is the whole match
+            require(variableName != Options.OPTIONS) {
+                "The '${Options.OPTIONS}' variable name is reserved for the options map, use another name."
             }
-            val variableName = values[1]
 
-            val result = options[variableName]
-                ?: throw VariableResolver.ResolutionException("unknown variable name '$name'")
+            val result = options[variableName] ?: optionMap[variableName]
+            ?: throw VariableResolver.ResolutionException("unknown variable name '$name'")
 
-            if (values.size > 2) { // there is a format
+            if (values.size > 2 && values[2].isNotEmpty()) { // there is a format
                 val formatName = values[2]
-                val format = config.formats[formatName] ?: error("Unknown format '$formatName'")
+                val format =
+                    config.formats[formatName]
+                        ?: error("Unknown format '$formatName' (${values.joinToString { "'$it'" }}})")
 
                 val params = if (values.size > 3) { // there are format parameters
                     values[3].split(FORMAT_PARAM_SPLIT_REGEX)

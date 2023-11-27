@@ -59,7 +59,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      */
     private var currentLocale = defaultLocale
 
-    private var options: OptionConfiguration = OptionConfiguration.create { }
+    private var config: TranslatorConfiguration = TranslatorConfiguration.create { }
 
     /**
      * Adds a path to the builder. If the path is a directory, all files in it will be loaded. If the path is a file, it
@@ -166,13 +166,14 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     /**
-     * Sets the options that will be used for the created translator.
+     * Sets the configuration that will be used for the created translator.
      *
-     * @param options the options to set
+     * @param config the configuration to set
      * @return this builder
+     * @see TranslatorConfiguration
      */
-    fun withOptions(options: OptionConfiguration): TranslatorBuilder = apply {
-        this.options = options
+    fun withConfiguration(config: TranslatorConfiguration): TranslatorBuilder = apply {
+        this.config = config
     }
 
     /**
@@ -211,25 +212,19 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         val finalMap = HashMap<Locale, HashMap<String, String>>()
         translatorContent.forEach {
             when (it) { // switch on different types of TranslationResourceInformation
-                // if it is a FileInfo, we need to load the file or if it is a directory, load all files in it
-                // and add them to the final map
+                // if it is a FileInfo, we need to load the file, or, if it is a directory, load all files in it
+                // and add them to the final map.
                 is FileInfo -> {
                     try {
                         loadPath(it).forEach { (locale, map) ->
                             addToMap(finalMap, locale, map)
                         }
-                    } catch (e: I18nException) { // catch and rethrow to add the path to the error message
+                    } catch (e: Exception) { // catch and rethrow to add the path to the error message
                         throw IllegalStateException("Error while loading file ${it.path}", e)
                     }
                 }
                 // if it is a MapInfo, we can directly add it to the final map
-                is MapInfo -> {
-                    try {
-                        addToMap(finalMap, it.locale, it.map)
-                    } catch (e: I18nException) {
-                        throw IllegalStateException(e)
-                    }
-                }
+                is MapInfo -> addToMap(finalMap, it.locale, it.map)
             }
         }
 
@@ -246,7 +241,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 .toMap()
         }
 
-        val data = TranslatorData(defaultLocale, sortedMap, options)
+        val data = TranslatorData(defaultLocale, sortedMap, config)
         return TranslatorImpl(currentLocale, data)
     }
 
@@ -303,7 +298,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
 
     private fun loadPath(info: FileInfo): List<Pair<Locale, Map<String, TranslationSourceData>>> =
         when {
-            !info.path.exists() -> throw I18nException("Path ${info.path} does not exist")
+            !info.path.exists() -> error("Path ${info.path} does not exist")
             info.path.isDirectory() -> { // if the path is a directory, load all files in it and return the list
                 Files.list(info.path)
                     .map {
@@ -322,21 +317,16 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
 
     private fun checkKeyIsValid(key: Any?, locale: Locale, map: Map<*, *>) {
-        if (key == null) {
-            throw I18nException(
-                "Error in map $map:\nInvalid translation key for locale '$locale', key cannot be null. $KEY_DOCUMENTATION"
-            )
+        check(key != null) {
+            "Error in map $map:\nInvalid translation key for locale '$locale', key cannot be null. $KEY_DOCUMENTATION"
+
         }
-        if (key !is String) {
-            throw I18nException(
-                "Error in map $map:\nInvalid translation key '$key' of type ${key::class.simpleName} for locale '$locale', expected String. $KEY_DOCUMENTATION"
-            )
+        check(key is String) {
+            "Error in map $map:\nInvalid translation key '$key' of type ${key::class.simpleName} for locale '$locale', expected String. $KEY_DOCUMENTATION"
         }
 
-        if (!KEY_REGEX.matches(key)) {
-            throw I18nException(
-                "Error in map $map:\nInvalid translation key '$key' for locale '$locale', format is not valid. $KEY_DOCUMENTATION"
-            )
+        check(KEY_REGEX.matches(key)) {
+            "Error in map $map:\nInvalid translation key '$key' for locale '$locale', format is not valid. $KEY_DOCUMENTATION"
         }
     }
 
@@ -345,15 +335,12 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         contract {
             returns() implies (value != null)
         }
-        if (value == null) {
-            throw I18nException(
-                "Error in map $map:\nInvalid translation value for locale '$locale', value cannot be null. $SOURCE_DATA_DOCUMENTATION"
-            )
+        check(value != null) {
+            "Error in map $map:\nInvalid translation value for locale '$locale', value cannot be null. $SOURCE_DATA_DOCUMENTATION"
+
         }
-        if (value !is String && value !is Number && value !is Boolean && value !is Map<*, *> && value !is List<*>) {
-            throw I18nException(
-                "Error in map $map:\nInvalid translation value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see TranslationSourceData typealias documentation."
-            )
+        check(value is String || value is Number || value is Boolean || value is Map<*, *> || value is List<*>) {
+            "Error in map $map:\nInvalid translation value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see TranslationSourceData typealias documentation."
         }
     }
 
@@ -363,14 +350,14 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 try {
                     JSONObject(path.readText()).toMap()
                 } catch (e: JSONException) {
-                    throw I18nException("Invalid JSON file: ${e.message}")
+                    throw IllegalStateException("Invalid JSON file.", e)
                 }
             }
             "yaml", "yml" -> {
                 try {
                     Yaml().load<Map<TranslationKeyPart, TranslationSourceData>>(path.readText())
                 } catch (e: YAMLException) {
-                    throw I18nException("Invalid YAML file: ${e.message}")
+                    throw IllegalStateException("Invalid YAML file.", e)
                 }
             }
             else -> assertionFailed("File extension '$extension' should have been checked before.")
@@ -382,9 +369,10 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             Locale.Builder()
                 .setLanguageTag(locale.replace('_', '-'))
                 .build()
-        } catch (_: IllformedLocaleException) {
-            throw I18nException(
+        } catch (e: IllformedLocaleException) {
+            throw IllegalStateException(
                 "Invalid locale '$locale'. For more details about locale syntax, see java.util.Locale documentation.",
+                e
             )
         }
     }
