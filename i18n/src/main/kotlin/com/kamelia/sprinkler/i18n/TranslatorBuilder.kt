@@ -43,10 +43,14 @@ import kotlin.io.path.readText
  * - the returned map of [Translator.toMap] will be sorted according to the lexical order of the
  * [key parts][TranslationKeyPart] of the keys (the map is created every time the method is called);
  * - [toString] will use [toMap] under the hood to create the string representation of the translator;
- * TODO regex for values
+ * - To be interpolated on [t][Translator.t] method call, values stored in the translator must contain variable defined
+ * inside [delimiters][TranslatorConfiguration.Builder.interpolationDelimiter] defined in the translator configuration. For more
+ * details about interpolation, see [String.interpolate][com.kamelia.sprinkler.util.interpolate]. Variables' names must
+ * follow a specific format, which is defined in the [TranslationInterpolationVariable] typealias documentation.
  * - the created translators are immutable and therefore `thread-safe`.
  *
  * @see Translator
+ * @see TranslatorConfiguration
  */
 class TranslatorBuilder @PackagePrivate internal constructor(
     private var defaultLocale: Locale,

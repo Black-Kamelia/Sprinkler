@@ -1,6 +1,11 @@
 package com.kamelia.sprinkler.i18n
 
 /**
+ * TODO: add documentation
+ */
+typealias TranslationInterpolationVariable = String
+
+/**
  * Represents a part of a translation key. It composes a [TranslationKey].
  *
  * It should respect the following rules:
