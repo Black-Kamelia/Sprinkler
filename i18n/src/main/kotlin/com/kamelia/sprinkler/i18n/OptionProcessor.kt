@@ -2,7 +2,6 @@ package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.VariableResolver
 import com.kamelia.sprinkler.util.interpolate
-import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.*
 import org.intellij.lang.annotations.Language
@@ -56,9 +55,9 @@ internal object OptionProcessor {
     private inline fun <reified T> Map<String, Any>.safeType(key: String): T? {
         val value = get(key) ?: return null
         require(value is T) {
-            "Expected ${T::class.simpleName}, got '$value' (${value::class.simpleName})."
+            "Cannot cast $value (${value.javaClass}) to ${T::class.java}"
         }
-        return value.unsafeCast()
+        return value
     }
 
     private fun interpolate(
@@ -73,7 +72,8 @@ internal object OptionProcessor {
         }
 
         val customResolver = VariableResolver { name, _ ->
-            val tokens = VARIABLE_REGEX.matchEntire(name) ?: TODO("Throw name $name")
+            val tokens = VARIABLE_REGEX.matchEntire(name)
+                ?: error("Invalid variable name '$name', variables should match the following regex: ${VARIABLE_REGEX.pattern}")
 
             val values = tokens.groupValues
 
@@ -113,7 +113,7 @@ internal object OptionProcessor {
     }
 
     @Language("RegExp")
-    private val FORMAT_REGEX = """,\s*(\w+)(?:\(([^,()]+(?:,\s*[^,()]+)*)\))?"""
+    private const val FORMAT_REGEX = """,\s*(\w+)(?:\(([^,()]+(?:,\s*[^,()]+)*)\))?"""
 
     private val VARIABLE_REGEX = """(\w+)(?:$FORMAT_REGEX)?""".toRegex()
 

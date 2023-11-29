@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.util.cast
 import com.kamelia.sprinkler.util.illegalArgument
 import java.math.RoundingMode
 import java.text.NumberFormat
@@ -60,7 +61,7 @@ fun interface VariableFormatter {
          */
         @JvmStatic
         fun currency(): VariableFormatter = VariableFormatter { value, locale, extraArgs ->
-            val amount = (value as? Number)?.toDouble() ?: castException(Number::class.java, value)
+            val amount = value.cast<Number>().toDouble()
 
             val inner = NumberFormat.getCurrencyInstance(locale)
             parseNumberFormatParams(inner, extraArgs)
@@ -80,7 +81,7 @@ fun interface VariableFormatter {
          */
         @JvmStatic
         fun date(): VariableFormatter = VariableFormatter { value, locale, extraArgs ->
-            val date = value as? TemporalAccessor ?: castException(TemporalAccessor::class.java, value)
+            val date = value.cast<TemporalAccessor>()
 
             val inner = createDateTimeFormatParams(DateTimeFormatterKind.DATE, extraArgs).localizedBy(locale)
             inner.format(date)
@@ -99,7 +100,7 @@ fun interface VariableFormatter {
          */
         @JvmStatic
         fun time(): VariableFormatter = VariableFormatter { value, locale, extraArgs ->
-            val time = value as? TemporalAccessor ?: castException(TemporalAccessor::class.java, value)
+            val time = value.cast<TemporalAccessor>()
 
             val inner = createDateTimeFormatParams(DateTimeFormatterKind.TIME, extraArgs).localizedBy(locale)
             inner.format(time)
@@ -122,7 +123,7 @@ fun interface VariableFormatter {
          */
         @JvmStatic
         fun datetime(): VariableFormatter = VariableFormatter { value, locale, extraArgs ->
-            val dateTime = value as? TemporalAccessor ?: castException(TemporalAccessor::class.java, value)
+            val dateTime = value.cast<TemporalAccessor>()
 
             val inner = createDateTimeFormatParams(DateTimeFormatterKind.DATE_TIME, extraArgs).localizedBy(locale)
             inner.format(dateTime)
@@ -156,7 +157,7 @@ fun interface VariableFormatter {
          */
         @JvmStatic
         fun number(): VariableFormatter = VariableFormatter { value, locale, extraArgs ->
-            val number = (value as? Number) ?: castException(Number::class.java, value)
+            val number = value.cast<Number>()
 
             val inner = NumberFormat.getInstance(locale)
             parseNumberFormatParams(inner, extraArgs)

@@ -2,6 +2,7 @@ package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
 import com.kamelia.sprinkler.util.assertionFailed
+import com.kamelia.sprinkler.util.cast
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.io.File
@@ -42,6 +43,7 @@ import kotlin.io.path.readText
  * - the returned map of [Translator.toMap] will be sorted according to the lexical order of the
  * [key parts][TranslationKeyPart] of the keys (the map is created every time the method is called);
  * - [toString] will use [toMap] under the hood to create the string representation of the translator;
+ * TODO regex for values
  * - the created translators are immutable and therefore `thread-safe`.
  *
  * @see Translator
@@ -271,7 +273,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             // not check the validity of the value nor the key in before adding it to the map
             checkKeyIsValid(k, currentLocale, map)
             checkValueIsValid(value, currentLocale, map)
-            val key = k as TranslationKey
+            val key = k.cast<TranslationKey>()
 
             val toFlatten = ArrayDeque<Pair<String, TranslationSourceData>>()
             toFlatten.addLast(key to value)
