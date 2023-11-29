@@ -385,6 +385,24 @@ inline fun <reified T> Any?.castOrNull(): T? = this as? T
 
 In the same way as `unsafeCast`, it is useful when it comes to chaining operations to avoid nested `as?` calls.
 
+### castIfNotNull
+
+A simple extension function on `Any?`, that allows to cast it to any type if it is not `null`, and returns `null` if the
+object is `null`. It is defined as follows:
+
+```kt
+inline fun <reified T> Any?.castIfNotNull(): T? = if (this != null) this as T else null
+```
+
+### cast
+
+A simple extension function on `Any?`, that allows to cast it to any type, and throws a `ClassCastException` if the cast
+fails. It is defined as follows:
+
+```kt
+inline fun <reified T> Any?.cast(): T = this as T
+```
+
 ## Exceptions
 
 The library provides a few methods to throw exceptions with a message. The reason for this is that the standard library
