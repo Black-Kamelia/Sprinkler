@@ -4,7 +4,6 @@ package com.kamelia.sprinkler.i18n
 
 
 import com.kamelia.sprinkler.i18n.Options.OPTIONS
-import java.util.*
 
 /**
  * Class defining the options that can be passed as extra arguments during translations.
@@ -73,9 +72,10 @@ object Options {
      *
      * As shown in the example above, the context actually appends the value to the key, separated by an underscore.
      *
-     * **NOTE**: the context is appended to the key before the [plural][Plurals] value (e.g. `key_male_one`).
+     * **NOTE**: The context is appended to the key before the [plural][Plural] value which is
+     * defined by the [COUNT] option (e.g. a possible key with context and plural `key_male_one`).
      *
-     * @see Plurals
+     * @see Plural
      * @see COUNT
      */
     const val CONTEXT = "context"
@@ -113,77 +113,52 @@ object Options {
      * As shown in the example above, the plural value actually appends the value to the key, separated by an
      * underscore.
      *
-     * **NOTE**: the plural value is appended to the key after the [context][CONTEXT] (e.g. `key_male_one`).
+     * **NOTE**: The plural value is appended to the key after the [context][CONTEXT] (e.g. `key_male_one`).
      *
-     * @see Plurals
+     * @see Plural
      * @see CONTEXT
      */
     const val COUNT = "count"
 
     /**
-     * The plural value of the translation. It can be used to disambiguate translations depending on the number of
-     * items.
+     * Whether the count value should be treated as an ordinal number. It can be used to disambiguate ordinal forms.
+     * It is only used if the [COUNT] option is also present (otherwise it is ignored).
      *
-     * @see COUNT
-     * @see TranslatorConfiguration.Builder.pluralMapper
+     * Valid values:
+     * - [Boolean]
+     *
+     * The most common use case is to disambiguate the ordinal form of a word, like in the following example:
+     *
+     * ```
+     * // content:
+     * // {
+     * //   "item_ordinal_one": "I arrived {count}st",
+     * //   "item_ordinal_two": "I arrived {count}nd",
+     * //   "item_ordinal_few": "I arrived {count}rd",
+     * //   "item_ordinal_other": "I arrived {rank}th"
+     * // }
+     * val translator: Translator = ...
+     *
+     * fun rank(count: Int) {
+     *    val value = translator.t(
+     *        "item",
+     *        mapOf(
+     *            Options.OPTIONS to mapOf(
+     *                Options.COUNT to count,
+     *                Options.ORDINAL to true
+     *            )
+     *        )
+     *    )
+     *    println(value)
+     * }
+     * ```
+     *
+     * As shown in the example above, the `ordinal` literal is appended to the key, separated by an underscore.
+     *
+     * **NOTE**: The value is right before the [plural][Plural] value (e.g. a possible key with
+     * `key_male_ordinal_one`).
      */
-    enum class Plurals {
-
-        /**
-         * Plural value usually used in case the count is 0.
-         */
-        ZERO,
-        /**
-         * Plural value usually used in case the count is 1.
-         */
-        ONE,
-
-        /**
-         * Plural value usually used in case the count is 2.
-         */
-        TWO,
-
-        /**
-         * Plural value usually used in case the count represents a few items.
-         */
-        FEW,
-
-        /**
-         * Plural value usually used in case the count represents many items.
-         */
-        MANY,
-
-        /**
-         * Plural value used as default when no other value matches.
-         */
-        OTHER,
-
-        ;
-
-        internal val representation: String = name.lowercase()
-
-        companion object {
-
-            /**
-             * Default mapper function for pluralization. It is based on the english
-             * [Unicode plural rules chart](https://unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html).
-             *
-             * @param locale the locale to use
-             * @param count the count to use
-             * @return the plural value
-             */
-            @JvmStatic
-            fun defaultCountMapper(locale: Locale, count: Int): Plurals {
-                require(count >= 0) { "count must be >= 0, but was $count" }
-                return when (count) {
-                    1 -> ONE
-                    else -> OTHER
-                }
-            }
-
-        }
-
-    }
+    const val ORDINAL = "ordinal"
 
 }
 

@@ -40,16 +40,31 @@ internal object OptionProcessor {
         if (optionMap.isEmpty()) return key
 
         val context = optionMap.safeType<String>(Options.CONTEXT)
+        val ordinal = optionMap.safeType<Boolean>(Options.ORDINAL) ?: false
         val count = optionMap.safeType<Int>(Options.COUNT)?.let { count ->
-            config.pluralMapper(locale, count).representation
+            if (ordinal) {
+                config.pluralMapper.mapOrdinal(locale, count)
+            } else {
+                config.pluralMapper.mapPlural(locale, count)
+            }.representation
         }
 
-        return when {
-            count == null && context == null -> key
-            count == null -> "${key}_$context"
-            context == null -> "${key}_$count"
-            else -> "${key}_${context}_$count"
+        val builder = StringBuilder(key)
+
+        if (context != null) {
+            builder.append("_")
+                .append(context)
         }
+
+        if (count != null) {
+            if (ordinal) {
+                builder.append("_ordinal")
+            }
+            builder.append("_")
+                .append(count)
+        }
+
+        return builder.toString()
     }
 
     private inline fun <reified T> Map<String, Any>.safeType(key: String): T? {

@@ -16,7 +16,7 @@ import java.util.*
  */
 class TranslatorConfiguration internal constructor(
     internal val interpolationDelimiter: VariableDelimiter,
-    internal val pluralMapper: (Locale, Int) -> Options.Plurals,
+    internal val pluralMapper: Plural.Mapper,
     internal val formats: Map<String, VariableFormatter>,
     internal val missingKeyPolicy: MissingKeyPolicy,
 ) {
@@ -68,7 +68,7 @@ class TranslatorConfiguration internal constructor(
          *
          * default: [Options.Plurals.Companion.defaultCountMapper]
          */
-        var pluralMapper: (locale: Locale, count: Int) -> Options.Plurals = Options.Plurals.Companion::defaultCountMapper
+        var pluralMapper: Plural.Mapper = Plural.defaultMapper()
 
         /**
          * Map used to find formatters using their name during variable interpolation.
