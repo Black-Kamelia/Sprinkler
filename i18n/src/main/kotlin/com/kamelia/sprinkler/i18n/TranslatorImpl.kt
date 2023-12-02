@@ -27,14 +27,10 @@ internal class TranslatorImpl private constructor(
         }
         val actualKey = prefix?.let { "$it.$key" } ?: key
 
-        try {
-            innerTranslate(actualKey, locale, extraArgs, fallbacks)?.let { return it }
+        innerTranslate(actualKey, locale, extraArgs, fallbacks)?.let { return it }
 
-            if (fallbackLocale != null && locale != fallbackLocale) { // to avoid a second lookup with the same key
-                innerTranslate(actualKey, fallbackLocale, extraArgs, fallbacks)?.let { return it }
-            }
-        } catch (e: I18nException) {
-            throw IllegalArgumentException(e)
+        if (fallbackLocale != null && locale != fallbackLocale) { // to avoid a second lookup with the same key
+            innerTranslate(actualKey, fallbackLocale, extraArgs, fallbacks)?.let { return it }
         }
 
         return null

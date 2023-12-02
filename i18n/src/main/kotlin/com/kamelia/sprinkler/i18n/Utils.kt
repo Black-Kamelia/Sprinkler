@@ -50,8 +50,6 @@ internal fun keyNotFound(
     illegalArgument(builder.toString())
 }
 
-internal class I18nException(message: String) : Throwable(message, null, false, false)
-
 internal const val KEY_DOCUMENTATION =
     "For more details about translation keys, see TranslationKey typealias documentation."
 
