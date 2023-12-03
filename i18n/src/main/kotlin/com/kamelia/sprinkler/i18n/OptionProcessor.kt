@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.util.VariableDelimiter
 import com.kamelia.sprinkler.util.VariableResolver
 import com.kamelia.sprinkler.util.interpolate
 import com.zwendo.restrikt.annotation.PackagePrivate
@@ -23,19 +24,19 @@ internal object OptionProcessor {
             ?: emptyMap()
 
         // build the actual key with the options
-        val actualKey = buildKey(key, optionMap, locale, config)
+        val actualKey = buildKey(key, optionMap, locale, config.pluralMapper)
 
         // get the value for the actual key or return null if it doesn't exist
         val value = translations[actualKey] ?: return null
 
-        return interpolate(value, locale, options, optionMap, config)
+        return interpolate(value, locale, options, optionMap, config.interpolationDelimiter, config.formats)
     }
 
-    private fun buildKey(
+    fun buildKey(
         key: String,
         optionMap: Map<String, Any>,
         locale: Locale,
-        config: TranslatorConfiguration,
+        pluralMapper: Plural.Mapper
     ): String {
         if (optionMap.isEmpty()) return key
 
@@ -43,9 +44,9 @@ internal object OptionProcessor {
         val ordinal = optionMap.safeType<Boolean>(Options.ORDINAL) ?: false
         val count = optionMap.safeType<Int>(Options.COUNT)?.let { count ->
             if (ordinal) {
-                config.pluralMapper.mapOrdinal(locale, count)
+                pluralMapper.mapOrdinal(locale, count)
             } else {
-                config.pluralMapper.mapPlural(locale, count)
+                pluralMapper.mapPlural(locale, count)
             }.representation
         }
 
@@ -67,22 +68,15 @@ internal object OptionProcessor {
         return builder.toString()
     }
 
-    private inline fun <reified T> Map<String, Any>.safeType(key: String): T? {
-        val value = get(key) ?: return null
-        require(value is T) {
-            "Cannot cast $value (${value.javaClass}) to ${T::class.java}"
-        }
-        return value
-    }
-
-    private fun interpolate(
+    fun interpolate(
         value: String,
         locale: Locale,
         options: Map<String, Any>,
         optionMap: Map<String, Any>,
-        config: TranslatorConfiguration,
+        interpolationDelimiter: VariableDelimiter,
+        formats: Map<String, VariableFormatter>,
     ): String {
-        if (options.isEmpty() && config.interpolationDelimiter.variableStart !in value) {
+        if (options.isEmpty() && interpolationDelimiter.variableStart !in value) {
             return value
         }
 
@@ -104,9 +98,8 @@ internal object OptionProcessor {
                 val formatName = values[2]
 
                 // try to get the format from its name, or throw an exception if it doesn't exist
-                val format =
-                    config.formats[formatName]
-                        ?: error("Unknown format '$formatName' (${values.joinToString { "'$it'" }}})")
+                val format = formats[formatName]
+                    ?: error("Unknown format '$formatName' (${values.joinToString { "'$it'" }}})")
 
                 val params = if (values.size > 3) { // there are format parameters
                     if (values[3].isEmpty()) {
@@ -124,7 +117,15 @@ internal object OptionProcessor {
             }
         }
 
-        return value.interpolate(customResolver, config.interpolationDelimiter)
+        return value.interpolate(customResolver, interpolationDelimiter)
+    }
+
+    private inline fun <reified T> Map<String, Any>.safeType(key: String): T? {
+        val value = get(key) ?: return null
+        require(value is T) {
+            "Cannot cast $value (${value.javaClass}) to ${T::class.java}"
+        }
+        return value
     }
 
     @Language("RegExp")
