@@ -132,7 +132,71 @@ val translator = Translator.builder(Locale.ENGLISH)
 
 ## Translator
 
+`Translators` are immutable structure, and therefore thread-safe. None of their methods will ever modify their internal
+state of the object.
 
+This is important to understand, as the method to change the current locale, `Translator::withCurrentLocale`, returns
+a new instance of `Translator` with the new locale.
+
+### Basic usage
+
+At its most basic level, one can use the `Translator::t` (as in "translate") and `Translator::tn`(as in "translate or 
+null") methods to obtain the value associated to a `TranslationKey` for the current locale.
+
+```kt
+val translator = Translator.builder(Locale.ENGLISH)...build()
+translator.t("foo") // "My translation"
+translator.t("bar") // "My other translation"
+
+val translatorFr = translator.withCurrentLocale(Locale.FRENCH)
+translatorFr.t("foo") // "Ma traduction"
+translatorFr.t("bar") // "Mon autre traduction"
+```
+
+However, it is to be noted that one of the overloads of these methods can take a `Locale` as a parameter, which will
+be used instead of the current locale.
+
+```kt
+val translator = Translator.builder(Locale.ENGLISH)...build()
+translator.t("foo", Locale.ENGLISH) // "My translation"
+translator.t("foo", Locale.FRENCH) // "Ma traduction"
+```
+
+Note that if the key is not found for the given locale, it will first try to fall back to searching for the key in the
+default locale, and if it is not found there either, the behavior will depend on the `MissingKeyPolicy` set in the
+configuration of the `Translator` (see the [Configuration](#configuration) section for more details) in case of
+the `Translator::t` method, and will simply return `null` in case of the `Translator::tn` method.
+
+### Variable interpolation
+
+Translations may contain variables, which can be interpolated with the `Translator::t` and `Translator::tn` methods.
+A variable must be delimited by an opening and a closing pair of symbols, which can be set with the configuration of the
+`Translator` (see the [Configuration](#configuration) section for more details). 
+By default, the symbols are `{` and `}`.
+
+Here is a few example of translations with variables:
+```json
+{
+  "hello": "Hello, {name}!",
+  "apple_dish": "With {apples} apple(s), you can make {dishes} dish(es).",
+  "indexed_trio": "Hello, {0}, {1}, and {2}!",
+  "unnamed_trio": "Hello, {}, {}, and {}!"
+}
+```
+
+```kt
+val translator = Translator.builder(Locale.ENGLISH)...build()
+translator.t("hello", mapOf("name" to "John")) // "Hello, John!"
+translator.t("apple_dish", mapOf("apples" to 3, "dishes" to 2)) // "With 3 apple(s), you can make 2 dish(es)."
+translator.t("indexed_trio", listOf("John", "Jane", "Jack")) // "Hello, John, Jane, and Jack!"
+translator.t("unnamed_trio", listOf("John", "Jane", "Jack")) // "Hello, John, Jane, and Jack!"
+```
+
+In fact, the rules for simple variable interpolation are the exact same as proposed by the 
+[Sprinkler Utils interpolation module](../utils/README.md#interpolation). Please refer to its documentation for more
+details.
+
+### Options
 
 ## Changelog
 
