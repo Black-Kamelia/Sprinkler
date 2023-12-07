@@ -147,7 +147,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @param maps the maps to add
      * @return this builder
      */
-    fun addMaps(maps: Map<Locale, Map<String, TranslationSourceData>>): TranslatorBuilder = apply {
+    fun addMaps(maps: Map<Locale, TranslationSourceMap>): TranslatorBuilder = apply {
         maps.forEach { (locale, map) ->
             addMap(locale, map)
         }
@@ -317,7 +317,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
     }
 
-    private fun loadPath(info: FileInfo): List<Pair<Locale, Map<String, TranslationSourceData>>> =
+    private fun loadPath(info: FileInfo): List<Pair<Locale, TranslationSourceMap>> =
         when {
             !info.path.exists() -> error("Path ${info.path} does not exist")
             info.path.isDirectory() -> { // if the path is a directory, load all files in it and return the list

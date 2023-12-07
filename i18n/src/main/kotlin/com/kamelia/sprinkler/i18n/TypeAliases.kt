@@ -75,15 +75,15 @@ typealias TranslationSourceData = Any
 
 /**
  * Represents a map that can be used to build a [Translator], using a [TranslatorBuilder]. Keys of this map are
- * [TranslationKeyParts][TranslationKeyPart] and values are [TranslationSourceData]s.
+ * [TranslationKeys][TranslationKey] and values are [TranslationSourceData]s.
  *
  * Whenever a function accepts a [TranslationSourceMap], it is the responsibility of the caller to ensure that the
  * given value respects the rules above. Any value that does not respect these rules will result in an exception being
  * thrown (the type of the exception will depend on the function).
  *
  * @see TranslatorBuilder
- * @see TranslationKeyPart
+ * @see TranslationKey
  * @see TranslationSourceData
  * @see Translator
  */
-typealias TranslationSourceMap = Map<TranslationKeyPart, TranslationSourceData>
+typealias TranslationSourceMap = Map<TranslationKey, TranslationSourceData>
