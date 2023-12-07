@@ -46,6 +46,18 @@ fun interface VariableFormatter {
      */
     fun format(value: Any, locale: Locale, extraArgs: List<String>): String
 
+    /**
+     * Formats the given [value] using the given [locale]. This is a convenience method that calls the [format] method
+     * with an [empty][emptyList] list of extra arguments.
+     *
+     * @param value the value to format
+     * @param locale the locale to use
+     * @return the formatted value
+     * @throws IllegalArgumentException if some of the extra arguments are invalid or not recognized by the formatter
+     * @throws Exception if an error occurs while formatting the value
+     */
+    fun format(value: Any, locale: Locale): String = format(value, locale, emptyList())
+
     companion object {
 
         /**
@@ -181,85 +193,76 @@ fun interface VariableFormatter {
             ::number.name to number(),
         )
 
-    }
-
-}
-
-private fun parseNumberFormatParams(formatter: NumberFormat, params: List<String>) {
-    params.forEach {
-        val tokens = it.split(":")
-        checkTokens(it, tokens.size)
-        val (key, value) = tokens
-        when (key) {
-            "minIntDigits" -> formatter.minimumIntegerDigits = value.toIntOrException(it)
-            "maxIntDigits" -> formatter.maximumIntegerDigits = value.toIntOrException(it)
-            "minFracDigits" -> formatter.minimumFractionDigits = value.toIntOrException(it)
-            "maxFracDigits" -> formatter.maximumFractionDigits = value.toIntOrException(it)
-            "groupingUsed" -> formatter.isGroupingUsed = value.toBooleanStrictOrNull()
-                ?: illegalArgument("Invalid parameter, expected 'true' or 'false', got '$value'.")
-            "roundingMode" -> formatter.roundingMode = RoundingMode.valueOf(value)
-            else -> illegalArgument("Unknown parameter: $key")
-        }
-    }
-}
-
-private enum class DateTimeFormatterKind {
-    DATE,
-    TIME,
-    DATE_TIME,
-}
-
-private fun createDateTimeFormatParams(kind: DateTimeFormatterKind, params: List<String>): DateTimeFormatter {
-    var firstFormat: FormatStyle = DEFAULT_FORMAT_STYLE
-    var secondFormat: FormatStyle = DEFAULT_FORMAT_STYLE
-    params.forEach {
-        val tokens = it.split(":")
-        checkTokens(it, tokens.size)
-        val (key, value) = tokens
-        if ("dateStyle" == key && (DateTimeFormatterKind.DATE == kind || DateTimeFormatterKind.DATE_TIME == kind)) {
-            firstFormat = formatStyle(value)
-        } else if ("timeStyle" == key && (kind == DateTimeFormatterKind.TIME || kind == DateTimeFormatterKind.DATE_TIME)) {
-            if (DateTimeFormatterKind.DATE_TIME == kind) {
-                secondFormat = formatStyle(value)
-            } else {
-                firstFormat = formatStyle(value)
+        private fun parseNumberFormatParams(formatter: NumberFormat, params: List<String>) {
+            params.forEach {
+                val tokens = it.split(":")
+                checkTokens(it, tokens.size)
+                val (key, value) = tokens
+                when (key) {
+                    "minIntDigits" -> formatter.minimumIntegerDigits = value.toIntOrException(it)
+                    "maxIntDigits" -> formatter.maximumIntegerDigits = value.toIntOrException(it)
+                    "minFracDigits" -> formatter.minimumFractionDigits = value.toIntOrException(it)
+                    "maxFracDigits" -> formatter.maximumFractionDigits = value.toIntOrException(it)
+                    "groupingUsed" -> formatter.isGroupingUsed = value.toBooleanStrictOrNull()
+                        ?: illegalArgument("Invalid parameter, expected 'true' or 'false', got '$value'.")
+                    "roundingMode" -> formatter.roundingMode = RoundingMode.valueOf(value)
+                    else -> illegalArgument("Unknown parameter: $key")
+                }
             }
-        } else {
-            illegalArgument("Unsupported parameter: $key")
         }
+
+        private enum class DateTimeFormatterKind {
+            DATE,
+            TIME,
+            DATE_TIME,
+        }
+
+        private fun createDateTimeFormatParams(kind: DateTimeFormatterKind, params: List<String>): DateTimeFormatter {
+            var firstFormat: FormatStyle = DEFAULT_FORMAT_STYLE
+            var secondFormat: FormatStyle = DEFAULT_FORMAT_STYLE
+            params.forEach {
+                val tokens = it.split(":")
+                checkTokens(it, tokens.size)
+                val (key, value) = tokens
+                if ("dateStyle" == key && (DateTimeFormatterKind.DATE == kind || DateTimeFormatterKind.DATE_TIME == kind)) {
+                    firstFormat = formatStyle(value)
+                } else if ("timeStyle" == key && (kind == DateTimeFormatterKind.TIME || kind == DateTimeFormatterKind.DATE_TIME)) {
+                    if (DateTimeFormatterKind.DATE_TIME == kind) {
+                        secondFormat = formatStyle(value)
+                    } else {
+                        firstFormat = formatStyle(value)
+                    }
+                } else {
+                    illegalArgument("Unsupported parameter: $key")
+                }
+            }
+
+            return when (kind) {
+                DateTimeFormatterKind.DATE -> DateTimeFormatter.ofLocalizedDate(firstFormat)
+                DateTimeFormatterKind.TIME -> DateTimeFormatter.ofLocalizedTime(firstFormat)
+                DateTimeFormatterKind.DATE_TIME -> DateTimeFormatter.ofLocalizedDateTime(firstFormat, secondFormat)
+            }
+        }
+
+        private fun formatStyle(string: String): FormatStyle = try {
+            FormatStyle.valueOf(string.uppercase(Locale.ENGLISH))
+        } catch (e: IllegalArgumentException) {
+            illegalArgument("Invalid format style: $string")
+        }
+
+        @Suppress("NOTHING_TO_INLINE")
+        private inline fun String.toIntOrException(token: String): Int {
+            return toIntOrNull() ?: illegalArgument("Invalid number format parameter: $token")
+        }
+
+        private fun checkTokens(root: String, size: Int) {
+            require(size == 2) {
+                "Invalid number format parameter, expected <key>:<value> but was '$root'"
+            }
+        }
+
+        private val DEFAULT_FORMAT_STYLE = FormatStyle.MEDIUM
+
     }
 
-    return when (kind) {
-        DateTimeFormatterKind.DATE -> DateTimeFormatter.ofLocalizedDate(firstFormat)
-        DateTimeFormatterKind.TIME -> DateTimeFormatter.ofLocalizedTime(firstFormat)
-        DateTimeFormatterKind.DATE_TIME -> DateTimeFormatter.ofLocalizedDateTime(firstFormat, secondFormat)
-    }
 }
-
-private fun formatStyle(string: String): FormatStyle = try {
-    FormatStyle.valueOf(string.uppercase(Locale.ENGLISH))
-} catch (e: IllegalArgumentException) {
-    illegalArgument("Invalid format style: $string")
-}
-
-@Suppress("NOTHING_TO_INLINE")
-private inline fun String.toIntOrException(token: String): Int {
-    return toIntOrNull() ?: illegalArgument("Invalid number format parameter: $token")
-}
-
-@Suppress("NOTHING_TO_INLINE")
-private inline fun castException(expected: Class<*>, actual: Any?): Nothing {
-    var message = "Expected ${expected.simpleName}, got '$actual'"
-    if (actual != null) {
-        message += " (${actual::class.simpleName})"
-    }
-    illegalArgument(message)
-}
-
-private fun checkTokens(root: String, size: Int) {
-    require(size == 2) {
-        "Invalid number format parameter, expected <key>:<value> but was '$root'"
-    }
-}
-
-private val DEFAULT_FORMAT_STYLE = FormatStyle.MEDIUM
