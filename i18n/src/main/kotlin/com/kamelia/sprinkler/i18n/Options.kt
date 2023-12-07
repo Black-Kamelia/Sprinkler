@@ -170,7 +170,7 @@ object Options {
  * val translator: Translator = ...
  * translator.t(
  *    "my.translation.key",
- *    options(Options.CONTEXT to "my-context")
+ *    mapOf(options(Options.CONTEXT to "my-context"))
  * )
  * ```
  *
