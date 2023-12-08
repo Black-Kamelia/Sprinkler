@@ -250,8 +250,9 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
 
         // once all data is added to the final map, we need to sort it
+        val comparator = keyComparator()
         val sortedMap = finalMap.mapValues { (_, map) ->
-            map.toSortedMap { key1, key2 -> keyComparator.compare(key1, key2) }
+            map.toSortedMap { key1, key2 -> comparator.compare(key1, key2) }
         }
 
         val data = TranslatorData(defaultLocale, sortedMap, config)

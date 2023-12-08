@@ -12,35 +12,35 @@ private const val KEY_IDENTIFIER_REGEX_STRING = """[a-zA-Z\d]+(?:[-_][a-zA-Z\d]+
 
 internal val KEY_REGEX = """$KEY_IDENTIFIER_REGEX_STRING(?:\.$KEY_IDENTIFIER_REGEX_STRING)*""".toRegex()
 
-private val charComparator = Comparator { o1: Char, o2: Char ->
-    when {
-        o1 == o2 -> 0
-        '.' == o1 -> -1
-        '.' == o2 -> 1
-        else -> o1.compareTo(o2)
+internal fun keyComparator(): Comparator<String> {
+    val charComparator = Comparator { o1: Char, o2: Char ->
+        when {
+            o1 == o2 -> 0
+            '.' == o1 -> -1
+            '.' == o2 -> 1
+            else -> o1.compareTo(o2)
+        }
+    }
+    return Comparator { o1: String, o2: String ->
+        val firstIt = o1.iterator()
+        val secondIt = o2.iterator()
+
+        while (firstIt.hasNext() && secondIt.hasNext()) {
+            val first = firstIt.nextChar()
+            val second = secondIt.nextChar()
+            val result = charComparator.compare(first, second)
+            if (result != 0) return@Comparator result
+        }
+
+        if (firstIt.hasNext()) {
+            1
+        } else if (secondIt.hasNext()) {
+            -1
+        } else {
+            0
+        }
     }
 }
-
-internal val keyComparator = Comparator { o1: String, o2: String ->
-    val firstIt = o1.iterator()
-    val secondIt = o2.iterator()
-
-    while (firstIt.hasNext() && secondIt.hasNext()) {
-        val first = firstIt.nextChar()
-        val second = secondIt.nextChar()
-        val result = charComparator.compare(first, second)
-        if (result != 0) return@Comparator result
-    }
-
-    if (firstIt.hasNext()) {
-        1
-    } else if (secondIt.hasNext()) {
-        -1
-    } else {
-        0
-    }
-}
-
 
 internal fun keyNotFound(
     key: TranslationKey,
