@@ -62,26 +62,28 @@ fun String.interpolate(
                 state = State.DEFAULT
             }
             State.IN_VARIABLE -> {
-                if (delimiters.variableEnd == char) { // end of the variable
-                    val key = if (keyBuilder.isEmpty()) { // if the key is empty, use the variable count
-                        variableCount.toString()
-                    } else {
-                        keyBuilder.toString()
-                    }
-
-                    val value = try { // try to resolve the variable
-                        resolver.value(key, delimiters)
-                    } catch (e: VariableResolver.ResolutionException) {
-                        illegalArgument("Error while resolving variable '$key': ${e.message!!}")
-                    }
-
-                    builder.append(value)
-                    keyBuilder = StringBuilder()
-                    state = State.DEFAULT
-                    variableCount++
-                } else { // append the current character to the key
+                if (delimiters.variableEnd != char) { // append the current character to the key
                     keyBuilder.append(char)
+                    return@forEach
                 }
+
+                // end of the variable
+                val key = if (keyBuilder.isEmpty()) { // if the key is empty, use the variable count
+                    variableCount.toString()
+                } else {
+                    keyBuilder.toString()
+                }
+
+                val value = try { // try to resolve the variable
+                    resolver.value(key, delimiters)
+                } catch (e: VariableResolver.ResolutionException) {
+                    illegalArgument("Error while resolving variable '$key': ${e.message!!}")
+                }
+
+                builder.append(value)
+                keyBuilder = StringBuilder()
+                state = State.DEFAULT
+                variableCount++
             }
         }
     }
