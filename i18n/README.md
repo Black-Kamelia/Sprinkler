@@ -13,8 +13,8 @@
   - [Building](#building)
 - [Translator](#translator)
   - [Basic usage](#basic-usage)
-  - [Variable interpolation](#variable-interpolation)
-  - [Options](#options)
+  - [Sections](#sections)
+  - [`extraArgs`](#extraargs)
 - [Configuration](#configuration)
   - [`interpolationDelimiter`](#interpolationdelimiter)
   - [`pluralMapper`](#pluralmapper)
@@ -25,7 +25,7 @@
 ## Intentions
 
 This module provides a simple way to manage internationalization in a Java/Kotlin project, with features such as
-variable interpolation and formatting, and automatic loading of translation files
+variable interpolation and formatting, and loading of translation files.
 
 ## TranslatorBuilder
 
@@ -54,6 +54,18 @@ Any value that does not respect these rules will result in an exception being th
 A set of those associations is a `TranslationSourceMap`, which is a type alias for 
 `Map<TranslationKey, TranslationSourceData>`.
 
+`TranslationSourceData` is in fact a type alias of `Any`, but is restricted at runtime and can be one of the following 
+types:
+- `String`
+- `Boolean`
+- Subtype of `Number` (e.g. `Int`, `Long`, `Double`, etc.)
+- `List` of `TranslationSourceData`
+- `TranslationSourceMap`
+
+Whenever a function accepts a `TranslationSourceData`, it is the responsibility of the caller to ensure that the
+given value respects the rules above. Any value that does not respect these rules will result in an exception being
+thrown.
+
 ### Adding translations
 
 To start off, one has to obtain an instance of `TranslatorBuilder` thanks to the `Translator::builder` static method, 
@@ -68,7 +80,7 @@ a `TranslationSourceMap`. This method can be called multiple times, and the `Tra
 (accordingly to the [`DuplicatedKeyResolution`](#duplicatedkeyresolution) strategy).
 
 ```kt
-val builder = Translator.builder(Locale.ENGLISH)
+val translator = Translator.builder(Locale.ENGLISH)
     .addMap(Locale.ENGLISH, mapOf(
         "foo" to "My translation",
         "bar" to "My other translation"
@@ -77,6 +89,7 @@ val builder = Translator.builder(Locale.ENGLISH)
         "foo" to "Ma traduction",
         "bar" to "Mon autre traduction"
     ))
+    .build()
 ```
 
 (The `TranslatorBuilder::addMaps` works in very much the same way, except that it takes a 
@@ -100,8 +113,9 @@ assets/
 
 Then, we can load the translations from it like so:
 ```kt
-val builder = Translator.builder(Locale.ENGLISH)
+val translator = Translator.builder(Locale.ENGLISH)
     .addFile(Path.of("assets/locales"))
+    .build()
 ```
 
 The builder will automatically load the translations from the files, for the locales `Locale.ENGLISH` and
@@ -139,10 +153,11 @@ val translator = Translator.builder(Locale.ENGLISH)
     .build()
 ```
 
-## Translator
+Note that actual computing and merging of the translations will only be done when the `TranslatorBuilder::build` method
+is called. This means that if there are duplicated keys, the `DuplicatedKeyResolutionPolicy` will be triggered at this
+point, and that files will only be loaded at this point as well.
 
-`Translators` are immutable structure, and therefore thread-safe. None of their methods will ever modify their internal
-state of the object.
+## Translator
 
 This is important to understand, as the method to change the current locale, `Translator::withCurrentLocale`, returns
 a new instance of `Translator` with the new locale.
@@ -150,20 +165,7 @@ a new instance of `Translator` with the new locale.
 ### Basic usage
 
 At its most basic level, one can use the `Translator::t` (as in "translate") and `Translator::tn`(as in "translate or 
-null") methods to obtain the value associated to a `TranslationKey` for the current locale.
-
-```kt
-val translator = Translator.builder(Locale.ENGLISH)...build()
-translator.t("foo") // "My translation"
-translator.t("bar") // "My other translation"
-
-val translatorFr = translator.withCurrentLocale(Locale.FRENCH)
-translatorFr.t("foo") // "Ma traduction"
-translatorFr.t("bar") // "Mon autre traduction"
-```
-
-However, it is to be noted that one of the overloads of these methods can take a `Locale` as a parameter, which will
-be used instead of the current locale.
+null") methods to obtain the value associated to a `TranslationKey` for the given locale.
 
 ```kt
 val translator = Translator.builder(Locale.ENGLISH)...build()
@@ -171,12 +173,45 @@ translator.t("foo", Locale.ENGLISH) // "My translation"
 translator.t("foo", Locale.FRENCH) // "Ma traduction"
 ```
 
-Note that if the key is not found for the given locale, it will first try to fall back to searching for the key in the
-default locale, and if it is not found there either, the behavior will depend on the `MissingKeyPolicy` set in the
+Note that if the key is not found for the given locale, the resulting behavior will depend on a few things.
+Indeed, there are several overloads of the `Translator::t` and `Translator::tn` methods, and some of them take in a few
+more parameters, such as:
+- a `fallbackLocale`, which is the locale that will be used if the key is not found for the given locale. If this
+  parameter is not set, then the `Translator`'s default locale will be used.
+- a vararg `fallbacks`, which are fallback keys that will be used if the key is not found for the given locale.
+
+Returns the translation using the provided information. If the translation is not found, it will return null.
+
+The order of resolution is the following:
+- First, the translation is searched for the given `key` and `locale`.
+- Then, it will try to find a valid translation for the keys provided in `fallbacks` in order.
+- The next step is, if the `locale` is different from the `fallbackLocale`, to repeat the previous steps using
+the `fallbackLocale` instead of the `locale`.
+- Finally, if no translation is found, the behavior will depend on the `MissingKeyPolicy` set in the
 configuration of the `Translator` (see the [Configuration](#configuration) section for more details) in case of
 the `Translator::t` method, and will simply return `null` in case of the `Translator::tn` method.
 
-### Variable interpolation
+It is to be noted that a `Translator` also has a `currentLocale` property. To change this property, one can use
+the `Translator::withCurrentLocale` method, which returns a new instance of `Translator` with the new locale.
+
+```kt
+val translator = Translator.builder(Locale.ENGLISH)...build()
+translator.t("foo") // "My translation"
+
+val translatorFr = translator.withCurrentLocale(Locale.FRENCH)
+translatorFr.t("foo") // "Ma traduction"
+```
+
+### Sections
+
+`Translators` are immutable structure, and therefore thread-safe. None of their methods will ever modify their internal
+state of the object.
+
+TODO
+
+### `extraArgs`
+
+#### Simple variables
 
 Translations may contain variables, which can be interpolated with the `Translator::t` and `Translator::tn` methods.
 A variable must be delimited by an opening and a closing pair of symbols, which can be set with the configuration of the
@@ -188,8 +223,6 @@ Here is a few example of translations with variables:
 {
   "hello": "Hello, {name}!",
   "apple_dish": "With {apples} apple(s), you can make {dishes} dish(es).",
-  "indexed_trio": "Hello, {0}, {1}, and {2}!",
-  "unnamed_trio": "Hello, {}, {}, and {}!"
 }
 ```
 
@@ -197,15 +230,114 @@ Here is a few example of translations with variables:
 val translator = Translator.builder(Locale.ENGLISH)...build()
 translator.t("hello", mapOf("name" to "John")) // "Hello, John!"
 translator.t("apple_dish", mapOf("apples" to 3, "dishes" to 2)) // "With 3 apple(s), you can make 2 dish(es)."
-translator.t("indexed_trio", listOf("John", "Jane", "Jack")) // "Hello, John, Jane, and Jack!"
-translator.t("unnamed_trio", listOf("John", "Jane", "Jack")) // "Hello, John, Jane, and Jack!"
 ```
 
 In fact, the rules for simple variable interpolation are the exact same as proposed by the 
 [Sprinkler Utils interpolation module](../utils/README.md#interpolation). Please refer to its documentation for more
 details.
 
-### Options
+#### Options
+
+There is also a special argument: `"options"`, which is a `Map` of option names (`String`) to option values (`Any`).
+The way to pass these options is as follows:
+```kt
+translator.t("foo", mapOf("options" to mapOf("count" to 3)))
+```
+
+Here are the options that are currently supported:
+- `context`: The value must be a `String`. The most common use case is to disambiguate gender, like in the following 
+  example:
+  ```kt
+  // content:
+  // {
+  //   "greetings_male": "Hello mister",
+  //   "greetings_female": "Hello miss"
+  // }
+  val translator: Translator = ...
+  
+  fun greetings(isMale: Boolean) {
+      val value = translator.t(
+          "greetings",
+          mapOf("options" to mapOf("context" to (if (isMale) "male" else "female")))
+      )
+      println(value)
+  }
+  ```
+  As shown in the example above, the context actually appends the value to the key, separated by an underscore.
+  **NOTE**: The context is appended to the key before the **_plural_** value (e.g. `key_male_one`).
+- `count`: The value must be a positive `Int`. The most common use case is to disambiguate the plural form of a word, 
+  like in the following example:
+  ```kt
+  // content:
+  // {
+  //   "item_zero": "I have no items",
+  //   "item_one": "I have one item",
+  //   "item_other": "I have several items"
+  // }
+  val translator: Translator = ...
+  
+  fun items(count: Int) {
+     val value = translator.t(
+         "item",
+         mapOf("options" to mapOf("count" to count))
+     )
+     println(value)
+  }
+  ```
+  As shown in the example above, the plural value actually appends the value to the key, separated by an underscore.
+  **NOTE**: The plural value is appended to the key after the **_context_** (e.g. `key_male_one`).
+- `ordinal`: The value must be a `Boolean`. The most common use case is to disambiguate the ordinal form of a word, 
+  like in the following example:
+   ```kt
+   // content:
+   // {
+   //   "item_ordinal_one": "I arrived {count}st",
+   //   "item_ordinal_two": "I arrived {count}nd",
+   //   "item_ordinal_few": "I arrived {count}rd",
+   //   "item_ordinal_other": "I arrived {rank}th"
+   // }
+   val translator: Translator = ...
+  
+   fun rank(count: Int) {
+      val value = translator.t(
+          "item",
+          mapOf("options" to mapOf(
+              "count" to count,
+              "ordinal" to true
+          ))
+      )
+      println(value)
+   }
+   ```
+   As shown in the example above, the `ordinal` literal is appended to the key, separated by an underscore.
+   **NOTE**: The value is right before the **_plural_** value (e.g. a possible key with `key_male_ordinal_one`).
+
+Note that there is a cleaner way to use these options thanks to the `options` factory, and the constants available in
+the `Options` object:
+```kt
+// content:
+// {
+//   "contest_male_ordinal_one": "{name} made a pie with his {fruits}, and arrived {count}st",
+//   ...
+// }
+
+val string = translator.t(
+    "contest",
+    mapOf(
+        "name" to "James",
+        "fruits" to "apples",
+        options(Options.COUNT to 1, Options.ORDINAL to true, Options.CONTEXT to "male")
+    )
+)
+println(string) // "James made a pie with his apples, and arrived 1st"
+```
+
+The resolution order for the variable names is the following:
+- First, the name is searched for in the `extraArgs` map.
+- If it is not found, then the name is searched for in the `options` map (which is why one can use the "count" variable
+  by only passing it in the `options` map).
+
+#### Formatting
 
 TODO
 
@@ -222,7 +354,7 @@ or not setting a specific property will result in the default value being used):
 val translator = Translator.builder(Locale.ENGLISH)
     ...
     .withConfiguration(TranslatorConfiguration.create {
-        interpolationDelimiter = VariableDelimiter('{', '}')
+        interpolationDelimiter = VariableDelimiter.DEFAULT
         pluralMapper = Plural.Mapper.defaultMapper()
         formats = VariableFormatter.builtins()
         missingKeyPolicy = MissingKeyPolicy.THROW_EXCEPTION
@@ -233,9 +365,7 @@ val translator = Translator.builder(Locale.ENGLISH)
 ### `interpolationDelimiter`
 
 This property is used to set the symbols that will be used to delimit variables in translations. It is a
-`VariableDelimiter` object, with a constructor that takes in two `String`s: the opening and closing symbols.
-
-By default, the opening and closing symbols are `{` and `}` respectively.
+`VariableDelimiter`, which comes from the [Sprinkler Utils interpolation module](../utils/README.md#interpolation).
 
 ### `pluralMapper`
 
@@ -257,10 +387,7 @@ ordinal form is used when the translation is used to represent an ordinal number
 instead of a cardinal number (for example, "1", "2", "3", etc.).
 
 By default, the `Plural.Mapper.defaultMapper` method is used to create the `Plural.Mapper` object, which uses the
-simplified English plural rules:
-- Plural form: `Plural.ONE` if `count` is equal to `1`, `Plural.OTHER` otherwise.
-- Ordinal form: for `mod = count % 10`, `Plural.ONE` if `mod` is equal to `1`, `Plural.TWO` if `mod` is equal to `2`,
-  `Plural.FEW` if `mod` is equal to `3`, `Plural.OTHER` otherwise.
+simplified [English plural rules](https://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html#en)
 
 ### `formats`
 
