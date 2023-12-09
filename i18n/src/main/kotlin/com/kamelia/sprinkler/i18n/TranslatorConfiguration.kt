@@ -92,7 +92,7 @@ class TranslatorConfiguration internal constructor(
         internal fun build(): TranslatorConfiguration = TranslatorConfiguration(
             interpolationDelimiter,
             pluralMapper,
-            formats,
+            formats.toMap(),
             missingKeyPolicy,
         )
 
