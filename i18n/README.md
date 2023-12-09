@@ -11,6 +11,15 @@
   - [DuplicatedKeyResolution](#duplicatedkeyresolution)
   - [Settings](#settings)
   - [Building](#building)
+- [Translator](#translator)
+  - [Basic usage](#basic-usage)
+  - [Variable interpolation](#variable-interpolation)
+  - [Options](#options)
+- [Configuration](#configuration)
+  - [`interpolationDelimiter`](#interpolationdelimiter)
+  - [`pluralMapper`](#pluralmapper)
+  - [`formats`](#formats)
+  - [`missingKeyPolicy`](#missingkeypolicy)
 - [Changelog](#changelog)
 
 ## Intentions
@@ -197,6 +206,74 @@ In fact, the rules for simple variable interpolation are the exact same as propo
 details.
 
 ### Options
+
+TODO
+
+## Configuration
+
+As said in the [builder section](#translatorbuilder), the `TranslatorBuilder` has a method to set the configuration of
+the `Translator`: `TranslatorBuilder::withConfiguration`. This method takes in a `TranslatorConfiguration` object, which
+can be built with the `TranslatorConfiguration::create` DSL builder.
+
+Here is an example of a configuration with all the settings set to their default values (not setting the configuration,
+or not setting a specific property will result in the default value being used):
+
+```kt
+val translator = Translator.builder(Locale.ENGLISH)
+    ...
+    .withConfiguration(TranslatorConfiguration.create {
+        interpolationDelimiter = VariableDelimiter('{', '}')
+        pluralMapper = Plural.Mapper.defaultMapper()
+        formats = VariableFormatter.builtins()
+        missingKeyPolicy = MissingKeyPolicy.THROW_EXCEPTION
+    })
+    .build()
+```
+
+### `interpolationDelimiter`
+
+This property is used to set the symbols that will be used to delimit variables in translations. It is a
+`VariableDelimiter` object, with a constructor that takes in two `String`s: the opening and closing symbols.
+
+By default, the opening and closing symbols are `{` and `}` respectively.
+
+### `pluralMapper`
+
+This property is used to set the `Plural.Mapper` that will be used to determine the plural form of a translation. It is
+an interface with two methods which both take in a `Locale` and `Int` (which corresponds to the `count` option during
+pluralization). Both of these methods must return a `Plural` enum value, which follow and represent the 
+[CLDR plural rules](https://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html). That is to say,
+the possible values are:
+- `Plural.ZERO`
+- `Plural.ONE`
+- `Plural.TWO`
+- `Plural.FEW`
+- `Plural.MANY`
+- `Plural.OTHER`
+
+The two methods are `Plural.Mapper::mapPlural` and `Plural.Mapper::mapOrdinal`, which are used to determine the plural
+form of a translation, and the ordinal form of a translation respectively. The difference between the two is that the
+ordinal form is used when the translation is used to represent an ordinal number (for example, "1st", "2nd", "3rd", etc.)
+instead of a cardinal number (for example, "1", "2", "3", etc.).
+
+By default, the `Plural.Mapper.defaultMapper` method is used to create the `Plural.Mapper` object, which uses the
+simplified English plural rules:
+- Plural form: `Plural.ONE` if `count` is equal to `1`, `Plural.OTHER` otherwise.
+- Ordinal form: for `mod = count % 10`, `Plural.ONE` if `mod` is equal to `1`, `Plural.TWO` if `mod` is equal to `2`,
+  `Plural.FEW` if `mod` is equal to `3`, `Plural.OTHER` otherwise.
+
+### `formats`
+
+TODO
+
+### `missingKeyPolicy`
+
+This property is used to set the policy that will be used when a translation is not found for a given key. It is a
+`MissingKeyPolicy` enum value, which can be one of the following:
+- `MissingKeyPolicy.THROW_EXCEPTION`: throws an exception when a translation is not found for a given key.
+- `MissingKeyPolicy.RETURN_KEY`: returns the key itself when a translation is not found for a given key.
+
+By default, the `MissingKeyPolicy.THROW_EXCEPTION` value is used.
 
 ## Changelog
 
