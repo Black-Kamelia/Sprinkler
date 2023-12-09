@@ -251,15 +251,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
 
         // once all data is added to the final map, we need to sort it
         val sortedMap = finalMap.mapValues { (_, map) ->
-            map.asSequence()
-                // the sort is done on each key part, so we need to split the key
-                .map { (key, value) -> key.split('.') to value }
-                // TODO try to sort without the split
-                .sortedWith { (first, _), (second, _) ->
-                    stringListComparator(first, second)
-                }
-                .map { (key, value) -> key.joinToString(".") to value }
-                .toMap()
+            map.toSortedMap { key1, key2 -> keyComparator.compare(key1, key2) }
         }
 
         val data = TranslatorData(defaultLocale, sortedMap, config)

@@ -92,28 +92,4 @@ class TranslatorBuilderTest {
         Assertions.assertEquals("test2", translator.t("test"))
     }
 
-    @Test
-    fun `stringListComparator works with empty lists`() {
-        Assertions.assertEquals(0, stringListComparator(emptyList(), emptyList()))
-    }
-
-    @Test
-    fun `stringListComparator works with lists of same size`() {
-        Assertions.assertEquals(0, stringListComparator(listOf("test"), listOf("test")))
-    }
-
-    @Test
-    fun `stringListComparator works with lists of different size (first is smaller)`() {
-        Assertions.assertEquals(-1, stringListComparator(emptyList(), listOf("test")))
-    }
-
-    @Test
-    fun `stringListComparator works with lists of different size (first is bigger)`() {
-        Assertions.assertEquals(1, stringListComparator(listOf("test"), emptyList()))
-    }
-
-    @Test
-    fun `stringListComparator works with lists of same size but different content`() {
-        Assertions.assertEquals(-1, stringListComparator(listOf("test"), listOf("test2")))
-    }
 }
