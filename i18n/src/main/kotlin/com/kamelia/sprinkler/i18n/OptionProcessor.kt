@@ -76,7 +76,8 @@ internal object OptionProcessor {
         interpolationDelimiter: VariableDelimiter,
         formats: Map<String, VariableFormatter>,
     ): String {
-        if (options.isEmpty() && interpolationDelimiter.variableStart !in value) {
+        val hasVariable = checkValue(value, interpolationDelimiter)
+        if (options.isEmpty() && !hasVariable) {
             return value
         }
 
@@ -126,6 +127,33 @@ internal object OptionProcessor {
             "Cannot cast $value (${value.javaClass}) to ${T::class.java}"
         }
         return value
+    }
+
+    private fun checkValue(value: String, limiter: VariableDelimiter): Boolean {
+        if (value.isEmpty()) return true
+
+        var escaping = false
+        var lastChar = value[0]
+        var found = false
+        for (index in 1 until value.length) {
+            val element = value[index]
+            if (escaping) {
+                escaping = false
+                continue
+            }
+            when (element) {
+                '\\' -> escaping = true
+                limiter.variableStart -> found = true
+                limiter.variableEnd -> {
+                    if (lastChar == limiter.variableStart) {
+                        throw IllegalStateException("Empty variable name in '$value'")
+                    }
+                }
+            }
+            lastChar = element
+        }
+
+        return found
     }
 
     @Language("RegExp")

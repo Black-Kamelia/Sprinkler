@@ -295,18 +295,19 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     private fun addValue(locale: Locale, finalMap: HashMap<String, String>, key: String, value: TranslationSourceData) {
+        val stringValue = value.toString()
         when (duplicatedKeyResolution) {
             // if resolution is FAIL, we need to check that the key is not already present
             DuplicatedKeyResolution.FAIL -> {
                 finalMap.compute(key) { _, old ->
                     check(old == null) { "Duplicate key '$key' for locale '$locale'" }
-                    value.toString()
+                    stringValue
                 }
             }
             // if resolution is KEEP_FIRST and old is null, we can add the value
-            DuplicatedKeyResolution.KEEP_FIRST -> finalMap.computeIfAbsent(key) { value.toString() }
+            DuplicatedKeyResolution.KEEP_FIRST -> finalMap.computeIfAbsent(key) { stringValue }
             // if resolution is KEEP_LAST, we always add the value
-            DuplicatedKeyResolution.KEEP_LAST -> finalMap[key] = value.toString()
+            DuplicatedKeyResolution.KEEP_LAST -> finalMap[key] = stringValue
         }
     }
 
