@@ -1,12 +1,8 @@
 package com.kamelia.sprinkler.i18n
 
 /**
- * TODO: add documentation
- */
-typealias TranslationInterpolationVariable = String
-
-/**
- * Represents a part of a translation key. It composes a [TranslationKey].
+ * Represents an identifier used in this library. It is used in several places to identify elements, such as translation
+ * keys, formatters, etc.
  *
  * It should respect the following rules:
  * - It cannot be empty
@@ -14,26 +10,36 @@ typealias TranslationInterpolationVariable = String
  * - It can contain alphanumeric characters, dashes and underscores
  * - It cannot contain two consecutive dashes or underscores (or a dash followed by an underscore or vice-versa).
  *
- * Here are some examples of valid [TranslationKeyPart]s:
+ * Here are some examples of valid [Identifier]s:
  * - `my-key`
  * - `my_key`
  * - `myKey`
  * - `1`
  *
- * Whenever a function accepts a [TranslationKeyPart], it is the responsibility of the caller to ensure that the
+ * Whenever a function accepts a [Identifier], it is the responsibility of the caller to ensure that the
  * given value respects the rules above. Any value that does not respect these rules will result in an exception being
  * thrown (the type of the exception will depend on the function).
  *
- * **NOTE**: the regex of [TranslationKeyPart] is `[a-zA-Z\d]+(?:-|_[a-zA-Z\d]+)*`.
+ * **NOTE**: the regex of [Identifier] is `[a-zA-Z\d]+(?:-|_[a-zA-Z\d]+)*`.
  *
  * @see TranslationKey
  * @see Translator
  */
-typealias TranslationKeyPart = String
+typealias Identifier = String
+
+/**
+ * Represents the syntax of a translation variable, however, it does not take into account the delimiters, but only the
+ * characters within the delimiters.
+ *
+ * It should respect the following rules:
+ * - Empty variables are not allowed
+ * - It can only contain alphanumeric characters, dashes and underscores
+ */
+typealias TranslationInterpolationVariable = String
 
 /**
  * Represents a translation key. It is used to identify a translation in a [Translator]. It is composed of one or more
- * [TranslationKeyPart]s separated by a dot.
+ * [Identifier]s separated by a dot.
  *
  * Here are some examples of valid [TranslationKey]s:
  * - `my-root.my-node.my-key`
@@ -46,9 +52,9 @@ typealias TranslationKeyPart = String
  * (the type of the exception will depend on the function).
  *
  * **NOTE**: the regex of [TranslationKey] is `[a-zA-Z\d]+(?:-|_[a-zA-Z\d]+)*(?:\.[a-zA-Z\d]+(?:-|_[a-zA-Z\d]+)*)*`. as
- * defined in [TranslationKeyPart].
+ * defined in [Identifier].
  *
- * @see TranslationKeyPart
+ * @see Identifier
  * @see Translator
  */
 typealias TranslationKey = String

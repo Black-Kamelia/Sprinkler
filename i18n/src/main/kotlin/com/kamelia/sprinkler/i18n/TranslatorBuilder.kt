@@ -41,7 +41,7 @@ import kotlin.io.path.readText
  * - the [Translator.t] method will behave according to the [TranslatorConfiguration.missingKeyPolicy] chosen when
  * creating the translator, in case the key is not found;
  * - the returned map of [Translator.toMap] will be sorted according to the lexical order of the
- * [key parts][TranslationKeyPart] of the keys (the map is created every time the method is called);
+ * [key parts][Identifier] of the keys (the map is created every time the method is called);
  * - [toString] will use [toMap] under the hood to create the string representation of the translator;
  * - To be interpolated on [t][Translator.t] method call, values stored in the translator must contain variable defined
  * inside [delimiters][TranslatorConfiguration.Builder.interpolationDelimiter] defined in the translator configuration. For more
@@ -376,7 +376,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             }
             "yaml", "yml" -> {
                 try {
-                    Yaml().load<Map<TranslationKeyPart, TranslationSourceData>>(path.readText())
+                    Yaml().load<Map<TranslationKey, TranslationSourceData>>(path.readText())
                 } catch (e: YAMLException) {
                     throw IllegalStateException("Invalid YAML file.", e)
                 }
