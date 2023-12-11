@@ -82,8 +82,7 @@ internal object OptionProcessor {
         }
 
         val customResolver = VariableResolver { name, _ ->
-            val tokens = VARIABLE_REGEX.matchEntire(name)
-                ?: error("Invalid variable name '$name', variables should match the following regex: ${VARIABLE_REGEX.pattern}")
+            val tokens = VARIABLE_REGEX.matchEntire(name)!! // it should always match
 
             val values = tokens.groupValues
 
@@ -159,7 +158,7 @@ internal object OptionProcessor {
     @Language("RegExp")
     private const val FORMAT_REGEX = """,\s*(\w+)(?:\(([^,()]+(?:,\s*[^,()]+)*)\))?"""
 
-    private val VARIABLE_REGEX = """(\w+)(?:$FORMAT_REGEX)?""".toRegex()
+    private val VARIABLE_REGEX = """$IDENTIFIER(?:$FORMAT_REGEX)?""".toRegex()
 
     private val FORMAT_PARAM_SPLIT_REGEX = """,\s*""".toRegex()
 

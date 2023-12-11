@@ -8,9 +8,14 @@ import java.util.*
 import org.intellij.lang.annotations.Language
 
 @Language("RegExp")
-private const val KEY_IDENTIFIER_REGEX_STRING = """[a-zA-Z\d]+(?:[-_][a-zA-Z\d]+)*"""
+internal const val IDENTIFIER = """[a-zA-Z\d]+(?:[-_][a-zA-Z\d]+)*"""
 
-internal val KEY_REGEX = """$KEY_IDENTIFIER_REGEX_STRING(?:\.$KEY_IDENTIFIER_REGEX_STRING)*""".toRegex()
+@Language("RegExp")
+internal const val FORMAT_REGEX = """\s*,\s*$IDENTIFIER(?:\([^,()]+(?:\s*,\s*[^,()]+)*\))?"""
+
+private val VARIABLE_REGEX = """$IDENTIFIER(?:$FORMAT_REGEX)?""".toRegex()
+
+internal val KEY_REGEX = """$IDENTIFIER(?:\.$IDENTIFIER)*""".toRegex()
 
 internal fun keyComparator(): Comparator<String> {
     val charComparator = Comparator { o1: Char, o2: Char ->
