@@ -297,12 +297,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     private fun addValue(locale: Locale, finalMap: HashMap<String, String>, key: String, value: TranslationSourceData) {
         val stringValue = value.toString()
         try {
-
-            checkValueFormat(
-                stringValue,
-                config.interpolationDelimiter.variableStart,
-                config.interpolationDelimiter.variableEnd
-            )
+            val delimiter = config.interpolationDelimiter
+            checkValueFormat(stringValue, delimiter.variableStart, delimiter.variableEnd)
         } catch (e: IllegalStateException) {
             throw IllegalStateException("Error for key '$key' and locale '$locale'. ${e.message}")
         }
@@ -402,151 +398,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
     }
 
-    private enum class State(val acceptMultipleDashOrUnderscore: Boolean) {
-        NORMAL(true),
-        VARIABLE_NAME(false),
-        VARIABLE_FORMAT_NAME(false),
-        VARIABLE_FORMAT_NAME_LEADING_SPACES(false),
-        VARIABLE_FORMAT_PARAMETERS_KEY(true),
-        VARIABLE_FORMAT_PARAMETERS_VALUE(true),
-        VARIABLE_FORMAT_AFTER(false),
-    }
-
-    private fun isValidChar(char: Char): Boolean = char.isLetterOrDigit() || char == '_' || char == '-'
-
-    private fun Char.isDashOrUnderscore(): Boolean = this == '-' || this == '_'
-
-    // TODO someday try to use a regex instead of this big boi
-    private fun checkValueFormat(value: String, start: Char, end: Char) {
-        var state = State.NORMAL
-        var escaping = false
-        var count = 0
-        var lastChar = ' ' // any char that is not a dash or an underscore is fine
-
-        value.forEachIndexed { index, char ->
-            // check for consecutive dashes or underscores
-            check(
-                state.acceptMultipleDashOrUnderscore
-                            || !char.isDashOrUnderscore()
-                            || !lastChar.isDashOrUnderscore()
-            ) {
-                "Invalid character '$char' at index $index: $value"
-            }
-            if (escaping) { // skip escaped char
-                escaping = false
-                lastChar = char
-                count++
-                return@forEachIndexed
-            } else if (char == '\\') { // start escaping
-                escaping = true
-                return@forEachIndexed
-            }
-
-            when (state) {
-                State.NORMAL -> {
-                    if (start == char) { // only transition is to variable name
-                        state = State.VARIABLE_NAME
-                    }
-                }
-                State.VARIABLE_NAME -> {
-                    if (end == char || ',' == char) { // end of variable or start of format
-                        check(count > 0) { // check for empty variable name
-                            "Empty variable name at index $index: $value"
-                        }
-                        check(!lastChar.isDashOrUnderscore()) { // check for trailing dash or underscore
-                            "Invalid character '$char' at index $index: $value"
-                        }
-                        count = 0 // reset count
-                        state = if (end == char) { // update state
-                            State.NORMAL // end of variable
-                        } else {
-                            State.VARIABLE_FORMAT_NAME_LEADING_SPACES // start of format
-                        }
-                    } else { // otherwise, just check for valid char
-                        check(isValidChar(char)) {
-                            "Invalid character '$char' at index $index: $value"
-                        }
-                        count++
-                    }
-                }
-                State.VARIABLE_FORMAT_NAME_LEADING_SPACES -> {
-                    if (' ' != char) { // only transition is to variable format name
-                        check(char.isLetterOrDigit()) { // check for valid char, this check disallows dashes and underscores
-                            "Invalid character '$char' at index $index: $value"
-                        }
-                        state = State.VARIABLE_FORMAT_NAME
-                        count = 1 // because we already have one valid char
-                    }
-                }
-                State.VARIABLE_FORMAT_NAME -> {
-                    if (end == char || '(' == char) { // end of format or start of format parameters
-                        check(count > 0) { // check for empty format name
-                            "Empty format name at index $index: $value"
-                        }
-                        check(!lastChar.isDashOrUnderscore()) { // check for trailing dash or underscore
-                            "Invalid character '$char' at index $index: $value"
-                        }
-                        count = 0
-                        state = if (end == char) { // update state
-                            State.NORMAL // end of format
-                        } else {
-                            State.VARIABLE_FORMAT_PARAMETERS_KEY // start of format parameters
-                        }
-                    } else { // otherwise, just check for valid char
-                        check(isValidChar(char)) {
-                            "Invalid character '$char' at index $index: $value"
-                        }
-                        count++
-                    }
-                }
-                State.VARIABLE_FORMAT_PARAMETERS_KEY -> {
-                    when (char) {
-                        ':' -> { // only transition is to variable format parameters value
-                            if (count == 0) { // check for empty format parameter key
-                                throw IllegalStateException("Empty format parameter key at index $index: $value")
-                            }
-                            count = 0
-                            state = State.VARIABLE_FORMAT_PARAMETERS_VALUE
-                        }
-                        // end of variable or start of another format parameter is not allowed
-                        ')', ',', end -> throw IllegalStateException("Missing format parameter value at index $index: $value")
-                        else -> count++
-                    }
-                }
-                State.VARIABLE_FORMAT_PARAMETERS_VALUE -> {
-                    when (char) {
-                        ')', ',' -> { // only transition is to variable format parameters key or end of format
-                            if (count == 0) { // check for empty format parameter value
-                                throw IllegalStateException("Empty format parameter value at index $index: $value")
-                            }
-                            count = 0
-                            state = if (',' == char) { // update state
-                                State.VARIABLE_FORMAT_PARAMETERS_KEY // start of another format parameter
-                            } else {
-                                State.VARIABLE_FORMAT_AFTER // end of format
-                            }
-                        }
-                        // end of variable or start of another format parameter is not allowed
-                        end -> throw IllegalStateException("Missing closing parenthesis for format parameter value at index $index: $value")
-                        else -> count++
-                    }
-                }
-                State.VARIABLE_FORMAT_AFTER -> {
-                    check(end == char) { // only transition is to end of variable
-                        "Unexpected character '$char' at index $index: $value"
-                    }
-                    state = State.NORMAL
-                }
-            }
-
-            lastChar = char
-        }
-
-        check(State.NORMAL == state) {
-            "Missing closing delimiter for variable at index ${value.length - 1}: $value"
-        }
-    }
-
     private sealed interface TranslationResourceInformation
 
     private class FileInfo(val path: Path) : TranslationResourceInformation
@@ -558,8 +409,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
 
 }
 
-fun main() {
+private fun main() {
     val translator = TranslatorBuilder(Locale.ENGLISH)
-        .addMap(Locale.ENGLISH, mapOf("test" to "aaa {hh\\h,   foo(a:®)}"))
+        .addMap(Locale.ENGLISH, mapOf("test" to "aaa {hhh, x(a\\::®)}"))
         .build()
 }
