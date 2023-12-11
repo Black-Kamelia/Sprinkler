@@ -408,9 +408,3 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     ) : TranslationResourceInformation
 
 }
-
-private fun main() {
-    val translator = TranslatorBuilder(Locale.ENGLISH)
-        .addMap(Locale.ENGLISH, mapOf("test" to "aaa {hhh, x(a\\::®)}"))
-        .build()
-}
