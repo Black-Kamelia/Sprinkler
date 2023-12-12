@@ -45,7 +45,7 @@ fun String.interpolate(
 ): String {
     val builder = StringBuilder() // final string builder
     var state = State.DEFAULT // current state of the parser
-    var keyBuilder = StringBuilder() // builder used to build the key of the variable
+    val keyBuilder = StringBuilder() // builder used to build the key of the variable
     var variableCount = 0 // number of variables encountered to resolve empty names
 
     forEach { char ->
@@ -81,7 +81,9 @@ fun String.interpolate(
                 }
 
                 builder.append(value)
-                keyBuilder = StringBuilder()
+                // clear instead of creating a new one, because the complexity is O(1) and not O(n)
+                // it simply sets the length of the builder to 0
+                keyBuilder.clear()
                 state = State.DEFAULT
                 variableCount++
             }
