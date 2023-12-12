@@ -231,6 +231,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      */
     fun build(): Translator {
         val finalMap = HashMap<Locale, HashMap<String, String>>()
+        val delimiter = config.interpolationDelimiter
+        val regex = translationValueFormatRegex(delimiter.variableStart, delimiter.variableEnd)
         translatorContent.forEach {
             when (it) { // switch on different types of TranslationResourceInformation
                 // if it is a FileInfo, we need to load the file, or, if it is a directory, load all files in it
@@ -238,14 +240,14 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 is FileInfo -> {
                     try {
                         loadPath(it).forEach { (locale, map) ->
-                            addToMap(finalMap, locale, map)
+                            addToMap(finalMap, locale, map, regex)
                         }
                     } catch (e: Exception) { // catch and rethrow to add the path to the error message
                         throw IllegalStateException("Error while loading file ${it.path}", e)
                     }
                 }
                 // if it is a MapInfo, we can directly add it to the final map
-                is MapInfo -> addToMap(finalMap, it.locale, it.map)
+                is MapInfo -> addToMap(finalMap, it.locale, it.map, regex)
             }
         }
 
@@ -263,6 +265,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         finalMap: HashMap<Locale, HashMap<String, String>>,
         locale: Locale,
         map: Map<*, *>,
+        regex: Regex,
     ) {
         val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
         map.forEach { (k, value) ->
@@ -288,20 +291,29 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                         toFlatten.addLast("$currentKey.$index" to subValue)
                     }
                     // type of value is always valid here (string, number or boolean), because of previous checks
-                    else -> addValue(locale, localeMap, currentKey, currentValue)
+                    else -> addValue(locale, localeMap, currentKey, currentValue, regex)
                 }
             }
         }
     }
 
-    private fun addValue(locale: Locale, finalMap: HashMap<String, String>, key: String, value: TranslationSourceData) {
-        val stringValue = value.toString()
-        try {
-            val delimiter = config.interpolationDelimiter
-            checkValueFormat(stringValue, delimiter.variableStart, delimiter.variableEnd)
-        } catch (e: IllegalStateException) {
-            throw IllegalStateException("Error for key '$key' and locale '$locale'. ${e.message}")
+    private fun addValue(
+        locale: Locale,
+        finalMap: HashMap<String, String>,
+        key: String,
+        value: TranslationSourceData,
+        valueFormatRegex: Regex,
+    ) {
+        // shortcut to only check strings
+        // if someday the jdk changes the implementation of toString for the other types, we will need to check them too
+        // (it is really unlikely to happen though)
+        val stringValue = if (value is String) {
+            valueFormatRegex.matches(value)
+            value
+        } else {
+            value.toString()
         }
+
         when (duplicatedKeyResolution) {
             // if resolution is FAIL, we need to check that the key is not already present
             DuplicatedKeyResolution.FAIL -> {

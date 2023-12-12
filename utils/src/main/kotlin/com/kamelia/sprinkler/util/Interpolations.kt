@@ -57,7 +57,7 @@ fun String.interpolate(
                     else -> builder.append(char) // any other character is appended to the final string
                 }
             }
-            State.BACKSLASH -> { // in this state the '{' is escaped
+            State.BACKSLASH -> { // in this state the variableStart is escaped
                 builder.append(char)
                 state = State.DEFAULT
             }
@@ -123,8 +123,7 @@ fun String.interpolate(
  * defined above
  * @see [VariableResolver.fromVararg]
  */
-fun String.interpolateIndexed(vararg args: Any): String =
-    interpolate(VariableResolver.fromVararg(*args))
+fun String.interpolateIndexed(vararg args: Any): String = interpolate(VariableResolver.fromVararg(*args))
 
 /**
  * Interpolates variables in this string using the given list [args].
@@ -368,7 +367,8 @@ fun interface VariableResolver {
  * @constructor Creates a new [VariableDelimiter] with the given [variableStart] and [variableEnd].
  * @param variableStart the start character of a variable
  * @param variableEnd the end character of a variable
- * @throws IllegalArgumentException if [variableStart] and [variableEnd] are equal
+ * @throws IllegalArgumentException if [variableStart] and [variableEnd] are equal, or if [variableStart] or
+ * [variableEnd] is equal to `'\'`
  * @see VariableResolver
  */
 class VariableDelimiter(
@@ -378,6 +378,8 @@ class VariableDelimiter(
 
     init {
         require(variableStart != variableEnd) { "variableStart and variableEnd must not be equal" }
+        require(variableStart != '\\') { "variableStart must not be equal to '\\'" }
+        require(variableEnd != '\\') { "variableEnd must not be equal to '\\'" }
     }
 
     companion object {
@@ -386,7 +388,6 @@ class VariableDelimiter(
          * The default [VariableDelimiter] used by [String.interpolate]. It uses the characters `'{'` and `'}'` as
          * delimiters.
          */
-        @JvmField
         val DEFAULT = VariableDelimiter('{', '}')
 
     }
