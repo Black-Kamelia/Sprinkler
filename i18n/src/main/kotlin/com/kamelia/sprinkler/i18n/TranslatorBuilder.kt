@@ -32,6 +32,9 @@ import kotlin.io.path.readText
  * to say that the construction is lazy;
  * - The order in which data is added is significant, as it will be used during key duplication resolution, depending on
  * the [DuplicatedKeyResolution] used.
+ * - Values passed to this builder are all validated on building, to ensure that the potential variables used in the
+ * string respect the [TranslationInterpolationVariable] rules. If a value does not respect these rules, an exception
+ * will be thrown when building the translator;
  *
  * The translators created with this builder will have the following properties:
  * - the `extraArgs` argument passed to the [t][Translator.t] methods will be used to
@@ -197,6 +200,15 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     }
 
     /**
+     * Sets the configuration that will be used for the created translator.
+     *
+     * @param block the block used to create the configuration
+     * @return this builder
+     */
+    fun withConfiguration(block: TranslatorConfiguration.Builder.() -> Unit): TranslatorBuilder =
+        withConfiguration(TranslatorConfiguration.create { block() })
+
+    /**
      * Defines how to handle duplicated keys when creating a translator.
      */
     enum class DuplicatedKeyResolution {
@@ -226,8 +238,12 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      *
      * @return the created translator
      * @throws IllegalStateException if a duplicate key is found and the duplicate key resolution policy is set to
-     * [DuplicatedKeyResolution.FAIL], or if a source has been added without following the rules defined in the method
+     * [DuplicatedKeyResolution.FAIL]
+     * @throws IllegalStateException if a source has been added without following the rules defined in the method
      * documentation
+     * @throws IllegalStateException if a source contains a key or a value that does not respect the rules defined in
+     * [TranslationKey] (for the keys) and [TranslationSourceData] (for the values) documentation
+     * @throws IllegalStateException if an error occurs while loading a file
      */
     fun build(): Translator {
         val finalMap = HashMap<Locale, HashMap<String, String>>()
