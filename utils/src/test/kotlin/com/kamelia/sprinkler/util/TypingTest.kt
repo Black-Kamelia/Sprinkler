@@ -22,71 +22,48 @@ class TypingTest {
     @Test
     fun `castOrNull casts when the receiver has the correct type`() {
         val value: Any = 42
-        val r = assertDoesNotThrow {
-            value.castOrNull<Int>() ?: 0
-        }
-        assertEquals(42, r)
+        assertEquals(value, value.castOrNull<Int>())
     }
 
     @Test
     fun `castOrNull returns null when the receiver has the wrong type`() {
-        val value: Any = "qsdqfgd"
-        val r = assertDoesNotThrow {
-            value.castOrNull<Int>()?.plus(4) ?: 0
-        }
-        assertEquals(0, r)
+        assertNull("qsdqfgd".castOrNull<Int>())
     }
 
     @Test
     fun `castOrNull returns null when the receiver is null`() {
-        val value: Any? = null
-        val r = assertDoesNotThrow {
-            value.castOrNull<Int>() ?: 0
-        }
-        assertEquals(0, r)
+        assertNull(null.castOrNull<Int>())
     }
 
     @Test
     fun `castIfNotNull casts when the receiver has the correct type`() {
         val value: Any = 42
-        val r = assertDoesNotThrow {
-            value.castIfNotNull<Int>()?.plus(4) ?: 0
-        }
-        assertEquals(46, r)
+        assertEquals(value, value.castIfNotNull<Int>())
     }
 
     @Test
     fun `castIfNotNull throws when the receiver has the wrong type`() {
-        val value: Any = "qsdqfgd"
         assertThrows<ClassCastException> {
-            value.castIfNotNull<Int>()?.plus(4) ?: 0
+            "aaaaa".castIfNotNull<Int>()
         }
     }
 
     @Test
     fun `castIfNotNull returns null when the receiver is null`() {
-        val value: Any? = null
-        val r = assertDoesNotThrow {
-            value.castIfNotNull<Int>()
-        }
-        assertNull(r)
+        assertNull(null.castIfNotNull<Int>())
     }
 
     @Test
     fun `cast throws when the receiver has the wrong type`() {
-        val value: Any = "qsdqfgd"
         assertThrows<ClassCastException> {
-            value.cast<Int>()
+            "qsdqfgd".cast<Int>()
         }
     }
 
     @Test
     fun `cast returns the receiver when it has the correct type`() {
         val value: Any = 42
-        val r = assertDoesNotThrow {
-            value.cast<Int>()
-        }
-        assertEquals(42, r)
+        assertEquals(value, value.cast<Int>())
     }
 
     @Test

@@ -26,7 +26,7 @@ inline fun <reified T> Any?.castOrNull(): T? = this as? T
  * @receiver the object to cast
  * @return the object cast as [T], or null if the object is null
  */
-inline fun <reified T> Any?.castIfNotNull(): T? = if (this != null) this as T else null
+inline fun <reified T> Any?.castIfNotNull(): T? = this?.let { this as T }
 
 /**
  * Tries to cast this object to the specified type [T]. This method throws a [ClassCastException] if the cast
