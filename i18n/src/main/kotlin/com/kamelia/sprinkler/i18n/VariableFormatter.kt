@@ -150,7 +150,7 @@ fun interface VariableFormatter {
             val dateTime = try {
                 value.cast<TemporalAccessor>()
             } catch (e: ClassCastException) {
-                throw IllegalArgumentException("The value ($value) must be of type TemporalAccessor", e)
+                throw ClassCastException("The value ($value) must be of type TemporalAccessor")
             }
 
             val inner = createDateTimeFormatParams(DateTimeFormatterKind.DATE_TIME, extraArgs).localizedBy(locale)
