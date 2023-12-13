@@ -108,14 +108,14 @@ fun translationValueFormatRegex(start: Char, end: Char): Regex {
 
     // and finally we can build the variable content regex
     @Language("RegExp")
-    val variableContent = """\s*$IDENTIFIER(?:$format)?"""
+    val variableContent = """\s*$IDENTIFIER(?:$format)?\s*"""
     @Language("RegExp")
-    val validVariable = """[$start]$variableContent[$end]"""
+    val validVariable = """[\$start]$variableContent[\$end]"""
 
     // the last step is to combine all the regexes to build the final regex
     @Language("RegExp")
-    val notStartChar = """[^$start]"""
+    val notStartChar = """[^\$start]"""
     @Language("RegExp")
-    val escapedStartChar = """(?<=\\)[$start]"""
+    val escapedStartChar = """(?<=\\)[\$start]"""
     return """(?:$notStartChar|$escapedStartChar|$validVariable)*""".toRegex()
 }
