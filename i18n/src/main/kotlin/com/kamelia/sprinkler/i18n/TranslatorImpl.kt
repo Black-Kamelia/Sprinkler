@@ -81,7 +81,11 @@ internal class TranslatorImpl private constructor(
         }
     }
 
-    override fun withNewCurrentLocale(locale: Locale): Translator = TranslatorImpl(prefix, locale, data)
+    override fun withNewCurrentLocale(locale: Locale): Translator = if (currentLocale == locale) {
+        this
+    } else {
+        TranslatorImpl(prefix, locale, data)
+    }
 
     override fun asRoot(): Translator = if (isRoot) {
         this
@@ -108,4 +112,3 @@ internal class TranslatorImpl private constructor(
     }
 
 }
-
