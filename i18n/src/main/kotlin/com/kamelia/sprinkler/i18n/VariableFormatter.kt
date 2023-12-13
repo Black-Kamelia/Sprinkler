@@ -10,20 +10,11 @@ import java.time.temporal.TemporalAccessor
 import java.util.*
 
 /**
- * Represents an object that can format specific values depending on the locale.
- *
- * The syntax to use a variable formatter within a translation value is `{variable-name, formatter-name(arg1: value1,
- * arg2: value2, ...)}` where:
- * - `formatter-name` is the name of the formatter to user (e.g. `datetime`)
- * - `arg1`, `arg2`, etc. are the names of the extra parameters to pass to the formatter
- * - `value1`, `value2`, etc. are the values associated with those parameters.
- * The number of arguments and their types depend on the formatter used.
+ * Represents an object that can format specific values depending on the locale. Formatting is performed through the
+ * [format] method.
  *
  * Formatter implementations should throw an [IllegalArgumentException] when calling the [format] method with unexpected
  * `extraArgs`.
- *
- * If no arguments are needed or passed, the parentheses can be omitted (e.g. `{value, datetime}`). If the formatter is
- * not found, the [Translator.t] and [Translator.tn] methods will throw and [IllegalStateException].
  *
  * The following formatters are built-in:
  * - [VariableFormatter.currency]
