@@ -76,16 +76,13 @@ internal object OptionProcessor {
         interpolationDelimiter: VariableDelimiter,
         formats: Map<String, VariableFormatter>,
     ): String {
-        val hasVariable = checkValue(value, interpolationDelimiter)
-        if (options.isEmpty() && !hasVariable) {
-            return value
-        }
+        if (interpolationDelimiter.variableStart !in value) return value
 
         val customResolver = VariableResolver { key, _ ->
             // '!!' is ok, because values are validated on translator creation
             val (_, variableName, formatName, params) = generalSplit.matchEntire(key)!!.groupValues
 
-            require(variableName != Options.OPTIONS) {
+            require(Options.OPTIONS != variableName) {
                 "The '${Options.OPTIONS}' variable name is reserved for the options map, use another name."
             }
 
