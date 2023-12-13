@@ -6,6 +6,7 @@ import com.kamelia.sprinkler.util.illegalArgument
 import com.kamelia.sprinkler.util.interpolate
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.*
+import org.intellij.lang.annotations.Language
 
 @PackagePrivate
 internal object OptionProcessor {
@@ -42,7 +43,7 @@ internal object OptionProcessor {
 
         val context = optionMap.safeType<String>(Options.CONTEXT)
         val ordinal = optionMap.safeType<Boolean>(Options.ORDINAL) ?: false
-        val count = optionMap.safeType<Int>(Options.COUNT)?.let { count ->
+        val pluralValue = optionMap.safeType<Int>(Options.COUNT)?.let { count ->
             if (ordinal) {
                 pluralMapper.mapOrdinal(locale, count)
             } else {
@@ -57,12 +58,12 @@ internal object OptionProcessor {
                 .append(context)
         }
 
-        if (count != null) {
+        if (pluralValue != null) {
             if (ordinal) {
                 builder.append("_ordinal")
             }
             builder.append("_")
-                .append(count)
+                .append(pluralValue)
         }
 
         return builder.toString()
@@ -121,34 +122,24 @@ internal object OptionProcessor {
         return value
     }
 
-    private fun checkValue(value: String, limiter: VariableDelimiter): Boolean {
-        if (value.isEmpty()) return true
+    /**
+     * This regex is globally the same as the [translationValueFormatRegex] except that this regex actually captures the
+     * information in groups, whereas the other one only checks if the format is valid.
+     */
+    private val generalSplit = run {
+        // capture all the params in a single group
+        // any char and ending with a non-escaped ')', no need further validation as the value has already been validated
+        // on translator creation
+        @Language("RegExp")
+        val formatParams = """\((.+(?<!\\))\)"""
 
-        var escaping = false
-        var lastChar = value[0]
-        var found = false
-        for (index in 1 until value.length) {
-            val element = value[index]
-            if (escaping) {
-                escaping = false
-                continue
-            }
-            when (element) {
-                '\\' -> escaping = true
-                limiter.variableStart -> found = true
-                limiter.variableEnd -> {
-                    if (lastChar == limiter.variableStart) {
-                        throw IllegalStateException("Empty variable name in '$value'")
-                    }
-                }
-            }
-            lastChar = element
-        }
+        // capture the format name
+        @Language("RegExp")
+        val format = """\s*,\s*($IDENTIFIER)\s*(?:$formatParams)?"""
 
-        return found
+        // capture the variable name
+        """\s*($IDENTIFIER)(?:$format)?\s*""".toRegex()
     }
-
-    private val generalSplit = """($IDENTIFIER)\s*(?:,\s*($IDENTIFIER)\s*(?:\((.+(?<!\\))\))?)?""".toRegex()
 
     private val paramsSplit = """(?<!\\),""".toRegex()
 
