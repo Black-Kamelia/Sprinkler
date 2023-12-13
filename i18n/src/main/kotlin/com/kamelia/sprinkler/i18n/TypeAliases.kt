@@ -32,23 +32,27 @@ typealias Identifier = String
  * characters within the delimiters.
  *
  * It should be structured as follows:
- * - Always starts with an [Identifier] representing the name of the variable
- * - Can be directly followed by ',' to indicate the presence of a format
- * - An arbitrary number of spaces can be present between the ',' and the start of the format name
+ * - Can start with an arbitrary number of ' ' (spaces) followed by a mandatory [Identifier] representing the name of
+ * the variable, followed by an arbitrary number of ' '
+ * - It can optionally be followed by a ',' to indicate the presence of a format
+ * - An arbitrary number of ' ' can be present after the ',' which will be followed by the format name
  * - The format name must respect the [Identifier] rules
- * - The format name can be directly followed by a '(' to indicate the presence of format parameters (always at least
- * one)
- * - Parameters are represented as key-value pairs, separated by ':' and can contain any character except ')', ':', and
- * ',' (unless escaped),
+ * - Optionally, the format can be followed by an arbitrary number of parameters which are presented in the next bullets
+ * - The format name can be directly followed by an arbitrary number of ' ' and a '(' to indicate the presence of format
+ * parameters (always at least one)
+ * - Parameters are represented as key-value pairs, separated by ':'. Keys cannot contain ':' or ',' (unless escaped),
+ * and values cannot contain ',' or ')' (unless escaped). Note that spaces are not trimmed and are considered part of
+ * the key or value.
  * - Each parameter is separated by a (non-escaped) ','
  * - The last parameter must be followed by a ')'
+ * - The ')' can be followed by an arbitrary number of ' '
  *
  * Here are some examples of valid [TranslationInterpolationVariables][TranslationInterpolationVariable]:
- * - `my-variable`
- * - `my-variable,my-format`
- * - `my-variable,   format`
- * - `my-variable, my-format(param1:value1)`
- * - `my-variable, my-format(param1\:still-name:value1,param2:value2)`
+ * - `'my-variable '`
+ * - `' my-variable  ,my-format'`
+ * - `'my-variable,    format'`
+ * - `' my-variable    ,  my-format(param1:value1)'`
+ * - `'my-variable, my-format    (param1\:still-name:value1,param2:value2)   '`
  *
  * Whenever a [String] is supposed to represent a [TranslationInterpolationVariable], and does not respect the rules
  * above, it will result in an exception being thrown (the type of the exception will depend on the function).
