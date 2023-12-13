@@ -44,7 +44,7 @@ fun interface VariableFormatter {
      * @throws IllegalArgumentException if some of the extra arguments are invalid or not recognized by the formatter
      * @throws Exception if an error occurs while formatting the value
      */
-    fun format(value: Any, locale: Locale, extraArgs: List<String>): String
+    fun format(value: Any, locale: Locale, extraArgs: List<Pair<String, String>>): String
 
     /**
      * Formats the given [value] using the given [locale]. This is a convenience method that calls the [format] method
@@ -193,18 +193,15 @@ fun interface VariableFormatter {
             ::number.name to number(),
         )
 
-        private fun parseNumberFormatParams(formatter: NumberFormat, params: List<String>) {
+        private fun parseNumberFormatParams(formatter: NumberFormat, params: List<Pair<String, String>>) {
             params.forEach {
-                val tokens = it.split(":")
-                checkTokens(it, tokens.size)
-                val (key, value) = tokens
+                val (key, value) = it
                 when (key) {
-                    "minIntDigits" -> formatter.minimumIntegerDigits = value.toIntOrException(it)
-                    "maxIntDigits" -> formatter.maximumIntegerDigits = value.toIntOrException(it)
-                    "minFracDigits" -> formatter.minimumFractionDigits = value.toIntOrException(it)
-                    "maxFracDigits" -> formatter.maximumFractionDigits = value.toIntOrException(it)
-                    "groupingUsed" -> formatter.isGroupingUsed = value.toBooleanStrictOrNull()
-                        ?: illegalArgument("Invalid parameter, expected 'true' or 'false', got '$value'.")
+                    "minIntDigits" -> formatter.minimumIntegerDigits = value.toInt()
+                    "maxIntDigits" -> formatter.maximumIntegerDigits = value.toInt()
+                    "minFracDigits" -> formatter.minimumFractionDigits = value.toInt()
+                    "maxFracDigits" -> formatter.maximumFractionDigits = value.toInt()
+                    "groupingUsed" -> formatter.isGroupingUsed = value.toBooleanStrict()
                     "roundingMode" -> formatter.roundingMode = RoundingMode.valueOf(value)
                     else -> illegalArgument("Unknown parameter: $key")
                 }
@@ -217,13 +214,14 @@ fun interface VariableFormatter {
             DATE_TIME,
         }
 
-        private fun createDateTimeFormatParams(kind: DateTimeFormatterKind, params: List<String>): DateTimeFormatter {
+        private fun createDateTimeFormatParams(
+            kind: DateTimeFormatterKind,
+            params: List<Pair<String, String>>,
+        ): DateTimeFormatter {
             var firstFormat: FormatStyle = DEFAULT_FORMAT_STYLE
             var secondFormat: FormatStyle = DEFAULT_FORMAT_STYLE
             params.forEach {
-                val tokens = it.split(":")
-                checkTokens(it, tokens.size)
-                val (key, value) = tokens
+                val (key, value) = it
                 if ("dateStyle" == key && (DateTimeFormatterKind.DATE == kind || DateTimeFormatterKind.DATE_TIME == kind)) {
                     firstFormat = formatStyle(value)
                 } else if ("timeStyle" == key && (kind == DateTimeFormatterKind.TIME || kind == DateTimeFormatterKind.DATE_TIME)) {
@@ -233,7 +231,7 @@ fun interface VariableFormatter {
                         firstFormat = formatStyle(value)
                     }
                 } else {
-                    illegalArgument("Unsupported parameter: $key")
+                    illegalArgument("Unknown parameter: $key")
                 }
             }
 
@@ -248,17 +246,6 @@ fun interface VariableFormatter {
             FormatStyle.valueOf(string.uppercase(Locale.ENGLISH))
         } catch (e: IllegalArgumentException) {
             illegalArgument("Invalid format style: $string")
-        }
-
-        @Suppress("NOTHING_TO_INLINE")
-        private inline fun String.toIntOrException(token: String): Int {
-            return toIntOrNull() ?: illegalArgument("Invalid number format parameter: $token")
-        }
-
-        private fun checkTokens(root: String, size: Int) {
-            require(size == 2) {
-                "Invalid number format parameter, expected <key>:<value> but was '$root'"
-            }
         }
 
         private val DEFAULT_FORMAT_STYLE = FormatStyle.MEDIUM

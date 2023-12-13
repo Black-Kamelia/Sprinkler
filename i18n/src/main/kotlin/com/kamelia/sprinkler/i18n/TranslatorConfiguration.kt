@@ -64,9 +64,9 @@ class TranslatorConfiguration internal constructor(
 
         /**
          * The mapper function to use for the pluralization strategy.
-         * Said strategy can use a given [Locale] and count to return a [Options.Plurals] value.
+         * Said strategy can use a given [Locale] and count to return a [Plural] value.
          *
-         * default: [Options.Plurals.Companion.defaultCountMapper]
+         * default: [Plural.defaultMapper]
          */
         var pluralMapper: Plural.Mapper = Plural.defaultMapper()
 

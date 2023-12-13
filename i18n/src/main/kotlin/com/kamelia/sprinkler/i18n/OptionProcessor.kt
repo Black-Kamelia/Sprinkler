@@ -6,7 +6,6 @@ import com.kamelia.sprinkler.util.illegalArgument
 import com.kamelia.sprinkler.util.interpolate
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.*
-import org.intellij.lang.annotations.Language
 
 @PackagePrivate
 internal object OptionProcessor {
@@ -37,7 +36,7 @@ internal object OptionProcessor {
         key: String,
         optionMap: Map<String, Any>,
         locale: Locale,
-        pluralMapper: Plural.Mapper
+        pluralMapper: Plural.Mapper,
     ): String {
         if (optionMap.isEmpty()) return key
 
@@ -82,37 +81,33 @@ internal object OptionProcessor {
             return value
         }
 
-        val customResolver = VariableResolver { name, _ ->
-            val tokens = VARIABLE_REGEX.matchEntire(name)!! // it should always match
+        val customResolver = VariableResolver { key, _ ->
+            // '!!' is ok, because values are validated on translator creation
+            val (_, variableName, formatName, params) = generalSplit.matchEntire(key)!!.groupValues
 
-            val values = tokens.groupValues
-
-            val variableName = values[1] // the variable name is always the first group as 0 is the whole match
             require(variableName != Options.OPTIONS) {
                 "The '${Options.OPTIONS}' variable name is reserved for the options map, use another name."
             }
 
-            val result = options[variableName] ?: optionMap[variableName]
-            ?: illegalArgument("unknown variable name '$name'")
+            val result = options[variableName]
+                ?: optionMap[variableName]
+                ?: illegalArgument("unknown variable name '$variableName'")
 
-            if (values.size > 2 && values[2].isNotEmpty()) { // there is a format
-                val formatName = values[2]
-
+            if (formatName.isNotEmpty()) { // there is a format
                 // try to get the format from its name, or throw an exception if it doesn't exist
-                val format = formats[formatName]
-                    ?: error("Unknown format '$formatName' (${values.joinToString { "'$it'" }}})")
+                val format = formats[formatName] ?: error("Unknown format '$formatName' ($key)")
 
-                val params = if (values.size > 3) { // there are format parameters
-                    if (values[3].isEmpty()) {
-                        emptyList()
-                    } else {
-                        values[3].split(FORMAT_PARAM_SPLIT_REGEX)
-                    }
+                val paramList = if (params.isNotEmpty()) { // there are format parameters
+                    params.split(paramsSplit)
+                        .asSequence()
+                        .map(keyValueSplit::split)
+                        .map { it[0] to it[1] } // also safe because values are validated on translator creation
+                        .toList()
                 } else {
                     emptyList()
                 }
 
-                format.format(result, locale, params)
+                format.format(result, locale, paramList)
             } else { // otherwise, just return the result
                 result.toString()
             }
@@ -156,11 +151,10 @@ internal object OptionProcessor {
         return found
     }
 
-    @Language("RegExp")
-    private const val FORMAT_REGEX = """,\s*(\w+)(?:\(([^,()]+(?:,\s*[^,()]+)*)\))?"""
+    private val generalSplit = """($IDENTIFIER)\s*(?:,\s*($IDENTIFIER)\s*(?:\((.+(?<!\\))\))?)?""".toRegex()
 
-    private val VARIABLE_REGEX = """$IDENTIFIER(?:$FORMAT_REGEX)?""".toRegex()
+    private val paramsSplit = """(?<!\\),""".toRegex()
 
-    private val FORMAT_PARAM_SPLIT_REGEX = """,\s*""".toRegex()
+    private val keyValueSplit = """(?<!\\):""".toRegex()
 
 }

@@ -76,11 +76,11 @@ internal const val SOURCE_DATA_DOCUMENTATION =
 private val VARIABLE = run {
     // first we define the param key regex
     @Language("RegExp")
-    val notColon = """[^:]"""
+    val notCommaOrColon = """[^:,]"""
     @Language("RegExp")
-    val escapedColon = """(?<=\\):"""
+    val escapedCommaOrColon = """(?<=\\)[,:]"""
     @Language("RegExp")
-    val formatParamKey = """(?:$notColon|$escapedColon)*"""
+    val formatParamKey = """(?:$notCommaOrColon|$escapedCommaOrColon)*"""
 
     // then we define the param value regex
     @Language("RegExp")
@@ -104,10 +104,13 @@ private val VARIABLE = run {
 
     // which allows us to build the format regex
     @Language("RegExp")
-    val format = """,\s*$IDENTIFIER\s*(?:$formatParams)?"""
+    val format = """\s*,\s*$IDENTIFIER\s*(?:$formatParams)?"""
 
     // and finally we can build the variable regex
-    """$IDENTIFIER(?:$format)?"""
+    @Language("RegExp")
+    val finalRegex = """\s*$IDENTIFIER(?:$format)?"""
+
+    finalRegex
 }
 
 fun translationValueFormatRegex(start: Char, end: Char): Regex {
