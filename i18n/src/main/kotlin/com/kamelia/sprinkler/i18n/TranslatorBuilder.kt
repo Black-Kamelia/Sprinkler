@@ -304,14 +304,9 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         value: TranslationSourceData,
         valueFormatRegex: Regex,
     ) {
-        // shortcut to only check strings
-        // if someday the jdk changes the implementation of toString for the other types, we will need to check them too
-        // (it is really unlikely to happen though)
-        val stringValue = if (value is String) {
-            valueFormatRegex.matches(value)
-            value
-        } else {
-            value.toString()
+        val stringValue = value.toString()
+        check(valueFormatRegex.matches(stringValue)) {
+            "Invalid translation value '$stringValue' for locale '$locale', format is not valid. $SOURCE_DATA_DOCUMENTATION. Error occurred for key '$key' in map $value"
         }
 
         when (duplicatedKeyResolution) {
@@ -351,15 +346,15 @@ class TranslatorBuilder @PackagePrivate internal constructor(
 
     private fun checkKeyIsValid(key: Any?, locale: Locale, map: Map<*, *>) {
         check(key != null) {
-            "Error in map $map:\nInvalid translation key for locale '$locale', key cannot be null. $KEY_DOCUMENTATION"
+            "Error in map $map:\nInvalid translation key for locale '$locale', key cannot be null. $KEY_DOCUMENTATION."
 
         }
         check(key is String) {
-            "Error in map $map:\nInvalid translation key '$key' of type ${key::class.simpleName} for locale '$locale', expected String. $KEY_DOCUMENTATION"
+            "Error in map $map:\nInvalid translation key '$key' of type ${key::class.simpleName} for locale '$locale', expected String. $KEY_DOCUMENTATION."
         }
 
         check(KEY_REGEX.matches(key)) {
-            "Error in map $map:\nInvalid translation key '$key' for locale '$locale', format is not valid. $KEY_DOCUMENTATION"
+            "Error in map $map:\nInvalid translation key '$key' for locale '$locale', format is not valid. $KEY_DOCUMENTATION."
         }
     }
 
@@ -369,7 +364,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             returns() implies (value != null)
         }
         check(value != null) {
-            "Error in map $map:\nInvalid translation value for locale '$locale', value cannot be null. $SOURCE_DATA_DOCUMENTATION"
+            "Error in map $map:\nInvalid translation value for locale '$locale', value cannot be null. $SOURCE_DATA_DOCUMENTATION."
 
         }
         check(value is String || value is Number || value is Boolean || value is Map<*, *> || value is List<*>) {
