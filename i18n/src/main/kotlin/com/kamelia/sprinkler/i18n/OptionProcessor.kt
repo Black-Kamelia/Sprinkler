@@ -2,6 +2,7 @@ package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.VariableDelimiter
 import com.kamelia.sprinkler.util.VariableResolver
+import com.kamelia.sprinkler.util.illegalArgument
 import com.kamelia.sprinkler.util.interpolate
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.*
@@ -92,7 +93,7 @@ internal object OptionProcessor {
             }
 
             val result = options[variableName] ?: optionMap[variableName]
-            ?: throw VariableResolver.ResolutionException("unknown variable name '$name'")
+            ?: illegalArgument("unknown variable name '$name'")
 
             if (values.size > 2 && values[2].isNotEmpty()) { // there is a format
                 val formatName = values[2]

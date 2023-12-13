@@ -17,7 +17,7 @@ class VariableResolverTest {
     @Test
     fun `vararg VariableResolver throws an exception if the index is not an integer`() {
         val resolver = VariableResolver.fromVararg(1, "a", true)
-        assertThrows<VariableResolver.ResolutionException> {
+        assertThrows<IllegalArgumentException> {
             resolver.value("a")
         }
     }
@@ -25,7 +25,7 @@ class VariableResolverTest {
     @Test
     fun `vararg VariableResolver throws an exception if the index is negative`() {
         val resolver = VariableResolver.fromVararg(1, "a", true)
-        assertThrows<VariableResolver.ResolutionException> {
+        assertThrows<IllegalArgumentException> {
             resolver.value("-3")
         }
     }
@@ -33,7 +33,7 @@ class VariableResolverTest {
     @Test
     fun `vararg VariableResolver throws an exception if the index is greater than the array size`() {
         val resolver = VariableResolver.fromVararg(1, "a", true)
-        assertThrows<VariableResolver.ResolutionException> {
+        assertThrows<IllegalArgumentException> {
             resolver.value("3")
         }
     }
@@ -49,7 +49,7 @@ class VariableResolverTest {
     @Test
     fun `array VariableResolver throws an exception if the index is not an integer`() {
         val resolver = VariableResolver.fromList(listOf(1, "a", true))
-        assertThrows<VariableResolver.ResolutionException> {
+        assertThrows<IllegalArgumentException> {
             resolver.value("a")
         }
     }
@@ -57,7 +57,7 @@ class VariableResolverTest {
     @Test
     fun `array VariableResolver throws an exception if the index is negative`() {
         val resolver = VariableResolver.fromList(listOf(1, "a", true))
-        assertThrows<VariableResolver.ResolutionException> {
+        assertThrows<IllegalArgumentException> {
             resolver.value("-3")
         }
     }
@@ -65,7 +65,7 @@ class VariableResolverTest {
     @Test
     fun `array VariableResolver throws an exception if the index is greater than the array size`() {
         val resolver = VariableResolver.fromList(listOf(1, "a", true))
-        assertThrows<VariableResolver.ResolutionException> {
+        assertThrows<IllegalArgumentException> {
             resolver.value("3")
         }
     }
@@ -87,7 +87,7 @@ class VariableResolverTest {
     @Test
     fun `fromMap VariableResolver throws an exception if the key is not found and no fallback is provided`() {
         val resolver = VariableResolver.fromMap(mapOf())
-        assertThrows<VariableResolver.ResolutionException> {
+        assertThrows<IllegalArgumentException> {
             resolver.value("d")
         }
     }

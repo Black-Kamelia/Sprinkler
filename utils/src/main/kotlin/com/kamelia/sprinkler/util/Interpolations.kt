@@ -74,12 +74,7 @@ fun String.interpolate(
                     keyBuilder.toString()
                 }
 
-                val value = try { // try to resolve the variable
-                    resolver.value(key, delimiters)
-                } catch (e: VariableResolver.ResolutionException) {
-                    illegalArgument("Error while resolving variable '$key': ${e.message!!}")
-                }
-
+                val value = resolver.value(key, delimiters)
                 builder.append(value)
                 // clear instead of creating a new one, because the complexity is O(1) and not O(n)
                 // it simply sets the length of the builder to 0
@@ -240,22 +235,22 @@ fun interface VariableResolver {
     /**
      * Returns the value of the variable with the given [name].
      *
-     * Implementations may throw an [ResolutionException] if the variable is unknown, or return a default value.
+     * Implementations may throw an [IllegalArgumentException] if the variable is unknown, or return a default value.
      *
      * @param name the name of the variable
      * @param delimiter the delimitation of the variable, can be useful for some implementations
      * @return the value of the variable
-     * @throws ResolutionException if the variable is unknown
+     * @throws IllegalArgumentException if the variable is unknown
      */
     fun value(name: String, delimiter: VariableDelimiter): String
 
-    /**
-     * Exception thrown by [VariableResolver] implementations when a variable name cannot be resolved.
-     *
-     * @param message the exception message
-     * @see VariableResolver.value
-     */
-    class ResolutionException(message: String) : IllegalArgumentException(message)
+//    /**
+//     * Exception thrown by [VariableResolver] implementations when a variable name cannot be resolved.
+//     *
+//     * @param message the exception message
+//     * @see VariableResolver.value
+//     */
+//    class ResolutionException(message: String) : IllegalArgumentException(message)
 
     companion object {
 
@@ -281,9 +276,9 @@ fun interface VariableResolver {
         fun fromList(args: List<Any>): VariableResolver =
             VariableResolver { name, _ ->
                 val index = name.toIntOrNull()
-                    ?: throw ResolutionException("index must be a parsable integer, but was'$name'")
-                if (index !in args.indices) {
-                    throw ResolutionException("index must be in between 0 and ${args.size}, but was $index")
+                    ?: illegalArgument("index must be a parsable integer, but was'$name'")
+                require(index in args.indices) {
+                    "index must be in between 0 and ${args.size}, but was $index"
                 }
                 args[index].toString()
             }
@@ -293,7 +288,7 @@ fun interface VariableResolver {
          *
          * The variable passed to [VariableResolver.value] is parsed as an integer, and the value at the corresponding index
          * in the [vararg][args] is returned. If name does not represent a valid integer, or if the index is out of
-         * bounds, an [ResolutionException] is thrown.
+         * bounds, an [IllegalArgumentException] is thrown.
          *
          * Example:
          * ```kt
@@ -313,7 +308,7 @@ fun interface VariableResolver {
          *
          * The name of the variable passed to [VariableResolver.value] is used as a key in the [map][args], and the value
          * associated with that key is returned. If a variable is unknown, the [fallback] value is returned. If the
-         * [fallback] value is `null`, an [ResolutionException] is thrown.
+         * [fallback] value is `null`, an [IllegalArgumentException] is thrown.
          *
          * Example:
          * ```kt
@@ -330,7 +325,7 @@ fun interface VariableResolver {
         @JvmOverloads
         fun fromMap(args: Map<String, Any>, fallback: String? = null): VariableResolver =
             VariableResolver { name, _ ->
-                args[name]?.toString() ?: fallback ?: throw ResolutionException("unknown variable name '$name'")
+                args[name]?.toString() ?: fallback ?: illegalArgument("unknown variable name '$name'")
             }
 
         /**
@@ -339,7 +334,7 @@ fun interface VariableResolver {
          *
          * The name of the variable passed to [VariableResolver.value] is used as a key in the map created from the
          * [array][args] and the value associated with that key is returned. If a variable is unknown, the [fallback]
-         * value is returned. If the [fallback] value is `null`, an [ResolutionException] is thrown.
+         * value is returned. If the [fallback] value is `null`, an [IllegalArgumentException] is thrown.
          *
          * Example:
          * ```kt
