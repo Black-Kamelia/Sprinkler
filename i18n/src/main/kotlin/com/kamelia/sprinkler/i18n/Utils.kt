@@ -68,12 +68,12 @@ internal fun keyNotFound(
 }
 
 internal const val KEY_DOCUMENTATION =
-    "For more details about translation keys, see TranslationKey typealias documentation."
+    "For more details about translation keys, see TranslationKey typealias documentation"
 
 internal const val SOURCE_DATA_DOCUMENTATION =
-    "For more details about translation source data, see TranslationSourceData typealias documentation."
+    "For more details about translation source data, see TranslationSourceData typealias documentation"
 
-private val VARIABLE = run {
+fun translationValueFormatRegex(start: Char, end: Char): Regex {
     // first we define the param key regex
     @Language("RegExp")
     val notCommaOrColon = """[^:,]"""
@@ -106,19 +106,16 @@ private val VARIABLE = run {
     @Language("RegExp")
     val format = """\s*,\s*$IDENTIFIER\s*(?:$formatParams)?"""
 
-    // and finally we can build the variable regex
+    // and finally we can build the variable content regex
     @Language("RegExp")
-    val finalRegex = """\s*$IDENTIFIER(?:$format)?"""
+    val variableContent = """\s*$IDENTIFIER(?:$format)?"""
+    @Language("RegExp")
+    val validVariable = """[$start]$variableContent[$end]"""
 
-    finalRegex
-}
-
-fun translationValueFormatRegex(start: Char, end: Char): Regex {
+    // the last step is to combine all the regexes to build the final regex
     @Language("RegExp")
     val notStartChar = """[^$start]"""
     @Language("RegExp")
     val escapedStartChar = """(?<=\\)[$start]"""
-    @Language("RegExp")
-    val validVariable = """[$start]$VARIABLE[$end]"""
     return """(?:$notStartChar|$escapedStartChar|$validVariable)*""".toRegex()
 }
