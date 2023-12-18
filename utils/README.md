@@ -177,7 +177,7 @@ and use a custom `VariableResolver`:
 
 ```kt
 val myResolver: VariableResolver<Int> = VariableResolver<Int> { name: String, i: Int -> name + i }
-val string: String = "Hello I'm {name}, and I'm {age} years old.".interpolate(resolver = myResolver)
+val string: String = "Hello I'm {{name}}, and I'm {{age}} years old.".interpolate(resolver = myResolver)
 println(string) // prints "Hello I'm name0, and I'm age0 years old."
 ```
 
