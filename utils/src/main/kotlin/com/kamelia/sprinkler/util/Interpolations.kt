@@ -399,6 +399,7 @@ class VariableDelimiter private constructor(
          * The default [VariableDelimiter] used by [String.interpolate]. It uses the strings `"{{"` and `"}}"` as
          * delimiters.
          */
+        @JvmStatic
         @get:JvmName("default")
         val default: VariableDelimiter = create("{{", "}}")
 
