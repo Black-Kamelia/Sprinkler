@@ -18,7 +18,7 @@ import org.intellij.lang.annotations.Language
  * ```kt
  * val resolver: VariableResolver<MyContext> = ...
  * val context: MyContext = ...
- * val result = "Hello {{name}}, you are {{age}} years old".interpolate(resolver, context)
+ * val result = "Hello {{name}}, you are {{age}} years old".interpolate(context, resolver = resolver)
  * ```
  *
  * There are several overloads of this function that can be used to interpolate variables using different types of
@@ -28,9 +28,9 @@ import org.intellij.lang.annotations.Language
  * [IllegalArgumentException] if a variable name is invalid for the given [VariableResolver].
  *
  * @receiver the string to interpolate
- * @param resolver the [VariableResolver] to use for resolving variable names
  * @param context the context to use for resolving the variable
  * @param delimiter the delimitation of the variable (defaults to [VariableDelimiter.default])
+ * @param resolver the [VariableResolver] to use for resolving variable names
  * @return the interpolated string
  * @throws IllegalArgumentException if a variable name is invalid for the given [VariableResolver]
  * @see VariableResolver
@@ -38,9 +38,9 @@ import org.intellij.lang.annotations.Language
  */
 @JvmOverloads
 fun <T> String.interpolate(
-    resolver: VariableResolver<T>,
     context: T,
     delimiter: VariableDelimiter = VariableDelimiter.default,
+    resolver: VariableResolver<T>,
 ): String {
     // this function is a copy of the kotlin.text.Regex#replace(CharSequence,(MatchResult) -> CharSequence) function
     // the code is pasted here to avoid variable capture in a lambda which would be created for each call to this
@@ -97,7 +97,7 @@ fun <T> String.interpolate(
  * @see VariableResolver.fromArray
  */
 fun String.interpolateIdxD(delimiter: VariableDelimiter, vararg args: Any): String =
-    interpolate(VariableResolver.fromArray(), args, delimiter)
+    interpolate(args, delimiter, VariableResolver.fromArray())
 
 /**
  * Overload of [String.interpolateIdxD] that uses the [default][VariableDelimiter.default] [VariableDelimiter].
@@ -109,7 +109,7 @@ fun String.interpolateIdxD(delimiter: VariableDelimiter, vararg args: Any): Stri
  * @see VariableResolver.fromArray
  * @see interpolateIdxD
  */
-fun String.interpolateIdx(vararg args: Any): String = interpolate(VariableResolver.fromArray(), args)
+fun String.interpolateIdx(vararg args: Any): String = interpolate(args, resolver = VariableResolver.fromArray())
 
 /**
  * Interpolates variables in this string using the given vararg [args], converted to an [Iterator].
@@ -130,7 +130,7 @@ fun String.interpolateIdx(vararg args: Any): String = interpolate(VariableResolv
  * @see VariableResolver.fromIterator
  */
 fun String.interpolateItD(delimiter: VariableDelimiter, vararg args: Any): String =
-    interpolate(VariableResolver.fromIterator(), args.iterator(), delimiter)
+    interpolate(args.iterator(), delimiter, VariableResolver.fromIterator())
 
 /**
  * Overload of [String.interpolateItD] that uses the [default][VariableDelimiter.default] [VariableDelimiter].
@@ -143,7 +143,7 @@ fun String.interpolateItD(delimiter: VariableDelimiter, vararg args: Any): Strin
  * @see interpolateItD
  */
 fun String.interpolateIt(vararg args: Any): String =
-    interpolate(VariableResolver.fromIterator(), args.iterator())
+    interpolate(args.iterator(), resolver = VariableResolver.fromIterator())
 
 /**
  * Interpolates variables in this string using the given map of [args].
@@ -169,7 +169,7 @@ fun String.interpolate(
     args: Map<String, Any>,
     delimiter: VariableDelimiter = VariableDelimiter.default,
 ): String =
-    interpolate(VariableResolver.fromMap(), args, delimiter)
+    interpolate(args, delimiter, VariableResolver.fromMap())
 
 /**
  * Interpolates variables in this string using the given [Pair] array [args]. The array of pairs is converted to a
@@ -231,7 +231,7 @@ fun String.interpolate(
     args: List<Any>,
     delimiter: VariableDelimiter = VariableDelimiter.default,
 ): String =
-    interpolate(VariableResolver.fromList(), args, delimiter)
+    interpolate(args, delimiter, VariableResolver.fromList())
 
 /**
  * Interpolates variables in this string using the given iterator [args].
@@ -253,7 +253,7 @@ fun String.interpolate(
  */
 @JvmOverloads
 fun String.interpolate(args: Iterator<Any>, delimiter: VariableDelimiter = VariableDelimiter.default): String =
-    interpolate(VariableResolver.fromIterator(), args, delimiter)
+    interpolate(args, delimiter, VariableResolver.fromIterator())
 
 /**
  * Interface for resolving variables during string interpolation. This interface maps variable names to their values.

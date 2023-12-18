@@ -156,7 +156,7 @@ causing signature conflicts. It also exists as a variant
 ### VariableResolvers
 
 The previously introduced functions are all using under the hood the default interpolation function
-`<T> interpolate(VariableResolver<T>, T, VariableDelimiter)` (where the VariableDelimiter is here again optional). This
+`<T> interpolate(T, VariableDelimiter, VariableResolver<T>)` (where the VariableDelimiter is here again optional). This
 function takes a `VariableResolver` as first parameter, which is a functional interface representing a function that
 takes a variable name, a context, and returns the value of the variable usually using the name and the context.
 
@@ -177,7 +177,7 @@ and use a custom `VariableResolver`:
 
 ```kt
 val myResolver: VariableResolver<Int> = VariableResolver<Int> { name: String, i: Int -> name + i }
-val string: String = "Hello I'm {name}, and I'm {age} years old.".interpolate(myResolver, 0)
+val string: String = "Hello I'm {name}, and I'm {age} years old.".interpolate(resolver = myResolver)
 println(string) // prints "Hello I'm name0, and I'm age0 years old."
 ```
 
