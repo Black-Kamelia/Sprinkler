@@ -8,104 +8,109 @@ class VariableResolverTest {
 
     @Test
     fun `vararg VariableResolver returns the variable at the index`() {
-        val resolver = VariableResolver.fromVararg(1, "a", true)
-        assertEquals("1", resolver.value("0"))
-        assertEquals("true", resolver.value("2"))
-        assertEquals("a", resolver.value("1"))
+        val array = arrayOf(1, "a", true)
+        val resolver = VariableResolver.fromArray()
+        assertEquals("1", resolver.resolve("0", array))
+        assertEquals("true", resolver.resolve("2", array))
+        assertEquals("a", resolver.resolve("1", array))
     }
 
     @Test
     fun `vararg VariableResolver throws an exception if the index is not an integer`() {
-        val resolver = VariableResolver.fromVararg(1, "a", true)
+        val array = arrayOf(1, "a", true)
+        val resolver = VariableResolver.fromArray()
         assertThrows<IllegalArgumentException> {
-            resolver.value("a")
+            resolver.resolve("a", array)
         }
     }
 
     @Test
     fun `vararg VariableResolver throws an exception if the index is negative`() {
-        val resolver = VariableResolver.fromVararg(1, "a", true)
+        val array = arrayOf(1, "a", true)
+        val resolver = VariableResolver.fromArray()
         assertThrows<IllegalArgumentException> {
-            resolver.value("-3")
+            resolver.resolve("-3", array)
         }
     }
 
     @Test
     fun `vararg VariableResolver throws an exception if the index is greater than the array size`() {
-        val resolver = VariableResolver.fromVararg(1, "a", true)
+        val array = arrayOf(1, "a", true)
+        val resolver = VariableResolver.fromArray()
         assertThrows<IllegalArgumentException> {
-            resolver.value("3")
+            resolver.resolve("3", array)
         }
     }
 
     @Test
     fun `array VariableResolver returns the variable at the index`() {
-        val resolver = VariableResolver.fromList(listOf(1, "a", true))
-        assertEquals("1", resolver.value("0"))
-        assertEquals("true", resolver.value("2"))
-        assertEquals("a", resolver.value("1"))
+        val list = listOf(1, "a", true)
+        val resolver = VariableResolver.fromList()
+        assertEquals("1", resolver.resolve("0", list))
+        assertEquals("true", resolver.resolve("2", list))
+        assertEquals("a", resolver.resolve("1", list))
     }
 
     @Test
     fun `array VariableResolver throws an exception if the index is not an integer`() {
-        val resolver = VariableResolver.fromList(listOf(1, "a", true))
+        val list = listOf(1, "a", true)
+        val resolver = VariableResolver.fromList()
         assertThrows<IllegalArgumentException> {
-            resolver.value("a")
+            resolver.resolve("a", list)
         }
     }
 
     @Test
     fun `array VariableResolver throws an exception if the index is negative`() {
-        val resolver = VariableResolver.fromList(listOf(1, "a", true))
+        val list = listOf(1, "a", true)
+        val resolver = VariableResolver.fromList()
         assertThrows<IllegalArgumentException> {
-            resolver.value("-3")
+            resolver.resolve("-3", list)
         }
     }
 
     @Test
     fun `array VariableResolver throws an exception if the index is greater than the array size`() {
-        val resolver = VariableResolver.fromList(listOf(1, "a", true))
+        val list = listOf(1, "a", true)
+        val resolver = VariableResolver.fromList()
         assertThrows<IllegalArgumentException> {
-            resolver.value("3")
+            resolver.resolve("3", list)
         }
     }
 
     @Test
     fun `fromMap VariableResolver returns the variable with the given key`() {
-        val resolver = VariableResolver.fromMap(mapOf("a" to 1, "b" to "a", "c" to true))
-        assertEquals("1", resolver.value("a"))
-        assertEquals("true", resolver.value("c"))
-        assertEquals("a", resolver.value("b"))
+        val map = mapOf("a" to 1, "b" to "a", "c" to true)
+        val resolver = VariableResolver.fromMap()
+        assertEquals("1", resolver.resolve("a", map))
+        assertEquals("true", resolver.resolve("c", map))
+        assertEquals("a", resolver.resolve("b", map))
     }
 
     @Test
-    fun `fromMap VariableResolver returns the fallback if the key is not found`() {
-        val resolver = VariableResolver.fromMap(mapOf("a" to 5), "fallback")
-        assertEquals("fallback", resolver.value("d"))
-    }
-
-    @Test
-    fun `fromMap VariableResolver throws an exception if the key is not found and no fallback is provided`() {
-        val resolver = VariableResolver.fromMap(mapOf())
+    fun `fromMap VariableResolver throws an exception if the key is not found`() {
+        val map = mapOf<String, Any>()
+        val resolver = VariableResolver.fromMap()
         assertThrows<IllegalArgumentException> {
-            resolver.value("d")
+            resolver.resolve("d", map)
         }
     }
 
     @Test
-    fun `fromPairs VariableResolver returns the variable with the given key`() {
-        val resolver = VariableResolver.fromPairs("a" to 1, "b" to "a", "c" to true)
-        assertEquals("1", resolver.value("a"))
-        assertEquals("true", resolver.value("c"))
-        assertEquals("a", resolver.value("b"))
+    fun `fromIterator VariableResolver returns variables in order`() {
+        val iterator = listOf(1, "a", true).iterator()
+        val resolver = VariableResolver.fromIterator()
+        assertEquals("1", resolver.resolve("", iterator))
+        assertEquals("a", resolver.resolve("", iterator))
+        assertEquals("true", resolver.resolve("", iterator))
     }
 
     @Test
-    fun `fromPairs VariableResolver returns the fallback if the key is not found`() {
-        val resolver = VariableResolver.fromPairs("a" to 5, fallback = "fallback")
-        assertEquals("fallback", resolver.value("d"))
+    fun `fromIterator VariableResolver throws an exception if the iterator is empty`() {
+        val iterator = listOf<Any>().iterator()
+        val resolver = VariableResolver.fromIterator()
+        assertThrows<IllegalArgumentException> {
+            resolver.resolve("", iterator)
+        }
     }
-
-    private fun VariableResolver.value(key: String): String = this.value(key, VariableDelimiter.DEFAULT)
-
 }
