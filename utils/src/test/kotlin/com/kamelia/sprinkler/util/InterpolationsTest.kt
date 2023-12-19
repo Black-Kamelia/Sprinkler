@@ -1,7 +1,9 @@
 package com.kamelia.sprinkler.util
 
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 
 class InterpolationsTest {
@@ -288,5 +290,81 @@ class InterpolationsTest {
             str.interpolate(listOf<String>().iterator())
         }
     }
+
+    // regex tests
+
+    @Test
+    fun `non closed delimiters are not interpolated`() {
+        val str = "Hello {{nope this should not be interpreted"
+        assertDoesNotThrow {
+            str.interpolate(null, resolver = throwResolver)
+        }
+    }
+
+    @Test
+    fun `escaped delimiters are not interpreted`() {
+        val str = "Hello \\{{this should not be interpreted}}"
+        assertDoesNotThrow {
+            str.interpolate(null, resolver = throwResolver)
+        }
+    }
+
+    @Test
+    fun `escaped closing delimiters are not interpreted`() {
+        val str = "Hello {{this should not be interpreted\\}}"
+        assertDoesNotThrow {
+            str.interpolate(null, resolver = throwResolver)
+        }
+    }
+
+    @Test
+    fun `escaped closing delimiters are part of the value`() {
+        val str = "Hello {{this should be interpreted\\}}}"
+        val result = str.interpolate(null) { name, _ ->
+            assertEquals("this should be interpreted\\}", name)
+            "ok"
+        }
+        assertEquals("Hello ok", result)
+    }
+
+    @Test
+    fun `one char delimiters are interpreted`() {
+        val str = "Hello {this should be interpreted}"
+        val result = str.interpolate(null, simpleDelimiter) { name, _ ->
+            assertEquals("this should be interpreted", name)
+            "ok"
+        }
+        assertEquals("Hello ok", result)
+    }
+
+    @Test
+    fun `one char delimiters are not interpreted if escaped`() {
+        val str = "Hello \\{this should not be interpreted}"
+        assertDoesNotThrow {
+            str.interpolate(null, simpleDelimiter, throwResolver)
+        }
+    }
+
+    @Test
+    fun `one char delimiters are not interpreted if escaped (2)`() {
+        val str = "Hello {this should not be interpreted\\}"
+        assertDoesNotThrow {
+            str.interpolate(null, simpleDelimiter, throwResolver)
+        }
+    }
+
+    @Test
+    fun `escaped one char delimiters are part of the value`() {
+        val str = "Hello {this should be interpreted\\}}"
+        val result = str.interpolate(null, simpleDelimiter) { name, _ ->
+            assertEquals("this should be interpreted\\}", name)
+            "ok"
+        }
+        assertEquals("Hello ok", result)
+    }
+
+    private val throwResolver: VariableResolver<Any?> = VariableResolver { _, _ -> Assertions.fail() }
+
+    private val simpleDelimiter = VariableDelimiter.create("{", "}")
 
 }
