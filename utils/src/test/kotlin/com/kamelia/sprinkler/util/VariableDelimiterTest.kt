@@ -55,4 +55,11 @@ class VariableDelimiterTest {
         }
     }
 
+    @Test
+    fun `toString contains the delimiters`() {
+        val delimiter = VariableDelimiter.create("{", "}")
+        assert("{" in delimiter.toString())
+        assert("}" in delimiter.toString())
+    }
+
 }

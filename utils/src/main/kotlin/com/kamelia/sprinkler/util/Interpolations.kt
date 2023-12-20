@@ -447,4 +447,6 @@ class VariableDelimiter private constructor(
 
     }
 
+    override fun toString(): String =
+        "VariableDelimiter(startDelimiter='$startDelimiter', endDelimiter='$endDelimiter')"
 }
