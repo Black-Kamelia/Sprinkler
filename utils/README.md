@@ -79,8 +79,8 @@ As stated previously, in the following examples all functions will use the defau
 The first overload category uses the variable name as a key to retrieve the value of the variable from a map. In case
 the variable name is not present in the map, an `IllegalArgumentException` will be thrown.
 
-It exists in two variants, the first one being `interpolate(map: Map<String, Any>): String` using directly the provided
-map directly.
+It exists in two variants, the first one being `interpolate(map: Map<String, Any>): String` using the provided map
+directly.
 
 ```kt
 val string: String = "Hello I'm {{name}}, and I'm {{age}} years old.".interpolate(
