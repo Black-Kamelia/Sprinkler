@@ -38,8 +38,8 @@ Strings that are valid for interpolation are defined as follows:
 - String may contain zero, one or more variables delimited by a start sequence and an end sequence (these sequences
   can be specified, but for the examples, we will use curly braces `{{` and `}}` as start and end characters) ;
 - Escaping of start character is possible using a backslash (`\`), and only the start character needs to be escaped ;
-- Any non-escaped start character is considered as the start of a variable and can be closed by the first non-escaped
-  end character ;
+- Any non-escaped start sequence is considered as the start of a variable and can be closed by the first non-escaped
+  end sequence ;
 - Any character between a non-escaped start character and the first non-escaped end character is considered as the
   variable name, and will be used to retrieve the value of the variable ;
 
@@ -56,8 +56,9 @@ In the next sections, some cases where variable names must follow specific rules
 ### VariableDelimiter
 
 Before going more in depth regarding the different interpolation functions overloads, let's first introduce the
-`VariableDelimiter` class, which allow to specify the start and end sequences delimiting the variables in the string.
-Delimiters can be instantiated through the `VariableDelimiter.create(start: String, end: String)` factory function.
+`VariableDelimiter` class, which allows one to specify the start and end sequences delimiting the variables in the
+string. Delimiters can be instantiated through the `VariableDelimiter.create(start: String, end: String)` factory
+function.
 
 Both start and end sequences can be composed of almost any character, but must follow the following rules:
 - They cannot be blank (meaning empty or only composed of whitespace characters) ;
@@ -79,7 +80,7 @@ The first overload category uses the variable name as a key to retrieve the valu
 the variable name is not present in the map, an `IllegalArgumentException` will be thrown.
 
 It exists in two variants, the first one being `interpolate(map: Map<String, Any>): String` using directly the provided
-map.
+map directly.
 
 ```kt
 val string: String = "Hello I'm {{name}}, and I'm {{age}} years old.".interpolate(
@@ -105,7 +106,7 @@ println(string) // prints "Hello I'm John, and I'm 42 years old."
 
 The second overload category uses the variable name as an index to retrieve the value of the variable from a list. These
 overloads therefore require the variable names to be valid integers, and the values to be between 0 and the number of
-provided arguments minus 1. If on of these overloads is used with a string that does not respect these rules, an
+provided arguments minus 1. If one of these overloads is used with a string that does not respect these rules, an
 `IllegalArgumentException` will be thrown.
 
 This overload category exists in two variants, the first one being `interpolate(list: List<Any>): String` using the
@@ -131,7 +132,7 @@ allows to specify a custom delimiter.
 
 The third overload and last category uses an `Iterator` to retrieve the values of the variables. Each time a variable is
 encountered, the iterator is called to retrieve the next value. If the iterator does not have a next value, an
-`IllegalArgumentException` will be thrown. Note that the overloads does not use the variable name at all, meaning that
+`IllegalArgumentException` will be thrown. Note that this overload does not use the variable name at all, meaning that
 it can be anything, even an empty string.
 
 This overload category exists in two variants, the first one being `interpolate(iterator: Iterator<Any>): String` using
@@ -155,10 +156,11 @@ causing signature conflicts. It also exists as a variant
 
 ### VariableResolvers
 
-The previously introduced functions are all using under the hood the default interpolation function
-`<T> interpolate(T, VariableDelimiter, VariableResolver<T>)` (where the VariableDelimiter is here again optional). This
-function takes a `VariableResolver` as first parameter, which is a functional interface representing a function that
-takes a variable name, a context, and returns the value of the variable usually using the name and the context.
+The previously introduced functions are all using the default interpolation function
+`<T> interpolate(T, VariableDelimiter, VariableResolver<T>)` (where, again, the VariableDelimiter is optional) under the
+hood. This function takes a `VariableResolver` as the first parameter, which is a functional interface representing a
+function that takes a variable name, a context, and returns the value of the variable usually using the name and the
+context.
 
 This library provides a few implementations of this interface, which are used by the previously introduced functions.
 
