@@ -7,8 +7,9 @@
 - [Intentions](#intentions)
 - [String interpolation](#string-interpolation)
     - [String syntax](#string-syntax)
+    - [VariableDelimiter](#variabledelimiter)
     - [Interpolation](#interpolation)
-    - [Custom Variable Resolvers](#custom-variable-resolvers)
+    - [VariableResolvers](#variableresolvers)
 - [CloseableScope](#closeablescope)
 - [Box Delegate](#box-delegate)
 - [Collector Factories](#collector-factories)
@@ -34,98 +35,153 @@ few extension functions to allow dynamic string interpolation with any object.
 
 Strings that are valid for interpolation are defined as follows:
 
-- String may contain zero, one or more variables delimited by a start character and an end character (these characters
-  can be specified but for the examples, we will use curly braces `{` and `}` as start and end characters) ;
-- Variable names must only contain alphanumeric characters, underscores (`_`) and dashes (`-`) ;
+- String may contain zero, one or more variables delimited by a start sequence and an end sequence (these sequences
+  can be specified, but for the examples, we will use curly braces `{{` and `}}` as start and end characters) ;
 - Escaping of start character is possible using a backslash (`\`), and only the start character needs to be escaped ;
-- Any non-escaped start character is considered as the start of a variable and must be closed before the end of the
-  string ;
-- If a variable name is empty, the variable is resolved by using the count of variables encountered so far. The first
-  variable has index 0, the second index 1, and so on. Note that even variables with a non-empty name are also counted
-  (e.g. in `"Hello {name}, I'm {}"`, the `{}` has the index 1 because the variable `name` is counted).
+- Any non-escaped start sequence is considered as the start of a variable and can be closed by the first non-escaped
+  end sequence ;
+- Any character between a non-escaped start character and the first non-escaped end character is considered as the
+  variable name, and will be used to retrieve the value of the variable ;
 
 Here are a few examples of valid strings:
 
-- `"Hello {Name}, I'm {my-NAME} and I'm {myAge} years old."`
-- `"I like {0} and {1}."`
-- `"I ate \{"`
-- `"{} or {} ?"`
-- `"See you next {time_unit}, at {}."`
+- `"Hello {{Name}, I'm {{my-NAME}} and I'm {{myAge}} years old."`
+- `"I like {{0}} and {{1}}."`
+- `"I ate \{{something."`
+- `"{{}} or {{}} ?"`
+- `"See you next {{time_unit}}, at {{}}."`
 
-Failure to respect the previously defined rules will result in an exception being thrown.
+In the next sections, some cases where variable names must follow specific rules will be presented.
+
+### VariableDelimiter
+
+Before going more in depth regarding the different interpolation functions overloads, let's first introduce the
+`VariableDelimiter` class, which allows one to specify the start and end sequences delimiting the variables in the
+string. Delimiters can be instantiated through the `VariableDelimiter.create(start: String, end: String)` factory
+function.
+
+Both start and end sequences can be composed of almost any character, but must follow the following rules:
+- They cannot be blank (meaning empty or only composed of whitespace characters) ;
+- They cannot contain a backslash (`'\'`) ;
+- They cannot be the same.
+
+There also exists a default delimiter `VariableDelimiter.default` which is composed of the double curly braces `"{{"`
+and `"}}"`. This default implementation is used by default in all the interpolation functions.
 
 ### Interpolation
 
-As stated previously, each overloads that will be presented here (except for the `interpolate(vararg args: Any`) will
-accept an optional `delimiters` parameter which allow to specify the start and end characters of the variables. In the
-whole section, we will use curly braces `{` `}` as start and end characters.
+As stated previously, in the following examples all functions will use the default `VariableDelimiter` (`{{` and `}}`).
 
-To interpolate a string, one must use the `interpolate` extension function on a `String`. It exists in several variants.
-The strings to interpolate must respect the previously defined syntax, as well a different one depending on the variant.
+`interpolate` overloads can be divided in three categories which will be presented in the following sections.
 
-The first ones are `interpolate(vararg args: Pair<String, Any>)` and `interpolate(args: Map<String, Any>)`. They take a
-list of pairs of variable names associated with their values or a map with the same semantics. The variable names must
-be valid identifiers, and the values can be of any type. The function will replace all variables in the string with
-their associated value.
+#### Map based overloads
+
+The first overload category uses the variable name as a key to retrieve the value of the variable from a map. In case
+the variable name is not present in the map, an `IllegalArgumentException` will be thrown.
+
+It exists in two variants, the first one being `interpolate(map: Map<String, Any>): String` using the provided map
+directly.
 
 ```kt
-val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(
+val string: String = "Hello I'm {{name}}, and I'm {{age}} years old.".interpolate(
+    mapOf(
+        "name" to "John",
+        "age" to 42,
+    )
+)
+println(string) // prints "Hello I'm John, and I'm 42 years old."
+```
+
+And the second one, `interpolate(vararg args: Pair<String, Any>): String` converting the provided varargs to a map.
+
+```kt
+val string: String = "Hello I'm {{name}}, and I'm {{age}} years old.".interpolate(
     "name" to "John",
     "age" to 42,
 )
-print(string) // prints "Hello I'm John, and I'm 42 years old."
+println(string) // prints "Hello I'm John, and I'm 42 years old."
 ```
 
-The strings interpolated with this variant must in addition to respect the defined syntax, have all their variables
-names present in the given arguments. If a variable is not found, an exception will be thrown, unless an optional
-`fallback` parameter is provided. It will be used as a default value if a variable is not found in the given arguments.
+#### Indexed overloads
+
+The second overload category uses the variable name as an index to retrieve the value of the variable from a list. These
+overloads therefore require the variable names to be valid integers, and the values to be between 0 and the number of
+provided arguments minus 1. If one of these overloads is used with a string that does not respect these rules, an
+`IllegalArgumentException` will be thrown.
+
+This overload category exists in two variants, the first one being `interpolate(list: List<Any>): String` using the
+provided list to retrieve the values.
 
 ```kt
-val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(
-    "name" to "John",
-    fallback = "unknown"
-)
-print(string) // prints "Hello I'm John, and I'm unknown years old."
+val string: String = "I like {{0}} and {{1}}.".interpolate(listOf("apples", "bananas"))
+println(string) // prints "I like apples and bananas."
 ```
 
-The second variant comes in two flavors: `interpolate(vararg args: Any)` and `interpolate(args: List<Any>)`. They take
-a vararg or a list of values, and will replace the variables in the string using their index in the list.
-
-Besides respecting the defined string syntax, the strings interpolated with this variant must have all their variables
-being named according to the following rules:
-
-- The variable name must be a valid integer ;
-- The value of the variable must be between 0 and the number of provided arguments minus 1.
-
-Note that as empty variable names are replaced by the index of the variable, they can be used in this variant, as long
-as they are in the bounds of the number of provided arguments.
+And the second one, `interpolateIdx(vararg args: Any): String` using the array of arguments to retrieve the values.
 
 ```kt
-val string = "'Hello I'm {0}, and I'm {1} years old.' said {0}.".interpolate(
-    "John",
-    42,
-)
-print(string) // prints "'Hello I'm John, and I'm 42 years old.' said John"
+val string: String = "I like {{0}} and {{1}}.".interpolateIdx("apples", "bananas")
+println(string) // prints "I like apples and bananas."
 ```
 
-### Custom Variable Resolvers
+Note that this overload name is different from the others, due to the `varargs Any` parameter causing signature
+conflicts. It also exists as a variant `interpolateIdxD(delimiter: VariableDelimiter, args: Array<Any>): String` which
+allows to specify a custom delimiter.
 
-The previously introduced functions are all using under the hood the default interpolation function
-`interpolate(VariableResolver)`. This function takes a `VariableResolver` as a parameter, which is a functional
-interface representing a function that takes a variable name and returns its value.
+#### Iterative overloads
 
-Here is a dumb but simple example of how to use it:
+The third overload and last category uses an `Iterator` to retrieve the values of the variables. Each time a variable is
+encountered, the iterator is called to retrieve the next value. If the iterator does not have a next value, an
+`IllegalArgumentException` will be thrown. Note that this overload does not use the variable name at all, meaning that
+it can be anything, even an empty string.
+
+This overload category exists in two variants, the first one being `interpolate(iterator: Iterator<Any>): String` using
+the provided iterator to retrieve the values.
 
 ```kt
-val myResolver = VariableResolver { variableName -> variableName.reversed() }
-val string = "Hello I'm {name}, and I'm {age} years old.".interpolate(myResolver)
-print(string) // prints "Hello I'm eman, and I'm ega years old."
+val string: String = "I ate {{}} and {{}}.".interpolate(listOf("apples", "bananas").iterator())
+println(string) // prints "I ate apples and bananas."
 ```
 
-A `VariableResolver`, can define specific rules that accepts a subset of the valid variable names (e.g. the vararg
-variant only accepts integers). If a variable name is not accepted by the resolver, it should throw the
-`VariableResolver.ResolutionException` exception. This exception will be caught by the interpolation functions to
-provide a more meaningful error message.
+And the second one, `interpolateIt(vararg args: Any): String` using the array of arguments to retrieve the values.
+
+```kt
+val string: String = "I ate {{}} and {{}}.".interpolateIt("apples", "bananas")
+println(string) // prints "I ate apples and bananas."
+```
+
+As for the indexed overloads, this overload name is different from the others, due to the `varargs Any` parameter
+causing signature conflicts. It also exists as a variant
+`interpolateItD(delimiter: VariableDelimiter, args: Array<Any>): String` which allows to specify a custom delimiter.
+
+### VariableResolvers
+
+The previously introduced functions are all using the default interpolation function
+`<T> interpolate(T, VariableDelimiter, VariableResolver<T>)` (where, again, the VariableDelimiter is optional) under the
+hood. This function takes a `VariableResolver` as the first parameter, which is a functional interface representing a
+function that takes a variable name, a context, and returns the value of the variable usually using the name and the
+context.
+
+This library provides a few implementations of this interface, which are used by the previously introduced functions.
+
+Here are the provided implementations:
+- `VariableResolver.fromMap(): VariableResolver<Map<String, Any>>` returns a resolver that uses a map to retrieve the
+  values of the variables.
+- `VariableResolver.fromArray(): VariableResolver<Array<out Any>>` returns a resolver that uses an array to retrieve
+  the values of the variables.
+- `VariableResolver.fromList(): VariableResolver<List<Any>>` returns a resolver that uses a list to retrieve the values
+  of the variables.
+- `VariableResolver.fromIterator(): VariableResolver<Iterator<Any>>` returns a resolver that uses an iterator to
+  retrieve the values of the variables.
+
+Users can also create their own `VariableResolver` implementations. Here is a dumb but simple example of how to create
+and use a custom `VariableResolver`:
+
+```kt
+val myResolver: VariableResolver<Int> = VariableResolver<Int> { name: String, i: Int -> name + i }
+val string: String = "Hello I'm {{name}}, and I'm {{age}} years old.".interpolate(resolver = myResolver)
+println(string) // prints "Hello I'm name0, and I'm age0 years old."
+```
 
 ## CloseableScope
 

@@ -2,108 +2,80 @@
 
 package com.kamelia.sprinkler.util
 
+import org.intellij.lang.annotations.Language
+
 /**
- * Interpolates variables in this string using the given [resolver]. This function replaces all occurrences of
- * `{variable}` with the value of the variable returned by [VariableResolver.value].
+ * Interpolates variables in this string using the given [resolver]. This function replaces all sequence of characters
+ * placed between two specific sequences of characters defined as start and end delimiters. The value used to replace
+ * these sequences is resolved using the [resolver] parameter which maps variable names to their values thanks to the
+ * [context] parameter.
  *
- * Strings that are valid for interpolation are defined as follows:
- * - String may contain **zero**, **one** or **more** variables delimited by a start character and an end character
- * defined by the [delimiters] parameter ;
- * - Variable names can contain any character except the end character, which is reserved for closing the variable ;
- * - **Escaping** [delimiters] characters is possible using a **backslash** (`\`), and **only the opening character**
- * can be escaped ;
- * - Any **non-escaped start character** is considered as the start of a variable and **must be closed** before the end
- * of the string ;
- * - If a variable **name is empty**, the variable is resolved by using the **count of variables** encountered so far.
- * The first variable has index 0, the second index 1, and so on. Note that even variables with a **non-empty name are**
- * **also counted** (e.g. with '{' and '}' as start and end characters, `"Hello {name}, I'm {}"`, the `{}` has the index
- * 1 because the variable `name` is counted).
- *
- * Any string that does not conform to these rules is considered invalid, a call to this function with an invalid string
- * will result in an [IllegalArgumentException] being thrown.
- *
- * **NOTE**: Depending on the implementation of [VariableResolver] used, this function may also throw an
- * [IllegalArgumentException] if a variable name is invalid for the given [VariableResolver].
+ * Any sequence that matches the start or end delimiter (encountered after the start delimiter) are considered as such.
+ * To escape a delimiter, it must be preceded by a backslash (`\`).
  *
  * This function can be used as follows:
  *
  * ```kt
- * val resolver: VariableResolver = ...
- * val result = "Hello {user_name}, you are {user-age} years old".interpolate(resolver)
+ * val resolver: VariableResolver<MyContext> = ...
+ * val context: MyContext = ...
+ * val result = "Hello {{name}}, you are {{age}} years old".interpolate(context, resolver = resolver)
  * ```
  *
+ * There are several overloads of this function that can be used to interpolate variables using different types of
+ * [context] like a map, a list, a vararg, etc.
+ *
+ * **NOTE**: Depending on the implementation of [VariableResolver] used, this function may throw an
+ * [IllegalArgumentException] if a variable name is invalid for the given [VariableResolver].
+ *
+ * @receiver the string to interpolate
+ * @param context the context to use for resolving the variable
+ * @param delimiter the delimitation of the variable (defaults to [VariableDelimiter.default])
  * @param resolver the [VariableResolver] to use for resolving variable names
- * @param delimiters the delimitation of the variable (defaults to [VariableDelimiter.DEFAULT])
  * @return the interpolated string
- * @throws IllegalArgumentException if the string is invalid, or if a variable name is invalid for the given
- * [VariableResolver]
- * @see [VariableResolver]
+ * @throws IllegalArgumentException if a variable name is invalid for the given [VariableResolver]
+ * @see VariableResolver
+ * @see VariableDelimiter
  */
-fun String.interpolate(
-    resolver: VariableResolver,
-    delimiters: VariableDelimiter = VariableDelimiter.DEFAULT,
+@JvmOverloads
+fun <T> String.interpolate(
+    context: T,
+    delimiter: VariableDelimiter = VariableDelimiter.default,
+    resolver: VariableResolver<T>,
 ): String {
-    val builder = StringBuilder() // final string builder
-    var state = State.DEFAULT // current state of the parser
-    val keyBuilder = StringBuilder() // builder used to build the key of the variable
-    var variableCount = 0 // number of variables encountered to resolve empty names
+    // this function is a copy of the kotlin.text.Regex#replace(CharSequence,(MatchResult) -> CharSequence) function
+    // the code is pasted here to avoid variable capture in a lambda which would be created for each call to this
+    var match: MatchResult? = delimiter.regex.find(this) ?: return this
 
-    forEach { char ->
-        when (state) {
-            State.DEFAULT -> {
-                when (char) {
-                    delimiters.variableStart -> state = State.IN_VARIABLE // start of a variable
-                    '\\' -> state = State.BACKSLASH // start of an escape sequence
-                    else -> builder.append(char) // any other character is appended to the final string
-                }
-            }
-            State.BACKSLASH -> { // in this state the variableStart is escaped
-                builder.append(char)
-                state = State.DEFAULT
-            }
-            State.IN_VARIABLE -> {
-                if (delimiters.variableEnd != char) { // append the current character to the key
-                    keyBuilder.append(char)
-                    return@forEach
-                }
+    var lastStart = 0
+    val length = length
+    val sb = StringBuilder(length)
+    do {
+        val foundMatch = match!!
+        sb.append(this, lastStart, foundMatch.range.first)
+        // lambda instantiation avoided here
+        val value = resolver.resolve(foundMatch.groupValues[1], context)
+        sb.append(value)
+        lastStart = foundMatch.range.last + 1
+        match = foundMatch.next()
+    } while (lastStart < length && match != null)
 
-                // end of the variable
-                val key = if (keyBuilder.isEmpty()) { // if the key is empty, use the variable count
-                    variableCount.toString()
-                } else {
-                    keyBuilder.toString()
-                }
-
-                val value = resolver.value(key, delimiters)
-                builder.append(value)
-                // clear instead of creating a new one, because the complexity is O(1) and not O(n)
-                // it simply sets the length of the builder to 0
-                keyBuilder.clear()
-                state = State.DEFAULT
-                variableCount++
-            }
-        }
-    }
-    require(State.IN_VARIABLE !== state) { // ensure that the string does not end in the middle of a variable
-        "Unexpected end of string in interpolated value"
+    if (lastStart < length) {
+        println("Yo")
+        sb.append(this, lastStart, length)
     }
 
-    return builder.toString()
+    return sb.toString()
 }
 
 /**
  * Interpolates variables in this string using the given vararg [args].
  *
- * Variable are resolved by their index in the given [args]. The variable passed to is parsed as an integer, and the
+ * Variables are resolved by their index in the given [args]. The variable passed to is parsed as an integer, and the
  * value at the corresponding index in the [array][args] is returned.
  *
- * Strings must follow the same rules as defined in [String.interpolate]. In addition, the following rules apply to
- * variable names:
+ * The following rules apply to variable names:
  * - Name must be a **valid integer** ;
  * - The **index** specified in the name must be in between **0** and the **number of arguments in [args]** - 1.
- *
- * **NOTE**: As empty variable names are resolved by using the count of variables encountered so far, they are totally
- * valid for this function, as long as the resulting index is in bounds.
  *
  * Any string that does not conform to these rules is considered invalid, a call to this function with an invalid string
  * will result in an [IllegalArgumentException] being thrown.
@@ -111,126 +83,184 @@ fun String.interpolate(
  * This function can be used as follows:
  *
  * ```kt
- * val result = "Hello {0}, you are {1} years old".interpolateIndexed("John", 42)
+ * val result = "Hello {{0}}, you are {{1}} years old".interpolateIdx("John", 42)
  * ```
  *
+ * **NOTE**: The [interpolateIdx] function is an overload of this function that uses the
+ * [default][VariableDelimiter.default] [VariableDelimiter].
+ *
+ * @receiver the string to interpolate
+ * @param delimiter the delimitation of the variable
  * @param args the vararg of values
  * @return the interpolated string
- * @throws IllegalArgumentException if the string is invalid, or if a variable name does not conform to the rules
- * defined above
- * @see [VariableResolver.fromVararg]
+ * @throws IllegalArgumentException if a variable name does not conform to the rules defined above
+ * @see VariableResolver.fromArray
  */
-fun String.interpolateIndexed(vararg args: Any): String = interpolate(VariableResolver.fromVararg(*args))
+fun String.interpolateIdxD(delimiter: VariableDelimiter, vararg args: Any): String =
+    interpolate(args, delimiter, VariableResolver.fromArray())
 
 /**
- * Interpolates variables in this string using the given list [args].
+ * Overload of [String.interpolateIdxD] that uses the [default][VariableDelimiter.default] [VariableDelimiter].
  *
- * Variable are resolved by their index in the given [args]. The variable passed to is parsed as an integer, and the
- * value at the corresponding index in the [list][args] is returned.
+ * @receiver the string to interpolate
+ * @param args the vararg of values
+ * @return the interpolated string
+ * @throws IllegalArgumentException if a variable name does not conform to the rules defined in [String.interpolateIdx]
+ * @see VariableResolver.fromArray
+ * @see interpolateIdxD
+ */
+fun String.interpolateIdx(vararg args: Any): String = interpolate(args, resolver = VariableResolver.fromArray())
+
+/**
+ * Interpolates variables in this string using the given vararg [args], converted to an [Iterator].
  *
- * Strings must follow the same rules as defined in [String.interpolate]. In addition, the following rules apply to
- * variable names:
- * - Name must be a **valid integer** ;
- * - The **index** specified in the name must be in between **0** and the **number of arguments in [args]** - 1.
+ * Variables are resolved in the order they appear in the string, using the [Iterator.next] method to get the next
+ * value. If the iterator has no more elements, an [IllegalArgumentException] is thrown.
  *
- * **NOTE**: As empty variable names are resolved by using the count of variables encountered so far, they are totally
- * valid for this function, as long as the resulting index is in bounds.
- *
- * Any string that does not conform to these rules is considered invalid, a call to this function with an invalid string
- * will result in an [IllegalArgumentException] being thrown.
- *
- * &nbsp;
- *
- * It can be used as follows:
- *
+ * This function can be used as follows:
  * ```kt
- * val args = listOf("John", 42)
- * val result = "Hello {0}, you are {1} years old".interpolateIndexed(args)
+ * val result = "Hello {{}}, {{}}, {{}}".interpolateIdxIt("John", 42, "foo")
  * ```
  *
- * @param args the list of values
- * @param delimiters the delimitation of the variable (defaults to [VariableDelimiter.DEFAULT])
+ * @receiver the string to interpolate
+ * @param delimiter the delimitation of the variable
+ * @param args the vararg of values
  * @return the interpolated string
- * @throws IllegalArgumentException if the string is invalid, or if a variable name does not conform to the rules
- * defined above
- * @see [VariableResolver.fromList]
+ * @throws IllegalArgumentException if the iterator has no more elements and a variable is found
+ * @see VariableResolver.fromIterator
  */
-@JvmOverloads
-fun String.interpolateIndexed(
-    args: List<Any>,
-    delimiters: VariableDelimiter = VariableDelimiter.DEFAULT,
-): String =
-    interpolate(VariableResolver.fromList(args), delimiters)
+fun String.interpolateItD(delimiter: VariableDelimiter, vararg args: Any): String =
+    interpolate(args.iterator(), delimiter, VariableResolver.fromIterator())
+
+/**
+ * Overload of [String.interpolateItD] that uses the [default][VariableDelimiter.default] [VariableDelimiter].
+ *
+ * @receiver the string to interpolate
+ * @param args the vararg of values
+ * @return the interpolated string
+ * @throws IllegalArgumentException if the iterator has no more elements and a variable is found
+ * @see VariableResolver.fromIterator
+ * @see interpolateItD
+ */
+fun String.interpolateIt(vararg args: Any): String =
+    interpolate(args.iterator(), resolver = VariableResolver.fromIterator())
 
 /**
  * Interpolates variables in this string using the given map of [args].
  *
- * Variable are resolved by their name in the given [map][args]. The name of the variable passed to is used as a key in
- * the [map][args], and the value associated with that key is returned. If a variable is unknown, the [fallback] value
- * is returned. If the [fallback] value is `null`, an [IllegalArgumentException] is thrown.
- *
- * Strings must follow the same rules as defined in [String.interpolate].
+ * Variables are resolved by their name in the given [map][args]. The name of the variable passed to is used as a key in
+ * the [map][args], and the value associated with that key is returned. If a variable name is unknown, an
+ * [IllegalArgumentException] is thrown.
  *
  * It can be used as follows:
  *
  * ```kt
- * val result = "Hello {name}, you are {age} years old".interpolate(mapOf("name" to "John", "age" to 42))
+ * val result = "Hello {{name}}, you are {{age}} years old".interpolate(mapOf("name" to "John", "age" to 42))
  * ```
  *
  * @param args the map of values
- * @param fallback the fallback value (defaults to `null`)
- * @param delimiters the delimitation of the variable (defaults to [VariableDelimiter.DEFAULT])
+ * @param delimiter the delimitation of the variable (defaults to [VariableDelimiter.default])
  * @return the interpolated string
- * @throws IllegalArgumentException if the string is invalid, or if a variable name is unknown and the [fallback] value
- * is `null`
- * @see [VariableResolver.fromMap]
+ * @throws IllegalArgumentException if a variable name is unknown
+ * @see VariableResolver.fromMap
  */
 @JvmOverloads
 fun String.interpolate(
     args: Map<String, Any>,
-    fallback: String? = null,
-    delimiters: VariableDelimiter = VariableDelimiter.DEFAULT,
+    delimiter: VariableDelimiter = VariableDelimiter.default,
 ): String =
-    interpolate(VariableResolver.fromMap(args, fallback), delimiters)
+    interpolate(args, delimiter, VariableResolver.fromMap())
 
 /**
  * Interpolates variables in this string using the given [Pair] array [args]. The array of pairs is converted to a
  * [map][Map].
  *
- * Variable are resolved by their name in the [Pair] array [args]. The name of the variable passed to is used as a key
- * in the map created from the [array][args] and the value associated with that key is returned. If a variable is
- * unknown, the [fallback] value is returned. If the [fallback] value is `null`, an [IllegalArgumentException] is
- * thrown.
+ * Variables are resolved by their name represented by the [first][Pair.first] value of each pair. The name of the
+ * variable passed to is used as a key in the map created from the [array][args] and the value associated with that key
+ * is returned. If a variable name is unknown, an [IllegalArgumentException] is thrown.
  *
  * Strings must follow the same rules as defined in [String.interpolate].
  *
  * It can be used as follows:
  *
  * ```kt
- * val result = "Hello {name}, you are {age} years old".interpolate("name" to "John", "age" to 42)
+ * val result = "Hello {{name}}, you are {{age}} years old".interpolate("name" to "John", "age" to 42)
  * ```
  *
  * @param args the array of pairs
- * @param fallback the fallback value (defaults to `null`)
- * @param delimiters the delimitation of the variable (defaults to [VariableDelimiter.DEFAULT])
+ * @param delimiter the delimitation of the variable (defaults to [VariableDelimiter.default])
  * @return the interpolated string
- * @throws IllegalArgumentException if the string is invalid, or if a variable name is unknown and the [fallback] value
- * is `null`
- * @see [VariableResolver.fromPairs]
+ * @throws IllegalArgumentException if a variable name is unknown
+ * @see VariableResolver.fromMap
  */
 @JvmOverloads
 fun String.interpolate(
     vararg args: Pair<String, Any>,
-    fallback: String? = null,
-    delimiters: VariableDelimiter = VariableDelimiter.DEFAULT,
+    delimiter: VariableDelimiter = VariableDelimiter.default,
 ): String =
-    interpolate(VariableResolver.fromMap(args.toMap(), fallback), delimiters)
+    interpolate(args.toMap(), delimiter)
 
 /**
- * Interface for resolving variables during string interpolation. This interface maps variable names to their
- * values.
+ * Interpolates variables in this string using the given list [args].
+ *
+ * Variables are resolved by their index in the given [args]. The variable passed to is parsed as an integer, and the
+ * value at the corresponding index in the [list][args] is returned.
+ *
+ * The following rules apply to variable names:
+ * - Name must be a **valid integer** ;
+ * - The **index** specified in the name must be in between **0** and the **number of arguments in [args]** - 1.
+ *
+ * Any string that does not conform to these rules is considered invalid, a call to this function with an invalid string
+ * will result in an [IllegalArgumentException] being thrown.
+ *
+ * This function can be used as follows:
+ *
+ * ```kt
+ * val args = listOf("John", 42)
+ * val result = "Hello {{0}}, you are {{1}} years old".interpolate(args)
+ * ```
+ *
+ * @param args the list of values
+ * @param delimiter the delimitation of the variable (defaults to [VariableDelimiter.default])
+ * @return the interpolated string
+ * @throws IllegalArgumentException if a variable name does not conform to the rules defined above
+ * @see VariableResolver.fromList
  */
-fun interface VariableResolver {
+@JvmOverloads
+fun String.interpolate(
+    args: List<Any>,
+    delimiter: VariableDelimiter = VariableDelimiter.default,
+): String =
+    interpolate(args, delimiter, VariableResolver.fromList())
+
+/**
+ * Interpolates variables in this string using the given iterator [args].
+ *
+ * Variables are resolved in the order they appear in the string, using the [Iterator.next] method to get the next
+ * value. If the iterator has no more elements, an [IllegalArgumentException] is thrown.
+ *
+ * This function can be used as follows:
+ * ```kt
+ * val args = listOf("John", 42).iterator()
+ * val result = "Hello {{}}, you are {{}} years old".interpolate(args)
+ * ```
+ *
+ * @param args the iterator of values
+ * @param delimiter the delimitation of the variable (defaults to [VariableDelimiter.default])
+ * @return the interpolated string
+ * @throws IllegalArgumentException if the iterator has no more elements and a variable is found
+ * @see VariableResolver.fromIterator
+ */
+@JvmOverloads
+fun String.interpolate(args: Iterator<Any>, delimiter: VariableDelimiter = VariableDelimiter.default): String =
+    interpolate(args, delimiter, VariableResolver.fromIterator())
+
+/**
+ * Interface for resolving variables during string interpolation. This interface maps variable names to their values.
+ *
+ * @see interpolate
+ */
+fun interface VariableResolver<T> {
 
     /**
      * Returns the value of the variable with the given [name].
@@ -238,119 +268,112 @@ fun interface VariableResolver {
      * Implementations may throw an [IllegalArgumentException] if the variable is unknown, or return a default value.
      *
      * @param name the name of the variable
-     * @param delimiter the delimitation of the variable, can be useful for some implementations
+     * @param context the context to use for resolving the variable
      * @return the value of the variable
      * @throws IllegalArgumentException if the variable is unknown
      */
-    fun value(name: String, delimiter: VariableDelimiter): String
-
-//    /**
-//     * Exception thrown by [VariableResolver] implementations when a variable name cannot be resolved.
-//     *
-//     * @param message the exception message
-//     * @see VariableResolver.value
-//     */
-//    class ResolutionException(message: String) : IllegalArgumentException(message)
+    fun resolve(name: String, context: T): String
 
     companion object {
 
         /**
-         * Creates a [VariableResolver] that resolves variables by their index in the given [list][args].
+         * Creates a [VariableResolver] that resolves variables by their index in a list.
          *
-         * The variable passed to [VariableResolver.value] is parsed as an integer, and the value at the corresponding index
-         * in the [list][args] is returned. If name does not represent a valid integer, or if the index is out of
-         * bounds, an [ResolutionException] is thrown.
+         * The variable passed to [VariableResolver.resolve] is parsed as an integer, and the value at the corresponding
+         * index in the is returned. If name does not represent a valid integer, or if the index is out of bounds, an
+         * [IllegalArgumentException] is thrown.
          *
          * Example:
          * ```kt
          * val args = listOf("foo", "bar", "baz")
-         * val resolver = VariableResolver.fromList(args)
-         * val result = "Hello {0}, {2}, {1}".interpolate(resolver)
+         * val resolver = VariableResolver.fromList()
+         * val result = "Hello {{0}}, {{2}}, {{1}}".interpolate(resolver, args)
          * println(result) // prints "Hello foo, baz, bar"
          * ```
          *
-         * @param args the list of values
-         * @return a [VariableResolver] that resolves variables by their index in the given [list][args]
+         * @return a [VariableResolver] that resolves variables by their index in a list
          */
         @JvmStatic
-        fun fromList(args: List<Any>): VariableResolver =
-            VariableResolver { name, _ ->
-                val index = name.toIntOrNull()
-                    ?: illegalArgument("index must be a parsable integer, but was'$name'")
-                require(index in args.indices) {
-                    "index must be in between 0 and ${args.size}, but was $index"
+        fun fromList(): VariableResolver<List<Any>> =
+            VariableResolver { name, context ->
+                val index = requireNotNull(name.toIntOrNull()) { "Expected an integer for variable '$name'" }
+                require(index >= 0 && index < context.size) {
+                    "Index out of bounds for variable '$name': expected an integer between 0 and ${context.size - 1} (inclusive)"
                 }
-                args[index].toString()
+                context[index].toString()
             }
 
         /**
-         * Creates a [VariableResolver] that resolves variables by their index in the given [vararg][args].
+         * Creates a [VariableResolver] that resolves variables by their index in an array.
          *
-         * The variable passed to [VariableResolver.value] is parsed as an integer, and the value at the corresponding index
-         * in the [vararg][args] is returned. If name does not represent a valid integer, or if the index is out of
-         * bounds, an [IllegalArgumentException] is thrown.
+         * The variable passed to [VariableResolver.resolve] is parsed as an integer, and the value at the corresponding
+         * index in the array is returned. If name does not represent a valid integer, or if the index is out of bounds,
+         * an [IllegalArgumentException] is thrown.
          *
          * Example:
          * ```kt
-         * val resolver = VariableResolver.fromVararg("foo", "bar", "baz")
-         * val result = "Hello {0}, {2}, {1}".interpolate(resolver)
+         * val args = arrayOf("foo", "bar", "baz")
+         * val resolver = VariableResolver.fromArray()
+         * val result = "Hello {{0}}, {{2}}, {{1}}".interpolate(resolver, args)
          * println(result) // prints "Hello foo, baz, bar"
          * ```
          *
-         * @param args the vararg of values
-         * @return a [VariableResolver] that resolves variables by their index in the given [vararg][args]
+         * @return a [VariableResolver] that resolves variables by their index in an array
          */
         @JvmStatic
-        fun fromVararg(vararg args: Any): VariableResolver = fromList(args.asList())
-
-        /**
-         * Creates a [VariableResolver] that resolves variables by their name in the given [map][args].
-         *
-         * The name of the variable passed to [VariableResolver.value] is used as a key in the [map][args], and the value
-         * associated with that key is returned. If a variable is unknown, the [fallback] value is returned. If the
-         * [fallback] value is `null`, an [IllegalArgumentException] is thrown.
-         *
-         * Example:
-         * ```kt
-         * val resolver = VariableResolver.fromMap(mapOf("name" to "John", "age" to 42), fallback = "unknown")
-         * val result = "Hello {name}, you are {age} years old, and you live in {city}".interpolate(resolver)
-         * println(result) // prints "Hello John, you are 42 years old, and you live in unknown"
-         * ```
-         *
-         * @param args the map of values
-         * @param fallback the fallback value (defaults to `null`)
-         * @return a [VariableResolver] that resolves variables by their name in the given [map][args]
-         */
-        @JvmStatic
-        @JvmOverloads
-        fun fromMap(args: Map<String, Any>, fallback: String? = null): VariableResolver =
-            VariableResolver { name, _ ->
-                args[name]?.toString() ?: fallback ?: illegalArgument("unknown variable name '$name'")
+        fun fromArray(): VariableResolver<Array<out Any>> =
+            VariableResolver { name, context ->
+                val index = requireNotNull(name.toIntOrNull()) { "Expected an integer for variable '$name'" }
+                require(index >= 0 && index < context.size) {
+                    "Index out of bounds for variable '$name': expected an integer between 0 and ${context.size - 1} (inclusive)"
+                }
+                context[index].toString()
             }
 
         /**
-         * Creates a [VariableResolver] that resolves variables by their name in the [Pair] array [args]. The array of pairs
-         * is converted to a [map][Map].
+         * Creates a [VariableResolver] that resolves variables by their name in a map.
          *
-         * The name of the variable passed to [VariableResolver.value] is used as a key in the map created from the
-         * [array][args] and the value associated with that key is returned. If a variable is unknown, the [fallback]
-         * value is returned. If the [fallback] value is `null`, an [IllegalArgumentException] is thrown.
+         * The name of the variable passed to [VariableResolver.resolve] is used as a key in the map, and the value
+         * associated with that key is returned. If a variable
          *
          * Example:
          * ```kt
-         * val resolver = VariableResolver.fromPairs("name" to "John", "age" to 42, fallback = "unknown")
-         * val result = "Hello {name}, you are {age} years old, and you live in {city}".interpolate(resolver)
-         * println(result) // prints "Hello John, you are 42 years old, and you live in unknown"
+         * val args = mapOf("name" to "John", "age" to 42)
+         * val resolver = VariableResolver.fromMap()
+         * val result = "Hello {{name}}, you are {{age}} years old.".interpolate(resolver, args)
+         * println(result) // prints "Hello John, you are 42 years old."
          * ```
          *
-         * @param args the array of pairs
-         * @param fallback the fallback value (defaults to `null`)
-         * @return a [VariableResolver] that resolves variables by their name in the [Pair] array [args]
+         * @return a [VariableResolver] that resolves variables by their name in a map
          */
         @JvmStatic
-        @JvmOverloads
-        fun fromPairs(vararg args: Pair<String, Any>, fallback: String? = null): VariableResolver =
-            fromMap(args.toMap(), fallback)
+        fun fromMap(): VariableResolver<Map<String, Any>> =
+            VariableResolver { name, context ->
+                context[name]?.toString() ?: throw IllegalArgumentException("No value found for variable '$name'")
+            }
+
+        /**
+         * Creates a [VariableResolver] that resolves variables using in an iterator. Each call to
+         * [VariableResolver.resolve] will use the [Iterator.next] method to get the next value.
+         *
+         * If the iterator has no more elements, an [IllegalArgumentException] is thrown.
+         *
+         * Example:
+         * ```kt
+         * val args = listOf("foo", "bar", "baz").iterator()
+         * val resolver = VariableResolver.fromIterator()
+         * val result = "Hello {{}}, {{}}, {{}}".interpolate(resolver, args)
+         * println(result) // prints "Hello foo, bar, baz"
+         * ```
+         *
+         * @return a [VariableResolver] that resolves variables using in an iterator
+         */
+        @JvmStatic
+        fun fromIterator(): VariableResolver<Iterator<Any>> =
+            VariableResolver { _, context ->
+                require(context.hasNext()) { "No available variable" }
+                context.next().toString()
+            }
 
     }
 
@@ -359,40 +382,71 @@ fun interface VariableResolver {
 /**
  * Represents the delimitation of a variable in an interpolated string.
  *
- * @property variableStart The start character of a variable.
- * @property variableEnd The end character of a variable.
- * @constructor Creates a new [VariableDelimiter] with the given [variableStart] and [variableEnd].
- * @param variableStart the start character of a variable
- * @param variableEnd the end character of a variable
- * @throws IllegalArgumentException if [variableStart] and [variableEnd] are equal, or if [variableStart] or
- * [variableEnd] is equal to `'\'`
+ * @property startDelimiter The start delimiter of the variable.
+ * @property endDelimiter The end delimiter of the variable.
  * @see VariableResolver
+ * @see interpolate
  */
-class VariableDelimiter(
-    val variableStart: Char,
-    val variableEnd: Char,
+class VariableDelimiter private constructor(
+    val startDelimiter: String,
+    val endDelimiter: String,
+    internal val regex: Regex,
 ) {
-
-    init {
-        require(variableStart != variableEnd) { "variableStart and variableEnd must not be equal" }
-        require(variableStart != '\\') { "variableStart must not be equal to '\\'" }
-        require(variableEnd != '\\') { "variableEnd must not be equal to '\\'" }
-    }
 
     companion object {
 
         /**
-         * The default [VariableDelimiter] used by [String.interpolate]. It uses the characters `'{'` and `'}'` as
+         * The default [VariableDelimiter] used by [String.interpolate]. It uses the strings `"{{"` and `"}}"` as
          * delimiters.
          */
-        val DEFAULT = VariableDelimiter('{', '}')
+        @JvmStatic
+        @get:JvmName("default")
+        val default: VariableDelimiter = create("{{", "}}")
+
+        /**
+         * Creates a [VariableDelimiter] using the given [start] and [end] delimiters.
+         *
+         * The [start] and [end] delimiters must follow these rules:
+         * - They must not be blank ;
+         * - They must be different ;
+         * - They must not contain the escape character (`\`).
+         *
+         * If the delimiters do not follow these rules, an [IllegalArgumentException] is thrown.
+         *
+         * @param start the start delimiter
+         * @param end the end delimiter
+         * @return a [VariableDelimiter] using the given [start] and [end] delimiters
+         * @throws IllegalArgumentException if the delimiters does not follow the rules defined above
+         */
+        @JvmStatic
+        fun create(start: String, end: String): VariableDelimiter {
+            require(start.isNotBlank()) { "start must not be blank" }
+            require(end.isNotBlank()) { "end must not be blank" }
+            require(start != end) { "start and end must be different" }
+            require('\\' !in start) { "start must not contain the escape character" }
+            require('\\' !in end) { "end must not contain the escape character" }
+
+            val s = Regex.escape(start)
+            val e = Regex.escape(end)
+
+            val validContent = if (end.length > 1) {
+                val last = Regex.escape(end.last().toString())
+                val prefix = Regex.escape(end.substring(0, end.length - 1))
+                @Language("RegExp") // variable needed to apply the @Language annotation for syntax highlighting
+                val r = """(?:[^$last]|(?<!$prefix)$last|(?<=\\$prefix)$last)*?"""
+                r
+            } else {
+                @Language("RegExp") // same as above
+                val r = """(?:[^$e]|(?<=\\)$e)*?"""
+                r
+            }
+
+            val regex = """(?<!\\)$s($validContent)(?<!\\)$e""".toRegex()
+            return VariableDelimiter(start, end, regex)
+        }
 
     }
 
-}
-
-private enum class State {
-    DEFAULT,
-    BACKSLASH,
-    IN_VARIABLE,
+    override fun toString(): String =
+        "VariableDelimiter(startDelimiter='$startDelimiter', endDelimiter='$endDelimiter')"
 }

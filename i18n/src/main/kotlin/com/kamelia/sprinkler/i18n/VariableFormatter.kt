@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.util.cast
+import com.kamelia.sprinkler.util.castOrNull
 import com.kamelia.sprinkler.util.illegalArgument
 import java.math.RoundingMode
 import java.text.NumberFormat
@@ -10,20 +10,11 @@ import java.time.temporal.TemporalAccessor
 import java.util.*
 
 /**
- * Represents an object that can format specific values depending on the locale.
- *
- * The syntax to use a variable formatter within a translation value is `{variable-name, formatter-name(arg1: value1,
- * arg2: value2, ...)}` where:
- * - `formatter-name` is the name of the formatter to user (e.g. `datetime`)
- * - `arg1`, `arg2`, etc. are the names of the extra parameters to pass to the formatter
- * - `value1`, `value2`, etc. are the values associated with those parameters.
- * The number of arguments and their types depend on the formatter used.
+ * Represents an object that can format specific values depending on the locale. Formatting is performed through the
+ * [format] method.
  *
  * Formatter implementations should throw an [IllegalArgumentException] when calling the [format] method with unexpected
  * `extraArgs`.
- *
- * If no arguments are needed or passed, the parentheses can be omitted (e.g. `{value, datetime}`). If the formatter is
- * not found, the [Translator.t] and [Translator.tn] methods will throw and [IllegalStateException].
  *
  * The following formatters are built-in:
  * - [VariableFormatter.currency]
@@ -73,11 +64,8 @@ fun interface VariableFormatter {
          */
         @JvmStatic
         fun currency(): VariableFormatter = VariableFormatter { value, locale, extraArgs ->
-            val amount = try {
-                value.cast<Number>().toDouble()
-            } catch (e: ClassCastException) {
-                throw ClassCastException("The value ($value) must be of type Number")
-            }
+            val amount = value.castOrNull<Number>()?.toDouble()
+                ?: throw ClassCastException("The value ($value) must be of type Number")
 
             val inner = NumberFormat.getCurrencyInstance(locale)
             parseNumberFormatParams(inner, extraArgs)
@@ -97,11 +85,8 @@ fun interface VariableFormatter {
          */
         @JvmStatic
         fun date(): VariableFormatter = VariableFormatter { value, locale, extraArgs ->
-            val date = try {
-                value.cast<TemporalAccessor>()
-            } catch (e: ClassCastException) {
-                throw ClassCastException("The value ($value) must be of type TemporalAccessor")
-            }
+            val date = value.castOrNull<TemporalAccessor>()
+                ?: throw ClassCastException("The value ($value) must be of type TemporalAccessor")
 
             val inner = createDateTimeFormatParams(DateTimeFormatterKind.DATE, extraArgs).localizedBy(locale)
             inner.format(date)
@@ -120,11 +105,8 @@ fun interface VariableFormatter {
          */
         @JvmStatic
         fun time(): VariableFormatter = VariableFormatter { value, locale, extraArgs ->
-            val time = try {
-                value.cast<TemporalAccessor>()
-            } catch (e: ClassCastException) {
-                throw ClassCastException("The value ($value) must be of type TemporalAccessor")
-            }
+            val time = value.castOrNull<TemporalAccessor>()
+                ?: throw ClassCastException("The value ($value) must be of type TemporalAccessor")
 
             val inner = createDateTimeFormatParams(DateTimeFormatterKind.TIME, extraArgs).localizedBy(locale)
             inner.format(time)
@@ -147,11 +129,8 @@ fun interface VariableFormatter {
          */
         @JvmStatic
         fun datetime(): VariableFormatter = VariableFormatter { value, locale, extraArgs ->
-            val dateTime = try {
-                value.cast<TemporalAccessor>()
-            } catch (e: ClassCastException) {
-                throw ClassCastException("The value ($value) must be of type TemporalAccessor")
-            }
+            val dateTime = value.castOrNull<TemporalAccessor>()
+                ?: throw ClassCastException("The value ($value) must be of type TemporalAccessor")
 
             val inner = createDateTimeFormatParams(DateTimeFormatterKind.DATE_TIME, extraArgs).localizedBy(locale)
             inner.format(dateTime)
@@ -185,11 +164,8 @@ fun interface VariableFormatter {
          */
         @JvmStatic
         fun number(): VariableFormatter = VariableFormatter { value, locale, extraArgs ->
-            val number = try {
-                value.cast<Number>()
-            } catch (e: ClassCastException) {
-                throw ClassCastException("The value ($value) must be of type Number")
-            }
+            val number = value.castOrNull<Number>()
+                ?: throw ClassCastException("The value ($value) must be of type Number")
 
             val inner = NumberFormat.getInstance(locale)
             parseNumberFormatParams(inner, extraArgs)
