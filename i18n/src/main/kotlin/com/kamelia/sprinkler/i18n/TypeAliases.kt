@@ -36,7 +36,8 @@ typealias Identifier = String
  * the variable, followed by an arbitrary number of ' '
  * - It can optionally be followed by a ',' to indicate the presence of a format
  * - An arbitrary number of ' ' can be present after the ',' which will be followed by the format name
- * - The format name must respect the [Identifier] rules
+ * - The format name must respect the [Identifier] rules, and must have been previously registered in the
+ * [configuration][TranslatorConfiguration]
  * - Optionally, the format can be followed by an arbitrary number of parameters which are presented in the next bullets
  * - The format name can be directly followed by an arbitrary number of ' ' and a '(' to indicate the presence of format
  * parameters (always at least one)

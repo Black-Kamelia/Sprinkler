@@ -5,7 +5,7 @@ import com.kamelia.sprinkler.util.VariableResolver
 import com.kamelia.sprinkler.util.illegalArgument
 import com.kamelia.sprinkler.util.interpolate
 import com.zwendo.restrikt.annotation.PackagePrivate
-import java.util.*
+import java.util.Locale
 import org.intellij.lang.annotations.Language
 
 @PackagePrivate
@@ -14,14 +14,14 @@ internal object OptionProcessor {
     fun translate(
         data: TranslatorData,
         key: String,
-        options: Map<String, Any>,
+        extraArgs: Map<String, Any>,
         locale: Locale,
     ): String? {
         // first, get the translations for the given locale, or return null if they don't exist
         val translations = data.translations[locale] ?: return null
 
-        val config = data.translatorConfiguration
-        val optionMap = options.safeType<Map<String, Any>>(Options.OPTIONS)
+        val config = data.configuration
+        val optionMap = extraArgs.safeType<Map<String, Any>>(Options.OPTIONS)
             ?: emptyMap()
 
         // build the actual key with the options
@@ -30,7 +30,7 @@ internal object OptionProcessor {
         // get the value for the actual key or return null if it doesn't exist
         val value = translations[actualKey] ?: return null
 
-        return interpolate(value, locale, options, optionMap, config.interpolationDelimiter, config.formats)
+        return interpolate(value, locale, extraArgs, optionMap, config.interpolationDelimiter, config.formats)
     }
 
     fun buildKey(
@@ -77,41 +77,8 @@ internal object OptionProcessor {
         interpolationDelimiter: VariableDelimiter,
         formats: Map<String, VariableFormatter>,
     ): String {
-        if (interpolationDelimiter.variableStart !in value) return value
-
-        val customResolver = VariableResolver { key, _ ->
-            // '!!' is ok, because values are validated on translator creation
-            val (_, variableName, formatName, params) = generalSplit.matchEntire(key)!!.groupValues
-
-            require(Options.OPTIONS != variableName) {
-                "The '${Options.OPTIONS}' variable name is reserved for the options map, use another name."
-            }
-
-            val result = options[variableName]
-                ?: optionMap[variableName]
-                ?: illegalArgument("unknown variable name '$variableName'")
-
-            if (formatName.isNotEmpty()) { // there is a format
-                // try to get the format from its name, or throw an exception if it doesn't exist
-                val format = formats[formatName] ?: error("Unknown format '$formatName' ($key)")
-
-                val paramList = if (params.isNotEmpty()) { // there are format parameters
-                    params.split(paramsSplit)
-                        .asSequence()
-                        .map(keyValueSplit::split)
-                        .map { it[0] to it[1] } // also safe because values are validated on translator creation
-                        .toList()
-                } else {
-                    emptyList()
-                }
-
-                format.format(result, locale, paramList)
-            } else { // otherwise, just return the result
-                result.toString()
-            }
-        }
-
-        return value.interpolate(customResolver, interpolationDelimiter)
+        val context = InterpolationContext(locale, options, optionMap, formats)
+        return value.interpolate(context, interpolationDelimiter, customResolver)
     }
 
     private inline fun <reified T> Map<String, Any>.safeType(key: String): T? {
@@ -123,7 +90,7 @@ internal object OptionProcessor {
     }
 
     /**
-     * This regex is globally the same as the [translationValueFormatRegex] except that this regex actually captures the
+     * This regex is globally the same as the [translationValueFormatCheckRegex] except that this regex actually captures the
      * information in groups, whereas the other one only checks if the format is valid.
      */
     private val generalSplit = run {
@@ -144,5 +111,40 @@ internal object OptionProcessor {
     private val paramsSplit = """(?<!\\),""".toRegex()
 
     private val keyValueSplit = """(?<!\\):""".toRegex()
+
+    private class InterpolationContext(
+        val locale: Locale,
+        val options: Map<String, Any>,
+        val optionMap: Map<String, Any>,
+        val formats: Map<String, VariableFormatter>,
+    )
+
+    private val customResolver = VariableResolver<InterpolationContext> { key, context ->
+        // '!!' is ok, because values are validated on translator creation
+        val (_, variableName, formatName, params) = generalSplit.matchEntire(key)!!.groupValues
+
+        val variableValue = context.options[variableName]
+            ?: context.optionMap[variableName]
+            ?: illegalArgument("variable '$variableName' not found")
+
+        if (formatName.isNotEmpty()) { // there is a format
+            // same as above, '!!' is ok due to pre-validation
+            val format = context.formats[formatName]!!
+
+            val paramList = if (params.isNotEmpty()) { // there are format parameters
+                params.split(paramsSplit)
+                    .asSequence()
+                    .map(keyValueSplit::split)
+                    .map { it[0] to it[1] } // also safe because values are validated on translator creation
+                    .toList()
+            } else {
+                emptyList()
+            }
+
+            format.format(variableValue, context.locale, paramList)
+        } else { // otherwise, just return the result
+            variableValue.toString()
+        }
+    }
 
 }

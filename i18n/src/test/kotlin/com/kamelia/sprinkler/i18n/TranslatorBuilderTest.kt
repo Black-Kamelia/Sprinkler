@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
-import java.util.*
+import java.util.Locale
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -90,6 +90,52 @@ class TranslatorBuilderTest {
             .addMap(Locale.ENGLISH, mapOf("test" to "test2"))
         val translator = builder.build()
         Assertions.assertEquals("test2", translator.t("test"))
+    }
+
+    @Test
+    fun `build throws an ISE if a value contains the a variable named 'options'`() {
+        assertThrows<IllegalStateException> {
+            Translator.builder(Locale.ENGLISH)
+                .addMap(Locale.ENGLISH, mapOf("test" to "test {{options}}"))
+                .build()
+        }
+    }
+
+    @Test
+    fun `build throws an ISE if a value contains a format that is not present in the configuration`() {
+        assertThrows<IllegalStateException> {
+            Translator.builder(Locale.ENGLISH)
+                .addMap(Locale.ENGLISH, mapOf("test" to "test {{name, unknown}}"))
+                .build()
+        }
+    }
+
+    @Test
+    fun `build does not throw if a value contains a format that is present in the configuration`() {
+        Translator.builder(Locale.ENGLISH)
+            .addMap(Locale.ENGLISH, mapOf("test" to "test {{name, date}}"))
+            .build()
+    }
+
+    @Test
+    fun `build throws an ISE if a value contains a variable that is does not respect the format (illegal name)`() {
+        assertThrows<IllegalStateException> {
+            Translator.builder(Locale.ENGLISH)
+                .addMap(Locale.ENGLISH, mapOf("test" to "test {{name#}}"))
+                .build()
+        }
+    }
+
+    @Test
+    fun `build throws an ISE if a value contains a variable that is does not respect the format (illegal format)`() {
+        assertThrows<IllegalStateException> {
+            Translator.builder(Locale.ENGLISH)
+                .withConfiguration {
+                    formats = formats + ("12#" to VariableFormatter.date())
+                }
+                .addMap(Locale.ENGLISH, mapOf("test" to "test {{name, 12#}}"))
+                .build()
+        }
     }
 
 }

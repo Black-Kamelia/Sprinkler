@@ -1,7 +1,8 @@
 package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.util.illegalArgument
 import com.zwendo.restrikt.annotation.PackagePrivate
-import java.util.*
+import java.util.Locale
 
 @PackagePrivate
 internal class TranslatorImpl private constructor(
@@ -43,7 +44,7 @@ internal class TranslatorImpl private constructor(
         fallbackLocale: Locale?,
         vararg fallbacks: String,
     ): String = tn(key, extraArgs, locale, fallbackLocale, *fallbacks)
-        ?: when (data.translatorConfiguration.missingKeyPolicy) {
+        ?: when (data.configuration.missingKeyPolicy) {
             TranslatorConfiguration.MissingKeyPolicy.THROW_EXCEPTION -> keyNotFound(
                 key,
                 extraArgs,
@@ -74,7 +75,7 @@ internal class TranslatorImpl private constructor(
                     // we must check that the char at root.length is a dot to avoid removing keys that start with the
                     // same prefix but are not direct children of the root e.g. prefix='a' and key='ab'
                     // NOTE: we first check the dot instead of the startWith because it is cheaper
-                    .filter { (key, _) -> '.' == key.getOrNull(root.length) && key.startsWith(root) }
+                    .filter { (key, _) -> key.length > root.length && '.' == key[root.length] && key.startsWith(root) }
                     .map { (key, value) -> key.substring(root.length + 1) to value } // + 1 to remove the dot
                     .toMap()
             }
@@ -94,7 +95,7 @@ internal class TranslatorImpl private constructor(
     }
 
     override fun toString(): String =
-        "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, translations=${toMap()})"
+        "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, configuration=${data.configuration}, translations=${toMap()})"
 
     private fun innerTranslate(
         key: String,
@@ -109,6 +110,31 @@ internal class TranslatorImpl private constructor(
         }
 
         return null
+    }
+
+    private fun keyNotFound(
+        key: TranslationKey,
+        options: Map<String, Any>,
+        locale: Locale,
+        fallbackLocale: Locale?,
+        fallbacks: Array<out String>,
+    ): Nothing {
+        val builder = StringBuilder()
+        builder.append("No translation found for parameters: key='")
+            .append(key)
+            .append("', locale='")
+            .append(locale)
+            .append("', fallbackLocale='")
+            .append(fallbackLocale)
+            .append("', fallbacks='")
+
+        fallbacks.joinTo(builder, ", ", "[", "]")
+
+        builder.append("', extraArgs='")
+            .append(options)
+            .append("'. ")
+
+        illegalArgument(builder.toString())
     }
 
 }

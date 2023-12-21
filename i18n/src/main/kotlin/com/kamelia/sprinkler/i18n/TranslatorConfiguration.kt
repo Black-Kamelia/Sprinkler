@@ -3,7 +3,8 @@ package com.kamelia.sprinkler.i18n
 import com.kamelia.sprinkler.bridge.KotlinDslAdapter
 import com.kamelia.sprinkler.i18n.TranslatorConfiguration.Companion.create
 import com.kamelia.sprinkler.util.VariableDelimiter
-import java.util.*
+import com.zwendo.restrikt.annotation.PackagePrivate
+import java.util.Locale
 
 /**
  * Configuration of a [Translator]. This class defines rules applied to a [Translator] and all [Translator]s created
@@ -28,7 +29,7 @@ class TranslatorConfiguration internal constructor(
 
         /**
          * Throw an exception when a key is not found.
-          */
+         */
         THROW_EXCEPTION,
 
         /**
@@ -49,7 +50,9 @@ class TranslatorConfiguration internal constructor(
          * @return the created [TranslatorConfiguration]
          */
         @JvmStatic
-        inline fun create(block: Builder.() -> Unit): TranslatorConfiguration = Builder().apply(block).build()
+        fun create(block: Builder.() -> Unit): TranslatorConfiguration = Builder().apply(block).build()
+
+        private fun forbiddenChars(): CharArray = charArrayOf('\\', '(', ')', ':')
 
     }
 
@@ -58,9 +61,12 @@ class TranslatorConfiguration internal constructor(
         /**
          * The delimiter to use for interpolation in translations.
          *
-         * default: [VariableDelimiter.DEFAULT]
+         * The delimiter cannot contain the following characters: `\`, `(`, `)`, `:`. Any delimiter containing one of
+         * these characters will throw an [IllegalStateException] when [build] is called.
+         *
+         * default: [VariableDelimiter.default]
          */
-        var interpolationDelimiter: VariableDelimiter = VariableDelimiter.DEFAULT
+        var interpolationDelimiter: VariableDelimiter = VariableDelimiter.default
 
         /**
          * The mapper function to use for the pluralization strategy.
@@ -88,14 +94,28 @@ class TranslatorConfiguration internal constructor(
          */
         var missingKeyPolicy: MissingKeyPolicy = MissingKeyPolicy.THROW_EXCEPTION
 
-        @PublishedApi
-        internal fun build(): TranslatorConfiguration = TranslatorConfiguration(
-            interpolationDelimiter,
-            pluralMapper,
-            formats.toMap(),
-            missingKeyPolicy,
-        )
+        @PackagePrivate
+        internal fun build(): TranslatorConfiguration {
+            val ch = forbiddenChars()
+            val forbiddenChars = ch.joinToString("", "[^", "]*") { it.toString() }.toRegex()
+            check(forbiddenChars.matches(interpolationDelimiter.startDelimiter)) {
+                "Start delimiter cannot contain the following characters: ${ch.contentToString()}, but was '${interpolationDelimiter.startDelimiter}'"
+            }
+            check(forbiddenChars.matches(interpolationDelimiter.endDelimiter)) {
+                "End delimiter cannot contain the following characters: ${ch.contentToString()}, but was '${interpolationDelimiter.endDelimiter}'"
+            }
+
+            return TranslatorConfiguration(
+                interpolationDelimiter,
+                pluralMapper,
+                formats.toMap(),
+                missingKeyPolicy,
+            )
+        }
 
     }
 
+    override fun toString(): String =
+        "TranslatorConfiguration(interpolationDelimiter=$interpolationDelimiter, pluralMapper=$pluralMapper, formats=$formats, missingKeyPolicy=$missingKeyPolicy)"
 }
+

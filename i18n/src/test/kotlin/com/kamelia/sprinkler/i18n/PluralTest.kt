@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
-import java.util.*
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -68,6 +68,12 @@ class PluralTest {
         val mapper = Plural.defaultMapper()
         assertThrows<IllegalArgumentException> { mapper.mapOrdinal(Locale.ENGLISH, -1) }
         assertThrows<IllegalArgumentException> { mapper.mapOrdinal(Locale.ENGLISH, 0) }
+    }
+
+    @Test
+    fun `the defaultMapper toString returns the name of the class`() {
+        val mapper = Plural.defaultMapper()
+        assertEquals("Plural.defaultMapper()", mapper.toString())
     }
 
 }

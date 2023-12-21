@@ -1,7 +1,7 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.i18n.Options.COUNT
-import java.util.*
+import java.util.Locale
 
 /**
  * The plural value of the translation. It can be used to disambiguate translations depending on the number of
@@ -101,6 +101,8 @@ enum class Plural {
                     else -> OTHER
                 }
             }
+
+            override fun toString(): String = "Plural.defaultMapper()"
 
         }
 

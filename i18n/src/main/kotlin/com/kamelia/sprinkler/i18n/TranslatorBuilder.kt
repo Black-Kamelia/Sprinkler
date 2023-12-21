@@ -8,13 +8,14 @@ import com.zwendo.restrikt.annotation.PackagePrivate
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.IllformedLocaleException
+import java.util.Locale
 import java.util.stream.Stream
+import org.intellij.lang.annotations.Language
 import org.json.JSONException
 import org.json.JSONObject
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.error.YAMLException
-import kotlin.collections.ArrayDeque
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.io.path.exists
@@ -29,7 +30,7 @@ import kotlin.io.path.readText
  *
  * There are several points of attention to take into account when using this class:
  * - The sources which are added will only be queried upon the creation of the translator, when calling [build]. That is
- * to say that the construction is lazy;
+ * to say that the construction is lazy and that all the checks and logic is done when calling [build];
  * - The order in which data is added is significant, as it will be used during key duplication resolution, depending on
  * the [DuplicatedKeyResolution] used.
  * - Values passed to this builder are all validated on building, to ensure that the potential variables used in the
@@ -206,7 +207,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @return this builder
      */
     fun withConfiguration(block: TranslatorConfiguration.Builder.() -> Unit): TranslatorBuilder =
-        withConfiguration(TranslatorConfiguration.create { block() })
+        withConfiguration(TranslatorConfiguration.create(block))
 
     /**
      * Defines how to handle duplicated keys when creating a translator.
@@ -248,7 +249,11 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     fun build(): Translator {
         val finalMap = HashMap<Locale, HashMap<String, String>>()
         val delimiter = config.interpolationDelimiter
-        val regex = translationValueFormatRegex(delimiter.variableStart, delimiter.variableEnd)
+        val start = delimiter.startDelimiter
+        val end = delimiter.endDelimiter
+        val checkRegex = translationValueFormatCheckRegex(start, end)
+        val extractionRegex = formatAndVariableNamesExtractionRegex(start, end)
+
         translatorContent.forEach {
             when (it) { // switch on different types of TranslationResourceInformation
                 // if it is a FileInfo, we need to load the file, or, if it is a directory, load all files in it
@@ -256,14 +261,14 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 is FileInfo -> {
                     try {
                         loadPath(it).forEach { (locale, map) ->
-                            addToMap(finalMap, locale, map, regex)
+                            addToMap(finalMap, locale, map, checkRegex, extractionRegex)
                         }
                     } catch (e: Exception) { // catch and rethrow to add the path to the error message
                         throw IllegalStateException("Error while loading file ${it.path}", e)
                     }
                 }
                 // if it is a MapInfo, we can directly add it to the final map
-                is MapInfo -> addToMap(finalMap, it.locale, it.map, regex)
+                is MapInfo -> addToMap(finalMap, it.locale, it.map, checkRegex, extractionRegex)
             }
         }
 
@@ -281,7 +286,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         finalMap: HashMap<Locale, HashMap<String, String>>,
         locale: Locale,
         map: Map<*, *>,
-        regex: Regex,
+        formatCheckRegex: Regex,
+        extractionRegex: Regex,
     ) {
         val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
         map.forEach { (k, value) ->
@@ -307,7 +313,14 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                         toFlatten.addLast("$currentKey.$index" to subValue)
                     }
                     // type of value is always valid here (string, number or boolean), because of previous checks
-                    else -> addValue(locale, localeMap, currentKey, currentValue, regex)
+                    else -> addValue(
+                        locale,
+                        localeMap,
+                        currentKey,
+                        currentValue,
+                        formatCheckRegex,
+                        extractionRegex
+                    )
                 }
             }
         }
@@ -318,11 +331,22 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         finalMap: HashMap<String, String>,
         key: String,
         value: TranslationSourceData,
-        valueFormatRegex: Regex,
+        formatCheckRegex: Regex,
+        extractionRegex: Regex,
     ) {
         val stringValue = value.toString()
-        check(valueFormatRegex.matches(stringValue)) {
-            "Invalid translation value '$stringValue' for locale '$locale', format is not valid. $SOURCE_DATA_DOCUMENTATION. Error occurred for key '$key' in map $value"
+        check(formatCheckRegex.matches(stringValue)) {
+            "Invalid translation value '$stringValue' for locale '$locale', format is not valid. $SOURCE_DATA_DOCUMENTATION. Error occurred for key '$key' in map $value."
+        }
+        val existingFormats = config.formats.keys
+        extractionRegex.findAll(stringValue).forEach {
+            val (_, variableName, formatName) = it.groupValues
+            check(Options.OPTIONS != variableName) {
+                "The '${Options.OPTIONS}' variable name is reserved for the options map, use another name."
+            }
+            check(formatName.isEmpty() || formatName in existingFormats) {
+                "Invalid translation value '$stringValue' for locale '$locale', format '$formatName' is not defined for this translator. Existing formats are: $existingFormats. $SOURCE_DATA_DOCUMENTATION. Error occurred for key '$key' in map $value."
+            }
         }
 
         when (duplicatedKeyResolution) {
@@ -340,85 +364,214 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
     }
 
-    private fun loadPath(info: FileInfo): List<Pair<Locale, TranslationSourceMap>> =
-        when {
-            !info.path.exists() -> error("Path ${info.path} does not exist")
-            info.path.isDirectory() -> { // if the path is a directory, load all files in it and return the list
-                Files.list(info.path)
-                    .map {
-                        val locale = parseLocale(it)
-                        val map = parseFile(it)
-                        locale to map
+    private companion object {
+
+        fun loadPath(info: FileInfo): List<Pair<Locale, TranslationSourceMap>> =
+            when {
+                !info.path.exists() -> error("Path ${info.path} does not exist")
+                info.path.isDirectory() -> { // if the path is a directory, load all files in it and return the list
+                    Files.list(info.path)
+                        .map {
+                            val locale = parseLocale(it)
+                            val map = parseFile(it)
+                            locale to map
+                        }
+                        .unsafeCast<Stream<Pair<Locale, Map<String, TranslationSourceData>>>>()
+                        .toList()
+                }
+                else -> { // if the path is a file, load it and store it in a one element list
+                    val map = parseFile(info.path)
+                    val locale = parseLocale(info.path)
+                    listOf(locale to map)
+                }
+            }
+
+        fun parseFile(path: Path): TranslationSourceMap =
+            when (val extension = path.extension) {
+                "json" -> {
+                    try {
+                        JSONObject(path.readText()).toMap()
+                    } catch (e: JSONException) {
+                        throw IllegalStateException("Invalid JSON file.", e)
                     }
-                    .unsafeCast<Stream<Pair<Locale, Map<String, TranslationSourceData>>>>()
-                    .toList()
+                }
+                "yaml", "yml" -> {
+                    try {
+                        Yaml().load<Map<TranslationKey, TranslationSourceData>>(path.readText())
+                    } catch (e: YAMLException) {
+                        throw IllegalStateException("Invalid YAML file.", e)
+                    }
+                }
+                else -> assertionFailed("File extension '$extension' should have been checked before.")
             }
-            else -> { // if the path is a file, load it and store it in a one element list
-                val map = parseFile(info.path)
-                val locale = parseLocale(info.path)
-                listOf(locale to map)
+
+        fun checkKeyIsValid(key: Any?, locale: Locale, map: Map<*, *>) {
+            check(key != null) {
+                "Error in map $map:\nInvalid translation key for locale '$locale', key cannot be null. $KEY_DOCUMENTATION."
+
+            }
+            check(key is String) {
+                "Error in map $map:\nInvalid translation key '$key' of type ${key::class.simpleName} for locale '$locale', expected String. $KEY_DOCUMENTATION."
+            }
+
+            check(KEY_REGEX.matches(key)) {
+                "Error in map $map:\nInvalid translation key '$key' for locale '$locale', format is not valid. $KEY_DOCUMENTATION."
             }
         }
 
-    private fun checkKeyIsValid(key: Any?, locale: Locale, map: Map<*, *>) {
-        check(key != null) {
-            "Error in map $map:\nInvalid translation key for locale '$locale', key cannot be null. $KEY_DOCUMENTATION."
+        @OptIn(ExperimentalContracts::class)
+        private fun checkValueIsValid(value: Any?, locale: Locale, map: Map<*, *>) {
+            contract {
+                returns() implies (value != null)
+            }
+            check(value != null) {
+                "Error in map $map:\nInvalid translation value for locale '$locale', value cannot be null. $SOURCE_DATA_DOCUMENTATION."
 
-        }
-        check(key is String) {
-            "Error in map $map:\nInvalid translation key '$key' of type ${key::class.simpleName} for locale '$locale', expected String. $KEY_DOCUMENTATION."
+            }
+            check(value is String || value is Number || value is Boolean || value is Map<*, *> || value is List<*>) {
+                "Error in map $map:\nInvalid translation value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see TranslationSourceData typealias documentation."
+            }
         }
 
-        check(KEY_REGEX.matches(key)) {
-            "Error in map $map:\nInvalid translation key '$key' for locale '$locale', format is not valid. $KEY_DOCUMENTATION."
-        }
-    }
+        fun formatAndVariableNamesExtractionRegex(start: String, end: String): Regex {
+            @Language("RegExp")
+            val nbs = """(?<!\\)"""
 
-    @OptIn(ExperimentalContracts::class)
-    private fun checkValueIsValid(value: Any?, locale: Locale, map: Map<*, *>) {
-        contract {
-            returns() implies (value != null)
-        }
-        check(value != null) {
-            "Error in map $map:\nInvalid translation value for locale '$locale', value cannot be null. $SOURCE_DATA_DOCUMENTATION."
+            @Language("RegExp")
+            val s = """$nbs${Regex.escape(start)}"""
 
-        }
-        check(value is String || value is Number || value is Boolean || value is Map<*, *> || value is List<*>) {
-            "Error in map $map:\nInvalid translation value '$value' of type ${value::class.simpleName} for locale '$locale'. For more details about supported types, see TranslationSourceData typealias documentation."
-        }
-    }
+            @Language("RegExp")
+            val e = """$nbs${Regex.escape(end)}"""
 
-    private fun parseFile(path: Path): TranslationSourceMap =
-        when (val extension = path.extension) {
-            "json" -> {
-                try {
-                    JSONObject(path.readText()).toMap()
-                } catch (e: JSONException) {
-                    throw IllegalStateException("Invalid JSON file.", e)
+            @Language("RegExp")
+            val variable = """\s*([^ ]+)\s*"""
+
+            @Language("RegExp")
+            val postFormat = """(?:\(.+?$nbs\)\s*)?"""
+
+            @Language("RegExp")
+            val format = """(?:,\s*([^ ]+)\s*$postFormat)?"""
+
+            return """$s$variable$format$e""".toRegex()
+        }
+
+        fun translationValueFormatCheckRegex(start: String, end: String): Regex {
+            // first we define the param key regex
+            @Language("RegExp")
+            val notCommaOrColon = """[^:,]"""
+
+            @Language("RegExp")
+            val escapedCommaOrColon = """(?<=\\)[,:]"""
+
+            @Language("RegExp")
+            val formatParamKey = """(?:$notCommaOrColon|$escapedCommaOrColon)*"""
+
+            // then we define the param value regex
+            @Language("RegExp")
+            val notCommaOrParenthesis = """[^,)]"""
+
+            @Language("RegExp")
+            val escapedCommaOrParenthesis = """(?<=\\)[,)]"""
+
+            @Language("RegExp")
+            val formatParamValue = """(?:$notCommaOrParenthesis|$escapedCommaOrParenthesis)*"""
+
+            // then we define the not escaped colon regex which will be used to separate the key and value
+            @Language("RegExp")
+            val notEscapedColon = """(?<!\\):"""
+
+            // now we combine the key and value regexes to build the param regex
+            @Language("RegExp")
+            val formatParam = """$formatParamKey$notEscapedColon$formatParamValue"""
+
+            // once we have the param regex, we can build the params regex
+            @Language("RegExp") // negative lookbehind to avoid escaping the closing parenthesis
+            val formatParams = """\(($formatParam,)*$formatParam(?<!\\)\)\s*"""
+
+            // which allows us to build the format regex
+            @Language("RegExp")
+            val format = """\s*,\s*$IDENTIFIER\s*(?:$formatParams)?"""
+
+            // and finally we can build the variable content regex
+            @Language("RegExp")
+            val variableContent = """\s*$IDENTIFIER\s*(?:$format)?"""
+
+            val s = Regex.escape(start)
+            val e = Regex.escape(end)
+
+            @Language("RegExp")
+            val validVariable = """$s$variableContent(?<!\\)$e"""
+
+            // the last step is to combine all the regexes to build the final regex
+            val notStartSequence = if (start.length > 1) { // in case the start sequence is more than one character long
+                val lastStartChar = Regex.escape(start.last().toString())
+                val startPrefix = Regex.escape(start.dropLast(1))
+
+                @Language("RegExp")
+                val r = """[^$lastStartChar]|(?<!$startPrefix)$lastStartChar"""
+                r
+            } else {
+                @Language("RegExp")
+                val r = """[^$s]"""
+                r
+            }
+
+            @Language("RegExp")
+            val escapedStartSequence = """\\$s""""
+
+            return """(?:$notStartSequence|$escapedStartSequence|$validVariable)*""".toRegex()
+        }
+
+        fun parseLocale(path: Path): Locale {
+            val locale = path.nameWithoutExtension
+            return try {
+                Locale.Builder()
+                    .setLanguageTag(locale.replace('_', '-'))
+                    .build()
+            } catch (e: IllformedLocaleException) {
+                throw IllegalStateException(
+                    "Invalid locale '$locale'. For more details about locale syntax, see java.util.Locale documentation.",
+                    e
+                )
+            }
+        }
+
+        fun keyComparator(): Comparator<String> {
+            val charComparator = Comparator { o1: Char, o2: Char ->
+                when {
+                    o1 == o2 -> 0
+                    '.' == o1 -> -1
+                    '.' == o2 -> 1
+                    else -> o1.compareTo(o2)
                 }
             }
-            "yaml", "yml" -> {
-                try {
-                    Yaml().load<Map<TranslationKey, TranslationSourceData>>(path.readText())
-                } catch (e: YAMLException) {
-                    throw IllegalStateException("Invalid YAML file.", e)
+            return Comparator { o1: String, o2: String ->
+                val firstIt = o1.iterator()
+                val secondIt = o2.iterator()
+
+                while (firstIt.hasNext() && secondIt.hasNext()) {
+                    val first = firstIt.nextChar()
+                    val second = secondIt.nextChar()
+                    val result = charComparator.compare(first, second)
+                    if (result != 0) return@Comparator result
+                }
+
+                if (firstIt.hasNext()) {
+                    1
+                } else if (secondIt.hasNext()) {
+                    -1
+                } else {
+                    0
                 }
             }
-            else -> assertionFailed("File extension '$extension' should have been checked before.")
         }
 
-    private fun parseLocale(path: Path): Locale {
-        val locale = path.nameWithoutExtension
-        return try {
-            Locale.Builder()
-                .setLanguageTag(locale.replace('_', '-'))
-                .build()
-        } catch (e: IllformedLocaleException) {
-            throw IllegalStateException(
-                "Invalid locale '$locale'. For more details about locale syntax, see java.util.Locale documentation.",
-                e
-            )
-        }
+        const val KEY_DOCUMENTATION =
+            "For more details about translation keys, see TranslationKey typealias documentation"
+
+        const val SOURCE_DATA_DOCUMENTATION =
+            "For more details about translation source data, see TranslationSourceData typealias documentation"
+
     }
 
     private sealed interface TranslationResourceInformation

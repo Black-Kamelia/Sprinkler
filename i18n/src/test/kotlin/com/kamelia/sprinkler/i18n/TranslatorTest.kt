@@ -1,11 +1,13 @@
 package com.kamelia.sprinkler.i18n
 
-import java.util.*
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 
 class TranslatorTest {
@@ -52,6 +54,17 @@ class TranslatorTest {
     }
 
     @Test
+    fun `section prepend the section prefix before the key`() {
+        val translator = Translator.builder(Locale.FRANCE)
+            .addMap(Locale.FRANCE, mapOf("foo" to mapOf("key" to "value")))
+            .build()
+        val section = translator.section("foo")
+        assertDoesNotThrow {
+            assertEquals("value", section.t("key"))
+        }
+    }
+
+    @Test
     fun `translateOrNull throws if the key is invalid`() {
         val translator = Translator.builder(Locale.FRANCE).build()
         assertThrows<IllegalArgumentException> {
@@ -86,6 +99,12 @@ class TranslatorTest {
     fun `translateOrNull returns null if the translation doesnt exist and locale is default locale`() {
         val translator = Translator.builder(Locale.ENGLISH).build()
         assertNull(translator.tn("key", Locale.ENGLISH))
+    }
+
+    @Test
+    fun `translateOrNull returns null if the translation doesnt exist and default locale is null`() {
+        val translator = Translator.builder(Locale.ENGLISH).build()
+        assertNull(translator.tn("key", mapOf(), Locale.ENGLISH, null))
     }
 
     @Test
@@ -215,7 +234,7 @@ class TranslatorTest {
     fun `toMap on section returns a map of all translations under the section`() {
         val translator = Translator.builder(Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("key.foo" to "value"))
-            .addMap(Locale.FRANCE, mapOf("key" to "valeur"))
+            .addMap(Locale.FRANCE, mapOf("key" to "valeur", "k" to "v", "kay.foo" to "va"))
             .build()
         assertEquals(
             mapOf(
@@ -265,6 +284,78 @@ class TranslatorTest {
             .addMap(Locale.ENGLISH, mapOf("key" to "value"))
             .build()
         assertTrue(translator.toMap().toString() in translator.toString())
+    }
+
+    @Test
+    fun `asRoot return this if the translator is a root`() {
+        val translator = Translator.builder(Locale.ENGLISH).build()
+        assertSame(translator, translator.asRoot())
+    }
+
+    @Test
+    fun `asRoot return a new translator with no prefix if the translator is not a root`() {
+        val translator = Translator.builder(Locale.ENGLISH).build().section("foo")
+        val root = translator.asRoot()
+        assertNull(root.prefix)
+    }
+
+    @Test
+    fun `withCurrentLocale returns this if the current locale is the same`() {
+        val translator = Translator.builder(Locale.ENGLISH).build()
+        assertSame(translator, translator.withNewCurrentLocale(Locale.ENGLISH))
+    }
+
+    @Test
+    fun `withCurrentLocale returns a new translator with the new current locale`() {
+        val translator = Translator.builder(Locale.ENGLISH).build()
+        val newTranslator = translator.withNewCurrentLocale(Locale.FRANCE)
+        assertEquals(Locale.FRANCE, newTranslator.currentLocale)
+    }
+
+    @Test
+    fun `tn uses fallback keys if the key does not exist`() {
+        val translator = Translator.builder(Locale.ENGLISH)
+            .addMap(Locale.ENGLISH, mapOf("key" to "value"))
+            .build()
+        assertEquals("value", translator.tn("foo", "key"))
+    }
+
+    @Test
+    fun `tn returns null if fallback keys do not exist`() {
+        val translator = Translator.builder(Locale.ENGLISH)
+            .addMap(Locale.ENGLISH, mapOf("key" to "value"))
+            .build()
+        assertNull(translator.tn("foo", "bar"))
+    }
+
+    @Test
+    fun `tn overloads coverage`() {
+        val t = Translator.builder(Locale.ENGLISH)
+            .addMap(Locale.ENGLISH, mapOf("key" to "value"))
+            .build()
+        assertDoesNotThrow {
+            t.tn("key")
+            t.tn("key", Locale.ENGLISH)
+            t.tn("key", mapOf())
+            t.tn("key", mapOf(), Locale.ENGLISH)
+            t.tn("key", mapOf(), Locale.ENGLISH, Locale.ENGLISH)
+            t.tn("key", mapOf(), Locale.ENGLISH, Locale.ENGLISH, "foo")
+        }
+    }
+
+    @Test
+    fun `t overloads coverage`() {
+        val t = Translator.builder(Locale.ENGLISH)
+            .addMap(Locale.ENGLISH, mapOf("key" to "value"))
+            .build()
+        assertDoesNotThrow {
+            t.t("key")
+            t.t("key", Locale.ENGLISH)
+            t.t("key", mapOf())
+            t.t("key", mapOf(), Locale.ENGLISH)
+            t.t("key", mapOf(), Locale.ENGLISH, Locale.ENGLISH)
+            t.t("key", mapOf(), Locale.ENGLISH, Locale.ENGLISH, "foo")
+        }
     }
 
 }

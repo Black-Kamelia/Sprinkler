@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
-import java.util.*
+import java.util.Locale
 
 /**
  * Interface representing an object that can be used to translate strings. Through the [t] method, a key can be
@@ -148,22 +148,6 @@ interface Translator {
         tn(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)
 
     /**
-     * Returns the translation using the provided information. If the translation is not found, it will return null.
-     *
-     * Method default values:
-     * - The fallback locale is the [defaultLocale]
-     * - The extraArgs parameter is an empty map
-     * - The locale parameter is the [currentLocale]
-     * - The fallbacks parameter is an empty array
-     *
-     * This method is an overload, see the documentation of the base method [tn] for more details.
-     *
-     * @param key the key to translate
-     * @return the translation using the provided information, or null if the translation is not found
-     */
-    fun tn(key: TranslationKey): String? = tn(key, emptyMap(), currentLocale, defaultLocale)
-
-    /**
      * Returns the translation using the provided information. If the translation is not found, the behavior depends on
      * the implementation.
      *
@@ -279,27 +263,6 @@ interface Translator {
      */
     fun t(key: TranslationKey, vararg fallbacks: String): String =
         t(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)
-
-    /**
-     * Returns the translation using the provided information. If the translation is not found, the behavior depends on
-     * the implementation.
-     *
-     * Method default values:
-     * - The fallback locale is the [defaultLocale]
-     * - The extraArgs parameter is an empty map
-     * - The locale parameter is the [currentLocale]
-     * - The fallbacks parameter is an empty array
-     * - The options parameter is an empty map
-     * - The fallbackLocale parameter is null
-     *
-     * This method is an overload, see the documentation of the base method [t] for more details.
-     *
-     * @param key the key to translate
-     * @return the translation using the provided information or a value depending on the implementation if not found
-     * @throws IllegalArgumentException if the key is not [valid][TranslationKey] or if the implementation throws an
-     * exception when a translation is not found
-     */
-    fun t(key: TranslationKey): String = t(key, emptyMap(), currentLocale, defaultLocale)
 
     /**
      * Returns a new [Translator] with the given [key] as root key. The [key] will be prepended to all keys used to

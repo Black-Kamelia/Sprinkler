@@ -7,7 +7,7 @@ import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.temporal.TemporalAccessor
-import java.util.*
+import java.util.Locale
 
 /**
  * Represents an object that can format specific values depending on the locale. Formatting is performed through the
