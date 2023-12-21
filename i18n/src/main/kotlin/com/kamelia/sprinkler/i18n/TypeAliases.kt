@@ -33,7 +33,8 @@ typealias Identifier = String
  *
  * It should be structured as follows:
  * - Can start with an arbitrary number of ' ' (spaces) followed by a mandatory [Identifier] representing the name of
- * the variable, followed by an arbitrary number of ' '
+ * the variable which cannot be the string 'options' (this name is reserved for the option map, followed by an arbitrary
+ * number of ' '
  * - It can optionally be followed by a ',' to indicate the presence of a format
  * - An arbitrary number of ' ' can be present after the ',' which will be followed by the format name
  * - The format name must respect the [Identifier] rules, and must have been previously registered in the
