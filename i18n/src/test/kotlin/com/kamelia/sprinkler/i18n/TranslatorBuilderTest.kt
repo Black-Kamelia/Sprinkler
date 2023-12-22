@@ -138,4 +138,13 @@ class TranslatorBuilderTest {
         }
     }
 
+    @Test
+    fun `build throws an ISE if a value contains a variable that is does not respect the format (format with parenthesis and no param)`() {
+        assertThrows<IllegalStateException> {
+            Translator.builder(Locale.ENGLISH)
+                .addMap(Locale.ENGLISH, mapOf("test" to "test {{name, date()}}"))
+                .build()
+        }
+    }
+
 }

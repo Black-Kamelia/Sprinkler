@@ -117,5 +117,6 @@ class TranslatorConfiguration internal constructor(
 
     override fun toString(): String =
         "TranslatorConfiguration(interpolationDelimiter=$interpolationDelimiter, pluralMapper=$pluralMapper, formats=$formats, missingKeyPolicy=$missingKeyPolicy)"
+
 }
 
