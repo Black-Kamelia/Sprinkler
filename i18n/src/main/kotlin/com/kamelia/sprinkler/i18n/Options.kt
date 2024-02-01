@@ -46,8 +46,7 @@ object Options {
      * Valid values:
      * - [String]
      *
-     * The most common use case is to
-     * disambiguate gender, like in the following example:
+     * The most common use case is to disambiguate gender, like in the following example:
      *
      * ```
      * // content:
