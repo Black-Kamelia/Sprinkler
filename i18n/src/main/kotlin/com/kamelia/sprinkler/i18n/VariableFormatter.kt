@@ -53,8 +53,8 @@ fun interface VariableFormatter {
 
         /**
          * Returns a [VariableFormatter] that formats the variable as a currency using the locale, following the
-         * rules of the [java.text.NumberFormat.getCurrencyInstance] method, including the currency symbol, its
-         * position, and the thousands and floating point symbols.
+         * rules of the [NumberFormat.getCurrencyInstance][java.text.NumberFormat.getCurrencyInstance] method, including
+         * the currency symbol, its position, and the thousands and floating point symbols.
          *
          * For example, if the locale is `en_US`, the value `1234.56` will be formatted as `$1,234.56`.
          *
@@ -74,12 +74,13 @@ fun interface VariableFormatter {
 
         /**
          * Returns a [VariableFormatter] that formats the variable as a readable date using the locale, following the
-         * rules of the [java.time.format.DateTimeFormatter.ofLocalizedDate] method.
+         * rules of the [DateTimeFormatter.ofLocalizedDate][java.time.format.DateTimeFormatter.ofLocalizedDate] method.
          *
          * For example, if the locale is `en_US`, the value `2023-01-01` will be formatted as `Jan 1, 2023` by default.
          *
-         * The extra argument represents the style to use to format the date, and is the same as that of the [datetime]
-         * formatter.
+         * The only recognized extra argument is `dateStyle`, which specify the style to use to format the date. The
+         * value must be a string that can be parsed by the [FormatStyle.valueOf][java.time.format.FormatStyle.valueOf]
+         * method, and the default is `MEDIUM`.
          *
          * @return A [VariableFormatter] that formats the variable as a readable date using the locale.
          */
@@ -94,12 +95,13 @@ fun interface VariableFormatter {
 
         /**
          * Returns a [VariableFormatter] that formats the variable as a readable date using the locale, following the
-         * rules of the [java.time.format.DateTimeFormatter.ofLocalizedTime] method.
+         * rules of the [DateTimeFormatter.ofLocalizedTime][java.time.format.DateTimeFormatter.ofLocalizedTime] method.
          *
          * For example, if the locale is `en_US`, the value `12:34:56` will be formatted as `12:34:56 PM` by default.
          *
-         * The extra argument represents the style to use to format the time, and is the same as that of the [datetime]
-         * formatter.
+         * The only recognized extra argument is `timeStyle`, which specify the style to use to format the time. The
+         * value must be a string that can be parsed by the [FormatStyle.valueOf][java.time.format.FormatStyle.valueOf]
+         * method, and the default is `MEDIUM`.
          *
          * @return A [VariableFormatter] that formats the variable as a readable date using the locale.
          */
@@ -114,16 +116,13 @@ fun interface VariableFormatter {
 
         /**
          * Returns a [VariableFormatter] that formats the variable as a readable date using the locale, following the
-         * rules of the [java.time.format.DateTimeFormatter.ofLocalizedDateTime] method.
+         * rules of the [DateTimeFormatter.ofLocalizedDateTime][java.time.format.DateTimeFormatter.ofLocalizedDateTime]
+         * method.
          *
          * For example, if the locale is `en_US`, the value `2023-01-01T12:34:56` will be formatted as
          * `Jan 1, 2023, 12:34:56 PM` by default.
          *
-         * The extra arguments represent the style to use to format the date and time respectively:
-         * - `dateStyle`: the style to use to format the date. The value must be a string that can be parsed by the
-         *   [java.time.format.FormatStyle.valueOf] method, and the default is `MEDIUM`.
-         * - `timeStyle`: the style to use to format the time. . The value must be a string that can be parsed by the
-         *   [java.time.format.FormatStyle.valueOf] method, and the default is `MEDIUM`.
+         * The extra arguments are the same as that of the [date] and [time] formatters.
          *
          * @return A [VariableFormatter] that formats the variable as a readable date using the locale.
          */
@@ -138,7 +137,8 @@ fun interface VariableFormatter {
 
         /**
          * Returns a [VariableFormatter] that formats the variable as a readable number using the locale, following the
-         * rules of the [java.text.NumberFormat.getInstance] method, including the thousands and floating point symbols.
+         * rules of the [NumberFormat.getInstance][java.text.NumberFormat.getInstance] method, including the thousands
+         * and floating point symbols.
          *
          * For example, if the locale is `en_US`, the value `1234.56` will be formatted as `1,234.56`.
          *
@@ -158,7 +158,8 @@ fun interface VariableFormatter {
          * - `groupingUsed`: whether to use the grouping separator (e.g. `,` in `1,234.56`) or not. The value must be a
          *   boolean, and the default is `true`.
          * - `roundingMode`: the rounding mode to use when truncating the number. The value must be a string that can be
-         *   parsed by the [java.math.RoundingMode.valueOf] method, and the default is `HALF_EVEN`.
+         *   parsed by the [RoundingMode.valueOf][java.math.RoundingMode.valueOf] method, and the default is
+         *   `HALF_EVEN`.
          *
          * @return A [VariableFormatter] that formats the variable as a readable number using the locale.
          */

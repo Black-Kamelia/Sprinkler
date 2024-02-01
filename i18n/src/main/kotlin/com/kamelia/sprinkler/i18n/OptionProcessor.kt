@@ -4,6 +4,7 @@ import com.kamelia.sprinkler.util.VariableDelimiter
 import com.kamelia.sprinkler.util.VariableResolver
 import com.kamelia.sprinkler.util.illegalArgument
 import com.kamelia.sprinkler.util.interpolate
+import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.Locale
 import org.intellij.lang.annotations.Language
@@ -21,8 +22,12 @@ internal object OptionProcessor {
         val translations = data.translations[locale] ?: return null
 
         val config = data.configuration
-        val optionMap = extraArgs.safeType<Map<String, Any>>(Options.OPTIONS)
-            ?: emptyMap()
+        val optionArg = extraArgs[Options.OPTIONS] ?: emptyMap<String, Any>()
+
+        require(optionArg is Map<*, *>) {
+            "The '${Options.OPTIONS}' argument is reserved and must be a map, but was ${optionArg.javaClass}"
+        }
+        val optionMap = optionArg.unsafeCast<Map<String, Any>>()
 
         // build the actual key with the options
         val actualKey = buildKey(key, optionMap, locale, config.pluralMapper)

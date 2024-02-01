@@ -66,6 +66,9 @@ Whenever a function accepts a `TranslationSourceData`, it is the responsibility 
 given value respects the rules above. Any value that does not respect these rules will result in an exception being
 thrown.
 
+> **NOTE**: The exact syntax of `TranslationKeys` (and all syntactic elements) can be found in the `TypeAliases.kt`
+> file. It also provides the regexes these elements must respect.
+
 ### Adding translations
 
 To start off, one has to obtain an instance of `TranslatorBuilder` thanks to the `Translator::builder` static method, 
@@ -204,27 +207,39 @@ translatorFr.t("foo") // "Ma traduction"
 
 ### Sections
 
-`Translators` are immutable structure, and therefore thread-safe. None of their methods will ever modify their internal
-state of the object.
+To avoid having to repeat the same prefix for all the keys, one can use the `Translator::section` method, which returns
+a new instance of `Translator` with the given prefix. This prefix will be prepended to all the keys that are passed to
+the `Translator::t` and `Translator::tn` methods.
 
-TODO
+```kt
+val translator = Translator.builder(Locale.ENGLISH)...build()
+val translatorFoo = translator.section("foo")
+translatorFoo.t("bar") // // will look for the key "foo.bar"
+```
 
 ### `extraArgs`
+
+Calls to the `Translator::t` and `Translator::tn` methods can take in a optional `Map<String, Any>` as an argument,
+which is called `extraArgs`. This map can contain extra arguments that will be used during the translation process.
 
 #### Simple variables
 
 Translations may contain variables, which can be interpolated with the `Translator::t` and `Translator::tn` methods.
 A variable must be delimited by an opening and a closing pair of symbols, which can be set with the configuration of the
 `Translator` (see the [Configuration](#configuration) section for more details). 
-By default, the symbols are `{` and `}`.
+By default, the symbols are `{{` and `}}` (which is defined in the 
+[Sprinkler Utils interpolation module](../utils/README.md#interpolation)).
 
 Here is a few example of translations with variables:
 ```json
 {
-  "hello": "Hello, {name}!",
-  "apple_dish": "With {apples} apple(s), you can make {dishes} dish(es).",
+  "hello": "Hello, {{name}}!",
+  "apple_dish": "With {{apples}} apple(s), you can make {{dishes}} dish(es)."
 }
 ```
+
+These variables can be interpolated with the `Translator::t` and `Translator::tn` methods, by passing the corresponding
+values in the `extraArgs` map:
 
 ```kt
 val translator = Translator.builder(Locale.ENGLISH)...build()
@@ -339,7 +354,27 @@ The resolution order for the variable names is the following:
 
 #### Formatting
 
-TODO
+It is also possible when declaring a variable in a translation string to specify a format for it. This is done by
+appending a comma and the name of the format to the variable name. For example, the following translation:
+
+```json
+{
+  "foo": "I am {{age, number}} years old."
+}
+```
+
+Will format the `age` variable as a number. The format name must be one of the formats that have been added to the
+`Translator` (see the [Configuration](#configuration) section for more details).
+
+Furthermore, one can also specify parameters for the format, by appending between parentheses after the format name.
+Each parameter must be represented as a key-value pair, separated by a colon, and parameters must be separated by a
+comma. For example, the following translation:
+
+```json
+{
+  "foo": "I am {{age, number(minFractionDigits: 2, maxFractionDigits: 2)}} years old."
+}
+```
 
 ## Configuration
 
@@ -353,12 +388,12 @@ or not setting a specific property will result in the default value being used):
 ```kt
 val translator = Translator.builder(Locale.ENGLISH)
     ...
-    .withConfiguration(TranslatorConfiguration.create {
+    .withConfiguration {
         interpolationDelimiter = VariableDelimiter.DEFAULT
         pluralMapper = Plural.Mapper.defaultMapper()
         formats = VariableFormatter.builtins()
         missingKeyPolicy = MissingKeyPolicy.THROW_EXCEPTION
-    })
+    }
     .build()
 ```
 
@@ -391,7 +426,42 @@ simplified [English plural rules](https://www.unicode.org/cldr/charts/latest/sup
 
 ### `formats`
 
-TODO
+Formats are represented by the `VariableFormatter` interface, which has a single method: 
+```kt 
+fun format(value: Any, locale: Locale, extraArgs: List<Pair<String, String>>): String
+```
+
+This method takes in the value to format, the locale to use, and a list of extra arguments that can be used to format
+the value. The list of extra arguments is a list of key-value pairs, where the key is the name of the argument, and the
+value is the value of the argument.
+
+Formats can be added to the `Translator` thanks to the `formats` property of the `TranslatorConfigurationBuilder`, which
+is a `MutableMap<String, VariableFormatter>`. The key is the name of the format, and the value is the formatter itself.
+This key will be used to retrieve the formatter when formatting a variable in a translation.
+
+By default, the `VariableFormatter.builtins` method is used to create the `MutableMap<String, VariableFormatter>`
+object, which contains the following formats:
+
+- `number`: Formats a number. The value must be a subtype of `Number`. The extra arguments are:
+  - `minIntDigits`: The minimum number of digits to use for the integer part of the number.
+  - `maxIntDigits`: The maximum number of digits to use for the integer part of the number.
+  - `minFracDigits`: The minimum number of digits to use for the fractional part of the number.
+  - `maxFracDigits`: The maximum number of digits to use for the fractional part of the number.
+  - `groupingUsed`: Whether to use grouping separators.
+  - `roundingMode`: The rounding mode to use.
+
+- `currency`: Formats a currency  (the currency symbol will be fetched from the `Currency` object corresponding to the
+given locale.). The value must be a subtype of `Number`. It accepts the same extra arguments as the `number` format.
+
+- `date`: Formats a date. The value must be a subtype of `TemporalAccessor`. The extra arguments are:
+  - `dateStyle`: The style to use for the date.
+
+- `time`: Formats a time. The value must be a subtype of `TemporalAccessor`. The extra arguments are:
+  - `timeStyle`: The style to use for the time.
+
+- `dateTime`: Formats a date and a time. The value must be a subtype of `TemporalAccessor`. The extra arguments are the
+same as the `date` and `time` formats.
+
 
 ### `missingKeyPolicy`
 
