@@ -15,7 +15,7 @@ import java.util.Locale
  * @see TranslatorBuilder
  * @see Translator
  */
-class TranslatorConfiguration internal constructor(
+class TranslatorConfiguration @PackagePrivate internal constructor(
     internal val interpolationDelimiter: VariableDelimiter,
     internal val pluralMapper: Plural.Mapper,
     internal val formats: Map<String, VariableFormatter>,
@@ -56,7 +56,10 @@ class TranslatorConfiguration internal constructor(
 
     }
 
-    class Builder @PublishedApi internal constructor() : KotlinDslAdapter {
+    /**
+     * Builder for [TranslatorConfiguration].
+     */
+    class Builder @PackagePrivate internal constructor() : KotlinDslAdapter {
 
         /**
          * The delimiter to use for interpolation in translations.

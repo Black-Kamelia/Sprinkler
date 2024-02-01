@@ -265,8 +265,8 @@ interface Translator {
         t(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)
 
     /**
-     * Returns a new [Translator] with the given [key] as root key. The [key] will be prepended to all keys used to
-     * translate values.
+     * Returns a new [Translator] with the given [key] as root key prefix. The [key] will be prepended to all keys used
+     * to translate values.
      *
      * **NOTE**: This method does not check if the key actually exists in the translations.
      *

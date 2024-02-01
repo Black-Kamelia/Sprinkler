@@ -3,14 +3,12 @@ package com.kamelia.sprinkler.i18n
 import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
 import com.kamelia.sprinkler.util.assertionFailed
 import com.kamelia.sprinkler.util.cast
-import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.IllformedLocaleException
 import java.util.Locale
-import java.util.stream.Stream
 import org.intellij.lang.annotations.Language
 import org.json.JSONException
 import org.json.JSONObject
@@ -376,7 +374,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                             val map = parseFile(it)
                             locale to map
                         }
-                        .unsafeCast<Stream<Pair<Locale, Map<String, TranslationSourceData>>>>()
                         .toList()
                 }
                 else -> { // if the path is a file, load it and store it in a one element list
