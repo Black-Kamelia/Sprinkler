@@ -25,7 +25,7 @@ pipeline {
                     }
                 }
                 stage('Readonly Collections') {
-                    when { expression { params."Utils" == true } }
+                    when { expression { params."Readonly Collections" == true } }
                     steps {
                         withCredentials([
                                 usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
@@ -36,7 +36,7 @@ pipeline {
                     }
                 }
                 stage('Binary Transcoders') {
-                    when { expression { params."Utils" == true } }
+                    when { expression { params."Binary Transcoders" == true } }
                     steps {
                         withCredentials([
                                 usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
@@ -47,13 +47,24 @@ pipeline {
                     }
                 }
                 stage('JVM Bridge') {
-                    when { expression { params."Utils" == true } }
+                    when { expression { params."JVM Bridge" == true } }
                     steps {
                         withCredentials([
                                 usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
                                 usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass'),
                         ]) {
                             sh 'gradle jvm-bridge:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
+                        }
+                    }
+                }
+                stage('I18N') {
+                    when { expression { params."I18N" == true } }
+                    steps {
+                        withCredentials([
+                                usernamePassword(credentialsId: 'maven-gpg-signingkey', usernameVariable: 'signingKey', passwordVariable: 'signingPassword'),
+                                usernamePassword(credentialsId: 'sonatype-nexus', usernameVariable: 'user', passwordVariable: 'pass'),
+                        ]) {
+                            sh 'gradle i18n:publish -PmavenCentralUsername=$user -PmavenCentralPassword=$pass -PsigningKey=$signingKey -PsigningPassword=$signingPassword'
                         }
                     }
                 }

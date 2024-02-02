@@ -1,6 +1,8 @@
 package com.kamelia.sprinkler.util
 
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -76,9 +78,9 @@ class BoxTest {
             box.value
         }
         assertThrows<IllegalStateException> {
+            @Suppress("UNUSED_EXPRESSION")
             v
         }
     }
-
 
 }

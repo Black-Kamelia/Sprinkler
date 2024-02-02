@@ -2,6 +2,8 @@
 
 package com.kamelia.sprinkler.util
 
+import com.zwendo.restrikt.annotation.HideFromJava
+
 /**
  * Throws an [IllegalArgumentException] with the given [message].
  *
@@ -9,8 +11,9 @@ package com.kamelia.sprinkler.util
  * @throws IllegalArgumentException always
  * @see [error]
  */
+@HideFromJava
 @Suppress("NOTHING_TO_INLINE")
-inline fun illegalArgument(message: Any): Nothing = throw IllegalArgumentException(message.toString())
+inline fun illegalArgument(message: Any?): Nothing = throw IllegalArgumentException(message.toString())
 
 /**
  * Throws an [AssertionError] with the given [message].
@@ -19,5 +22,6 @@ inline fun illegalArgument(message: Any): Nothing = throw IllegalArgumentExcepti
  * @throws AssertionError always
  * @see [error]
  */
+@HideFromJava
 @Suppress("NOTHING_TO_INLINE")
-inline fun assertionFailed(message: Any): Nothing = throw AssertionError(message.toString())
+inline fun assertionFailed(message: Any?): Nothing = throw AssertionError(message.toString())
