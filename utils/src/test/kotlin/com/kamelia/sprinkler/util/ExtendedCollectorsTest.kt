@@ -7,6 +7,7 @@ import java.util.function.Supplier
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
+@Suppress("UNCHECKED_CAST")
 class ExtendedCollectorsTest {
 
     @Test

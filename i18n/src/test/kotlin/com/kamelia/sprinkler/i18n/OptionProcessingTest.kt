@@ -236,5 +236,16 @@ class OptionProcessingTest {
         assertEquals("bar", value)
     }
 
+    @Test
+    fun `translate throws if options is not a map`() {
+        assertThrows<IllegalArgumentException> {
+            OptionProcessor.translate(
+                TranslatorData(Locale.FRANCE, mapOf(Locale.FRANCE to mapOf("foo" to "bar")), TranslatorConfiguration.create {}),
+                "foo",
+                mapOf("options" to "context"),
+                Locale.FRANCE,
+            )
+        }
+    }
 
 }
