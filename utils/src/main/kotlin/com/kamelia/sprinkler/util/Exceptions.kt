@@ -13,7 +13,7 @@ import com.zwendo.restrikt.annotation.HideFromJava
  */
 @HideFromJava
 @Suppress("NOTHING_TO_INLINE")
-inline fun illegalArgument(message: Any): Nothing = throw IllegalArgumentException(message.toString())
+inline fun illegalArgument(message: Any?): Nothing = throw IllegalArgumentException(message.toString())
 
 /**
  * Throws an [AssertionError] with the given [message].
@@ -24,4 +24,4 @@ inline fun illegalArgument(message: Any): Nothing = throw IllegalArgumentExcepti
  */
 @HideFromJava
 @Suppress("NOTHING_TO_INLINE")
-inline fun assertionFailed(message: Any): Nothing = throw AssertionError(message.toString())
+inline fun assertionFailed(message: Any?): Nothing = throw AssertionError(message.toString())

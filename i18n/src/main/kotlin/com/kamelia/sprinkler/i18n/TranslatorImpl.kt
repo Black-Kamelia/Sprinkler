@@ -1,70 +1,140 @@
 package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.util.illegalArgument
 import com.zwendo.restrikt.annotation.PackagePrivate
-import java.util.*
+import java.util.Locale
 
 @PackagePrivate
 internal class TranslatorImpl private constructor(
     override val prefix: String?,
-    override val defaultLocale: Locale,
     override val currentLocale: Locale,
-    private val translations: Map<Locale, Map<String, String>>,
+    private val data: TranslatorData,
 ) : Translator {
 
-    constructor(defaultLocale: Locale, currentLocale: Locale, children: Map<Locale, Map<String, String>>) : this(
-        null,
-        defaultLocale,
-        currentLocale,
-        children
-    )
+    constructor(currentLocale: Locale, data: TranslatorData) : this(null, currentLocale, data)
 
-    override fun translateOrNull(key: String, locale: Locale): String? {
-        require(FULL_KEY_REGEX.matches(key)) {
+    override val defaultLocale: Locale
+        get() = data.defaultLocale
+
+    override fun tn(
+        key: String,
+        extraArgs: Map<String, Any>,
+        locale: Locale,
+        fallbackLocale: Locale?,
+        vararg fallbacks: String,
+    ): String? {
+        require(KEY_REGEX.matches(key)) {
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
         val actualKey = prefix?.let { "$it.$key" } ?: key
 
-        val value = translations[locale]?.get(actualKey)
-        if (value != null) return value
+        innerTranslate(actualKey, locale, extraArgs, fallbacks)?.let { return it }
 
-        if (defaultLocale != locale) { // to avoid a second lookup with the same key
-            val fallback = translations[defaultLocale]?.get(actualKey)
-            if (fallback != null) return fallback
+        if (fallbackLocale != null && locale != fallbackLocale) { // to avoid a second lookup with the same key
+            innerTranslate(actualKey, fallbackLocale, extraArgs, fallbacks)?.let { return it }
         }
 
         return null
     }
 
+    override fun t(
+        key: TranslationKey,
+        extraArgs: Map<String, Any>,
+        locale: Locale,
+        fallbackLocale: Locale?,
+        vararg fallbacks: String,
+    ): String = tn(key, extraArgs, locale, fallbackLocale, *fallbacks)
+        ?: when (data.configuration.missingKeyPolicy) {
+            TranslatorConfiguration.MissingKeyPolicy.THROW_EXCEPTION -> keyNotFound(
+                key,
+                extraArgs,
+                locale,
+                fallbackLocale,
+                fallbacks
+            )
+            TranslatorConfiguration.MissingKeyPolicy.RETURN_KEY -> key
+        }
+
     override fun section(key: String): Translator {
-        require(FULL_KEY_REGEX.matches(key)) {
+        require(KEY_REGEX.matches(key)) {
             "Invalid key '$key'. For more details about key syntax, see Translator interface documentation."
         }
         val newRootKey = prefix?.let { "$it.$key" } ?: key
-        return TranslatorImpl(newRootKey, currentLocale, defaultLocale, translations)
+        return TranslatorImpl(newRootKey, currentLocale, data)
     }
 
     override fun toMap(): Map<Locale, Map<String, String>> {
         val root = prefix
         return if (root == null) {
-            translations.mapValues { (_ , map) -> // simple deep copy
+            data.translations.mapValues { (_, map) -> // simple deep copy
                 map.toMap()
             }
         } else {
-            translations.mapValues { (_, map) -> // deep copy with filtering and key prefix removal
+            data.translations.mapValues { (_, map) -> // deep copy with filtering and key prefix removal
                 map.asSequence()
                     // we must check that the char at root.length is a dot to avoid removing keys that start with the
                     // same prefix but are not direct children of the root e.g. prefix='a' and key='ab'
-                    .filter { (key, _) -> key.startsWith(root) && root != key && key[root.length] == '.' }
+                    // NOTE: we first check the dot instead of the startWith because it is cheaper
+                    .filter { (key, _) -> key.length > root.length && '.' == key[root.length] && key.startsWith(root) }
                     .map { (key, value) -> key.substring(root.length + 1) to value } // + 1 to remove the dot
                     .toMap()
             }
         }
     }
 
-    override fun withNewCurrentLocale(locale: Locale): Translator =
-        TranslatorImpl(prefix, defaultLocale, locale, translations)
+    override fun withNewCurrentLocale(locale: Locale): Translator = if (currentLocale == locale) {
+        this
+    } else {
+        TranslatorImpl(prefix, locale, data)
+    }
+
+    override fun asRoot(): Translator = if (isRoot) {
+        this
+    } else {
+        TranslatorImpl(null, currentLocale, data)
+    }
 
     override fun toString(): String =
-        "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, translations=${toMap()})"
+        "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, configuration=${data.configuration}, translations=${toMap()})"
+
+    private fun innerTranslate(
+        key: String,
+        locale: Locale,
+        options: Map<String, Any>,
+        fallbacks: Array<out String>,
+    ): String? {
+        OptionProcessor.translate(data, key, options, locale)?.let { return it }
+
+        fallbacks.forEach { fallback ->
+            OptionProcessor.translate(data, fallback, options, locale)?.let { return it }
+        }
+
+        return null
+    }
+
+    private fun keyNotFound(
+        key: TranslationKey,
+        options: Map<String, Any>,
+        locale: Locale,
+        fallbackLocale: Locale?,
+        fallbacks: Array<out String>,
+    ): Nothing {
+        val builder = StringBuilder()
+        builder.append("No translation found for parameters: key='")
+            .append(key)
+            .append("', locale='")
+            .append(locale)
+            .append("', fallbackLocale='")
+            .append(fallbackLocale)
+            .append("', fallbacks='")
+
+        fallbacks.joinTo(builder, ", ", "[", "]")
+
+        builder.append("', extraArgs='")
+            .append(options)
+            .append("'. ")
+
+        illegalArgument(builder.toString())
+    }
 
 }
