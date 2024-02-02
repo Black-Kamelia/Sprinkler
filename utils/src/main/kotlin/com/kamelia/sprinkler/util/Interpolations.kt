@@ -60,7 +60,6 @@ fun <T> String.interpolate(
     } while (lastStart < length && match != null)
 
     if (lastStart < length) {
-        println("Yo")
         sb.append(this, lastStart, length)
     }
 
