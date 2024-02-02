@@ -35,6 +35,7 @@ same vein as projects such as ***kotlinx***, that is mainly used in **[Black Kam
 - ***[Binary Transcoders](binary-transcoders/README.md)***: Composable binary encoders and decoders builders
 - ***[Utils](utils/README.md)***: Various utilities for Kotlin (and Java+Kotlin)
 - ***[JVM Bridge](jvm-bridge/README.md)***: Utilities for JVM interoperability (Java+Kotlin)
+- ***[i18n](i18n/README.md)***: Internationalization for the JVM
 
 ## Integration
 
@@ -46,7 +47,7 @@ The available modules are:
 - [`binary-transcoders` ![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/binary-transcoders)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/binary-transcoders)
 - [`utils` ![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/utils)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/utils)
 - [`jvm-bridge` ![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/jvm-bridge)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/jvm-bridge)
-
+- [`i18n` ![Maven Central](https://img.shields.io/maven-central/v/com.black-kamelia.sprinkler/i18n)](https://central.sonatype.com/artifact/com.black-kamelia.sprinkler/i18n)
 
 ### Maven
 
