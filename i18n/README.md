@@ -15,6 +15,9 @@
   - [Basic usage](#basic-usage)
   - [Sections](#sections)
   - [`extraArgs`](#extraargs)
+    - [Simple variables](#simple-variables)
+    - [Options](#options)
+    - [Formatting](#formatting)
 - [Configuration](#configuration)
   - [`interpolationDelimiter`](#interpolationdelimiter)
   - [`pluralMapper`](#pluralmapper)
@@ -354,7 +357,7 @@ The resolution order for the variable names is the following:
 
 #### Formatting
 
-It is also possible when declaring a variable in a translation string to specify a format for it. This is done by
+When declaring a variable in a translation string, it is also possible to specify a format for it. This is done by
 appending a comma and the name of the format to the variable name. For example, the following translation:
 
 ```json
@@ -372,7 +375,7 @@ comma. For example, the following translation:
 
 ```json
 {
-  "foo": "I am {{age, number(minFractionDigits: 2, maxFractionDigits: 2)}} years old."
+  "foo": "I am {{age, number(minFracDigits: 2, maxFracDigits: 2)}} years old."
 }
 ```
 

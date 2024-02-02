@@ -6,10 +6,13 @@
 
 - [Intentions](#intentions)
 - [String interpolation](#string-interpolation)
-    - [String syntax](#string-syntax)
-    - [VariableDelimiter](#variabledelimiter)
-    - [Interpolation](#interpolation)
-    - [VariableResolvers](#variableresolvers)
+  - [String syntax](#string-syntax)
+  - [VariableDelimiter](#variabledelimiter)
+  - [Interpolation](#interpolation)
+    - [Map based overloads](#map-based-overloads)
+    - [Indexed overloads](#indexed-overloads)
+    - [Iterative overloads](#iterative-overloads)
+  - [VariableResolvers](#variableresolvers)
 - [CloseableScope](#closeablescope)
 - [Box Delegate](#box-delegate)
 - [Collector Factories](#collector-factories)
@@ -36,12 +39,12 @@ few extension functions to allow dynamic string interpolation with any object.
 Strings that are valid for interpolation are defined as follows:
 
 - String may contain zero, one or more variables delimited by a start sequence and an end sequence (these sequences
-  can be specified, but for the examples, we will use curly braces `{{` and `}}` as start and end characters) ;
-- Escaping of start character is possible using a backslash (`\`), and only the start character needs to be escaped ;
+  can be specified, but for the examples, we will use curly braces `{{` and `}}` as start and end sequences) ;
+- Escaping of start sequences is possible using a backslash (`\`), and only the start character needs to be escaped ;
 - Any non-escaped start sequence is considered as the start of a variable and can be closed by the first non-escaped
   end sequence ;
-- Any character between a non-escaped start character and the first non-escaped end character is considered as the
-  variable name, and will be used to retrieve the value of the variable ;
+- Any content between a non-escaped start sequence and the first non-escaped character of en end sequence is considered 
+  as the variable name, and will be used to retrieve the value of the variable ;
 
 Here are a few examples of valid strings:
 
@@ -124,7 +127,7 @@ val string: String = "I like {{0}} and {{1}}.".interpolateIdx("apples", "bananas
 println(string) // prints "I like apples and bananas."
 ```
 
-Note that this overload name is different from the others, due to the `varargs Any` parameter causing signature
+Note that this overload's name is different from the others, due to the `varargs Any` parameter causing signature
 conflicts. It also exists as a variant `interpolateIdxD(delimiter: VariableDelimiter, args: Array<Any>): String` which
 allows to specify a custom delimiter.
 
@@ -150,8 +153,8 @@ val string: String = "I ate {{}} and {{}}.".interpolateIt("apples", "bananas")
 println(string) // prints "I ate apples and bananas."
 ```
 
-As for the indexed overloads, this overload name is different from the others, due to the `varargs Any` parameter
-causing signature conflicts. It also exists as a variant
+In the same way as the indexed overloads, this overload's name is different from the others, due to the `varargs Any` 
+parameter causing signature conflicts. It also exists as a variant
 `interpolateItD(delimiter: VariableDelimiter, args: Array<Any>): String` which allows to specify a custom delimiter.
 
 ### VariableResolvers
@@ -285,10 +288,9 @@ closeableScope(someCloseable, someOtherCloseable) { // will autoclose these at t
 
 > The semantics of `closeableScope` in regard to exceptions are the exact same as Java's `try-with-resources` statement:
 > - If an exception is thrown during the execution of the scope, all resources will be closed in the reverse order of
-    their
-    > declaration, and the exception will be caught and cached.
+    their declaration, and the exception will be caught and cached.
 > - If the actual closing of one of the resources throws an exception, it will be added as a suppressed exception to the
-    > original one.
+>   original one.
 > - The original exception will be rethrown.
 
 ## Box Delegate
