@@ -1,8 +1,5 @@
 pipeline {
     agent any
-    parameters {
-        booleanParam(name: 'skip_test', defaultValue: false, description: 'Set to true to skip the test stage')
-    }
     options {
         timestamps()
         ansiColor('xterm')
