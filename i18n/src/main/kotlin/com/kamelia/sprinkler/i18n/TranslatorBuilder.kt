@@ -66,7 +66,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     /**
      * List of all data that will be used to build the translator.
      */
-    private val translatorContent = ArrayList<TranslationResourceInformation>()
+    private val translatorContent = ArrayList<TranslationResourceLoader>()
 
     /**
      * How to handle duplicate keys.
@@ -102,7 +102,17 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
         val isNew = addedPaths.add(path)
         if (!isNew) return@apply // if the path is already added, we do not need to append it to the list
-        translatorContent += FileInfo(path)
+
+        translatorContent += { finalMap, check, extraction ->
+            // we need to load the file, or, if it is a directory, load all files in it and add them to the final map.
+            try {
+                loadPath(path).forEach { (locale, map) ->
+                    addToMap(finalMap, locale, map, check, extraction)
+                }
+            } catch (e: Exception) { // catch and rethrow to add the path to the error message
+                throw IllegalStateException("Error while loading file $path", e)
+            }
+        }
     }
 
     /**
@@ -135,7 +145,9 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @return this builder
      */
     fun addMap(locale: Locale, map: TranslationSourceMap): TranslatorBuilder = apply {
-        translatorContent += MapInfo(locale, map)
+        translatorContent += { finalMap, check, extraction ->
+            addToMap(finalMap, locale, map, check, extraction)
+        }
     }
 
     /**
@@ -252,23 +264,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         val checkRegex = translationValueFormatCheckRegex(start, end)
         val extractionRegex = formatAndVariableNamesExtractionRegex(start, end)
 
-        translatorContent.forEach {
-            when (it) { // switch on different types of TranslationResourceInformation
-                // if it is a FileInfo, we need to load the file, or, if it is a directory, load all files in it
-                // and add them to the final map.
-                is FileInfo -> {
-                    try {
-                        loadPath(it).forEach { (locale, map) ->
-                            addToMap(finalMap, locale, map, checkRegex, extractionRegex)
-                        }
-                    } catch (e: Exception) { // catch and rethrow to add the path to the error message
-                        throw IllegalStateException("Error while loading file ${it.path}", e)
-                    }
-                }
-                // if it is a MapInfo, we can directly add it to the final map
-                is MapInfo -> addToMap(finalMap, it.locale, it.map, checkRegex, extractionRegex)
-            }
-        }
+        translatorContent.forEach { loader -> loader(finalMap, checkRegex, extractionRegex) }
 
         // once all data is added to the final map, we need to sort it
         val comparator = keyComparator()
@@ -364,11 +360,11 @@ class TranslatorBuilder @PackagePrivate internal constructor(
 
     private companion object {
 
-        fun loadPath(info: FileInfo): List<Pair<Locale, TranslationSourceMap>> =
+        fun loadPath(path: Path): List<Pair<Locale, TranslationSourceMap>> =
             when {
-                !info.path.exists() -> error("Path ${info.path} does not exist")
-                info.path.isDirectory() -> { // if the path is a directory, load all files in it and return the list
-                    Files.list(info.path)
+                !path.exists() -> error("Path $path does not exist")
+                path.isDirectory() -> { // if the path is a directory, load all files in it and return the list
+                    Files.list(path)
                         .map {
                             val locale = parseLocale(it)
                             val map = parseFile(it)
@@ -377,8 +373,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                         .toList()
                 }
                 else -> { // if the path is a file, load it and store it in a one element list
-                    val map = parseFile(info.path)
-                    val locale = parseLocale(info.path)
+                    val map = parseFile(path)
+                    val locale = parseLocale(path)
                     listOf(locale to map)
                 }
             }
@@ -571,13 +567,10 @@ class TranslatorBuilder @PackagePrivate internal constructor(
 
     }
 
-    private sealed interface TranslationResourceInformation
-
-    private class FileInfo(val path: Path) : TranslationResourceInformation
-
-    private class MapInfo(
-        val locale: Locale,
-        val map: Map<String, TranslationSourceData>,
-    ) : TranslationResourceInformation
-
 }
+
+private typealias TranslationResourceLoader = (
+    finalMap: HashMap<Locale, HashMap<String, String>>,
+    check: Regex,
+    extraction: Regex,
+) -> Unit
