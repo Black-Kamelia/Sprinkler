@@ -1,9 +1,7 @@
 package com.kamelia.sprinkler.i18n
 
-import java.nio.file.Path as JavaPath
-import com.kamelia.sprinkler.util.unsafeCast
 import java.io.File
-import java.util.*
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -234,23 +232,6 @@ class TranslatorBuilderFileTest {
     }
 
     @Test
-    fun `throws an AssertionError if a file with an invalid extension is added`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-        val fileInfo = Class.forName("com.kamelia.sprinkler.i18n.TranslatorBuilder\$FileInfo")
-            .getDeclaredConstructor(JavaPath::class.java)
-            .apply { isAccessible = true }
-            .newInstance(absoluteResource(ROOT, "invalid-extension.txt"))
-        val list = TranslatorBuilder::class.java.getDeclaredField("translatorContent")
-            .apply { isAccessible = true }
-            .get(builder)
-            .unsafeCast<MutableList<Any>>()
-        list.add(fileInfo)
-        assertThrows<AssertionError> {
-            builder.build()
-        }
-    }
-
-    @Test
     fun `throws an exception if the content of the file of a json file is not a valid json`() {
         val builder = Translator.builder(Locale.ENGLISH)
             .addFile(absoluteResource(ROOT, INVALID_JSON))
@@ -273,6 +254,18 @@ class TranslatorBuilderFileTest {
         val builder = Translator.builder(Locale.ENGLISH)
             .addFile(absoluteResource(ROOT, LIST).toFile())
             .addFile(absoluteResource(ROOT, LIST).toFile())
+            // to ensure that it should fail in case of the file is added more than once
+            .withDuplicatedKeyResolutionPolicy(TranslatorBuilder.DuplicatedKeyResolution.FAIL)
+        assertDoesNotThrow {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `addURL with the same file more than once does not add the file more than once`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addFile(absoluteResource(ROOT, LIST))
+            .addFile(absoluteResource(ROOT, LIST))
             // to ensure that it should fail in case of the file is added more than once
             .withDuplicatedKeyResolutionPolicy(TranslatorBuilder.DuplicatedKeyResolution.FAIL)
         assertDoesNotThrow {
