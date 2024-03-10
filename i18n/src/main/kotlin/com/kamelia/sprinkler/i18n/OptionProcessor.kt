@@ -95,8 +95,8 @@ internal object OptionProcessor {
     }
 
     /**
-     * This regex is globally the same as the [translationValueFormatCheckRegex] except that this regex actually captures the
-     * information in groups, whereas the other one only checks if the format is valid.
+     * This regex is globally the same as the translation value format check regex except that this regex actually
+     * captures the information in groups, whereas the other one only checks if the format is valid.
      */
     private val generalSplit = run {
         // capture all the params in a single group
@@ -138,7 +138,7 @@ internal object OptionProcessor {
 
             val paramList = if (params.isNotEmpty()) { // there are format parameters
                 params.split(paramsSplit)
-                    .asSequence()
+                    .stream()
                     .map(keyValueSplit::split)
                     .map { it[0] to it[1] } // also safe because values are validated on translator creation
                     .toList()
