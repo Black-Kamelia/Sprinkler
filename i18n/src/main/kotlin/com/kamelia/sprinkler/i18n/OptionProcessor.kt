@@ -53,7 +53,7 @@ internal object OptionProcessor {
                 pluralMapper.mapOrdinal(locale, count)
             } else {
                 pluralMapper.mapPlural(locale, count)
-            }.representation
+            }.name.lowercase()
         }
 
         val builder = StringBuilder(key)
