@@ -277,10 +277,8 @@ class TranslatorBuilder @PackagePrivate internal constructor(
     fun build(): Translator {
         val finalMap = HashMap<Locale, HashMap<String, String>>()
         val delimiter = config.interpolationDelimiter
-        val start = delimiter.startDelimiter
-        val end = delimiter.endDelimiter
-        val checkRegex = translationValueFormatCheckRegex(start, end)
-        val extractionRegex = formatAndVariableNamesExtractionRegex(start, end)
+        val checkRegex = translationValueFormatCheckRegex(delimiter.startDelimiter, delimiter.endDelimiter)
+        val extractionRegex = formatAndVariableNamesExtractionRegex(delimiter.startDelimiter, delimiter.endDelimiter)
 
         translatorContent.forEach { loader -> loader(finalMap, checkRegex, extractionRegex) }
 
