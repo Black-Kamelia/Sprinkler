@@ -318,6 +318,16 @@ interface Translator {
         @JvmStatic
         fun builder(defaultLocale: Locale): TranslatorBuilder = TranslatorBuilder(defaultLocale)
 
+        /**
+         * The key regex used to validate keys.
+         *
+         * @return the key regex
+         */
+        @JvmStatic
+        fun keyRegex(): Regex = KEY_REGEX
+
+        private val KEY_REGEX = """$IDENTIFIER(?:\.$IDENTIFIER)*""".toRegex()
+
     }
 
 }

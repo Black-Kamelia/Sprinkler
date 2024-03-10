@@ -76,7 +76,7 @@ typealias TranslationInterpolationVariable = String
  * (the type of the exception will depend on the function).
  *
  * **NOTE**: the regex of [TranslationKey] is `[a-zA-Z\d]+(?:-|_[a-zA-Z\d]+)*(?:\.[a-zA-Z\d]+(?:-|_[a-zA-Z\d]+)*)*`. as
- * defined in [Identifier].
+ * defined in [Identifier]. It can be obtained through the [keyRegex()][Translator.keyRegex] method.
  *
  * @see Identifier
  * @see Translator

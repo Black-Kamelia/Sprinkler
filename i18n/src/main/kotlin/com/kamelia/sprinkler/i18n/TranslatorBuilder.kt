@@ -425,7 +425,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 "Error in map $map:\nInvalid translation key '$key' of type ${key::class.simpleName} for locale '$locale', expected String. $KEY_DOCUMENTATION."
             }
 
-            check(KEY_REGEX.matches(key)) {
+            check(Translator.keyRegex().matches(key)) {
                 "Error in map $map:\nInvalid translation key '$key' for locale '$locale', format is not valid. $KEY_DOCUMENTATION."
             }
         }
@@ -576,9 +576,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 }
             }
         }
-
-        const val KEY_DOCUMENTATION =
-            "For more details about translation keys, see TranslationKey typealias documentation"
 
         const val SOURCE_DATA_DOCUMENTATION =
             "For more details about translation source data, see TranslationSourceData typealias documentation"
