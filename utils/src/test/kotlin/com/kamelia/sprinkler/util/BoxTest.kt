@@ -83,4 +83,18 @@ class BoxTest {
         }
     }
 
+    @Test
+    fun `rewritable box with nullable type test`() {
+        val box = Box.rewritable<Int?>()
+        box.fill(null)
+        assertTrue(box.isFilled)
+    }
+
+    @Test
+    fun `singleWrite box with nullable type test`() {
+        val box = Box.singleWrite<Int?>()
+        box.fill(null)
+        assertTrue(box.isFilled)
+    }
+
 }
