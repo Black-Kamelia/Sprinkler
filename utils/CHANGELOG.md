@@ -14,8 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- Renamed VariableFormatter default instance JVM name to be compatible with java (a hidden method with the old name has
+- Renamed VariableFormatter default instance's JVM name to be compatible with java (a hidden method with the old name has
 been also added for compatibility)
+([#67](https://github.com/Black-Kamelia/Sprinkler/pull/67/commits/e546a63e410f96c212ba5c0c7c48b5ccd752c04f))
+- Nullable type boxes now work correctly when filled with null
 ([#67](https://github.com/Black-Kamelia/Sprinkler/pull/67/commits/e546a63e410f96c212ba5c0c7c48b5ccd752c04f))
 
 
