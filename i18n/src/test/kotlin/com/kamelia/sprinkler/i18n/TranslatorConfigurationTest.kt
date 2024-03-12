@@ -1,6 +1,5 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.util.VariableDelimiter
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -36,7 +35,7 @@ class TranslatorConfigurationTest {
     @Test
     fun `interpolationDelimiter is used for interpolation`() {
         val config = TranslatorConfiguration.create {
-            interpolationDelimiter = VariableDelimiter.create("[", "]")
+            interpolationDelimiter = TranslatorConfiguration.InterpolationDelimiter.create("[", "]")
         }
         val translator = Translator.builder(Locale.ENGLISH)
             .withConfiguration(config)
@@ -47,22 +46,16 @@ class TranslatorConfigurationTest {
     }
 
     @Test
-    fun `build throws an ISE if the interpolationDelimiter startDelimiter contains forbidden  characters`() {
-        val delimiter = VariableDelimiter.create("a(ee", "}}")
+    fun `throws an ISE if the interpolationDelimiter startDelimiter contains forbidden  characters`() {
         assertThrows<IllegalStateException> {
-            TranslatorConfiguration.create {
-                interpolationDelimiter = delimiter
-            }
+            TranslatorConfiguration.InterpolationDelimiter.create("a(ee", "}}")
         }
     }
 
     @Test
-    fun `build throws an ISE if the interpolationDelimiter endDelimiter contains forbidden characters`() {
-        val delimiter = VariableDelimiter.create("{{", "a)ee")
+    fun `throws an ISE if the interpolationDelimiter endDelimiter contains forbidden characters`() {
         assertThrows<IllegalStateException> {
-            TranslatorConfiguration.create {
-                interpolationDelimiter = delimiter
-            }
+            TranslatorConfiguration.InterpolationDelimiter.create("{{", "a)ee")
         }
     }
 
