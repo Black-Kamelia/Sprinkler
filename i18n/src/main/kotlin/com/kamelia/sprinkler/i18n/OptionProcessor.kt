@@ -126,29 +126,38 @@ internal object OptionProcessor {
 
     private val customResolver = VariableResolver<InterpolationContext> { key, context ->
         // '!!' is ok, because values are validated on translator creation
-        val (_, variableName, formatName, params) = generalSplit.matchEntire(key)!!.groupValues
+        val (_, variableName, formatName, formatParams) = generalSplit.matchEntire(key)!!.groupValues
 
         val variableValue = context.options[variableName]
             ?: context.optionMap[variableName]
             ?: illegalArgument("variable '$variableName' not found")
 
-        if (formatName.isNotEmpty()) { // there is a format
-            // same as above, '!!' is ok due to pre-validation
-            val format = context.formats[formatName]!!
+        var formatPassedParams = emptyMap<String, String>()
+        var actualValue: Any = variableValue
+        if (variableValue is FormattedValue) {
+            actualValue = variableValue.value
+            formatPassedParams = variableValue.formatParams
+        }
 
-            val paramList = if (params.isNotEmpty()) { // there are format parameters
-                params.split(paramsSplit)
-                    .stream()
-                    .map(keyValueSplit::split)
-                    .map { it[0] to it[1] } // also safe because values are validated on translator creation
-                    .toList()
+        if (formatName.isNotEmpty()) { // there is a format
+            val paramMap = if (formatParams.isEmpty() && formatPassedParams.isEmpty()) {
+                emptyMap()
             } else {
-                emptyList()
+                HashMap<String, String>(formatParams.length).apply {
+                    if (formatParams.isNotEmpty()) { // there are format parameters
+                        formatParams.split(paramsSplit).forEach {
+                            val (k, v) = keyValueSplit.split(it, 2)
+                            put(k, v)
+                        }
+                    }
+                    putAll(formatPassedParams) // add the formats passed after to override the defaults
+                }
             }
 
-            format.format(variableValue, context.locale, paramList)
+            // same as above, '!!' is ok due to pre-validation
+            context.formats[formatName]!!.format(actualValue, context.locale, paramMap)
         } else { // otherwise, just return the result
-            variableValue.toString()
+            actualValue.toString()
         }
     }
 
