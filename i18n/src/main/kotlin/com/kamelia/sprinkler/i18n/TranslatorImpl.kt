@@ -69,13 +69,13 @@ internal class TranslatorImpl private constructor(
         } else {
             data.translations.mapValues { (_, map) -> // deep copy with filtering and key prefix removal
                 map.entries
-                    .stream()
+                    .stream() // the stream is ordered as the underlying set is a LinkedHashSet
                     // we must check that the char at root.length is a dot to avoid removing keys that start with the
                     // same prefix but are not direct children of the root e.g. prefix='a' and key='ab'
                     // NOTE: we first check the dot instead of the startWith because it is cheaper
                     .filter { (key, _) -> key.length > root.length && '.' == key[root.length] && key.startsWith(root) }
                     .map { (key, value) -> key.substring(root.length + 1) to value } // + 1 to remove the dot
-                    .collect(ExtendedCollectors.toMap())
+                    .collect(ExtendedCollectors.toLinkedHashMap())
             }
         }
     }
