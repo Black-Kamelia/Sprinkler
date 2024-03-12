@@ -444,8 +444,15 @@ class VariableDelimiter private constructor(
             return VariableDelimiter(start, end, regex)
         }
 
+
+        /**
+         * Backward compatibility method
+         */
+        internal fun default(): VariableDelimiter = default
+
     }
 
     override fun toString(): String =
         "VariableDelimiter(startDelimiter='$startDelimiter', endDelimiter='$endDelimiter')"
+
 }
