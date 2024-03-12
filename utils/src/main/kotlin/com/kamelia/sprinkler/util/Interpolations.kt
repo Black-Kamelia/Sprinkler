@@ -448,6 +448,7 @@ class VariableDelimiter private constructor(
         /**
          * Backward compatibility method
          */
+        @JvmName("default")
         internal fun default(): VariableDelimiter = default
 
     }
