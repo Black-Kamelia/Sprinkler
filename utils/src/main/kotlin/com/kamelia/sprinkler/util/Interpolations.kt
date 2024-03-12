@@ -399,7 +399,7 @@ class VariableDelimiter private constructor(
          * delimiters.
          */
         @JvmStatic
-        @get:JvmName("default")
+        @get:JvmName("defaultDelimiter")
         val default: VariableDelimiter = create("{{", "}}")
 
         /**
