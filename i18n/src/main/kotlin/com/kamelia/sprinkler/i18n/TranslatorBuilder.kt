@@ -5,6 +5,7 @@ import com.kamelia.sprinkler.util.assertionFailed
 import com.kamelia.sprinkler.util.cast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.io.File
+import java.net.URI
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
@@ -150,6 +151,23 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @throws IllegalArgumentException if the extension is not supported
      */
     fun addURL(url: URL): TranslatorBuilder = addFile(Path.of(url.toURI()))
+
+    /**
+     * Adds a URI to the builder. If the URI points to a directory, all files in it will be loaded (one level of depth,
+     * inner directories are ignored). If the URI points to a file, it will be loaded.
+     *
+     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
+     *
+     * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
+     * name is not a valid locale identifier, an [IllegalStateException] will be thrown when building the translator.
+     *
+     * This method will throw an [IllegalArgumentException] if the file extension is not supported.
+     *
+     * @param uri the URI to load
+     * @return this builder
+     * @throws IllegalArgumentException if the extension is not supported
+     */
+    fun addURI(uri: URI): TranslatorBuilder = addFile(Path.of(uri))
 
     /**
      * Adds a map for a locale to the builder. The content of the map will be added to the final translator. The
