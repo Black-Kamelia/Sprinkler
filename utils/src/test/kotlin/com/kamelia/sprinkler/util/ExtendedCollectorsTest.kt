@@ -11,6 +11,28 @@ import org.junit.jupiter.api.Test
 class ExtendedCollectorsTest {
 
     @Test
+    fun `toLinkedHashMap works correctly`() {
+        val collector = ExtendedCollectors.toLinkedHashMap<String, Int>()
+        val p1 = "one" to 1
+        val p2 = "two" to 2
+        val p3 = "three" to 3
+        val expected = listOf(p1, p2, p3)
+        val actual = listOf(p1, p2, p3).stream().collect(collector).toList()
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `toLinkedHashMapUsingEntries works correctly`() {
+        val collector = ExtendedCollectors.toLinkedHashMapUsingEntries<String, Int>()
+        val p1 = "one" to 1
+        val p2 = "two" to 2
+        val p3 = "three" to 3
+        val expected = listOf(p1, p2, p3)
+        val actual = linkedMapOf(p1, p2, p3).entries.stream().collect(collector).toList()
+        assertEquals(expected, actual)
+    }
+
+    @Test
     fun `toMap works correctly`() {
         val collector = ExtendedCollectors.toMap<String, Int>()
         val p1 = "one" to 1
@@ -18,6 +40,19 @@ class ExtendedCollectorsTest {
         val p3 = "three" to 3
         val expected = mapOf(p1, p2, p3)
         val actual = listOf(p1, p2, p3).stream().collect(collector)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `toMapUsingEntries works correctly`() {
+        val collector = ExtendedCollectors.toMapUsingEntries<String, Int>()
+        val m = java.util.Map.of(
+            "one", 1,
+            "two", 2,
+            "three", 3
+        )
+        val expected = mapOf("one" to 1, "two" to 2, "three" to 3)
+        val actual = m.entries.stream().collect(collector)
         assertEquals(expected, actual)
     }
 
