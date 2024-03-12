@@ -35,19 +35,7 @@ fun interface VariableFormatter {
      * @throws IllegalArgumentException if some of the extra arguments are invalid or not recognized by the formatter
      * @throws Exception if an error occurs while formatting the value
      */
-    fun format(value: Any, locale: Locale, extraArgs: List<Pair<String, String>>): String
-
-    /**
-     * Formats the given [value] using the given [locale]. This is a convenience method that calls the [format] method
-     * with an [empty][emptyList] list of extra arguments.
-     *
-     * @param value the value to format
-     * @param locale the locale to use
-     * @return the formatted value
-     * @throws IllegalArgumentException if some of the extra arguments are invalid or not recognized by the formatter
-     * @throws Exception if an error occurs while formatting the value
-     */
-    fun format(value: Any, locale: Locale): String = format(value, locale, emptyList())
+    fun format(value: Any, locale: Locale, extraArgs: Map<String, String>): String
 
     companion object {
 
@@ -190,9 +178,8 @@ fun interface VariableFormatter {
             ::number.name to number(),
         )
 
-        private fun parseNumberFormatParams(formatter: NumberFormat, params: List<Pair<String, String>>) {
-            params.forEach {
-                val (key, value) = it
+        private fun parseNumberFormatParams(formatter: NumberFormat, params: Map<String, String>) {
+            params.forEach { (key, value) ->
                 when (key) {
                     "minIntDigits" -> formatter.minimumIntegerDigits = value.toInt()
                     "maxIntDigits" -> formatter.maximumIntegerDigits = value.toInt()
@@ -213,12 +200,11 @@ fun interface VariableFormatter {
 
         private fun createDateTimeFormatParams(
             kind: DateTimeFormatterKind,
-            params: List<Pair<String, String>>,
+            params: Map<String, String>,
         ): DateTimeFormatter {
             var firstFormat: FormatStyle = DEFAULT_FORMAT_STYLE
             var secondFormat: FormatStyle = DEFAULT_FORMAT_STYLE
-            params.forEach {
-                val (key, value) = it
+            params.forEach { (key, value) ->
                 if ("dateStyle" == key && (DateTimeFormatterKind.DATE == kind || DateTimeFormatterKind.DATE_TIME == kind)) {
                     firstFormat = formatStyle(value)
                 } else if ("timeStyle" == key && (kind == DateTimeFormatterKind.TIME || kind == DateTimeFormatterKind.DATE_TIME)) {
