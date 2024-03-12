@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
+import com.kamelia.sprinkler.util.ExtendedCollectors
 import com.kamelia.sprinkler.util.assertionFailed
 import com.kamelia.sprinkler.util.cast
 import com.zwendo.restrikt.annotation.PackagePrivate
@@ -293,25 +294,44 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @throws IllegalStateException if an error occurs while loading a file
      */
     fun build(): Translator {
-        val finalMap = HashMap<Locale, HashMap<String, String>>()
         val delimiter = config.interpolationDelimiter
         val checkRegex = translationValueFormatCheckRegex(delimiter.startDelimiter, delimiter.endDelimiter)
         val extractionRegex = formatAndVariableNamesExtractionRegex(delimiter.startDelimiter, delimiter.endDelimiter)
-
-        translatorContent.forEach { loader -> loader(finalMap, checkRegex, extractionRegex) }
-
-        // once all data is added to the final map, we need to sort it
         val comparator = keyComparator()
-        val sortedMap = finalMap.mapValues { (_, map) ->
-            map.toSortedMap { key1, key2 -> comparator.compare(key1, key2) }
-        }
 
-        val data = TranslatorData(defaultLocale, sortedMap, config)
+        val translations = HashMap<Locale, MutableMap<String, String>>()
+        translatorContent.forEach { loader -> loader(translations, checkRegex, extractionRegex) }
+
+        val translatorMap = translations.entries
+            .stream()
+            // then we sort each locale map by key
+            .map { entry ->
+                val newValue = entry.value
+                    .entries
+                    .stream()
+                    .sorted { (a, _), (b, _) -> comparator.compare(a, b) }
+                    .collect(
+                        ExtendedCollectors.toLinkedHashMapUsingEntries { _, _ ->
+                            assertionFailed("Collisions must have been resolved")
+                        }
+                    )
+                entry.setValue(newValue)
+                entry
+            }
+            // and finally we sort the whole map by locale using the language tag
+            .sorted { (a, _), (b, _) -> a.toLanguageTag().compareTo(b.toLanguageTag()) }
+            .collect(
+                ExtendedCollectors.toLinkedHashMapUsingEntries { _, _ ->
+                    assertionFailed("Collisions must have been resolved")
+                }
+            )
+
+        val data = TranslatorData(defaultLocale, translatorMap, config)
         return TranslatorImpl(currentLocale, data)
     }
 
     private fun addToMap(
-        finalMap: HashMap<Locale, HashMap<String, String>>,
+        finalMap: MutableMap<Locale, MutableMap<String, String>>,
         locale: Locale,
         map: Map<*, *>,
         formatCheckRegex: Regex,
@@ -356,7 +376,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
 
     private fun addValue(
         locale: Locale,
-        finalMap: HashMap<String, String>,
+        finalMap: MutableMap<String, String>,
         key: String,
         value: TranslationSourceData,
         formatCheckRegex: Regex,
@@ -447,7 +467,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         }
 
         @OptIn(ExperimentalContracts::class)
-        private fun checkValueIsValid(value: Any?, locale: Locale, map: Map<*, *>) {
+        fun checkValueIsValid(value: Any?, locale: Locale, map: Map<*, *>) {
             contract {
                 returns() implies (value != null)
             }
@@ -477,7 +497,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             val postFormat = """(?:\(.+?$nbs\)\s*)?"""
 
             @Language("RegExp")
-            val format = """(?:,\s*([^ ]+)\s*$postFormat)?"""
+            val format = """(?:,\s*([^ ]+?)\s*$postFormat)?"""
 
             return """$s$variable$format$e""".toRegex()
         }
@@ -601,7 +621,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
 }
 
 private typealias TranslationResourceLoader = (
-    finalMap: HashMap<Locale, HashMap<String, String>>,
+    finalMap: MutableMap<Locale, MutableMap<String, String>>,
     check: Regex,
     extraction: Regex,
 ) -> Unit
