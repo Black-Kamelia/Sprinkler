@@ -39,20 +39,24 @@ import kotlin.io.path.readText
  * will be thrown when building the translator;
  *
  * The translators created with this builder will have the following properties:
+ * - the created translators are immutable and therefore `thread-safe`.
+ * - all methods (of the created translator) returning a translator (e.g. [section][Translator.section],
+ * [withNewCurrentLocale][Translator.withNewCurrentLocale]) returns a translator sharing common information with the
+ * translator which created it. The methods do not copy the data, meaning that they do not have a significant
+ * performance nor memory impact.
  * - the `extraArgs` argument passed to the [t][Translator.t] methods will be used to
  * [interpolate][com.kamelia.sprinkler.util.interpolate] the translation, all keys in the map will be replaced by their
  * corresponding values in the translation, except for the [Options.OPTIONS] key, which will contain a map of options as
- * defined in the [Options] class;
+ * defined in the [Options] class.
  * - the [Translator.t] method will behave according to the [TranslatorConfiguration.missingKeyPolicy] chosen when
- * creating the translator, in case the key is not found;
+ * creating the translator, in case the key is not found.
  * - the returned map of [Translator.toMap] will be sorted according to the lexical order of the
- * [key parts][Identifier] of the keys (the map is created every time the method is called);
- * - [toString] will use [toMap] under the hood to create the string representation of the translator;
+ * [key parts][Identifier] of the keys (the map is created every time the method is called).
+ * - [toString] will use [toMap] under the hood to create the string representation of the translator.
  * - To be interpolated on [t][Translator.t] method call, values stored in the translator must contain variable defined
  * inside [delimiters][TranslatorConfiguration.Builder.interpolationDelimiter] defined in the translator configuration. For more
  * details about interpolation, see [String.interpolate][com.kamelia.sprinkler.util.interpolate]. Variables' names must
  * follow a specific format, which is defined in the [TranslationInterpolationVariable] typealias documentation.
- * - the created translators are immutable and therefore `thread-safe`.
  *
  * @see Translator
  * @see TranslatorConfiguration

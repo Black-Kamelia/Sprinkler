@@ -277,9 +277,7 @@ interface Translator {
     fun section(key: TranslationKey): Translator
 
     /**
-     * Returns a new [Translator] with the given [locale] as current locale. This operation is lightweight (it simply
-     * uses a translation map which is shared between all instances), meaning that it can be used frequently without any
-     * performance impact.
+     * Returns a new [Translator] with the given [locale] as current locale.
      *
      * **NOTE**: This method does not check if the [locale] is actually supported by this [Translator].
      *
@@ -289,8 +287,7 @@ interface Translator {
     fun withNewCurrentLocale(locale: Locale): Translator
 
     /**
-     * Returns the root [Translator] version of this [Translator] (the same translator with its prefix set to null). If
-     * this [Translator] is already a root [Translator], it will return itself.
+     * Returns the root [Translator] version of this [Translator] (the same translator with its prefix set to null).
      *
      * @return the root [Translator] version of this [Translator]
      */

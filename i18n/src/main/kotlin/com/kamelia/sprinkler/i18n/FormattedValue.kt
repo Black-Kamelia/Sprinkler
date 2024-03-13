@@ -8,6 +8,22 @@ import com.zwendo.restrikt.annotation.PackagePrivate
  * Represents a value and the parameters of the format to be applied to it. It is used to pass parameters to the
  * formatter on translation call instead of directly put them in the translation string.
  *
+ * It can be used in the following way:
+ *
+ * ```
+ * // the value of the key "my.key" is "Hello, {name, myFormatter}!"
+ * val translator: Translator = ...
+ * val value = translator.t(
+ *     "my.key",
+ *     mapOf(
+ *         "name" to p("World", mapOf("myFormatterParam" to "foo"))
+ *     )
+ * )
+ * ```
+ *
+ * In the above example, after retrieving the value of the key "my.key" from the translator, the formatter `myFormatter`
+ * will be called on the value "World" with the parameter "myFormatterParam" set to "foo".
+ *
  * @see p
  */
 class FormattedValue @PackagePrivate internal constructor(
