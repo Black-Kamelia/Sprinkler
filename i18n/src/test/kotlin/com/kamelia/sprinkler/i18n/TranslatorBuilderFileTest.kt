@@ -28,6 +28,22 @@ class TranslatorBuilderFileTest {
     }
 
     @Test
+    fun `addURL throws an IAE if the extension is invalid`() {
+        assertThrows<IllegalArgumentException> {
+            Translator.builder(Locale.ENGLISH)
+                .addURL(absoluteResource(ROOT, "invalid-extension.txt").toUri().toURL())
+        }
+    }
+
+    @Test
+    fun `addURI throws an IAE if the extension is invalid`() {
+        assertThrows<IllegalArgumentException> {
+            Translator.builder(Locale.ENGLISH)
+                .addURI(absoluteResource(ROOT, "invalid-extension.txt").toUri())
+        }
+    }
+
+    @Test
     fun `addFile does not throw with json extension`() {
         assertDoesNotThrow {
             Translator.builder(Locale.ENGLISH)
@@ -40,6 +56,22 @@ class TranslatorBuilderFileTest {
         assertDoesNotThrow {
             Translator.builder(Locale.ENGLISH)
                 .addFile(Path("valid-extension.json"))
+        }
+    }
+
+    @Test
+    fun `addURL does not throw with json extension`() {
+        assertDoesNotThrow {
+            Translator.builder(Locale.ENGLISH)
+                .addURL(Path("valid-extension.json").toUri().toURL())
+        }
+    }
+
+    @Test
+    fun `addURI does not throw with json extension`() {
+        assertDoesNotThrow {
+            Translator.builder(Locale.ENGLISH)
+                .addURI(Path( "valid-extension.json").toUri())
         }
     }
 
@@ -60,6 +92,22 @@ class TranslatorBuilderFileTest {
     }
 
     @Test
+    fun `addURL does not throw with yaml extension`() {
+        assertDoesNotThrow {
+            Translator.builder(Locale.ENGLISH)
+                .addURL(Path("valid-extension.yaml").toUri().toURL())
+        }
+    }
+
+    @Test
+    fun `addURI does not throw with yaml extension`() {
+        assertDoesNotThrow {
+            Translator.builder(Locale.ENGLISH)
+                .addURI(Path("valid-extension.yaml").toUri())
+        }
+    }
+
+    @Test
     fun `addFile does not throw with yml extension`() {
         assertDoesNotThrow {
             Translator.builder(Locale.ENGLISH)
@@ -72,6 +120,22 @@ class TranslatorBuilderFileTest {
         assertDoesNotThrow {
             Translator.builder(Locale.ENGLISH)
                 .addFile(Path("valid-extension.yml"))
+        }
+    }
+
+    @Test
+    fun `addURL does not throw with yml extension`() {
+        assertDoesNotThrow {
+            Translator.builder(Locale.ENGLISH)
+                .addURL(Path("valid-extension.yml").toUri().toURL())
+        }
+    }
+
+    @Test
+    fun `addURI does not throw with yml extension`() {
+        assertDoesNotThrow {
+            Translator.builder(Locale.ENGLISH)
+                .addURI(Path("valid-extension.yml").toUri())
         }
     }
 
@@ -267,6 +331,17 @@ class TranslatorBuilderFileTest {
             .addFile(absoluteResource(ROOT, LIST))
             .addFile(absoluteResource(ROOT, LIST))
             // to ensure that it should fail in case of the file is added more than once
+            .withDuplicatedKeyResolutionPolicy(TranslatorBuilder.DuplicatedKeyResolution.FAIL)
+        assertDoesNotThrow {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun `addURI with the same file more than once does not add the file more than once`() {
+        val builder = Translator.builder(Locale.ENGLISH)
+            .addURI(absoluteResource(ROOT, LIST).toUri())
+            .addURI(absoluteResource(ROOT, LIST).toUri())
             .withDuplicatedKeyResolutionPolicy(TranslatorBuilder.DuplicatedKeyResolution.FAIL)
         assertDoesNotThrow {
             builder.build()
