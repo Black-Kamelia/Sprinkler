@@ -4,6 +4,7 @@ import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
 import com.kamelia.sprinkler.util.ExtendedCollectors
 import com.kamelia.sprinkler.util.assertionFailed
 import com.kamelia.sprinkler.util.cast
+import com.kamelia.sprinkler.util.illegalArgument
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.io.File
 import java.net.URI
@@ -173,6 +174,32 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @throws IllegalArgumentException if the extension is not supported
      */
     fun addURI(uri: URI): TranslatorBuilder = addFile(Path.of(uri))
+
+    /**
+     * Adds a resource to the builder. The resource is loaded using the class loader of the [resourceClass] parameter
+     * and the [resourcePath] parameter. If the resource is not found, an [IllegalArgumentException] will be thrown.
+     * By default, the class loader of the [TranslatorBuilder] class is used. If the resource is a directory, all files
+     * in it will be loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be
+     * loaded.
+     *
+     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
+     *
+     * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
+     * name is not a valid locale identifier, an [IllegalStateException] will be thrown when building the translator.
+     *
+     * This method will throw an [IllegalArgumentException] if the file extension is not supported.
+     *
+     * @param resourcePath the path of the resource to load
+     * @param resourceClass the class to use to load the resource (defaults to [TranslatorBuilder] class)
+     * @return this builder
+     * @throws IllegalArgumentException if the extension is not supported
+     */
+    @JvmOverloads
+    fun addResource(resourcePath: String, resourceClass: Class<*>? = null): TranslatorBuilder {
+        val cl = resourceClass ?: javaClass
+        val path = cl.getResource(resourcePath)?.toURI() ?: illegalArgument("Resource $resourcePath not found")
+        return addURI(path)
+    }
 
     /**
      * Adds a map for a locale to the builder. The content of the map will be added to the final translator. The
