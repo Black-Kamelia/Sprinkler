@@ -3,9 +3,7 @@ package com.kamelia.sprinkler.i18n
 import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
 import com.kamelia.sprinkler.util.ExtendedCollectors
 import com.kamelia.sprinkler.util.assertionFailed
-import com.kamelia.sprinkler.util.cast
 import com.kamelia.sprinkler.util.illegalArgument
-import com.zwendo.restrikt.annotation.PackagePrivate
 import java.io.File
 import java.net.URI
 import java.net.URL
@@ -13,6 +11,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.IllformedLocaleException
 import java.util.Locale
+import java.util.TreeMap
 import org.intellij.lang.annotations.Language
 import org.json.JSONException
 import org.json.JSONObject
@@ -30,6 +29,7 @@ import kotlin.io.path.readText
  * Builder class used to create a [Translator]. This class provides several methods to add data to the translator from
  * different sources.
  *
+ * TODO
  * There are several points of attention to take into account when using this class:
  * - The sources which are added will only be queried upon the creation of the translator, when calling [build]. That is
  * to say that the construction is lazy and that all the checks and logic is done when calling [build];
@@ -62,31 +62,16 @@ import kotlin.io.path.readText
  * @see Translator
  * @see TranslatorConfiguration
  */
-class TranslatorBuilder @PackagePrivate internal constructor(
-    private var defaultLocale: Locale,
+class TranslatorBuilder private constructor(
+    private val defaultLocale: Locale,
+    private val configuration: TranslatorConfiguration,
+    private val throwOnMissingKey: Boolean,
+    private val duplicatedKeyResolution: DuplicatedKeyResolution,
+    private val valueFormattingCheckRegex: Regex,
+    private val variableExtractionRegex: Regex,
 ) {
 
-    /**
-     * Set of already added path to avoid duplicates.
-     */
-    private val addedPaths = HashSet<Path>()
-
-    /**
-     * List of all data that will be used to build the translator.
-     */
-    private val translatorContent = ArrayList<TranslationResourceLoader>()
-
-    /**
-     * How to handle duplicate keys.
-     */
-    private var duplicatedKeyResolution = DuplicatedKeyResolution.FAIL
-
-    /**
-     * The current locale that will be used to create the translator.
-     */
-    private var currentLocale = defaultLocale
-
-    private var config: TranslatorConfiguration = TranslatorConfiguration.create { }
+    private val content = TreeMap<Locale, HashMap<String, String>>(::compareLocale)
 
     /**
      * Adds a path to the builder.
@@ -108,18 +93,14 @@ class TranslatorBuilder @PackagePrivate internal constructor(
         require("json" == extension || "yaml" == extension || "yml" == extension || path.isDirectory()) {
             "Unsupported file extension '$extension' for path '$path'. Supported extensions are 'json', 'yaml' and 'yml'."
         }
-        val isNew = addedPaths.add(path)
-        if (!isNew) return@apply // if the path is already added, we do not need to append it to the list
 
-        translatorContent += { finalMap, check, extraction ->
+        try {
             // we need to load the file, or, if it is a directory, load all files in it and add them to the final map.
-            try {
-                loadPath(path).forEach { (locale, map) ->
-                    addToMap(finalMap, locale, map, check, extraction)
-                }
-            } catch (e: Exception) { // catch and rethrow to add the path to the error message
-                throw IllegalStateException("Error while loading file $path", e)
+            loadPath(path).forEach { (locale, map) ->
+                addToMap(locale, map)
             }
+        } catch (e: Exception) { // catch and rethrow to add the path to the error message
+            throw IllegalArgumentException("Error while loading file $path", e)
         }
     }
 
@@ -212,11 +193,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @param map the map to add
      * @return this builder
      */
-    fun addMap(locale: Locale, map: TranslationSourceMap): TranslatorBuilder = apply {
-        translatorContent += { finalMap, check, extraction ->
-            addToMap(finalMap, locale, map, check, extraction)
-        }
-    }
+    fun addMap(locale: Locale, map: TranslationSourceMap): TranslatorBuilder = apply { addToMap(locale, map) }
 
     /**
      * Adds a map of locales to the builder. The content of the maps will be added to the final translator. The keys of
@@ -234,58 +211,6 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             addMap(locale, map)
         }
     }
-
-    /**
-     * Sets the duplicated key resolution policy to use when adding data to the builder. By default, the policy is set
-     * to [DuplicatedKeyResolution.FAIL].
-     *
-     * @param duplicatedKeyResolution the duplicated key resolution policy to use
-     * @return this builder
-     * @see DuplicatedKeyResolution
-     */
-    fun withDuplicatedKeyResolutionPolicy(duplicatedKeyResolution: DuplicatedKeyResolution): TranslatorBuilder = apply {
-        this.duplicatedKeyResolution = duplicatedKeyResolution
-    }
-
-    /**
-     * Sets the default locale that will be set to the translator upon creation.
-     *
-     * @param locale the default locale to set
-     * @return this builder
-     */
-    fun withDefaultLocale(locale: Locale): TranslatorBuilder = apply {
-        defaultLocale = locale
-    }
-
-    /**
-     * Sets the current locale that will be set to the translator upon creation.
-     *
-     * @param locale the current locale to set
-     * @return this builder
-     */
-    fun withCurrentLocale(locale: Locale): TranslatorBuilder = apply {
-        currentLocale = locale
-    }
-
-    /**
-     * Sets the configuration that will be used for the created translator.
-     *
-     * @param config the configuration to set
-     * @return this builder
-     * @see TranslatorConfiguration
-     */
-    fun withConfiguration(config: TranslatorConfiguration): TranslatorBuilder = apply {
-        this.config = config
-    }
-
-    /**
-     * Sets the configuration that will be used for the created translator.
-     *
-     * @param block the block used to create the configuration
-     * @return this builder
-     */
-    fun withConfiguration(block: TranslatorConfiguration.Builder.() -> Unit): TranslatorBuilder =
-        withConfiguration(TranslatorConfiguration.create(block))
 
     /**
      * Defines how to handle duplicated keys when creating a translator.
@@ -316,6 +241,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * Builds the translator using the data added to the builder.
      *
      * @return the created translator
+     * TODO
      * @throws IllegalStateException if a duplicate key is found and the duplicate key resolution policy is set to
      * [DuplicatedKeyResolution.FAIL]
      * @throws IllegalStateException if a source has been added without following the rules defined in the method
@@ -325,127 +251,72 @@ class TranslatorBuilder @PackagePrivate internal constructor(
      * @throws IllegalStateException if an error occurs while loading a file
      */
     fun build(): Translator {
-        val delimiter = config.interpolationDelimiter
-        val checkRegex = translationValueFormatCheckRegex(delimiter.startDelimiter, delimiter.endDelimiter)
-        val extractionRegex = formatAndVariableNamesExtractionRegex(delimiter.startDelimiter, delimiter.endDelimiter)
+        if (content.isEmpty()) {
+            return TranslatorImpl(defaultLocale, TranslatorData(defaultLocale, emptyMap(), configuration))
+        }
+        val finalMap = LinkedHashMap<Locale, MutableMap<String, String>>(content.size)
+
         val comparator = keyComparator()
+        val expectedKeys: Set<String> = content.firstEntry().value.keys // possible because we checked that content is not empty
 
-        val translations = HashMap<Locale, MutableMap<String, String>>()
-        translatorContent.forEach { loader -> loader(translations, checkRegex, extractionRegex) }
-
-        val translatorMap = translations.entries
-            .stream()
-            // then we sort each locale map by key
-            .map { entry ->
-                val newValue = entry.value
-                    .entries
-                    .stream()
-                    .sorted { (a, _), (b, _) -> comparator.compare(a, b) }
-                    .collect(
-                        ExtendedCollectors.toLinkedHashMapUsingEntries { _, _ ->
-                            assertionFailed("Collisions must have been resolved")
-                        }
-                    )
-                entry.setValue(newValue)
-                entry
-            }
-            // and finally we sort the whole map by locale using the language tag
-            .sorted { (a, _), (b, _) -> a.toLanguageTag().compareTo(b.toLanguageTag()) }
-            .collect(
-                ExtendedCollectors.toLinkedHashMapUsingEntries { _, _ ->
-                    assertionFailed("Collisions must have been resolved")
+        content.entries.forEach { entry ->
+            val (locale, translations) = entry
+            if (throwOnMissingKey) {
+                check(expectedKeys == translations.keys) {
+                    "Error in map ${translations.keys}:\nKeys are not the same as the first map added to the builder. All maps must have the same keys. To disable this check, use the ignoreMissingKeysOnBuild parameter when creating the builder."
                 }
+            }
+
+            // we sort translations and add them to the final map
+            finalMap[locale] = translations.entries
+                .stream()
+                .sorted { (a, _), (b, _) -> comparator.compare(a, b) }
+                .collect(
+                    ExtendedCollectors.toLinkedHashMapUsingEntries { _, _ ->
+                        assertionFailed("Collisions should have been resolved")
+                    }
+                )
+        }
+
+        val data = TranslatorData(defaultLocale, finalMap, configuration)
+        return TranslatorImpl(defaultLocale, data)
+    }
+
+    companion object {
+
+        @JvmStatic
+        @JvmOverloads
+        fun create(
+            defaultLocale: Locale = Locale.ENGLISH,
+            configuration: TranslatorConfiguration = TranslatorConfiguration.builder().build(),
+            ignoreMissingKeysOnBuild: Boolean = true,
+            duplicatedKeyResolution: DuplicatedKeyResolution = DuplicatedKeyResolution.FAIL,
+        ): TranslatorBuilder {
+            val delimiter = configuration.interpolationDelimiter
+            val checkRegex = translationValueFormatCheckRegex(delimiter.startDelimiter, delimiter.endDelimiter)
+            val extractionRegex =
+                formatAndVariableNamesExtractionRegex(delimiter.startDelimiter, delimiter.endDelimiter)
+            return TranslatorBuilder(
+                defaultLocale,
+                configuration,
+                !ignoreMissingKeysOnBuild,
+                duplicatedKeyResolution,
+                checkRegex,
+                extractionRegex,
             )
-
-        val data = TranslatorData(defaultLocale, translatorMap, config)
-        return TranslatorImpl(currentLocale, data)
-    }
-
-    private fun addToMap(
-        finalMap: MutableMap<Locale, MutableMap<String, String>>,
-        locale: Locale,
-        map: Map<*, *>,
-        formatCheckRegex: Regex,
-        extractionRegex: Regex,
-    ) {
-        val localeMap = finalMap.computeIfAbsent(locale) { HashMap() }
-        map.forEach { (k, value) ->
-            // we must check the validity here in case the value is a leaf (string, number or boolean), because we do
-            // not check the validity of the value nor the key in before adding it to the map
-            checkKeyIsValid(k, currentLocale, map)
-            checkValueIsValid(value, currentLocale, map)
-            val key = k.cast<TranslationKey>()
-
-            val toFlatten = ArrayDeque<Pair<String, TranslationSourceData>>()
-            toFlatten.addLast(key to value)
-
-            while (toFlatten.isNotEmpty()) {
-                val (currentKey, currentValue) = toFlatten.removeFirst()
-                when (currentValue) {
-                    is Map<*, *> -> currentValue.forEach { (subKey, subValue) ->
-                        checkKeyIsValid(subKey, currentLocale, map)
-                        checkValueIsValid(subValue, currentLocale, map)
-                        toFlatten.addLast("$currentKey.$subKey" to subValue)
-                    }
-                    is List<*> -> currentValue.forEachIndexed { index, subValue ->
-                        checkValueIsValid(subValue, currentLocale, map)
-                        toFlatten.addLast("$currentKey.$index" to subValue)
-                    }
-                    // type of value is always valid here (string, number or boolean), because of previous checks
-                    else -> addValue(
-                        locale,
-                        localeMap,
-                        currentKey,
-                        currentValue,
-                        formatCheckRegex,
-                        extractionRegex
-                    )
-                }
-            }
-        }
-    }
-
-    private fun addValue(
-        locale: Locale,
-        finalMap: MutableMap<String, String>,
-        key: String,
-        value: TranslationSourceData,
-        formatCheckRegex: Regex,
-        extractionRegex: Regex,
-    ) {
-        val stringValue = value.toString()
-        check(formatCheckRegex.matches(stringValue)) {
-            "Invalid translation value '$stringValue' for locale '$locale', format is not valid. $SOURCE_DATA_DOCUMENTATION. Error occurred for key '$key' in map $value."
-        }
-        val existingFormats = config.formats.keys
-        extractionRegex.findAll(stringValue).forEach {
-            val (_, variableName, formatName) = it.groupValues
-            check(Options.OPTIONS != variableName) {
-                "The '${Options.OPTIONS}' variable name is reserved for the options map, use another name."
-            }
-            check(formatName.isEmpty() || formatName in existingFormats) {
-                "Invalid translation value '$stringValue' for locale '$locale', format '$formatName' is not defined for this translator. Existing formats are: $existingFormats. $SOURCE_DATA_DOCUMENTATION. Error occurred for key '$key' in map $value."
-            }
         }
 
-        when (duplicatedKeyResolution) {
-            // if resolution is FAIL, we need to check that the key is not already present
-            DuplicatedKeyResolution.FAIL -> {
-                finalMap.compute(key) { _, old ->
-                    check(old == null) { "Duplicate key '$key' for locale '$locale'" }
-                    stringValue
-                }
-            }
-            // if resolution is KEEP_FIRST and old is null, we can add the value
-            DuplicatedKeyResolution.KEEP_FIRST -> finalMap.computeIfAbsent(key) { stringValue }
-            // if resolution is KEEP_LAST, we always add the value
-            DuplicatedKeyResolution.KEEP_LAST -> finalMap[key] = stringValue
-        }
-    }
+        /**
+         * The key regex used to validate keys.
+         *
+         * @return the key regex
+         */
+        @JvmStatic
+        fun keyRegex(): Regex = KEY_REGEX
 
-    private companion object {
+        private val KEY_REGEX = """$IDENTIFIER(?:\.$IDENTIFIER)*""".toRegex()
 
-        fun loadPath(path: Path): List<Pair<Locale, TranslationSourceMap>> =
+        private fun loadPath(path: Path): List<Pair<Locale, TranslationSourceMap>> =
             when {
                 !path.exists() -> error("Path $path does not exist")
                 path.isDirectory() -> { // if the path is a directory, load all files in it and return the list
@@ -464,7 +335,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 }
             }
 
-        fun parseFile(path: Path): TranslationSourceMap =
+        private fun parseFile(path: Path): TranslationSourceMap =
             when (val extension = path.extension) {
                 "json" -> {
                     try {
@@ -483,7 +354,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 else -> assertionFailed("File extension '$extension' should have been checked before.")
             }
 
-        fun checkKeyIsValid(key: Any?, locale: Locale, map: Map<*, *>) {
+        private fun checkKeyIsValid(key: Any?, locale: Locale, map: Map<*, *>) {
             check(key != null) {
                 "Error in map $map:\nInvalid translation key for locale '$locale', key cannot be null. $KEY_DOCUMENTATION."
 
@@ -492,13 +363,13 @@ class TranslatorBuilder @PackagePrivate internal constructor(
                 "Error in map $map:\nInvalid translation key '$key' of type ${key::class.simpleName} for locale '$locale', expected String. $KEY_DOCUMENTATION."
             }
 
-            check(Translator.keyRegex().matches(key)) {
+            check(keyRegex().matches(key)) {
                 "Error in map $map:\nInvalid translation key '$key' for locale '$locale', format is not valid. $KEY_DOCUMENTATION."
             }
         }
 
         @OptIn(ExperimentalContracts::class)
-        fun checkValueIsValid(value: Any?, locale: Locale, map: Map<*, *>) {
+        private fun checkValueIsValid(value: Any?, locale: Locale, map: Map<*, *>) {
             contract {
                 returns() implies (value != null)
             }
@@ -511,7 +382,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             }
         }
 
-        fun formatAndVariableNamesExtractionRegex(start: String, end: String): Regex {
+        private fun formatAndVariableNamesExtractionRegex(start: String, end: String): Regex {
             @Language("RegExp")
             val nbs = """(?<!\\)"""
 
@@ -533,7 +404,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             return """$s$variable$format$e""".toRegex()
         }
 
-        fun translationValueFormatCheckRegex(start: String, end: String): Regex {
+        private fun translationValueFormatCheckRegex(start: String, end: String): Regex {
             // first we define the param key regex
             @Language("RegExp")
             val notCommaOrColon = """[^:,]"""
@@ -600,7 +471,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             return """(?:$notStartSequence|$escapedStartSequence|$validVariable)*""".toRegex()
         }
 
-        fun parseLocale(path: Path): Locale {
+        private fun parseLocale(path: Path): Locale {
             val locale = path.nameWithoutExtension
             return try {
                 Locale.Builder()
@@ -614,7 +485,7 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             }
         }
 
-        fun keyComparator(): Comparator<String> {
+        private fun keyComparator(): Comparator<String> {
             val charComparator = Comparator { o1: Char, o2: Char ->
                 when {
                     o1 == o2 -> 0
@@ -644,15 +515,85 @@ class TranslatorBuilder @PackagePrivate internal constructor(
             }
         }
 
-        const val SOURCE_DATA_DOCUMENTATION =
+        private fun compareLocale(a: Locale, b: Locale): Int = a.toLanguageTag().compareTo(b.toLanguageTag())
+
+        private const val SOURCE_DATA_DOCUMENTATION =
             "For more details about translation source data, see TranslationSourceData typealias documentation"
 
     }
 
-}
+    private fun addToMap(locale: Locale, map: Map<*, *>) {
+        val localeMap = content.computeIfAbsent(locale) { HashMap() }
+        map.forEach { (k, value) ->
+            // we must check the validity here in case the value is a leaf (string, number or boolean), because we do
+            // not check the validity of the value nor the key in before adding it to the map
+            checkKeyIsValid(k, locale, map)
+            checkValueIsValid(value, locale, map)
+            val key = k as TranslationKey
 
-private typealias TranslationResourceLoader = (
-    finalMap: MutableMap<Locale, MutableMap<String, String>>,
-    check: Regex,
-    extraction: Regex,
-) -> Unit
+            val toFlatten = ArrayDeque<Pair<String, TranslationSourceData>>()
+            toFlatten.addLast(key to value)
+
+            while (toFlatten.isNotEmpty()) {
+                val (currentKey, currentValue) = toFlatten.removeFirst()
+                when (currentValue) {
+                    is Map<*, *> -> currentValue.forEach { (subKey, subValue) ->
+                        checkKeyIsValid(subKey, locale, map)
+                        checkValueIsValid(subValue, locale, map)
+                        toFlatten.addLast("$currentKey.$subKey" to subValue)
+                    }
+                    is List<*> -> currentValue.forEachIndexed { index, subValue ->
+                        checkValueIsValid(subValue, locale, map)
+                        toFlatten.addLast("$currentKey.$index" to subValue)
+                    }
+                    // type of value is always valid here (string, number or boolean), because of previous checks
+                    else -> addValue(
+                        locale,
+                        localeMap,
+                        currentKey,
+                        currentValue,
+                    )
+                }
+            }
+        }
+    }
+
+    private fun addValue(
+        locale: Locale,
+        finalMap: MutableMap<String, String>,
+        key: String,
+        value: TranslationSourceData,
+    ) {
+        val stringValue = value.toString()
+        check(valueFormattingCheckRegex.matches(stringValue)) {
+            "Invalid translation value '$stringValue' for locale '$locale', format is not valid. $SOURCE_DATA_DOCUMENTATION. Error occurred for key '$key' in map $value."
+        }
+        val existingFormats = configuration.formatters.keys
+        variableExtractionRegex.findAll(stringValue).forEach {
+            val (_, variableName, formatName) = it.groupValues
+            check(Options.OPTIONS != variableName) {
+                "The '${Options.OPTIONS}' variable name is reserved for the options map, use another name."
+            }
+            check(formatName.isEmpty() || formatName in existingFormats) {
+                "Invalid translation value '$stringValue' for locale '$locale', format '$formatName' is not defined for this translator. Existing formats are: $existingFormats. $SOURCE_DATA_DOCUMENTATION. Error occurred for key '$key' in map $value."
+            }
+        }
+
+        when (duplicatedKeyResolution) {
+            // if resolution is FAIL, we need to check that the key is not already present
+            DuplicatedKeyResolution.FAIL -> {
+                finalMap.compute(key) { _, old ->
+                    check(old == null) {
+                        "Duplicate key '$key' for locale '$locale'. To avoid this error, do not add translations with the same key several times, or use a different resolution policy."
+                    }
+                    stringValue
+                }
+            }
+            // if resolution is KEEP_FIRST and old is null, we can add the value
+            DuplicatedKeyResolution.KEEP_FIRST -> finalMap.computeIfAbsent(key) { stringValue }
+            // if resolution is KEEP_LAST, we always add the value
+            DuplicatedKeyResolution.KEEP_LAST -> finalMap[key] = stringValue
+        }
+    }
+
+}

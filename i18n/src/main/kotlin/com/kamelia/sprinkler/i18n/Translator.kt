@@ -303,28 +303,4 @@ interface Translator {
      */
     fun toMap(): Map<Locale, Map<TranslationKey, String>>
 
-    companion object {
-
-        /**
-         * Returns a new [TranslatorBuilder] with the given [defaultLocale]. The [defaultLocale] will be used as the
-         * default locale for all [Translator]s built by the returned [TranslatorBuilder].
-         *
-         * @param defaultLocale the default locale
-         * @return a new [TranslatorBuilder] with the given [defaultLocale]
-         */
-        @JvmStatic
-        fun builder(defaultLocale: Locale): TranslatorBuilder = TranslatorBuilder(defaultLocale)
-
-        /**
-         * The key regex used to validate keys.
-         *
-         * @return the key regex
-         */
-        @JvmStatic
-        fun keyRegex(): Regex = KEY_REGEX
-
-        private val KEY_REGEX = """$IDENTIFIER(?:\.$IDENTIFIER)*""".toRegex()
-
-    }
-
 }

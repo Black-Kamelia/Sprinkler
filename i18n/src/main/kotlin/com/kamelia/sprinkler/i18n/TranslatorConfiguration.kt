@@ -1,7 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.bridge.KotlinDslAdapter
-import com.kamelia.sprinkler.i18n.TranslatorConfiguration.Companion.create
+import com.kamelia.sprinkler.i18n.TranslatorConfiguration.Companion.builder
 import com.kamelia.sprinkler.util.VariableDelimiter
 import com.zwendo.restrikt.annotation.HideFromJava
 import com.zwendo.restrikt.annotation.HideFromKotlin
@@ -12,7 +11,7 @@ import java.util.Locale
  * Configuration of a [Translator]. This class defines rules applied to a [Translator] and all [Translator]s created
  * from it.
  *
- * @see create
+ * @see builder
  * @see TranslatorConfiguration.Builder
  * @see TranslatorBuilder
  * @see Translator
@@ -20,9 +19,115 @@ import java.util.Locale
 class TranslatorConfiguration @PackagePrivate internal constructor(
     internal val interpolationDelimiter: VariableDelimiter,
     internal val pluralMapper: Plural.Mapper,
-    internal val formats: Map<String, VariableFormatter>,
+    internal val formatters: Map<String, VariableFormatter>,
     internal val missingKeyPolicy: MissingKeyPolicy,
 ) {
+
+    /**
+     * Builder for [TranslatorConfiguration].
+     */
+    class Builder @PackagePrivate internal constructor() {
+
+        /**
+         * The delimiter to use for interpolation in translations.
+         *
+         * default: '{{' and '}}'
+         */
+        @set:HideFromJava
+        var interpolationDelimiter: InterpolationDelimiter = InterpolationDelimiter(VariableDelimiter.default)
+
+        /**
+         * The mapper function to use for the pluralization strategy.
+         * Said strategy can use a given [Locale] and count to return a [Plural] value.
+         *
+         * default: [Plural.defaultMapper]
+         */
+        @set:HideFromJava
+        var pluralMapper: Plural.Mapper = Plural.defaultMapper()
+
+        /**
+         * Map used to find formatters using their name during variable interpolation.
+         *
+         * default: [VariableFormatter.builtins]
+         *
+         * @see VariableFormatter
+         */
+        @set:HideFromJava
+        var formatters: Map<String, VariableFormatter> = VariableFormatter.builtins()
+            set(value) {
+                field = value.toMap()
+            }
+
+        /**
+         * The policy to use when a key is not found.
+         *
+         * default: [MissingKeyPolicy.THROW_EXCEPTION]
+         *
+         * @see MissingKeyPolicy
+         */
+        @set:HideFromJava
+        var missingKeyPolicy: MissingKeyPolicy = MissingKeyPolicy.THROW_EXCEPTION
+
+        /**
+         * Sets the delimiter to use for interpolation in translations.
+         *
+         * The delimiter cannot contain the following characters: `\`, `(`, `)`, `:`. Any delimiter containing one of
+         * these characters will throw an [IllegalStateException] when [build] is called.
+         *
+         * default: '{{' and '}}'
+         *
+         * @param value the delimiter to use
+         * @return this [Builder]
+         */
+        @HideFromKotlin
+        fun setInterpolationDelimiter(value: InterpolationDelimiter): Builder = apply { interpolationDelimiter = value }
+
+        /**
+         * Sets the mapper function to use for the pluralization strategy.
+         * Said strategy can use a given [Locale] and count to return a [Plural] value.
+         *
+         * default: [Plural.defaultMapper]
+         *
+         * @param pluralMapper the mapper function to use
+         * @return this [Builder]
+         */
+        @HideFromKotlin
+        fun setPluralMapper(pluralMapper: Plural.Mapper): Builder = apply { this.pluralMapper = pluralMapper }
+
+        /**
+         * Sets the map used to find formatters using their name during variable interpolation.
+         *
+         * default: [VariableFormatter.builtins]
+         *
+         * @param formatters the map to use
+         * @return this [Builder]
+         */
+        @HideFromKotlin
+        fun setFormatters(formatters: Map<String, VariableFormatter>): Builder = apply { this.formatters = formatters }
+
+        /**
+         * Sets the policy to use when a key is not found.
+         *
+         * default: [MissingKeyPolicy.THROW_EXCEPTION]
+         *
+         * @param missingKeyPolicy the policy to use
+         * @return this [Builder]
+         */
+        @HideFromKotlin
+        fun setMissingKeyPolicy(missingKeyPolicy: MissingKeyPolicy): Builder = apply {
+            this.missingKeyPolicy = missingKeyPolicy
+        }
+
+        @PackagePrivate
+        internal fun build(): TranslatorConfiguration = TranslatorConfiguration(
+            interpolationDelimiter.inner,
+            pluralMapper,
+            formatters,
+            missingKeyPolicy,
+        )
+
+    }
+
 
     /**
      * Policy to use when a key is not found.
@@ -86,117 +191,16 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
     companion object {
 
         /**
-         * Creates a [TranslatorConfiguration] using the given [block] applied to a [Builder].
+         * Creates a [TranslatorConfiguration.Builder].
          *
-         * @param block the block to apply to the [Builder]
-         * @return the created [TranslatorConfiguration]
+         * @return the created [TranslatorConfiguration.Builder]
          */
         @JvmStatic
-        fun create(block: Builder.() -> Unit): TranslatorConfiguration = Builder().apply(block).build()
-
-    }
-
-    /**
-     * Builder for [TranslatorConfiguration].
-     */
-    class Builder @PackagePrivate internal constructor() : KotlinDslAdapter {
-
-        /**
-         * The delimiter to use for interpolation in translations.
-         *
-         * default: '{{' and '}}'
-         */
-        @set:HideFromJava
-        var interpolationDelimiter: InterpolationDelimiter = InterpolationDelimiter(VariableDelimiter.default)
-
-        /**
-         * The mapper function to use for the pluralization strategy.
-         * Said strategy can use a given [Locale] and count to return a [Plural] value.
-         *
-         * default: [Plural.defaultMapper]
-         */
-        @set:HideFromJava
-        var pluralMapper: Plural.Mapper = Plural.defaultMapper()
-
-        /**
-         * Map used to find formatters using their name during variable interpolation.
-         *
-         * default: [VariableFormatter.builtins]
-         *
-         * @see VariableFormatter
-         */
-        @set:HideFromJava
-        var formats: Map<String, VariableFormatter> = VariableFormatter.builtins()
-
-        /**
-         * The policy to use when a key is not found.
-         *
-         * default: [MissingKeyPolicy.THROW_EXCEPTION]
-         *
-         * @see MissingKeyPolicy
-         */
-        @set:HideFromJava
-        var missingKeyPolicy: MissingKeyPolicy = MissingKeyPolicy.THROW_EXCEPTION
-
-        /**
-         * Sets the delimiter to use for interpolation in translations.
-         *
-         * The delimiter cannot contain the following characters: `\`, `(`, `)`, `:`. Any delimiter containing one of
-         * these characters will throw an [IllegalStateException] when [build] is called.
-         *
-         * default: '{{' and '}}'
-         *
-         * @param value the delimiter to use
-         * @return this [Builder]
-         */
-        @HideFromKotlin
-        fun setInterpolationDelimiter(value: InterpolationDelimiter): Builder = apply { interpolationDelimiter = value }
-
-        /**
-         * Sets the mapper function to use for the pluralization strategy.
-         * Said strategy can use a given [Locale] and count to return a [Plural] value.
-         *
-         * default: [Plural.defaultMapper]
-         *
-         * @param value the mapper function to use
-         * @return this [Builder]
-         */
-        @HideFromKotlin
-        fun setPluralMapper(value: Plural.Mapper): Builder = apply { pluralMapper = value }
-
-        /**
-         * Sets the map used to find formatters using their name during variable interpolation.
-         *
-         * default: [VariableFormatter.builtins]
-         *
-         * @param value the map to use
-         * @return this [Builder]
-         */
-        @HideFromKotlin
-        fun setFormats(value: Map<String, VariableFormatter>): Builder = apply { formats = value }
-
-        /**
-         * Sets the policy to use when a key is not found.
-         *
-         * default: [MissingKeyPolicy.THROW_EXCEPTION]
-         *
-         * @param value the policy to use
-         * @return this [Builder]
-         */
-        @HideFromKotlin
-        fun setMissingKeyPolicy(value: MissingKeyPolicy): Builder = apply { missingKeyPolicy = value }
-
-        @PackagePrivate
-        internal fun build(): TranslatorConfiguration = TranslatorConfiguration(
-            interpolationDelimiter.inner,
-            pluralMapper,
-            formats.toMap(),
-            missingKeyPolicy,
-        )
+        fun builder(): Builder = Builder()
 
     }
 
     override fun toString(): String =
-        "TranslatorConfiguration(interpolationDelimiter=$interpolationDelimiter, pluralMapper=$pluralMapper, formats=$formats, missingKeyPolicy=$missingKeyPolicy)"
+        "TranslatorConfiguration(interpolationDelimiter=$interpolationDelimiter, pluralMapper=$pluralMapper, formatters=$formatters, missingKeyPolicy=$missingKeyPolicy)"
 
 }

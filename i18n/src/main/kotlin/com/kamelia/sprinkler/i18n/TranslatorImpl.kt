@@ -24,7 +24,7 @@ internal class TranslatorImpl private constructor(
         fallbackLocale: Locale?,
         vararg fallbacks: String,
     ): String? {
-        require(Translator.keyRegex().matches(key)) { "Invalid key '$key'. $KEY_DOCUMENTATION" }
+        require(TranslatorBuilder.keyRegex().matches(key)) { "Invalid key '$key'. $KEY_DOCUMENTATION" }
         val actualKey = prefix?.let { "$it.$key" } ?: key
 
         innerTranslate(actualKey, locale, extraArgs, fallbacks)?.let { return it }
@@ -55,7 +55,7 @@ internal class TranslatorImpl private constructor(
         }
 
     override fun section(key: String): Translator {
-        require(Translator.keyRegex().matches(key)) { "Invalid key '$key'. $KEY_DOCUMENTATION" }
+        require(TranslatorBuilder.keyRegex().matches(key)) { "Invalid key '$key'. $KEY_DOCUMENTATION" }
         val newRootKey = prefix?.let { "$it.$key" } ?: key
         return TranslatorImpl(newRootKey, currentLocale, data)
     }
@@ -63,7 +63,7 @@ internal class TranslatorImpl private constructor(
     override fun toMap(): Map<Locale, Map<String, String>> {
         val root = prefix
         return if (root == null) {
-            data.translations.mapValues { (_, map) -> // simple deep copy
+            data.translations.mapValuesTo(LinkedHashMap(data.translations.size)) { (_, map) -> // simple deep copy
                 map.toMap()
             }
         } else {
