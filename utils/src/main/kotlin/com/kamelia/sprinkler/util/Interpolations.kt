@@ -42,28 +42,52 @@ fun <T> String.interpolate(
     delimiter: VariableDelimiter = VariableDelimiter.default,
     resolver: VariableResolver<T>,
 ): String {
+    val builder = StringBuilder()
+    interpolateTo(builder, context, resolver, delimiter)
+    return builder.toString()
+}
+
+/**
+ * Interpolates variables in this string to the given [builder].
+ *
+ * For more documentation about the implementation, see [String.interpolate].
+ *
+ * @receiver the string to interpolate
+ * @param builder the builder to append the interpolated string to
+ * @param context the context to use for resolving the variable
+ * @param resolver the [VariableResolver] to use for resolving variable names
+ * @param delimiter the delimitation of the variable (defaults to [VariableDelimiter.default])
+ * @see String.interpolate
+ */
+@JvmOverloads
+fun <T> String.interpolateTo(
+    builder: StringBuilder,
+    context: T,
+    resolver: VariableResolver<T>,
+    delimiter: VariableDelimiter = VariableDelimiter.default,
+) {
     // this function is a copy of the kotlin.text.Regex#replace(CharSequence,(MatchResult) -> CharSequence) function
     // the code is pasted here to avoid variable capture in a lambda which would be created for each call to this
-    var match: MatchResult? = delimiter.regex.find(this) ?: return this
+    var match: MatchResult? = delimiter.regex.find(this)
+    if (match == null) {
+        builder.append(this)
+        return
+    }
 
     var lastStart = 0
     val length = length
-    val sb = StringBuilder(length)
     do {
         val foundMatch = match!!
-        sb.append(this, lastStart, foundMatch.range.first)
+        builder.append(this, lastStart, foundMatch.range.first)
         // lambda instantiation avoided here
-        val value = resolver.resolve(foundMatch.groupValues[1], context)
-        sb.append(value)
+        resolver.resolveTo(builder, foundMatch.groupValues[1], context)
         lastStart = foundMatch.range.last + 1
         match = foundMatch.next()
     } while (lastStart < length && match != null)
 
     if (lastStart < length) {
-        sb.append(this, lastStart, length)
+        builder.append(this, lastStart, length)
     }
-
-    return sb.toString()
 }
 
 /**
@@ -273,6 +297,10 @@ fun interface VariableResolver<T> {
      */
     fun resolve(name: String, context: T): String
 
+    fun resolveTo(builder: Appendable, name: String, context: T) {
+        builder.append(resolve(name, context))
+    }
+
     companion object {
 
         /**
@@ -431,6 +459,7 @@ class VariableDelimiter private constructor(
             val validContent = if (end.length > 1) {
                 val last = Regex.escape(end.last().toString())
                 val prefix = Regex.escape(end.substring(0, end.length - 1))
+
                 @Language("RegExp") // variable needed to apply the @Language annotation for syntax highlighting
                 val r = """(?:[^$last]|(?<!$prefix)$last|(?<=\\$prefix)$last)*?"""
                 r
@@ -443,7 +472,6 @@ class VariableDelimiter private constructor(
             val regex = """(?<!\\)$s($validContent)(?<!\\)$e""".toRegex()
             return VariableDelimiter(start, end, regex)
         }
-
 
         /**
          * Backward compatibility method
