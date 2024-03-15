@@ -12,12 +12,7 @@ import org.intellij.lang.annotations.Language
 @PackagePrivate
 internal object OptionProcessor {
 
-    fun translate(
-        data: TranslatorData,
-        key: String,
-        extraArgs: Map<String, Any>,
-        locale: Locale,
-    ): String? {
+    fun translate(data: TranslatorData, key: String, extraArgs: Map<String, Any>, locale: Locale): String? {
         // first, get the translations for the given locale, or return null if they don't exist
         val translations = data.translations[locale] ?: return null
 
@@ -35,15 +30,10 @@ internal object OptionProcessor {
         // get the value for the actual key or return null if it doesn't exist
         val value = translations[actualKey] ?: return null
 
-        return interpolate(value, locale, extraArgs, optionMap, config.interpolationDelimiter, config.formats)
+        return interpolate(value, locale, extraArgs, optionMap, config.interpolationDelimiter, config.formatters)
     }
 
-    fun buildKey(
-        key: String,
-        optionMap: Map<String, Any>,
-        locale: Locale,
-        pluralMapper: Plural.Mapper,
-    ): String {
+    fun buildKey(key: String, optionMap: Map<String, Any>, locale: Locale, pluralMapper: Plural.Mapper): String {
         if (optionMap.isEmpty()) return key
 
         val context = optionMap.safeType<String>(Options.CONTEXT)
@@ -88,9 +78,7 @@ internal object OptionProcessor {
 
     private inline fun <reified T> Map<String, Any>.safeType(key: String): T? {
         val value = get(key) ?: return null
-        require(value is T) {
-            "Cannot cast $value (${value.javaClass}) to ${T::class.java}"
-        }
+        require(value is T) { "Cannot cast $value (${value.javaClass}) to ${T::class.java}" }
         return value
     }
 
@@ -98,20 +86,7 @@ internal object OptionProcessor {
      * This regex is globally the same as the translation value format check regex except that this regex actually
      * captures the information in groups, whereas the other one only checks if the format is valid.
      */
-    private val generalSplit = run {
-        // capture all the params in a single group
-        // any char and ending with a non-escaped ')', no need further validation as the value has already been validated
-        // on translator creation
-        @Language("RegExp")
-        val formatParams = """\((.+(?<!\\))\)"""
-
-        // capture the format name
-        @Language("RegExp")
-        val format = """\s*,\s*($IDENTIFIER)\s*(?:$formatParams)?"""
-
-        // capture the variable name
-        """\s*($IDENTIFIER)(?:$format)?\s*""".toRegex()
-    }
+    private val generalSplit: Regex
 
     private val paramsSplit = """(?<!\\),""".toRegex()
 
@@ -124,22 +99,44 @@ internal object OptionProcessor {
         val formats: Map<String, VariableFormatter>,
     )
 
-    private val customResolver = VariableResolver<InterpolationContext> { key, context ->
-        // '!!' is ok, because values are validated on translator creation
-        val (_, variableName, formatName, formatParams) = generalSplit.matchEntire(key)!!.groupValues
+    init {
+        // capture all the params in a single group
+        // any char and ending with a non-escaped ')', no need further validation as the value has already been validated
+        // on translator creation
+        @Language("RegExp")
+        val formatParams = """\((.+(?<!\\))\)"""
 
-        val variableValue = context.options[variableName]
-            ?: context.optionMap[variableName]
-            ?: illegalArgument("variable '$variableName' not found")
+        // capture the format name
+        @Language("RegExp")
+        val format = """\s*,\s*($IDENTIFIER)\s*(?:$formatParams)?"""
 
-        var formatPassedParams = emptyMap<String, String>()
-        var actualValue: Any = variableValue
-        if (variableValue is FormattedValue) {
-            actualValue = variableValue.value
-            formatPassedParams = variableValue.formatParams
-        }
+        // capture the variable name
+        generalSplit = """\s*($IDENTIFIER)(?:$format)?\s*""".toRegex()
+    }
 
-        if (formatName.isNotEmpty()) { // there is a format
+    private val customResolver = object : VariableResolver<InterpolationContext> {
+
+        override fun resolveTo(builder: Appendable, name: String, context: InterpolationContext) {
+            // '!!' is ok, because values are validated on translator creation
+            val (_, variableName, formatName, formatParams) = generalSplit.matchEntire(name)!!.groupValues
+
+            val variableValue = context.options[variableName]
+                ?: context.optionMap[variableName]
+                ?: illegalArgument("variable '$variableName' not found")
+
+            var formatPassedParams = emptyMap<String, String>()
+            var actualValue: Any = variableValue
+            if (variableValue is FormattedValue) {
+                actualValue = variableValue.value
+                formatPassedParams = variableValue.formatParams
+            }
+
+            if (formatName.isEmpty()) { // if there is no format, just append the value
+                builder.append(actualValue.toString())
+                return
+            }
+
+            // otherwise, there is a format
             val paramMap = if (formatParams.isEmpty() && formatPassedParams.isEmpty()) {
                 emptyMap()
             } else {
@@ -153,12 +150,13 @@ internal object OptionProcessor {
                     putAll(formatPassedParams) // add the formats passed after to override the defaults
                 }
             }
-
             // same as above, '!!' is ok due to pre-validation
-            context.formats[formatName]!!.format(actualValue, context.locale, paramMap)
-        } else { // otherwise, just return the result
-            actualValue.toString()
+            context.formats[formatName]!!.format(builder, actualValue, context.locale, paramMap)
         }
+
+        override fun resolve(name: String, context: InterpolationContext): String =
+            throw AssertionError("This method should never be called")
+
     }
 
 }
