@@ -18,6 +18,7 @@ import java.util.Locale
  */
 class TranslatorConfiguration @PackagePrivate internal constructor(
     internal val interpolationDelimiter: VariableDelimiter,
+    internal val nestedInterpolationDelimiter: VariableDelimiter,
     internal val pluralMapper: Plural.Mapper,
     internal val formatters: Map<String, VariableFormatter>,
     internal val missingKeyPolicy: MissingKeyPolicy,
@@ -35,6 +36,15 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          */
         @set:HideFromJava
         var interpolationDelimiter: InterpolationDelimiter = InterpolationDelimiter(VariableDelimiter.default)
+
+        /**
+         * The delimiter to use for nested interpolation in translations. A nested interpolation is an interpolation
+         * where the name of the variable represents a key in the translations.
+         *
+         * default: '[[' and ']]'
+         */
+        @set:HideFromJava
+        var nestedInterpolationDelimiter: InterpolationDelimiter = InterpolationDelimiter.create("[[", "]]")
 
         /**
          * The mapper function to use for the pluralization strategy.
@@ -71,9 +81,6 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
         /**
          * Sets the delimiter to use for interpolation in translations.
          *
-         * The delimiter cannot contain the following characters: `\`, `(`, `)`, `:`. Any delimiter containing one of
-         * these characters will throw an [IllegalStateException] when [build] is called.
-         *
          * default: '{{' and '}}'
          *
          * @param value the delimiter to use
@@ -81,6 +88,21 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          */
         @HideFromKotlin
         fun setInterpolationDelimiter(value: InterpolationDelimiter): Builder = apply { interpolationDelimiter = value }
+
+        /**
+         * Sets the delimiter to use for nested interpolation in translations. A nested interpolation is an
+         * interpolation where the name of the variable represents a key in the translations.
+         *
+         *
+         * default: '[[' and ']]'
+         *
+         * @param value the delimiter to use
+         * @return this [Builder]
+         */
+        @HideFromKotlin
+        fun setNestedInterpolationDelimiter(value: InterpolationDelimiter): Builder = apply {
+            nestedInterpolationDelimiter = value
+        }
 
         /**
          * Sets the mapper function to use for the pluralization strategy.
@@ -118,13 +140,26 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
             this.missingKeyPolicy = missingKeyPolicy
         }
 
-        @PackagePrivate
-        internal fun build(): TranslatorConfiguration = TranslatorConfiguration(
-            interpolationDelimiter.inner,
-            pluralMapper,
-            formatters,
-            missingKeyPolicy,
-        )
+        /**
+         * Builds the [TranslatorConfiguration].
+         *
+         * @return the built [TranslatorConfiguration]
+         * @throws IllegalStateException if [interpolationDelimiter] and [nestedInterpolationDelimiter] have the same
+         * delimiters
+         */
+        fun build(): TranslatorConfiguration {
+            check(interpolationDelimiter.inner != nestedInterpolationDelimiter.inner) {
+                "The interpolation delimiter and the nested interpolation delimiter cannot be the same, but were both '${interpolationDelimiter.inner}'"
+            }
+
+            return TranslatorConfiguration(
+                interpolationDelimiter.inner,
+                nestedInterpolationDelimiter.inner,
+                pluralMapper,
+                formatters,
+                missingKeyPolicy,
+            )
+        }
 
     }
 

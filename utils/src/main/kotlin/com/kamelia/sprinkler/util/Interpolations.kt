@@ -2,6 +2,7 @@
 
 package com.kamelia.sprinkler.util
 
+import java.util.Objects
 import org.intellij.lang.annotations.Language
 
 /**
@@ -481,7 +482,14 @@ class VariableDelimiter private constructor(
 
     }
 
+
+
     override fun toString(): String =
         "VariableDelimiter(startDelimiter='$startDelimiter', endDelimiter='$endDelimiter')"
+
+    override fun equals(other: Any?): Boolean =
+        other is VariableDelimiter && startDelimiter == other.startDelimiter && endDelimiter == other.endDelimiter
+
+    override fun hashCode(): Int = Objects.hash(startDelimiter, endDelimiter)
 
 }
