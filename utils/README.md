@@ -350,8 +350,14 @@ Java's standard library is missing a few very common `Collector` factories. To t
 the `ExtendedCollectors` class.
 
 - `ExtendedCollectors::toMap` returns a collector that collects elements to a map from pairs of keys and values.
+- `ExtendedCollectors::toMapWithEntries` returns a collector that collects elements to a map from java.util.Map.Entry
+  instances.
+- `ExtendedCollectors::toLinkedHashMap` returns a collector that collects elements to a linked hash map from pairs of
+  keys and values.
+- `ExtendedCollectors::toLinkedHashMapWithEntries` returns a collector that collects elements to a linked hash map from
+  java.util.Map.Entry instances.
 - `ExtendedCollectors::toArray` returns a collector that collects elements to an array.
-- `ExtendedCollectors::to[Primitive]Array` returns a collector that collects elements to a primitive array, where
+- `ExtendedCollectors::to[Primitive]Array` returns a collector that collects elements to a primitive array, where 
   `[Primitive]` is the wanted primitive (e.g. `toIntArray`, `toDoubleArray`).
 
 ## ByteArrayDecoding
