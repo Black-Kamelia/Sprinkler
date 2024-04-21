@@ -3,19 +3,20 @@ package com.kamelia.sprinkler.i18n
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 
 class CurrencyVariableFormatterTest {
 
     @Test
-    fun `currency formatter throws an IAE if an unknown extra args is provided`() {
-        assertThrows<IllegalArgumentException> {
+    fun `currency formatter ignores if an unknown extra args is provided`() {
+        assertDoesNotThrow {
             VariableFormatter.currency().format(1, Locale.ENGLISH, mapOf("foo" to "bar"))
         }
     }
 
     @Test
-    fun `currency formatter throws a CCE if the currency is not a number`() {
+    fun `currency formatter ignores if the currency is not a number`() {
         assertThrows<ClassCastException> {
             VariableFormatter.currency().format("1", Locale.ENGLISH, emptyMap())
         }

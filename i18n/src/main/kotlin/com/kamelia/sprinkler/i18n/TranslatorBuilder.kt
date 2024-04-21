@@ -3,7 +3,6 @@ package com.kamelia.sprinkler.i18n
 import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
 import com.kamelia.sprinkler.util.ExtendedCollectors
 import com.kamelia.sprinkler.util.assertionFailed
-import com.kamelia.sprinkler.util.illegalArgument
 import java.io.File
 import java.net.URI
 import java.net.URL
@@ -12,6 +11,7 @@ import java.nio.file.Path
 import java.util.IllformedLocaleException
 import java.util.Locale
 import java.util.TreeMap
+import java.util.stream.Collectors
 import org.intellij.lang.annotations.Language
 import org.json.JSONException
 import org.json.JSONObject
@@ -176,10 +176,27 @@ class TranslatorBuilder private constructor(
      * @throws IllegalArgumentException if the extension is not supported
      */
     @JvmOverloads
-    fun addResource(resourcePath: String, resourceClass: Class<*>? = null): TranslatorBuilder {
-        val cl = resourceClass ?: javaClass
-        val path = cl.getResource(resourcePath)?.toURI() ?: illegalArgument("Resource $resourcePath not found")
-        return addURI(path)
+    fun addResource(resourcePath: String, resourceClass: Class<*>? = null): TranslatorBuilder = apply {
+        val clazz = resourceClass ?: javaClass
+        // we first try to load the resource as a directory, if it is not a directory, we load it as a file
+        val endsWithSlash = resourcePath.endsWith('/')
+        val directoryPath = if (!endsWithSlash) {
+            "$resourcePath/"
+        } else {
+            resourcePath
+        }
+        val dir = clazz.getResource(directoryPath)
+        if (dir == null) { // the resource is not a directory
+            // if the name was already a directory, it means that the user intended to load a directory, so we throw an
+            // exception
+            require(!endsWithSlash) { "Resource directory '$directoryPath' not found." }
+            loadResourceFile(resourcePath, clazz, null)
+            return@apply
+        }
+        // the resource is a directory, we load all files in it
+        dir.openStream()
+            .bufferedReader()
+            .use { stream -> stream.lines().forEach { loadResourceFile(it, clazz, directoryPath) } }
     }
 
     /**
@@ -257,7 +274,8 @@ class TranslatorBuilder private constructor(
         val finalMap = LinkedHashMap<Locale, MutableMap<String, String>>(content.size)
 
         val comparator = keyComparator()
-        val expectedKeys: Set<String> = content.firstEntry().value.keys // possible because we checked that content is not empty
+        val expectedKeys: Set<String> =
+            content.firstEntry().value.keys // possible because we checked that content is not empty
 
         content.entries.forEach { entry ->
             val (locale, translations) = entry
@@ -322,34 +340,30 @@ class TranslatorBuilder private constructor(
                 path.isDirectory() -> { // if the path is a directory, load all files in it and return the list
                     Files.list(path)
                         .map {
-                            val locale = parseLocale(it)
-                            val map = parseFile(it)
+                            val locale = parseLocale(it.nameWithoutExtension)
+                            val map = parseFile(it.readText(), it.extension)
                             locale to map
                         }
                         .toList()
                 }
                 else -> { // if the path is a file, load it and store it in a one element list
-                    val map = parseFile(path)
-                    val locale = parseLocale(path)
+                    val map = parseFile(path.readText(), path.extension)
+                    val locale = parseLocale(path.nameWithoutExtension)
                     listOf(locale to map)
                 }
             }
 
-        private fun parseFile(path: Path): TranslationSourceMap =
-            when (val extension = path.extension) {
-                "json" -> {
-                    try {
-                        JSONObject(path.readText()).toMap()
-                    } catch (e: JSONException) {
-                        throw IllegalStateException("Invalid JSON file.", e)
-                    }
+        private fun parseFile(content: String, extension: String): TranslationSourceMap =
+            when (extension) {
+                "json" -> try {
+                    JSONObject(content).toMap()
+                } catch (e: JSONException) {
+                    throw IllegalStateException("Invalid JSON file.", e)
                 }
-                "yaml", "yml" -> {
-                    try {
-                        Yaml().load<Map<TranslationKey, TranslationSourceData>>(path.readText())
-                    } catch (e: YAMLException) {
-                        throw IllegalStateException("Invalid YAML file.", e)
-                    }
+                "yaml", "yml" -> try {
+                    Yaml().load<Map<TranslationKey, TranslationSourceData>>(content)
+                } catch (e: YAMLException) {
+                    throw IllegalStateException("Invalid YAML file.", e)
                 }
                 else -> assertionFailed("File extension '$extension' should have been checked before.")
             }
@@ -471,15 +485,14 @@ class TranslatorBuilder private constructor(
             return """(?:$notStartSequence|$escapedStartSequence|$validVariable)*""".toRegex()
         }
 
-        private fun parseLocale(path: Path): Locale {
-            val locale = path.nameWithoutExtension
+        private fun parseLocale(fileName: String): Locale {
             return try {
                 Locale.Builder()
-                    .setLanguageTag(locale.replace('_', '-'))
+                    .setLanguageTag(fileName.replace('_', '-'))
                     .build()
             } catch (e: IllformedLocaleException) {
                 throw IllegalStateException(
-                    "Invalid locale '$locale'. For more details about locale syntax, see java.util.Locale documentation.",
+                    "Invalid locale '$fileName'. For more details about locale syntax, see java.util.Locale documentation.",
                     e
                 )
             }
@@ -520,6 +533,20 @@ class TranslatorBuilder private constructor(
         private const val SOURCE_DATA_DOCUMENTATION =
             "For more details about translation source data, see TranslationSourceData typealias documentation"
 
+    }
+
+    private fun loadResourceFile(path: String, clazz: Class<*>, directoryPath: String?) {
+        val extension = path.substringAfterLast('.')
+        val actualPath = if (directoryPath != null) "$directoryPath$path" else path
+        require("json" == extension || "yaml" == extension || "yml" == extension) {
+            "Unsupported file extension '$extension' for path '$actualPath'. Supported extensions are 'json', 'yaml' and 'yml'."
+        }
+        val nameWithoutExtension = path.substring(0, path.length - extension.length - 1)
+        val locale = parseLocale(nameWithoutExtension)
+        val content = clazz.getResourceAsStream(actualPath)!!
+            .bufferedReader()
+            .use { it.lines().collect(Collectors.joining("\n")) }
+        addToMap(locale, parseFile(content, extension))
     }
 
     private fun addToMap(locale: Locale, map: Map<*, *>) {

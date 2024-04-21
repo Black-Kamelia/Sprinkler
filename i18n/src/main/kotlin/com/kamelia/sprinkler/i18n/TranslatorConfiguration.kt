@@ -2,8 +2,6 @@ package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.i18n.TranslatorConfiguration.Companion.builder
 import com.kamelia.sprinkler.util.VariableDelimiter
-import com.zwendo.restrikt.annotation.HideFromJava
-import com.zwendo.restrikt.annotation.HideFromKotlin
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.Locale
 
@@ -22,6 +20,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
     internal val pluralMapper: Plural.Mapper,
     internal val formatters: Map<String, VariableFormatter>,
     internal val missingKeyPolicy: MissingKeyPolicy,
+    internal val maxNestingDepth: Int,
 ) {
 
     /**
@@ -34,8 +33,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          *
          * default: '{{' and '}}'
          */
-        @set:HideFromJava
-        var interpolationDelimiter: InterpolationDelimiter = InterpolationDelimiter(VariableDelimiter.default)
+        private var interpolationDelimiter: InterpolationDelimiter = InterpolationDelimiter(VariableDelimiter.default)
 
         /**
          * The delimiter to use for nested interpolation in translations. A nested interpolation is an interpolation
@@ -43,8 +41,9 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          *
          * default: '[[' and ']]'
          */
-        @set:HideFromJava
-        var nestedInterpolationDelimiter: InterpolationDelimiter = InterpolationDelimiter.create("[[", "]]")
+        private var nestedInterpolationDelimiter: InterpolationDelimiter = InterpolationDelimiter.create("[[", "]]")
+
+        private var maxNestingDepth: Int = 5
 
         /**
          * The mapper function to use for the pluralization strategy.
@@ -52,8 +51,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          *
          * default: [Plural.defaultMapper]
          */
-        @set:HideFromJava
-        var pluralMapper: Plural.Mapper = Plural.defaultMapper()
+        private var pluralMapper: Plural.Mapper = Plural.defaultMapper()
 
         /**
          * Map used to find formatters using their name during variable interpolation.
@@ -62,11 +60,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          *
          * @see VariableFormatter
          */
-        @set:HideFromJava
-        var formatters: Map<String, VariableFormatter> = VariableFormatter.builtins()
-            set(value) {
-                field = value.toMap()
-            }
+        private var formatters: MutableMap<String, VariableFormatter> = VariableFormatter.mutableBuiltins()
 
         /**
          * The policy to use when a key is not found.
@@ -75,8 +69,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          *
          * @see MissingKeyPolicy
          */
-        @set:HideFromJava
-        var missingKeyPolicy: MissingKeyPolicy = MissingKeyPolicy.THROW_EXCEPTION
+        private var missingKeyPolicy: MissingKeyPolicy = MissingKeyPolicy.THROW_EXCEPTION
 
         /**
          * Sets the delimiter to use for interpolation in translations.
@@ -86,7 +79,6 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          * @param value the delimiter to use
          * @return this [Builder]
          */
-        @HideFromKotlin
         fun setInterpolationDelimiter(value: InterpolationDelimiter): Builder = apply { interpolationDelimiter = value }
 
         /**
@@ -99,7 +91,6 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          * @param value the delimiter to use
          * @return this [Builder]
          */
-        @HideFromKotlin
         fun setNestedInterpolationDelimiter(value: InterpolationDelimiter): Builder = apply {
             nestedInterpolationDelimiter = value
         }
@@ -113,8 +104,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          * @param pluralMapper the mapper function to use
          * @return this [Builder]
          */
-        @HideFromKotlin
-        fun setPluralMapper(pluralMapper: Plural.Mapper): Builder = apply { this.pluralMapper = pluralMapper }
+        fun withPluralMapper(pluralMapper: Plural.Mapper): Builder = apply { this.pluralMapper = pluralMapper }
 
         /**
          * Sets the map used to find formatters using their name during variable interpolation.
@@ -124,8 +114,26 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          * @param formatters the map to use
          * @return this [Builder]
          */
-        @HideFromKotlin
-        fun setFormatters(formatters: Map<String, VariableFormatter>): Builder = apply { this.formatters = formatters }
+        fun withFormatters(formatters: Map<String, VariableFormatter>): Builder = apply { this.formatters = HashMap(formatters) }
+
+        /**
+         * Adds a formatter to the map used to find formatters using their name during variable interpolation. In case
+         * a formatter with the same name already exists, it will be replaced.
+         *
+         * @param name the name of the formatter
+         * @param formatter the formatter to add
+         * @return this [Builder]
+         */
+        fun addFormatter(name: String, formatter: VariableFormatter): Builder = apply {
+            formatters[name] = formatter
+        }
+
+        /**
+         * Clears the map used to find formatters using their name during variable interpolation.
+         *
+         * @return this [Builder]
+         */
+        fun clearFormatters(): Builder = withFormatters(HashMap())
 
         /**
          * Sets the policy to use when a key is not found.
@@ -135,9 +143,21 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          * @param missingKeyPolicy the policy to use
          * @return this [Builder]
          */
-        @HideFromKotlin
-        fun setMissingKeyPolicy(missingKeyPolicy: MissingKeyPolicy): Builder = apply {
+        fun withMissingKeyPolicy(missingKeyPolicy: MissingKeyPolicy): Builder = apply {
             this.missingKeyPolicy = missingKeyPolicy
+        }
+
+        /**
+         * Sets the maximum nesting depth allowed for nested interpolations.
+         *
+         * default: 5
+         *
+         * @param maxNestingDepth the maximum nesting depth allowed
+         * @return this [Builder]
+         */
+        fun withMaxNestingDepth(maxNestingDepth: Int): Builder = apply {
+            require(maxNestingDepth >= 0) { "The maximum nesting depth must be greater than 0, but was $maxNestingDepth" }
+            this.maxNestingDepth = maxNestingDepth
         }
 
         /**
@@ -158,6 +178,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
                 pluralMapper,
                 formatters,
                 missingKeyPolicy,
+                maxNestingDepth,
             )
         }
 

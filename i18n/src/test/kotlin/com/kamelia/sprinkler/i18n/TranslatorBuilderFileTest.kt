@@ -14,7 +14,7 @@ class TranslatorBuilderFileTest {
     @Test
     fun `addFile throws an IAE if the extension is invalid`() {
         assertThrows<IllegalArgumentException> {
-            Translator.builder(Locale.ENGLISH)
+            TranslatorBuilder.create(Locale.ENGLISH)
                 .addFile(File("invalid-extension.txt"))
         }
     }
@@ -22,7 +22,7 @@ class TranslatorBuilderFileTest {
     @Test
     fun `addPath throws an IAE if the extension is invalid`() {
         assertThrows<IllegalArgumentException> {
-            Translator.builder(Locale.ENGLISH)
+            TranslatorBuilder.create(Locale.ENGLISH)
                 .addFile(Path("invalid-extension.txt"))
         }
     }
@@ -30,7 +30,7 @@ class TranslatorBuilderFileTest {
     @Test
     fun `addURL throws an IAE if the extension is invalid`() {
         assertThrows<IllegalArgumentException> {
-            Translator.builder(Locale.ENGLISH)
+            TranslatorBuilder.create(Locale.ENGLISH)
                 .addURL(absoluteResource(ROOT, "invalid-extension.txt").toUri().toURL())
         }
     }
@@ -38,7 +38,7 @@ class TranslatorBuilderFileTest {
     @Test
     fun `addURI throws an IAE if the extension is invalid`() {
         assertThrows<IllegalArgumentException> {
-            Translator.builder(Locale.ENGLISH)
+            TranslatorBuilder.create(Locale.ENGLISH)
                 .addURI(absoluteResource(ROOT, "invalid-extension.txt").toUri())
         }
     }
@@ -46,208 +46,186 @@ class TranslatorBuilderFileTest {
     @Test
     fun `addFile does not throw with json extension`() {
         assertDoesNotThrow {
-            Translator.builder(Locale.ENGLISH)
-                .addFile(File("valid-extension.json"))
+            TranslatorBuilder.create(Locale.ENGLISH).addFile(absoluteResource(ROOT, "fr.json").toFile())
         }
     }
 
     @Test
     fun `addPath does not throw with json extension`() {
         assertDoesNotThrow {
-            Translator.builder(Locale.ENGLISH)
-                .addFile(Path("valid-extension.json"))
+            TranslatorBuilder.create(Locale.ENGLISH).addFile(absoluteResource(ROOT, "fr.json"))
         }
     }
 
     @Test
     fun `addURL does not throw with json extension`() {
         assertDoesNotThrow {
-            Translator.builder(Locale.ENGLISH)
-                .addURL(Path("valid-extension.json").toUri().toURL())
+            TranslatorBuilder.create(Locale.ENGLISH).addURL(absoluteResource(ROOT, "fr.json").toUri().toURL())
         }
     }
 
     @Test
     fun `addURI does not throw with json extension`() {
         assertDoesNotThrow {
-            Translator.builder(Locale.ENGLISH)
-                .addURI(Path( "valid-extension.json").toUri())
+            TranslatorBuilder.create(Locale.ENGLISH).addURI(absoluteResource(ROOT, "fr.json").toUri())
         }
     }
 
     @Test
     fun `addFile does not throw with yaml extension`() {
         assertDoesNotThrow {
-            Translator.builder(Locale.ENGLISH)
-                .addFile(File("valid-extension.yaml"))
+            TranslatorBuilder.create(Locale.ENGLISH).addFile(absoluteResource(ROOT, "en.yaml").toFile())
         }
     }
 
     @Test
     fun `addPath does not throw with yaml extension`() {
         assertDoesNotThrow {
-            Translator.builder(Locale.ENGLISH)
-                .addFile(Path("valid-extension.yaml"))
+            TranslatorBuilder.create(Locale.ENGLISH).addFile(absoluteResource(ROOT, "en.yaml"))
         }
     }
 
     @Test
     fun `addURL does not throw with yaml extension`() {
         assertDoesNotThrow {
-            Translator.builder(Locale.ENGLISH)
-                .addURL(Path("valid-extension.yaml").toUri().toURL())
+            TranslatorBuilder.create(Locale.ENGLISH).addURL(absoluteResource(ROOT, "en.yaml").toUri().toURL())
         }
     }
 
     @Test
     fun `addURI does not throw with yaml extension`() {
         assertDoesNotThrow {
-            Translator.builder(Locale.ENGLISH)
-                .addURI(Path("valid-extension.yaml").toUri())
+            TranslatorBuilder.create(Locale.ENGLISH).addURI(absoluteResource(ROOT, "en.yaml").toUri())
         }
     }
 
     @Test
     fun `addFile does not throw with yml extension`() {
         assertDoesNotThrow {
-            Translator.builder(Locale.ENGLISH)
-                .addFile(File("valid-extension.yml"))
+            TranslatorBuilder.create(Locale.ENGLISH).addFile(absoluteResource(ROOT, "en.yml").toFile())
         }
     }
 
     @Test
     fun `addPath does not throw with yml extension`() {
         assertDoesNotThrow {
-            Translator.builder(Locale.ENGLISH)
-                .addFile(Path("valid-extension.yml"))
+            TranslatorBuilder.create(Locale.ENGLISH).addFile(absoluteResource(ROOT, "en.yml"))
         }
     }
 
     @Test
     fun `addURL does not throw with yml extension`() {
         assertDoesNotThrow {
-            Translator.builder(Locale.ENGLISH)
-                .addURL(Path("valid-extension.yml").toUri().toURL())
+            TranslatorBuilder.create(Locale.ENGLISH).addURL(absoluteResource(ROOT, "en.yml").toUri().toURL())
         }
     }
 
     @Test
     fun `addURI does not throw with yml extension`() {
         assertDoesNotThrow {
-            Translator.builder(Locale.ENGLISH)
-                .addURI(Path("valid-extension.yml").toUri())
+            TranslatorBuilder.create(Locale.ENGLISH).addURI(absoluteResource(ROOT, "en.yml").toUri())
         }
     }
 
     @Test
     fun `addPath throws an ISE on build call if the file name is not a valid locale`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, "invalid-locale&.json"))
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, "invalid-locale&.json"))
         }
     }
 
     @Test
     fun `addFile throws an ISE on build call if the file name is not a valid locale`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, "invalid-locale&.json").toFile())
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, "invalid-locale&.json").toFile())
         }
     }
 
     @Test
     fun `addPath throws an ISE on build if the parser returns a map containing invalid key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, INVALID_CONTENT))
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, INVALID_CONTENT))
         }
     }
 
     @Test
     fun `addFile throws an ISE on build if the parser returns a map containing invalid key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, INVALID_CONTENT).toFile())
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, INVALID_CONTENT).toFile())
         }
     }
 
     @Test
     fun `addPath throws an ISE on build if a value is null`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, NULL_VALUE))
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, NULL_VALUE))
         }
     }
 
     @Test
     fun `addFile throws an ISE on build if a value is null`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, NULL_VALUE).toFile())
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, NULL_VALUE).toFile())
         }
     }
 
     @Test
     fun `addPath throws an ISE on build if the map contains a map containing an invalid key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, INVALID_NESTED_KEY))
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, INVALID_NESTED_KEY))
         }
     }
 
     @Test
     fun `addFile throws an ISE on build if the map contains a map containing an invalid key`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, "fr_FR.json").toFile())
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, "fr_FR.json").toFile())
         }
     }
 
     @Test
     fun `addPath throws an ISE on build if the map contains a map containing a null value`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, NESTED_NULL_VALUE))
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, NESTED_NULL_VALUE))
         }
     }
 
     @Test
     fun `addFile throws an ISE on build if the map contains a map containing a null value`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, NESTED_NULL_VALUE).toFile())
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, NESTED_NULL_VALUE).toFile())
         }
     }
 
     @Test
     fun `addPath works with list`() {
-        val builder = Translator.builder(Locale.ENGLISH)
+        val translator = TranslatorBuilder.create(Locale.JAPANESE)
             .addFile(absoluteResource(ROOT, LIST))
-        val translator = builder.build()
-        assertEquals("test", translator.t("test.0"))
+            .build()
+        assertEquals("tesuto", translator.t("test.0"))
     }
 
     @Test
     fun `addFile works with list`() {
-        val builder = Translator.builder(Locale.ENGLISH)
+        val builder = TranslatorBuilder.create(Locale.JAPANESE)
             .addFile(absoluteResource(ROOT, LIST).toFile())
         val translator = builder.build()
-        assertEquals("test", translator.t("test.0"))
+        assertEquals("tesuto", translator.t("test.0"))
     }
 
     @Test
     fun `addPath works with nested value`() {
-        val builder = Translator.builder(Locale.ENGLISH)
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
             .addFile(absoluteResource(ROOT, NESTED_VALUE))
         val translator = builder.build()
         assertEquals("test", translator.t("test.test"))
@@ -255,7 +233,7 @@ class TranslatorBuilderFileTest {
 
     @Test
     fun `addFile works with map`() {
-        val builder = Translator.builder(Locale.ENGLISH)
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
             .addFile(absoluteResource(ROOT, NESTED_VALUE).toFile())
         val translator = builder.build()
         assertEquals("test", translator.t("test.test"))
@@ -263,7 +241,7 @@ class TranslatorBuilderFileTest {
 
     @Test
     fun `addFile works with folder`() {
-        val builder = Translator.builder(Locale.ENGLISH)
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
             .addFile(absoluteResource(ROOT, GROUP_FOLDER).toFile())
         val translator = builder.build()
         assertEquals("this is a test", translator.t("test.test"))
@@ -271,7 +249,7 @@ class TranslatorBuilderFileTest {
 
     @Test
     fun `addPath works with folder`() {
-        val builder = Translator.builder(Locale.ENGLISH)
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
             .addFile(absoluteResource(ROOT, GROUP_FOLDER))
         val translator = builder.build()
         assertEquals("this is a test", translator.t("test.test"))
@@ -279,72 +257,60 @@ class TranslatorBuilderFileTest {
 
     @Test
     fun `addFile throws an ISE if the file does not exist`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(File("does-not-exist.json"))
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(File("does-not-exist.json"))
         }
     }
 
     @Test
     fun `addPath throws an ISE if the file does not exist`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(Path("does-not-exist.json"))
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(Path("does-not-exist.json"))
         }
     }
 
     @Test
     fun `throws an exception if the content of the file of a json file is not a valid json`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, INVALID_JSON))
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, INVALID_JSON))
         }
     }
 
     @Test
     fun `throws an exception if the content of the file of a yaml file is not a valid yaml`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addFile(absoluteResource(ROOT, INVALID_YAML))
-        assertThrows<IllegalStateException> {
-            builder.build()
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, INVALID_YAML))
         }
     }
 
     @Test
-    fun `addFile with the same file more than once does not add the file more than once`() {
-        val builder = Translator.builder(Locale.ENGLISH)
+    fun `addFile with the same file more than once throws an ISE`() {
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
             .addFile(absoluteResource(ROOT, LIST).toFile())
-            .addFile(absoluteResource(ROOT, LIST).toFile())
-            // to ensure that it should fail in case of the file is added more than once
-            .withDuplicatedKeyResolutionPolicy(TranslatorBuilder.DuplicatedKeyResolution.FAIL)
-        assertDoesNotThrow {
-            builder.build()
+        assertThrows<IllegalArgumentException> {
+            builder.addFile(absoluteResource(ROOT, LIST).toFile())
         }
     }
 
     @Test
-    fun `addURL with the same file more than once does not add the file more than once`() {
-        val builder = Translator.builder(Locale.ENGLISH)
+    fun `addURL with the same file more than once throws an ISE`() {
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
             .addFile(absoluteResource(ROOT, LIST))
-            .addFile(absoluteResource(ROOT, LIST))
-            // to ensure that it should fail in case of the file is added more than once
-            .withDuplicatedKeyResolutionPolicy(TranslatorBuilder.DuplicatedKeyResolution.FAIL)
-        assertDoesNotThrow {
-            builder.build()
+        assertThrows<IllegalArgumentException> {
+            builder.addURL(absoluteResource(ROOT, LIST).toUri().toURL())
         }
     }
 
     @Test
-    fun `addURI with the same file more than once does not add the file more than once`() {
-        val builder = Translator.builder(Locale.ENGLISH)
-            .addURI(absoluteResource(ROOT, LIST).toUri())
-            .addURI(absoluteResource(ROOT, LIST).toUri())
-            .withDuplicatedKeyResolutionPolicy(TranslatorBuilder.DuplicatedKeyResolution.FAIL)
-        assertDoesNotThrow {
-            builder.build()
+    fun `addURI with the same file more than once throws an ISE`() {
+        val builder = TranslatorBuilder.create(Locale.ENGLISH)
+            .addFile(absoluteResource(ROOT, LIST))
+        assertThrows<IllegalArgumentException> {
+            builder.addURI(absoluteResource(ROOT, LIST).toUri())
         }
     }
 
@@ -360,13 +326,13 @@ class TranslatorBuilderFileTest {
 
         const val INVALID_NESTED_KEY = "fr_FR.json"
 
-        const val NESTED_NULL_VALUE = "fr.json"
+        const val NESTED_NULL_VALUE = "nlv.json"
 
         const val INVALID_JSON = "invalid.json"
 
         const val INVALID_YAML = "invalid.yaml"
 
-        const val LIST = "en.yml"
+        const val LIST = "ja.yml"
 
         const val NESTED_VALUE = "en.yaml"
 

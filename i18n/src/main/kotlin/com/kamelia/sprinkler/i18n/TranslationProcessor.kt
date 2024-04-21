@@ -3,54 +3,57 @@ package com.kamelia.sprinkler.i18n
 import com.kamelia.sprinkler.util.VariableDelimiter
 import com.kamelia.sprinkler.util.VariableResolver
 import com.kamelia.sprinkler.util.illegalArgument
-import com.kamelia.sprinkler.util.interpolate
+import com.kamelia.sprinkler.util.interpolateTo
 import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt.annotation.PackagePrivate
 import java.util.Locale
 import org.intellij.lang.annotations.Language
 
 @PackagePrivate
-internal object OptionProcessor {
+internal object TranslationProcessor {
 
     fun translate(data: TranslatorData, key: String, extraArgs: Map<String, Any>, locale: Locale): String? {
-        // first, get the translations for the given locale, or return null if they don't exist
-        val translations = data.translations[locale] ?: return null
-
-        val config = data.configuration
         val optionArg = extraArgs[Options.OPTIONS] ?: emptyMap<String, Any>()
-
         require(optionArg is Map<*, *>) {
             "The '${Options.OPTIONS}' argument is reserved and must be a map, but was ${optionArg.javaClass}"
         }
+
         val optionMap = optionArg.unsafeCast<Map<String, Any>>()
+        val context = ProcessingContext(data, locale, extraArgs, optionMap)
 
-        // build the actual key with the options
-        val actualKey = buildKey(key, optionMap, locale, config.pluralMapper)
-
-        // get the value for the actual key or return null if it doesn't exist
-        val value = translations[actualKey] ?: return null
-
-        return interpolate(value, locale, extraArgs, optionMap, config.interpolationDelimiter, config.formatters)
+        val found = try {
+            innerTranslate(key, context)
+        } catch (e: NestingDepthExceededException) {
+            val errorMessageBuilder = StringBuilder()
+            errorMessageBuilder.append("Nesting depth exceeded while translating key '$key' with locale '$locale': ")
+            for (i in e.pairs().lastIndex downTo 0) {
+                errorMessageBuilder.append(e.pairs()[i])
+                if (i > 0) errorMessageBuilder.append(" -> ")
+            }
+            throw IllegalArgumentException(errorMessageBuilder.toString())
+        }
+        return if (found) context.builder.toString() else null
     }
 
-    fun buildKey(key: String, optionMap: Map<String, Any>, locale: Locale, pluralMapper: Plural.Mapper): String {
+    fun buildKey(key: String, context: ProcessingContext): String {
+        val optionMap = context.optionMap
         if (optionMap.isEmpty()) return key
 
-        val context = optionMap.safeType<String>(Options.CONTEXT)
+        val interpolationContext = optionMap.safeType<String>(Options.CONTEXT)
         val ordinal = optionMap.safeType<Boolean>(Options.ORDINAL) ?: false
         val pluralValue = optionMap.safeType<Int>(Options.COUNT)?.let { count ->
             if (ordinal) {
-                pluralMapper.mapOrdinal(locale, count)
+                context.pluralMapper.mapOrdinal(context.locale, count)
             } else {
-                pluralMapper.mapPlural(locale, count)
+                context.pluralMapper.mapPlural(context.locale, count)
             }.name.lowercase()
         }
 
         val builder = StringBuilder(key)
 
-        if (context != null) {
+        if (interpolationContext != null) {
             builder.append("_")
-                .append(context)
+                .append(interpolationContext)
         }
 
         if (pluralValue != null) {
@@ -64,17 +67,29 @@ internal object OptionProcessor {
         return builder.toString()
     }
 
-    fun interpolate(
-        value: String,
-        locale: Locale,
-        options: Map<String, Any>,
-        optionMap: Map<String, Any>,
-        interpolationDelimiter: VariableDelimiter,
-        formats: Map<String, VariableFormatter>,
-    ): String {
-        val context = InterpolationContext(locale, options, optionMap, formats)
-        return value.interpolate(context, interpolationDelimiter, customResolver)
+    fun innerTranslate(key: String, context: ProcessingContext): Boolean {
+        if (context.depth > context.maxDepth) {
+            throw NestingDepthExceededException()
+        }
+        // first, get the translations for the given locale, or return null if they don't exist
+        val translations = context.translations[context.locale] ?: return false
+
+        // build the actual key with the options
+        val actualKey = buildKey(key, context)
+
+        // get the value for the actual key or return null if it doesn't exist
+        val value = translations[actualKey] ?: return false
+
+        try {
+            value.interpolateTo(context.builder, context, customResolver, context.variableDelimiter)
+        } catch (e: NestingDepthExceededException) {
+            e.addPair(actualKey)
+            throw e
+        }
+
+        return true
     }
+
 
     private inline fun <reified T> Map<String, Any>.safeType(key: String): T? {
         val value = get(key) ?: return null
@@ -92,12 +107,41 @@ internal object OptionProcessor {
 
     private val keyValueSplit = """(?<!\\):""".toRegex()
 
-    private class InterpolationContext(
+    @PackagePrivate
+    internal class ProcessingContext(
+        private val data: TranslatorData,
         val locale: Locale,
-        val options: Map<String, Any>,
+        val interpolationValues: Map<String, Any>,
         val optionMap: Map<String, Any>,
-        val formats: Map<String, VariableFormatter>,
-    )
+    ) {
+
+        var depth: Int = 0
+            private set
+
+        val builder: StringBuilder = StringBuilder()
+
+        val translations: Map<Locale, Map<String, String>>
+            get() = data.translations
+
+        val pluralMapper: Plural.Mapper
+            get() = data.configuration.pluralMapper
+
+        val formatters: Map<String, VariableFormatter>
+            get() = data.configuration.formatters
+
+        val variableDelimiter: VariableDelimiter
+            get() = data.configuration.interpolationDelimiter
+
+        val maxDepth: Int
+            get() = data.configuration.maxNestingDepth
+
+        fun nestedTranslate(key: String) {
+            depth++
+            innerTranslate(key, this)
+            depth--
+        }
+
+    }
 
     init {
         // capture all the params in a single group
@@ -111,16 +155,21 @@ internal object OptionProcessor {
         val format = """\s*,\s*($IDENTIFIER)\s*(?:$formatParams)?"""
 
         // capture the variable name
-        generalSplit = """\s*($IDENTIFIER)(?:$format)?\s*""".toRegex()
+        generalSplit = """\s*(${Regex.escape(NESTED_KEY_CHAR.toString())}?$IDENTIFIER)(?:$format)?\s*""".toRegex()
     }
 
-    private val customResolver = object : VariableResolver<InterpolationContext> {
+    private val customResolver = object : VariableResolver<ProcessingContext> {
 
-        override fun resolveTo(builder: Appendable, name: String, context: InterpolationContext) {
+        override fun resolveTo(builder: Appendable, name: String, context: ProcessingContext) {
             // '!!' is ok, because values are validated on translator creation
             val (_, variableName, formatName, formatParams) = generalSplit.matchEntire(name)!!.groupValues
 
-            val variableValue = context.options[variableName]
+            if (variableName[0] == NESTED_KEY_CHAR) { // if it's a nested key
+                context.nestedTranslate(variableName.substring(1))
+                return
+            }
+
+            val variableValue = context.interpolationValues[variableName]
                 ?: context.optionMap[variableName]
                 ?: illegalArgument("variable '$variableName' not found")
 
@@ -151,12 +200,24 @@ internal object OptionProcessor {
                 }
             }
             // same as above, '!!' is ok due to pre-validation
-            context.formats[formatName]!!.format(builder, actualValue, context.locale, paramMap)
+            context.formatters[formatName]!!.format(builder, actualValue, context.locale, paramMap)
         }
 
-        override fun resolve(name: String, context: InterpolationContext): String =
+        override fun resolve(name: String, context: ProcessingContext): String =
             throw AssertionError("This method should never be called")
 
     }
+
+}
+
+private class NestingDepthExceededException : RuntimeException("", null, false, false) {
+
+    private val translationKeys = ArrayList<String>()
+
+    fun addPair(key: String) {
+        translationKeys.add(key)
+    }
+
+    fun pairs(): List<String> = translationKeys
 
 }

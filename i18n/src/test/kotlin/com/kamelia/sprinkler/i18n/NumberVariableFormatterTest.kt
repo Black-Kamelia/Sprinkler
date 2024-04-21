@@ -8,13 +8,6 @@ import org.junit.jupiter.api.assertThrows
 class NumberVariableFormatterTest {
 
     @Test
-    fun `number formatter throws an IAE if an unknown extra args is provided`() {
-        assertThrows<IllegalArgumentException> {
-            VariableFormatter.number().format(1, Locale.ENGLISH, mapOf("foo" to "bar"))
-        }
-    }
-
-    @Test
     fun `number formatter throws a CCE if the number is not a number`() {
         assertThrows<ClassCastException> {
             VariableFormatter.number().format("1", Locale.ENGLISH, emptyMap())

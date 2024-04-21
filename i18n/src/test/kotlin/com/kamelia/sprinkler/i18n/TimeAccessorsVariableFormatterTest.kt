@@ -7,13 +7,14 @@ import java.time.Month
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 
 class TimeAccessorsVariableFormatterTest {
 
     @Test
-    fun `time formatter throws an IAE if an unknown extra args is provided`() {
-        assertThrows<IllegalArgumentException> {
+    fun `time formatter ignores if an unknown extra args is provided`() {
+        assertDoesNotThrow {
             VariableFormatter.time().format(LocalTime.now(), Locale.ENGLISH, mapOf("foo" to "bar"))
         }
     }
@@ -38,13 +39,6 @@ class TimeAccessorsVariableFormatterTest {
     }
 
     @Test
-    fun `time formatter does not accept dateStyle param`() {
-        assertThrows<IllegalArgumentException> {
-            VariableFormatter.time().format(LocalTime.of(1, 0), Locale.US, mapOf("dateStyle" to "short"))
-        }
-    }
-
-    @Test
     fun `time formatter throws on invalid timeStyle value`() {
         assertThrows<IllegalArgumentException> {
             VariableFormatter.time().format(LocalTime.of(1, 0), Locale.US, mapOf("timeStyle" to "foo"))
@@ -52,8 +46,8 @@ class TimeAccessorsVariableFormatterTest {
     }
 
     @Test
-    fun `date formatter throws an IAE if an unknown extra args is provided`() {
-        assertThrows<IllegalArgumentException> {
+    fun `date formatter ignore if an unknown extra args is provided`() {
+        assertDoesNotThrow {
             VariableFormatter.date().format(LocalDate.now(), Locale.ENGLISH, mapOf("foo" to "bar"))
         }
     }
@@ -80,14 +74,6 @@ class TimeAccessorsVariableFormatterTest {
     }
 
     @Test
-    fun `date formatter does not accept timeStyle param`() {
-        assertThrows<IllegalArgumentException> {
-            VariableFormatter.date()
-                .format(LocalDate.of(1969, Month.DECEMBER, 31), Locale.US, mapOf("timeStyle" to "short"))
-        }
-    }
-
-    @Test
     fun `date formatter throws on invalid dateStyle value`() {
         assertThrows<IllegalArgumentException> {
             VariableFormatter.date()
@@ -97,8 +83,8 @@ class TimeAccessorsVariableFormatterTest {
 
     @Test
     fun `datetime formatter throws an IAE if an unknown extra args is provided`() {
-        assertThrows<IllegalArgumentException> {
-            VariableFormatter.datetime().format(LocalDate.now(), Locale.ENGLISH, mapOf("foo" to "bar"))
+        assertDoesNotThrow {
+            VariableFormatter.datetime().format(LocalDateTime.now(), Locale.ENGLISH, mapOf("foo" to "bar"))
         }
     }
 

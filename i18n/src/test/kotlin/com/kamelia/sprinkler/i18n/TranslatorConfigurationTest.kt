@@ -9,12 +9,10 @@ class TranslatorConfigurationTest {
 
     @Test
     fun `MissingKeyPolicy THROW_EXCEPTION make the translator throw when a key is not found`() {
-        val config = TranslatorConfiguration.create {
-            missingKeyPolicy = TranslatorConfiguration.MissingKeyPolicy.THROW_EXCEPTION
-        }
-        val translator = Translator.builder(Locale.ENGLISH)
-            .withConfiguration(config)
+        val config = TranslatorConfiguration.builder()
+            .withMissingKeyPolicy(TranslatorConfiguration.MissingKeyPolicy.THROW_EXCEPTION)
             .build()
+        val translator = TranslatorBuilder.create(Locale.ENGLISH, configuration = config).build()
         assertThrows<IllegalArgumentException> {
             translator.t("missing")
         }
@@ -22,23 +20,20 @@ class TranslatorConfigurationTest {
 
     @Test
     fun `MissingKeyPolicy RETURN_KEY make the translator return the key when a key is not found`() {
-
-        val translator = Translator.builder(Locale.ENGLISH)
-            .withConfiguration {
-                missingKeyPolicy = TranslatorConfiguration.MissingKeyPolicy.RETURN_KEY
-            }
+        val config = TranslatorConfiguration.builder()
+            .withMissingKeyPolicy(TranslatorConfiguration.MissingKeyPolicy.RETURN_KEY)
             .build()
+        val translator = TranslatorBuilder.create(Locale.ENGLISH, configuration = config).build()
         val key = "missing"
         assertEquals(key, translator.t(key))
     }
 
     @Test
     fun `interpolationDelimiter is used for interpolation`() {
-        val config = TranslatorConfiguration.create {
-            interpolationDelimiter = TranslatorConfiguration.InterpolationDelimiter.create("[", "]")
-        }
-        val translator = Translator.builder(Locale.ENGLISH)
-            .withConfiguration(config)
+        val config = TranslatorConfiguration.builder()
+            .setInterpolationDelimiter(TranslatorConfiguration.InterpolationDelimiter.create("[", "]"))
+            .build()
+        val translator = TranslatorBuilder.create(Locale.ENGLISH, configuration = config)
             .addMap(Locale.ENGLISH, mapOf("interpolation" to "This is a [value]."))
             .build()
         val value = "dog"

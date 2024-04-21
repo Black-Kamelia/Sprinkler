@@ -198,7 +198,10 @@ fun interface VariableFormatter {
          * @return the map of all the built-in variable formatters
          */
         @JvmStatic
-        fun builtins(): Map<String, VariableFormatter> = mapOf(
+        fun builtins(): Map<String, VariableFormatter> = mutableBuiltins()
+
+
+        internal fun mutableBuiltins(): MutableMap<String, VariableFormatter> = hashMapOf(
             ::currency.name to currency(),
             ::date.name to date(),
             ::time.name to time(),
