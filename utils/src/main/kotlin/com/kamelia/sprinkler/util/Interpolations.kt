@@ -283,6 +283,7 @@ fun String.interpolate(args: Iterator<Any>, delimiter: VariableDelimiter = Varia
  * Interface for resolving variables during string interpolation. This interface maps variable names to their values.
  *
  * @see interpolate
+ * @param T the type of the context used for resolving the variable
  */
 fun interface VariableResolver<T> {
 

@@ -16,11 +16,9 @@ import java.util.Locale
  */
 class TranslatorConfiguration @PackagePrivate internal constructor(
     internal val interpolationDelimiter: VariableDelimiter,
-    internal val nestedInterpolationDelimiter: VariableDelimiter,
     internal val pluralMapper: Plural.Mapper,
     internal val formatters: Map<String, VariableFormatter>,
     internal val missingKeyPolicy: MissingKeyPolicy,
-    internal val maxNestingDepth: Int,
 ) {
 
     /**
@@ -34,16 +32,6 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          * default: '{{' and '}}'
          */
         private var interpolationDelimiter: InterpolationDelimiter = InterpolationDelimiter(VariableDelimiter.default)
-
-        /**
-         * The delimiter to use for nested interpolation in translations. A nested interpolation is an interpolation
-         * where the name of the variable represents a key in the translations.
-         *
-         * default: '[[' and ']]'
-         */
-        private var nestedInterpolationDelimiter: InterpolationDelimiter = InterpolationDelimiter.create("[[", "]]")
-
-        private var maxNestingDepth: Int = 5
 
         /**
          * The mapper function to use for the pluralization strategy.
@@ -80,20 +68,6 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          * @return this [Builder]
          */
         fun setInterpolationDelimiter(value: InterpolationDelimiter): Builder = apply { interpolationDelimiter = value }
-
-        /**
-         * Sets the delimiter to use for nested interpolation in translations. A nested interpolation is an
-         * interpolation where the name of the variable represents a key in the translations.
-         *
-         *
-         * default: '[[' and ']]'
-         *
-         * @param value the delimiter to use
-         * @return this [Builder]
-         */
-        fun setNestedInterpolationDelimiter(value: InterpolationDelimiter): Builder = apply {
-            nestedInterpolationDelimiter = value
-        }
 
         /**
          * Sets the mapper function to use for the pluralization strategy.
@@ -148,39 +122,16 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
         }
 
         /**
-         * Sets the maximum nesting depth allowed for nested interpolations.
-         *
-         * default: 5
-         *
-         * @param maxNestingDepth the maximum nesting depth allowed
-         * @return this [Builder]
-         */
-        fun withMaxNestingDepth(maxNestingDepth: Int): Builder = apply {
-            require(maxNestingDepth >= 0) { "The maximum nesting depth must be greater than 0, but was $maxNestingDepth" }
-            this.maxNestingDepth = maxNestingDepth
-        }
-
-        /**
          * Builds the [TranslatorConfiguration].
          *
          * @return the built [TranslatorConfiguration]
-         * @throws IllegalStateException if [interpolationDelimiter] and [nestedInterpolationDelimiter] have the same
-         * delimiters
          */
-        fun build(): TranslatorConfiguration {
-            check(interpolationDelimiter.inner != nestedInterpolationDelimiter.inner) {
-                "The interpolation delimiter and the nested interpolation delimiter cannot be the same, but were both '${interpolationDelimiter.inner}'"
-            }
-
-            return TranslatorConfiguration(
-                interpolationDelimiter.inner,
-                nestedInterpolationDelimiter.inner,
-                pluralMapper,
-                formatters,
-                missingKeyPolicy,
-                maxNestingDepth,
-            )
-        }
+        fun build(): TranslatorConfiguration = TranslatorConfiguration(
+            interpolationDelimiter.inner,
+            pluralMapper,
+            formatters,
+            missingKeyPolicy,
+        )
 
     }
 

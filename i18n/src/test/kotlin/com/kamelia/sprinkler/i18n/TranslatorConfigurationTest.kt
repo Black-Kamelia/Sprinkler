@@ -12,7 +12,7 @@ class TranslatorConfigurationTest {
         val config = TranslatorConfiguration.builder()
             .withMissingKeyPolicy(TranslatorConfiguration.MissingKeyPolicy.THROW_EXCEPTION)
             .build()
-        val translator = TranslatorBuilder.create(Locale.ENGLISH, configuration = config).build()
+        val translator = TranslatorBuilder.create(configuration = config, defaultLocale = Locale.ENGLISH).build()
         assertThrows<IllegalArgumentException> {
             translator.t("missing")
         }
@@ -23,7 +23,7 @@ class TranslatorConfigurationTest {
         val config = TranslatorConfiguration.builder()
             .withMissingKeyPolicy(TranslatorConfiguration.MissingKeyPolicy.RETURN_KEY)
             .build()
-        val translator = TranslatorBuilder.create(Locale.ENGLISH, configuration = config).build()
+        val translator = TranslatorBuilder.create(configuration = config, defaultLocale = Locale.ENGLISH).build()
         val key = "missing"
         assertEquals(key, translator.t(key))
     }
@@ -33,7 +33,7 @@ class TranslatorConfigurationTest {
         val config = TranslatorConfiguration.builder()
             .setInterpolationDelimiter(TranslatorConfiguration.InterpolationDelimiter.create("[", "]"))
             .build()
-        val translator = TranslatorBuilder.create(Locale.ENGLISH, configuration = config)
+        val translator = TranslatorBuilder.create(configuration = config, defaultLocale = Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("interpolation" to "This is a [value]."))
             .build()
         val value = "dog"

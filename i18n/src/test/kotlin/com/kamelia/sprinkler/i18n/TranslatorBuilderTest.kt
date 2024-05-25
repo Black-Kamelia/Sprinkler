@@ -10,14 +10,14 @@ class TranslatorBuilderTest {
     @Test
     fun `defaultLocale is the locale specifier in the constructor`() {
         val locale = Locale.FRANCE
-        val translator = TranslatorBuilder.create(locale).build()
+        val translator = TranslatorBuilder.create(defaultLocale = locale).build()
         Assertions.assertEquals(locale, translator.defaultLocale)
     }
 
     @Test
     fun `currentLocale is set to the default locale by default`() {
         val locale = Locale.FRANCE
-        val translator = TranslatorBuilder.create(locale).build()
+        val translator = TranslatorBuilder.create(defaultLocale = locale).build()
         Assertions.assertEquals(locale, translator.currentLocale)
     }
 
@@ -27,7 +27,7 @@ class TranslatorBuilderTest {
         val value = "this is a test"
         val locale = Locale.FRANCE
 
-        val translator = TranslatorBuilder.create(Locale.ENGLISH)
+        val translator = TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
             .addMap(locale, mapOf(key to value))
             .build()
         Assertions.assertEquals(value, translator.t(key, locale))
@@ -39,7 +39,7 @@ class TranslatorBuilderTest {
         val value = "this is a test"
         val locale = Locale.FRANCE
 
-        val translator = TranslatorBuilder.create(Locale.ENGLISH)
+        val translator = TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
             .addMaps(mapOf(locale to mapOf(key to value)))
             .build()
         Assertions.assertEquals(value, translator.t(key, locale))
@@ -48,8 +48,8 @@ class TranslatorBuilderTest {
     @Test
     fun `FAIL duplicate policy throws if a key is duplicated`() {
         val builder = TranslatorBuilder.create(
-            Locale.ENGLISH,
-            duplicatedKeyResolution = TranslatorBuilder.DuplicatedKeyResolution.FAIL
+            duplicatedKeyResolution = TranslatorBuilder.DuplicatedKeyResolution.FAIL,
+            defaultLocale = Locale.ENGLISH
         ).addMap(Locale.ENGLISH, mapOf("test" to "test"))
 
         assertThrows<IllegalStateException> {
@@ -61,8 +61,8 @@ class TranslatorBuilderTest {
     fun `KEEP_FIRST duplicate policy keeps the first value`() {
         val builder =
             TranslatorBuilder.create(
-                Locale.ENGLISH,
-                duplicatedKeyResolution = TranslatorBuilder.DuplicatedKeyResolution.KEEP_FIRST
+                duplicatedKeyResolution = TranslatorBuilder.DuplicatedKeyResolution.KEEP_FIRST,
+                defaultLocale = Locale.ENGLISH
             )
                 .addMap(Locale.ENGLISH, mapOf("test" to "test"))
                 .addMap(Locale.ENGLISH, mapOf("test" to "test2"))
@@ -74,8 +74,8 @@ class TranslatorBuilderTest {
     fun `KEEP_LAST duplicate policy keeps the last value`() {
         val builder =
             TranslatorBuilder.create(
-                Locale.ENGLISH,
-                duplicatedKeyResolution = TranslatorBuilder.DuplicatedKeyResolution.KEEP_LAST
+                duplicatedKeyResolution = TranslatorBuilder.DuplicatedKeyResolution.KEEP_LAST,
+                defaultLocale = Locale.ENGLISH
             )
                 .addMap(Locale.ENGLISH, mapOf("test" to "test"))
                 .addMap(Locale.ENGLISH, mapOf("test" to "test2"))
@@ -84,18 +84,18 @@ class TranslatorBuilderTest {
     }
 
     @Test
-    fun `build throws an ISE if a value contains the a variable named 'options'`() {
-        assertThrows<IllegalStateException> {
-            TranslatorBuilder.create(Locale.ENGLISH)
+    fun `build throws an IAE if a value contains a variable named 'options'`() {
+        assertThrows<IllegalArgumentException> {
+            TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
                 .addMap(Locale.ENGLISH, mapOf("test" to "test {{options}}"))
                 .build()
         }
     }
 
     @Test
-    fun `build throws an ISE if a value contains a format that is not present in the configuration`() {
-        assertThrows<IllegalStateException> {
-            TranslatorBuilder.create(Locale.ENGLISH)
+    fun `build throws an IAE if a value contains a format that is not present in the configuration`() {
+        assertThrows<IllegalArgumentException> {
+            TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
                 .addMap(Locale.ENGLISH, mapOf("test" to "test {{name, unknown}}"))
                 .build()
         }
@@ -103,36 +103,36 @@ class TranslatorBuilderTest {
 
     @Test
     fun `build does not throw if a value contains a format that is present in the configuration`() {
-        TranslatorBuilder.create(Locale.ENGLISH)
+        TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("test" to "test {{name, date}}"))
             .build()
     }
 
     @Test
-    fun `build throws an ISE if a value contains a variable that is does not respect the format (illegal name)`() {
-        assertThrows<IllegalStateException> {
-            TranslatorBuilder.create(Locale.ENGLISH)
+    fun `build throws an IAE if a value contains a variable that is does not respect the format (illegal name)`() {
+        assertThrows<IllegalArgumentException> {
+            TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
                 .addMap(Locale.ENGLISH, mapOf("test" to "test {{name#}}"))
                 .build()
         }
     }
 
     @Test
-    fun `build throws an ISE if a value contains a variable that is does not respect the format (illegal format)`() {
+    fun `build throws an IAE if a value contains a variable that is does not respect the format (illegal format)`() {
         val configuration = TranslatorConfiguration.builder()
             .addFormatter("12#", VariableFormatter.date())
             .build()
-        assertThrows<IllegalStateException> {
-            TranslatorBuilder.create(Locale.ENGLISH, configuration)
+        assertThrows<IllegalArgumentException> {
+            TranslatorBuilder.create(configuration, defaultLocale = Locale.ENGLISH)
                 .addMap(Locale.ENGLISH, mapOf("test" to "test {{name, 12#}}"))
                 .build()
         }
     }
 
     @Test
-    fun `build throws an ISE if a value contains a variable that is does not respect the format (format with parenthesis and no param)`() {
-        assertThrows<IllegalStateException> {
-            TranslatorBuilder.create(Locale.ENGLISH)
+    fun `build throws an IAE if a value contains a variable that is does not respect the format (format with parenthesis and no param)`() {
+        assertThrows<IllegalArgumentException> {
+            TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
                 .addMap(Locale.ENGLISH, mapOf("test" to "test {{name, date()}}"))
                 .build()
         }
