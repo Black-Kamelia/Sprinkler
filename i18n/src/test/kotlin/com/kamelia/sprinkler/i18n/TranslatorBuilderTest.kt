@@ -84,56 +84,60 @@ class TranslatorBuilderTest {
     }
 
     @Test
-    fun `build throws an IAE if a value contains a variable named 'options'`() {
+    fun `addMap throws an IAE if a value contains a variable named 'options'`() {
         assertThrows<IllegalArgumentException> {
             TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
                 .addMap(Locale.ENGLISH, mapOf("test" to "test {{options}}"))
-                .build()
         }
     }
 
     @Test
-    fun `build throws an IAE if a value contains a format that is not present in the configuration`() {
+    fun `addMap throws an IAE if a value contains a format that is not present in the configuration`() {
         assertThrows<IllegalArgumentException> {
             TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
                 .addMap(Locale.ENGLISH, mapOf("test" to "test {{name, unknown}}"))
-                .build()
         }
     }
 
     @Test
-    fun `build does not throw if a value contains a format that is present in the configuration`() {
+    fun `addMap does not throw if a value contains a format that is present in the configuration`() {
         TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("test" to "test {{name, date}}"))
-            .build()
     }
 
     @Test
-    fun `build throws an IAE if a value contains a variable that is does not respect the format (illegal name)`() {
+    fun `addMap throws an IAE if a value contains a variable that is does not respect the format (illegal name)`() {
         assertThrows<IllegalArgumentException> {
             TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
                 .addMap(Locale.ENGLISH, mapOf("test" to "test {{name#}}"))
-                .build()
         }
     }
 
     @Test
-    fun `build throws an IAE if a value contains a variable that is does not respect the format (illegal format)`() {
+    fun `addMap throws an IAE if a value contains a variable that is does not respect the format (illegal format)`() {
         val configuration = TranslatorConfiguration.builder()
             .addFormatter("12#", VariableFormatter.date())
             .build()
         assertThrows<IllegalArgumentException> {
             TranslatorBuilder.create(configuration, defaultLocale = Locale.ENGLISH)
                 .addMap(Locale.ENGLISH, mapOf("test" to "test {{name, 12#}}"))
-                .build()
         }
     }
 
     @Test
-    fun `build throws an IAE if a value contains a variable that is does not respect the format (format with parenthesis and no param)`() {
+    fun `addMap throws an IAE if a value contains a variable that is does not respect the format (format with parenthesis and no param)`() {
         assertThrows<IllegalArgumentException> {
             TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
                 .addMap(Locale.ENGLISH, mapOf("test" to "test {{name, date()}}"))
+        }
+    }
+
+    @Test
+    fun `build throws an ISE if at least two locals does not have the same keys`() {
+        assertThrows<IllegalStateException> {
+            TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
+                .addMap(Locale.ENGLISH, mapOf("test" to "test"))
+                .addMap(Locale.FRANCE, mapOf())
                 .build()
         }
     }

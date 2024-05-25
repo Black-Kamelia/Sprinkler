@@ -114,7 +114,7 @@ internal object TranslationProcessor {
                 ?: context.optionMap[variableName]
                 ?: illegalArgument("variable '$variableName' not found")
 
-            var formatPassedParams = emptyMap<String, String>()
+            var formatPassedParams = emptyMap<String, Any>()
             var actualValue: Any = variableValue
             if (variableValue is FormattedValue) {
                 actualValue = variableValue.value
@@ -130,7 +130,7 @@ internal object TranslationProcessor {
             val paramMap = if (formatParams.isEmpty() && formatPassedParams.isEmpty()) {
                 emptyMap()
             } else {
-                HashMap<String, String>(formatParams.length).apply {
+                HashMap<String, Any>(formatParams.length).apply {
                     if (formatParams.isNotEmpty()) { // there are format parameters
                         formatParams.split(paramsSplit).forEach {
                             val (k, v) = keyValueSplit.split(it, 2)

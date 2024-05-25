@@ -28,7 +28,7 @@ import com.zwendo.restrikt.annotation.PackagePrivate
  */
 class FormattedValue @PackagePrivate internal constructor(
     internal val value: Any,
-    internal val formatParams: Map<String, String>,
+    internal val formatParams: Map<String, Any>,
 )
 
 /**
@@ -38,7 +38,7 @@ class FormattedValue @PackagePrivate internal constructor(
  * @param formatParams the parameters to be used in the format
  * @return a [FormattedValue] instance with the given value and format parameters
  */
-fun p(value: Any, formatParams: Map<String, String>): FormattedValue =
+fun p(value: Any, formatParams: Map<String, Any>): FormattedValue =
     FormattedValue(value, java.util.Map.copyOf(formatParams))
 
 /**
@@ -48,5 +48,5 @@ fun p(value: Any, formatParams: Map<String, String>): FormattedValue =
  * @param formatParams the parameters to be used in the format
  * @return a [FormattedValue] instance with the given value and format parameters
  */
-fun p(value: Any, vararg formatParams: Pair<String, String>): FormattedValue =
+fun p(value: Any, vararg formatParams: Pair<String, Any>): FormattedValue =
     FormattedValue(value, formatParams.toMap())

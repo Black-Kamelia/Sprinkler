@@ -131,9 +131,9 @@ sealed interface TranslatorBuilder {
     /**
      * Adds a resource to the builder. The resource is loaded using the class loader of the [resourceClass] parameter
      * and the [resourcePath] parameter. If the resource is not found, an [IllegalArgumentException] will be thrown.
-     * By default, the class loader of the [TranslatorBuilder] class is used. If the resource is a directory, all files
-     * in it will be loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be
-     * loaded.
+     * By default, the class loader of the [TranslatorBuilder] class is used. The [isDirectory] parameter is used to
+     * specify whether the resource is a directory or not. If the resource is a directory, all files in it will be
+     * loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
      *
      * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
      *
@@ -144,12 +144,71 @@ sealed interface TranslatorBuilder {
      *
      * @param resourcePath the path of the resource to load
      * @param resourceClass the class to use to load the resource (defaults to [TranslatorBuilder] class)
+     * @param isDirectory whether the resource is a directory or not
      * @return this builder
+     *
      * @throws IllegalArgumentException if the extension is not supported
+     * @throws IllegalArgumentException if the file name is not a valid locale identifier
+     * @throws IOException if an I/O error occurs when trying to read the file
+     * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
+     * [DuplicatedKeyResolution.FAIL]
      */
-    fun addResource(resourcePath: String, resourceClass: Class<*>): TranslatorBuilder
+    fun addResource(resourcePath: String, isDirectory: Boolean, resourceClass: Class<*>): TranslatorBuilder
 
-    fun addResource(resourcePath: String): TranslatorBuilder = addResource(resourcePath, TranslatorBuilder::class.java)
+    /**
+     * Adds a resource to the builder. The resource is loaded using the class loader of the [resourceClass] parameter
+     * and the [resourcePath] parameter. If the resource is not found, an [IllegalArgumentException] will be thrown.
+     * By default, the class loader of the [TranslatorBuilder] class is used. The resource is considered a directory.
+     *
+     * @param resourcePath the path of the resource to load
+     * @param resourceClass the class to use to load the resource (defaults to [TranslatorBuilder] class)
+     * @return this builder
+     *
+     * @throws IllegalArgumentException if the extension is not supported
+     * @throws IllegalArgumentException if the file name is not a valid locale identifier
+     * @throws IOException if an I/O error occurs when trying to read the file
+     * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
+     * [DuplicatedKeyResolution.FAIL]
+     * @see addResource
+     */
+    fun addResource(resourcePath: String, resourceClass: Class<*>): TranslatorBuilder =
+        addResource(resourcePath, true, resourceClass)
+
+    /**
+     * Adds a resource to the builder. The resource is loaded using the class loader of the [TranslatorBuilder] class
+     * and the [resourcePath] parameter. If the resource is not found, an [IllegalArgumentException] will be thrown.
+     *
+     * @param resourcePath the path of the resource to load
+     * @param isDirectory whether the resource is a directory or not
+     * @return this builder
+     *
+     * @throws IllegalArgumentException if the extension is not supported
+     * @throws IllegalArgumentException if the file name is not a valid locale identifier
+     * @throws IOException if an I/O error occurs when trying to read the file
+     * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
+     * [DuplicatedKeyResolution.FAIL]
+     * @see addResource
+     */
+    fun addResource(resourcePath: String, isDirectory: Boolean): TranslatorBuilder =
+        addResource(resourcePath, isDirectory, TranslatorBuilder::class.java)
+
+    /**
+     * Adds a resource to the builder. The resource is loaded using the class loader of the [TranslatorBuilder] class
+     * and the [resourcePath] parameter. If the resource is not found, an [IllegalArgumentException] will be thrown. The
+     * resource is considered a directory.
+     *
+     * @param resourcePath the path of the resource to load
+     * @return this builder
+     *
+     * @throws IllegalArgumentException if the extension is not supported
+     * @throws IllegalArgumentException if the file name is not a valid locale identifier
+     * @throws IOException if an I/O error occurs when trying to read the file
+     * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
+     * [DuplicatedKeyResolution.FAIL]
+     * @see addResource
+     */
+    fun addResource(resourcePath: String): TranslatorBuilder =
+        addResource(resourcePath, true, TranslatorBuilder::class.java)
 
     /**
      * Adds a map for a locale to the builder. The content of the map will be added to the final translator. The
@@ -202,7 +261,7 @@ sealed interface TranslatorBuilder {
      */
     enum class DuplicatedKeyResolution {
 
-         /**
+        /**
          * If a duplicated key is found, the build will fail. This policy will cause an [IllegalStateException] to be
          * thrown when a duplicated key is found.
          */

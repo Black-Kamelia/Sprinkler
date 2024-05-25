@@ -59,39 +59,31 @@ internal class TranslatorBuilderImpl private constructor(
         }
     }
 
-    override fun addResource(resourcePath: String, resourceClass: Class<*>): TranslatorBuilder = apply {
-        // we first try to load the resource as a directory, if it is not a directory, we load it as a file
-        val endsWithSlash = resourcePath.endsWith('/')
-        val directoryPath = if (!endsWithSlash) {
-            "$resourcePath/"
-        } else {
-            resourcePath
-        }
-        val dir = resourceClass.getResource(directoryPath)
-        if (dir == null) { // the resource is not a directory
-            // if the name was already a directory, it means that the user intended to load a directory, so we throw an
-            // exception
-            require(!endsWithSlash) { "Resource directory '$directoryPath' not found." }
-            try {
-                loadResourceFile(resourcePath, resourceClass, null)
-            } catch (_: NullPointerException) {
-                resourceNotFound(resourcePath, resourceClass)
-            }
-            return@apply
-        }
-        // the resource is a directory, we load all files in it
-        dir.openStream()
-            .bufferedReader()
-            .use { stream ->
-                stream.lines().forEach {
-                    try {
-                        loadResourceFile(it, resourceClass, directoryPath)
-                    } catch (_: NullPointerException) {
-                        resourceNotFound(it, resourceClass)
+    override fun addResource(resourcePath: String, isDirectory: Boolean, resourceClass: Class<*>): TranslatorBuilder =
+        apply {
+            // the resource is a directory, we load all files in it
+            if (isDirectory) {
+                val directoryPath = if (resourcePath.endsWith('/')) resourcePath else "$resourcePath/"
+                val resource = resourceClass.getResource(resourcePath) ?: resourceNotFound(resourcePath, resourceClass)
+                resource.openStream()
+                    .bufferedReader()
+                    .use { stream ->
+                        stream.lines().forEach {
+                            try {
+                                loadResourceFile("$directoryPath$it", resourceClass)
+                            } catch (_: NullPointerException) {
+                                resourceNotFound(it, resourceClass)
+                            }
+                        }
                     }
+            } else {
+                try {
+                    loadResourceFile(resourcePath, resourceClass)
+                } catch (_: NullPointerException) {
+                    resourceNotFound(resourcePath, resourceClass)
                 }
             }
-    }
+        }
 
     private fun resourceNotFound(resourcePath: String, resourceClass: Class<*>): Nothing {
         val message = if (!resourcePath.startsWith('/') && TranslatorBuilder::class.java == resourceClass) {
@@ -359,15 +351,14 @@ internal class TranslatorBuilderImpl private constructor(
 
     }
 
-    private fun loadResourceFile(path: String, clazz: Class<*>, directoryPath: String?) {
-        val extension = path.substringAfterLast('.')
-        val actualPath = if (directoryPath != null) "$directoryPath$path" else path
+    private fun loadResourceFile(path: String, clazz: Class<*>) {
+        val extension = Path.of(path).extension
         require("json" == extension || "yaml" == extension || "yml" == extension) {
-            "Unsupported file extension '$extension' for path '$actualPath'. Supported extensions are 'json', 'yaml' and 'yml'."
+            "Unsupported file extension '$extension' for path '$path'. Supported extensions are 'json', 'yaml' and 'yml'."
         }
         val nameWithoutExtension = Path.of(path).nameWithoutExtension
         val locale = parseLocale(nameWithoutExtension)
-        val content = clazz.getResourceAsStream(actualPath)!!
+        val content = clazz.getResourceAsStream(path)!!
             .bufferedReader()
             .use { it.lines().collect(Collectors.joining("\n")) }
         addToMap(locale, parseFile(content, extension))

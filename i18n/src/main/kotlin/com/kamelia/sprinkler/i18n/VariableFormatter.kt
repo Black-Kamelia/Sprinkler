@@ -33,7 +33,7 @@ fun interface VariableFormatter {
      * @param extraArgs the extra arguments to use
      * @throws RuntimeException if an error occurs during formatting
      */
-    fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, String>)
+    fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, Any>)
 
     companion object {
 
@@ -51,7 +51,7 @@ fun interface VariableFormatter {
         @JvmStatic
         fun currency(): VariableFormatter = object : VariableFormatter {
 
-            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, String>) {
+            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, Any>) {
                 val amount = value.castOrNull<Number>()?.toDouble()
                     ?: throw ClassCastException("The value ($value) must be of type Number")
 
@@ -79,7 +79,7 @@ fun interface VariableFormatter {
         @JvmStatic
         fun date(): VariableFormatter = object : VariableFormatter {
 
-            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, String>) {
+            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, Any>) {
                 val date = value.castOrNull<TemporalAccessor>()
                     ?: throw ClassCastException("The value ($value) must be of type TemporalAccessor")
 
@@ -106,7 +106,7 @@ fun interface VariableFormatter {
         @JvmStatic
         fun time(): VariableFormatter = object : VariableFormatter {
 
-            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, String>) {
+            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, Any>) {
                 val time = value.castOrNull<TemporalAccessor>()
                     ?: throw ClassCastException("The value ($value) must be of type TemporalAccessor")
 
@@ -133,7 +133,7 @@ fun interface VariableFormatter {
         @JvmStatic
         fun datetime(): VariableFormatter = object : VariableFormatter {
 
-            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, String>) {
+            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, Any>) {
                 val dateTime = value.castOrNull<TemporalAccessor>()
                     ?: throw ClassCastException("The value ($value) must be of type TemporalAccessor")
 
@@ -176,7 +176,7 @@ fun interface VariableFormatter {
         @JvmStatic
         fun number(): VariableFormatter = object : VariableFormatter {
 
-            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, String>) {
+            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, Any>) {
                 val number = value.castOrNull<Number>()
                     ?: throw ClassCastException("The value ($value) must be of type Number")
 
@@ -209,7 +209,7 @@ fun interface VariableFormatter {
             ::number.name to number(),
         )
 
-        private fun parseNumberFormatParams(formatter: NumberFormat, params: Map<String, String>) {
+        private fun parseNumberFormatParams(formatter: NumberFormat, params: Map<String, Any>) {
             params.forEach { (key, value) ->
                 when (key) {
                     "minIntDigits" -> formatter.minimumIntegerDigits = value.toInt()
@@ -217,7 +217,7 @@ fun interface VariableFormatter {
                     "minFracDigits" -> formatter.minimumFractionDigits = value.toInt()
                     "maxFracDigits" -> formatter.maximumFractionDigits = value.toInt()
                     "groupingUsed" -> formatter.isGroupingUsed = value.toBooleanStrict()
-                    "roundingMode" -> formatter.roundingMode = RoundingMode.valueOf(value)
+                    "roundingMode" -> formatter.roundingMode = value.toEnum(RoundingMode::class.java)
                 }
             }
         }
@@ -230,18 +230,18 @@ fun interface VariableFormatter {
 
         private fun createDateTimeFormatParams(
             kind: DateTimeFormatterKind,
-            params: Map<String, String>,
+            params: Map<String, Any>,
         ): DateTimeFormatter {
             var firstFormat: FormatStyle = DEFAULT_FORMAT_STYLE
             var secondFormat: FormatStyle = DEFAULT_FORMAT_STYLE
             params.forEach { (key, value) ->
                 if ("dateStyle" == key && (DateTimeFormatterKind.DATE == kind || DateTimeFormatterKind.DATE_TIME == kind)) {
-                    firstFormat = formatStyle(value)
+                    firstFormat = value.toEnum(FormatStyle::class.java)
                 } else if ("timeStyle" == key && (kind == DateTimeFormatterKind.TIME || kind == DateTimeFormatterKind.DATE_TIME)) {
                     if (DateTimeFormatterKind.DATE_TIME == kind) {
-                        secondFormat = formatStyle(value)
+                        secondFormat = value.toEnum(FormatStyle::class.java)
                     } else {
-                        firstFormat = formatStyle(value)
+                        firstFormat = value.toEnum(FormatStyle::class.java)
                     }
                 }
             }
@@ -253,10 +253,30 @@ fun interface VariableFormatter {
             }
         }
 
-        private fun formatStyle(string: String): FormatStyle = try {
-            FormatStyle.valueOf(string.uppercase(Locale.ENGLISH))
-        } catch (e: IllegalArgumentException) {
-            illegalArgument("Invalid format style: $string")
+        private fun Any.toInt(): Int = when (this) {
+            is Number -> toInt()
+            is String -> Integer.valueOf(this)
+            else -> illegalArgument("Invalid integer value: $this, must be a number or a parsable string")
+        }
+
+        private fun Any.toBooleanStrict(): Boolean = when (this) {
+            is Boolean -> this
+            is String -> when (this.lowercase()) {
+                "true" -> true
+                "false" -> false
+                else -> illegalArgument("Invalid boolean value: $this, must be 'true' or 'false'")
+            }
+            else -> illegalArgument("Invalid boolean value: $this, must be a boolean or a parsable string")
+        }
+
+        private fun <T : Enum<T>> Any.toEnum(cl: Class<T>): T = when {
+            cl.isInstance(this) -> @Suppress("UNCHECKED_CAST") (this as T)
+            this is String -> try {
+                java.lang.Enum.valueOf(cl, this.uppercase(Locale.ENGLISH))
+            } catch (e: IllegalArgumentException) {
+                illegalArgument("Invalid enum value: $this")
+            }
+            else -> illegalArgument("Invalid enum value: $this, must be a ${cl.simpleName} label or a parsable string")
         }
 
         private val DEFAULT_FORMAT_STYLE = FormatStyle.MEDIUM

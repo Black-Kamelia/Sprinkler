@@ -107,7 +107,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          *
          * @return this [Builder]
          */
-        fun clearFormatters(): Builder = withFormatters(HashMap())
+        fun clearFormatters(): Builder = apply { formatters = HashMap() }
 
         /**
          * Sets the policy to use when a key is not found.

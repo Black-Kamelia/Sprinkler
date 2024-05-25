@@ -325,6 +325,40 @@ class TranslatorTest {
     }
 
     @Test
+    fun `formatters are applied to the translation`() {
+        val translator = TranslatorBuilder.create(defaultLocale = Locale.US)
+            .addMap(Locale.US, mapOf("key" to "value {{currency, currency}}"))
+            .build()
+        assertEquals("value $1.00", translator.t("key", mapOf("currency" to 1)))
+    }
+
+    @Test
+    fun `formatters arguments present in translation value are passed to the formatter`() {
+        val translator = TranslatorBuilder.create(defaultLocale = Locale.US)
+            .addMap(Locale.US, mapOf("key" to "value {{currency, currency(maxFracDigits:1)}}"))
+            .build()
+        assertEquals("value $1.0", translator.t("key", mapOf("currency" to 1)))
+    }
+
+    @Test
+    fun `formatters arguments passed in through t are passed to the formatter`() {
+        val translator = TranslatorBuilder.create(defaultLocale = Locale.US)
+            .addMap(Locale.US, mapOf("key" to "value {{currency, currency}}"))
+            .build()
+        assertEquals("value $1.0", translator.t("key", mapOf("currency" to p(1, "maxFracDigits" to 1))))
+    }
+
+    @Test
+    fun `formatters arguments passed in through t override the ones in the translation value`() {
+        val translator = TranslatorBuilder.create(defaultLocale = Locale.US)
+            .addMap(Locale.US, mapOf("key" to "value {{currency, currency(maxFracDigits:1)}}"))
+            .build()
+        assertEquals(
+            "value $1", translator.tn("key", mapOf("currency" to p(1, "maxFracDigits" to 0)))
+        )
+    }
+
+    @Test
     fun `tn overloads coverage`() {
         val t = TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("key" to "value"))
