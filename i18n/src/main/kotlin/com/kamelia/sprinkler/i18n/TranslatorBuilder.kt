@@ -15,19 +15,16 @@ import java.util.Locale
  * Builder class used to create a [Translator]. This class provides several methods to add data to the translator from
  * different sources.
  *
- * TODO
  * There are several points of attention to take into account when using this class:
- * - The sources which are added will only be queried upon the creation of the translator, when calling [build]. That is
- * to say that the construction is lazy and that all the checks and logic is done when calling [build];
  * - The order in which data is added is significant, as it will be used during key duplication resolution, depending on
  * the [DuplicatedKeyResolution] used.
  * - Values passed to this builder are all validated on building, to ensure that the potential variables used in the
  * string respect the [TranslationInterpolationVariable] rules. If a value does not respect these rules, an exception
- * will be thrown when building the translator;
+ * will be thrown when adding the value to the builder.
  *
  * The translators created with this builder will have the following properties:
  * - the created translators are immutable and therefore `thread-safe`.
- * - all methods (of the created translator) returning a translator (e.g. [section][Translator.section],
+ * - all methods returning a translator (e.g. [section][Translator.section],
  * [withNewCurrentLocale][Translator.withNewCurrentLocale]) returns a translator sharing common information with the
  * translator which created it. The methods do not copy the data, meaning that they do not have a significant
  * performance nor memory impact.
@@ -47,6 +44,7 @@ import java.util.Locale
  *
  * @see Translator
  * @see TranslatorConfiguration
+ * @see FormattedValue
  */
 sealed interface TranslatorBuilder {
 
