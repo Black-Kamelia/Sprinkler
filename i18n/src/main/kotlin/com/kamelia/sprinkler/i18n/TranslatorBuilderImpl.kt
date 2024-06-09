@@ -10,6 +10,7 @@ import java.nio.file.Path
 import java.util.IllformedLocaleException
 import java.util.Locale
 import java.util.TreeMap
+import java.util.jar.JarFile
 import java.util.stream.Collectors
 import org.intellij.lang.annotations.Language
 import org.json.JSONException
@@ -59,39 +60,19 @@ internal class TranslatorBuilderImpl private constructor(
         }
     }
 
-    override fun addResource(resourcePath: String, isDirectory: Boolean, resourceClass: Class<*>): TranslatorBuilder =
-        apply {
-            // the resource is a directory, we load all files in it
-            if (isDirectory) {
-                val directoryPath = if (resourcePath.endsWith('/')) resourcePath else "$resourcePath/"
-                val resource = resourceClass.getResource(resourcePath) ?: resourceNotFound(resourcePath, resourceClass)
-                resource.openStream()
-                    .bufferedReader()
-                    .use { stream ->
-                        stream.lines().forEach {
-                            try {
-                                loadResourceFile("$directoryPath$it", resourceClass)
-                            } catch (_: NullPointerException) {
-                                resourceNotFound(it, resourceClass)
-                            }
-                        }
-                    }
-            } else {
-                try {
-                    loadResourceFile(resourcePath, resourceClass)
-                } catch (_: NullPointerException) {
-                    resourceNotFound(resourcePath, resourceClass)
-                }
-            }
-        }
+    override fun addResource(resourcePath: String, resourceClass: Class<*>): TranslatorBuilder = apply {
+        loadResources(resourcePath, resourceClass)
+    }
 
-    private fun resourceNotFound(resourcePath: String, resourceClass: Class<*>): Nothing {
-        val message = if (!resourcePath.startsWith('/') && TranslatorBuilder::class.java == resourceClass) {
-            "Resource file '$resourcePath' not found. Try using an absolute path (leading '/') or a class in the resource package."
-        } else {
-            "Resource file '$resourcePath' not found."
+    override fun addResource(resourcePath: String): TranslatorBuilder = apply {
+        loadResources(resourcePath, null)
+    }
+
+    private fun loadResources(resourcePath: String, resourceClass: Class<*>?) {
+        val cl = resourceClass ?: Class.forName(Exception().stackTrace[2].className)
+        walkJarDirectory(resourcePath, cl).forEach {
+            loadResourceFile(it, cl)
         }
-        throw IllegalArgumentException(message)
     }
 
     override fun addMap(locale: Locale, map: TranslationSourceMap): TranslatorBuilder = apply { addToMap(locale, map) }
@@ -348,6 +329,36 @@ internal class TranslatorBuilderImpl private constructor(
 
         private const val SOURCE_DATA_DOCUMENTATION =
             "For more details about translation source data, see TranslationSourceData typealias documentation"
+
+        private fun walkJarDirectory(directory: String, resourceClass: Class<*>): List<String> {
+            val isAbsolute = directory.startsWith('/')
+            val path = resourceClass
+                .getProtectionDomain()
+                .codeSource
+                .location
+                .path
+
+            val root = if (isAbsolute) {
+                directory.drop(1)
+            } else {
+                val bytes = resourceClass.packageName.split('.')
+                val builder = StringBuilder(resourceClass.packageName.length + 1 + directory.length)
+                bytes.forEach { builder.append(it).append('/') }
+                builder.append(directory)
+                    .toString()
+            }
+            val lastSlashIndex = root.lastIndexOf('/')
+            return JarFile(path).stream().use { file ->
+                file.filter { jarEntry ->
+                    val name = jarEntry.name
+                    if (jarEntry.isDirectory || !name.startsWith(root)) return@filter false
+                    val lastSlash = name.lastIndexOf('/')
+                    lastSlash == lastSlashIndex || lastSlash == root.length
+                }
+                    .map { "/${it.name}" }
+                    .toList()
+            }
+        }
 
     }
 
