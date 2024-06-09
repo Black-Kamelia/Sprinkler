@@ -155,15 +155,15 @@ sealed interface TranslatorBuilder {
     fun addResource(resourcePath: String, resourceClass: Class<*>): TranslatorBuilder
 
     /**
-     * Adds a resource to the builder. The resource is loaded using the class loader of the [TranslatorBuilder] class
+     * Adds a resource to the builder. The resource is loaded using the class loader of the class calling this method
      * and the [resourcePath] parameter. If the resource is not found, an [IllegalArgumentException] will be thrown. The
      * [resourcePath] can represent a file or a directory. If the resource is a directory, all files in it will be
      * loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
      *
-     * **NOTE**: As this method uses the [TranslatorBuilder] class to load the resource, it may not work as expected in
-     * jars if the [TranslatorBuilder] class is not in the same jar as the resource to load. In this case, use the
-     * [addResource] method with an explicit `resourceClass` parameter. The [resourcePath] parameter can be either an
-     * absolute path or a relative path.
+     * **NOTE**: As this method uses the class calling this method to load the resource, it may not work as expected in
+     * jars if the  class is not in the same jar as the resource to load. In this case, use the [addResource] method
+     * with an explicit `resourceClass` parameter. The [resourcePath] parameter can be either an absolute path or a
+     * relative path.
      *
      * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
      *
