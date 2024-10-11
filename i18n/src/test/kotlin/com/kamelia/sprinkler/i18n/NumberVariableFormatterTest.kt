@@ -6,14 +6,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 class NumberVariableFormatterTest {
-
-    @Test
-    fun `number formatter throws a CCE if the number is not a number`() {
-        assertThrows<ClassCastException> {
-            VariableFormatter.number().format("1", Locale.ENGLISH, emptyMap())
-        }
-    }
-
     @Test
     fun `number formatter formats a number input`() {
         val result = VariableFormatter.number().format(1, Locale.US, emptyMap())

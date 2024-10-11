@@ -2,7 +2,7 @@ package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.ExtendedCollectors
 import com.kamelia.sprinkler.util.illegalArgument
-import com.zwendo.restrikt.annotation.PackagePrivate
+import com.zwendo.restrikt2.annotation.PackagePrivate
 import java.util.Locale
 
 @PackagePrivate

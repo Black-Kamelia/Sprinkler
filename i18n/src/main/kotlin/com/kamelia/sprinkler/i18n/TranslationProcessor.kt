@@ -1,10 +1,11 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.VariableResolver
+import com.kamelia.sprinkler.util.assertionFailed
 import com.kamelia.sprinkler.util.illegalArgument
 import com.kamelia.sprinkler.util.interpolate
 import com.kamelia.sprinkler.util.unsafeCast
-import com.zwendo.restrikt.annotation.PackagePrivate
+import com.zwendo.restrikt2.annotation.PackagePrivate
 import java.util.Locale
 import org.intellij.lang.annotations.Language
 
@@ -28,10 +29,9 @@ internal object TranslationProcessor {
         // get the value for the actual key or return null if it doesn't exist
         val value = translations[actualKey] ?: return null
 
-        val context = ProcessingContext(data.configuration.formatters, locale, extraArgs, optionMap)
+        val context = ProcessingContext(data.configuration.formatters.unsafeCast(), locale, extraArgs, optionMap)
         return value.interpolate(context, data.configuration.interpolationDelimiter, customResolver)
     }
-
 
     fun buildKey(key: String, locale: Locale, optionMap: Map<String, Any>, pluralMapper: Plural.Mapper): String {
         if (optionMap.isEmpty()) return key
@@ -64,7 +64,6 @@ internal object TranslationProcessor {
         return builder.toString()
     }
 
-
     private inline fun <reified T> Map<String, Any>.safeType(key: String): T? {
         val value = get(key) ?: return null
         require(value is T) { "Cannot cast $value (${value.javaClass}) to ${T::class.java}" }
@@ -83,7 +82,7 @@ internal object TranslationProcessor {
 
     @PackagePrivate
     internal class ProcessingContext(
-        val formatters: Map<String, VariableFormatter>,
+        val formatters: Map<String, VariableFormatter<Any>>,
         val locale: Locale,
         val interpolationValues: Map<String, Any>,
         val optionMap: Map<String, Any>,
@@ -145,7 +144,7 @@ internal object TranslationProcessor {
         }
 
         override fun resolve(name: String, context: ProcessingContext): String =
-            throw AssertionError("This method should never be called")
+            assertionFailed("This method should never be called")
 
     }
 

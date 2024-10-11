@@ -88,7 +88,7 @@ class TranslatorConfigurationTest {
             .addFormatter("foo", VariableFormatter.date())
             .clearFormatters()
             .build()
-        assertEquals(emptyMap<String, VariableFormatter>(), config.formatters)
+        assertEquals(emptyMap<String, VariableFormatter<*>>(), config.formatters)
     }
 
     @Test

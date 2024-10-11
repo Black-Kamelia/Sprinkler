@@ -20,13 +20,6 @@ class TimeAccessorsVariableFormatterTest {
     }
 
     @Test
-    fun `time formatter throws a CCE if the time is not temporal accessor`() {
-        assertThrows<ClassCastException> {
-            VariableFormatter.time().format("1", Locale.ENGLISH, emptyMap())
-        }
-    }
-
-    @Test
     fun `time formatter formats a temporal accessor input`() {
         val result = VariableFormatter.time().format(LocalTime.of(1, 0), Locale.US, emptyMap())
         assertEquals("1:00:00 AM", result)
@@ -49,13 +42,6 @@ class TimeAccessorsVariableFormatterTest {
     fun `date formatter ignore if an unknown extra args is provided`() {
         assertDoesNotThrow {
             VariableFormatter.date().format(LocalDate.now(), Locale.ENGLISH, mapOf("foo" to "bar"))
-        }
-    }
-
-    @Test
-    fun `date formatter throws a CCE if the date is not temporal accessor`() {
-        assertThrows<ClassCastException> {
-            VariableFormatter.date().format("1", Locale.ENGLISH, emptyMap())
         }
     }
 
@@ -85,13 +71,6 @@ class TimeAccessorsVariableFormatterTest {
     fun `datetime formatter throws an IAE if an unknown extra args is provided`() {
         assertDoesNotThrow {
             VariableFormatter.datetime().format(LocalDateTime.now(), Locale.ENGLISH, mapOf("foo" to "bar"))
-        }
-    }
-
-    @Test
-    fun `datetime formatter throws a CCE if the date is not temporal accessor`() {
-        assertThrows<ClassCastException> {
-            VariableFormatter.datetime().format("1", Locale.ENGLISH, emptyMap())
         }
     }
 

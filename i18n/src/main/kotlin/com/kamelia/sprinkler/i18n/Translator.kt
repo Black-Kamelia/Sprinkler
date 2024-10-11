@@ -265,8 +265,8 @@ interface Translator {
         t(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)
 
     /**
-     * Returns a new [Translator] with the given [key] as root key prefix. The [key] will be prepended to all keys used
-     * to translate values.
+     * Returns a [Translator] with the given [key] as root key prefix (it can return itself after a state mutation,
+     * depending on the implementation). The [key] will be prepended to all keys used to translate values.
      *
      * **NOTE**: This method does not check if the key actually exists in the translations.
      *
@@ -277,17 +277,19 @@ interface Translator {
     fun section(key: TranslationKey): Translator
 
     /**
-     * Returns a new [Translator] with the given [locale] as current locale.
+     * Returns a [Translator] with the given [locale] as current locale (it can return itself after a state mutation,
+     * depending on the implementation).
      *
      * **NOTE**: This method does not check if the [locale] is actually supported by this [Translator].
      *
      * @param locale the new current locale
-     * @return a new [Translator] with the given [locale] as current locale
+     * @return a [Translator] with the given [locale] as current locale
      */
     fun withNewCurrentLocale(locale: Locale): Translator
 
     /**
-     * Returns the root [Translator] version of this [Translator] (the same translator with its prefix set to null).
+     * Returns the root [Translator] version of this [Translator] (it can return itself after a state mutation,
+     * depending on the implementation). The root translator is a translator with its prefix set to null.
      *
      * @return the root [Translator] version of this [Translator]
      */

@@ -8,7 +8,7 @@ class TranslatorBuilderResourceTest {
 
     @Test
     fun `addResource adds the resource to the translator`() {
-        val t = TranslatorBuilder.create().addResource("/builder_test/en.yml", false).build()
+        val t = TranslatorBuilder.create().addResource("/builder_test/en.yml").build()
         assertEquals("foo", t.t("test"))
     }
 
@@ -16,7 +16,7 @@ class TranslatorBuilderResourceTest {
     fun `addResource throws an IAE if the resource file does not exist`() {
         val builder = TranslatorBuilder.create()
         assertThrows<IllegalArgumentException> {
-            builder.addResource("builder_test/does_not_exist.yml", false)
+            builder.addResource("builder_test/does_not_exist.yml")
         }
     }
 
@@ -24,7 +24,7 @@ class TranslatorBuilderResourceTest {
     fun `addResource throws an IAE if the resource directory does not exist`() {
         val builder = TranslatorBuilder.create()
         assertThrows<IllegalArgumentException> {
-            builder.addResource("/builder_test/does_not_exist/", true, Translator::class.java)
+            builder.addResource("/builder_test/does_not_exist/")
         }
     }
 

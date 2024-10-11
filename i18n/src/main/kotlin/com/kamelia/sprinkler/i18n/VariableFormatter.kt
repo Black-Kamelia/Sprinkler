@@ -1,6 +1,5 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.util.castOrNull
 import com.kamelia.sprinkler.util.illegalArgument
 import java.math.RoundingMode
 import java.text.NumberFormat
@@ -22,7 +21,7 @@ import java.util.Locale
  * - [VariableFormatter.datetime]
  * - [VariableFormatter.number]
  */
-fun interface VariableFormatter {
+fun interface VariableFormatter<T> {
 
     /**
      * Formats the given [value] to an [Appendable] using the given [locale] and [extraArgs].
@@ -33,7 +32,7 @@ fun interface VariableFormatter {
      * @param extraArgs the extra arguments to use
      * @throws RuntimeException if an error occurs during formatting
      */
-    fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, Any>)
+    fun format(appendable: Appendable, value: T, locale: Locale, extraArgs: Map<String, Any>)
 
     companion object {
 
@@ -49,15 +48,12 @@ fun interface VariableFormatter {
          * @return A [VariableFormatter] that formats the variable as a currency using the locale.
          */
         @JvmStatic
-        fun currency(): VariableFormatter = object : VariableFormatter {
+        fun currency(): VariableFormatter<Number> = object : VariableFormatter<Number> {
 
-            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, Any>) {
-                val amount = value.castOrNull<Number>()?.toDouble()
-                    ?: throw ClassCastException("The value ($value) must be of type Number")
-
+            override fun format(appendable: Appendable, value: Number, locale: Locale, extraArgs: Map<String, Any>) {
                 val inner = NumberFormat.getCurrencyInstance(locale)
                 parseNumberFormatParams(inner, extraArgs)
-                appendable.append(inner.format(amount))
+                appendable.append(inner.format(value))
             }
 
             override fun toString(): String = "VariableFormatter.currency()"
@@ -77,14 +73,16 @@ fun interface VariableFormatter {
          * @return A [VariableFormatter] that formats the variable as a readable date using the locale.
          */
         @JvmStatic
-        fun date(): VariableFormatter = object : VariableFormatter {
+        fun date(): VariableFormatter<TemporalAccessor> = object : VariableFormatter<TemporalAccessor> {
 
-            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, Any>) {
-                val date = value.castOrNull<TemporalAccessor>()
-                    ?: throw ClassCastException("The value ($value) must be of type TemporalAccessor")
-
+            override fun format(
+                appendable: Appendable,
+                value: TemporalAccessor,
+                locale: Locale,
+                extraArgs: Map<String, Any>,
+            ) {
                 val inner = createDateTimeFormatParams(DateTimeFormatterKind.DATE, extraArgs).localizedBy(locale)
-                inner.formatTo(date, appendable)
+                inner.formatTo(value, appendable)
             }
 
             override fun toString(): String = "VariableFormatter.date()"
@@ -104,14 +102,16 @@ fun interface VariableFormatter {
          * @return A [VariableFormatter] that formats the variable as a readable date using the locale.
          */
         @JvmStatic
-        fun time(): VariableFormatter = object : VariableFormatter {
+        fun time(): VariableFormatter<TemporalAccessor> = object : VariableFormatter<TemporalAccessor> {
 
-            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, Any>) {
-                val time = value.castOrNull<TemporalAccessor>()
-                    ?: throw ClassCastException("The value ($value) must be of type TemporalAccessor")
-
+            override fun format(
+                appendable: Appendable,
+                value: TemporalAccessor,
+                locale: Locale,
+                extraArgs: Map<String, Any>,
+            ) {
                 val inner = createDateTimeFormatParams(DateTimeFormatterKind.TIME, extraArgs).localizedBy(locale)
-                inner.formatTo(time, appendable)
+                inner.formatTo(value, appendable)
             }
 
             override fun toString(): String = "VariableFormatter.time()"
@@ -131,14 +131,11 @@ fun interface VariableFormatter {
          * @return A [VariableFormatter] that formats the variable as a readable date using the locale.
          */
         @JvmStatic
-        fun datetime(): VariableFormatter = object : VariableFormatter {
+        fun datetime(): VariableFormatter<TemporalAccessor> = object : VariableFormatter<TemporalAccessor> {
 
-            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, Any>) {
-                val dateTime = value.castOrNull<TemporalAccessor>()
-                    ?: throw ClassCastException("The value ($value) must be of type TemporalAccessor")
-
+            override fun format(appendable: Appendable, value: TemporalAccessor, locale: Locale, extraArgs: Map<String, Any>) {
                 val inner = createDateTimeFormatParams(DateTimeFormatterKind.DATE_TIME, extraArgs).localizedBy(locale)
-                inner.formatTo(dateTime, appendable)
+                inner.formatTo(value, appendable)
             }
 
             override fun toString(): String = "VariableFormatter.datetime()"
@@ -174,15 +171,12 @@ fun interface VariableFormatter {
          * @return A [VariableFormatter] that formats the variable as a readable number using the locale.
          */
         @JvmStatic
-        fun number(): VariableFormatter = object : VariableFormatter {
+        fun number(): VariableFormatter<Number> = object : VariableFormatter<Number> {
 
-            override fun format(appendable: Appendable, value: Any, locale: Locale, extraArgs: Map<String, Any>) {
-                val number = value.castOrNull<Number>()
-                    ?: throw ClassCastException("The value ($value) must be of type Number")
-
+            override fun format(appendable: Appendable, value: Number, locale: Locale, extraArgs: Map<String, Any>) {
                 val inner = NumberFormat.getInstance(locale)
                 parseNumberFormatParams(inner, extraArgs)
-                appendable.append(inner.format(number))
+                appendable.append(inner.format(value))
             }
 
             override fun toString(): String = "VariableFormatter.number()"
@@ -198,10 +192,9 @@ fun interface VariableFormatter {
          * @return the map of all the built-in variable formatters
          */
         @JvmStatic
-        fun builtins(): Map<String, VariableFormatter> = mutableBuiltins()
+        fun builtins(): Map<String, VariableFormatter<out Any>> = java.util.Map.copyOf(mutableBuiltins())
 
-
-        internal fun mutableBuiltins(): MutableMap<String, VariableFormatter> = hashMapOf(
+        internal fun mutableBuiltins(): MutableMap<String, VariableFormatter<out Any>> = hashMapOf(
             ::currency.name to currency(),
             ::date.name to date(),
             ::time.name to time(),
@@ -254,7 +247,7 @@ fun interface VariableFormatter {
         }
 
         private fun Any.toInt(): Int = when (this) {
-            is Number -> toInt()
+            is Int -> this
             is String -> Integer.valueOf(this)
             else -> illegalArgument("Invalid integer value: $this, must be a number or a parsable string")
         }

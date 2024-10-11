@@ -2,7 +2,7 @@ package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.i18n.TranslatorConfiguration.Companion.builder
 import com.kamelia.sprinkler.util.VariableDelimiter
-import com.zwendo.restrikt.annotation.PackagePrivate
+import com.zwendo.restrikt2.annotation.PackagePrivate
 import java.util.Locale
 
 /**
@@ -17,7 +17,7 @@ import java.util.Locale
 class TranslatorConfiguration @PackagePrivate internal constructor(
     internal val interpolationDelimiter: VariableDelimiter,
     internal val pluralMapper: Plural.Mapper,
-    internal val formatters: Map<String, VariableFormatter>,
+    internal val formatters: Map<String, VariableFormatter<out Any>>,
     internal val missingKeyPolicy: MissingKeyPolicy,
 ) {
 
@@ -48,7 +48,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          *
          * @see VariableFormatter
          */
-        private var formatters: MutableMap<String, VariableFormatter> = VariableFormatter.mutableBuiltins()
+        private var formatters: MutableMap<String, VariableFormatter<out Any>> = VariableFormatter.mutableBuiltins()
 
         /**
          * The policy to use when a key is not found.
@@ -88,7 +88,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          * @param formatters the map to use
          * @return this [Builder]
          */
-        fun withFormatters(formatters: Map<String, VariableFormatter>): Builder = apply { this.formatters = HashMap(formatters) }
+        fun withFormatters(formatters: Map<String, VariableFormatter<out Any>>): Builder = apply { this.formatters = HashMap(formatters) }
 
         /**
          * Adds a formatter to the map used to find formatters using their name during variable interpolation. In case
@@ -98,7 +98,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          * @param formatter the formatter to add
          * @return this [Builder]
          */
-        fun addFormatter(name: String, formatter: VariableFormatter): Builder = apply {
+        fun addFormatter(name: String, formatter: VariableFormatter<out Any>): Builder = apply {
             formatters[name] = formatter
         }
 

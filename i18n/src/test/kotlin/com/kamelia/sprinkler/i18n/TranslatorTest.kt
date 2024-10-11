@@ -354,7 +354,7 @@ class TranslatorTest {
             .addMap(Locale.US, mapOf("key" to "value {{currency, currency(maxFracDigits:1)}}"))
             .build()
         assertEquals(
-            "value $1", translator.tn("key", mapOf("currency" to p(1, "maxFracDigits" to 0)))
+            "value $1", translator.tn("key", mapOf("currency" to p(1, mapOf("maxFracDigits" to 0))))
         )
     }
 

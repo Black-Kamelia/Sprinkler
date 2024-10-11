@@ -16,7 +16,7 @@ fun absoluteResource(vararg path: String): Path {
 
 private sealed interface ResourceAccessor
 
-fun VariableFormatter.format(value: Any, locale: Locale, extraArgs: Map<String, String>): String {
+fun <T> VariableFormatter<T>.format(value: T, locale: Locale, extraArgs: Map<String, String>): String {
     val builder = StringBuilder()
     format(builder, value, locale, extraArgs)
     return builder.toString()

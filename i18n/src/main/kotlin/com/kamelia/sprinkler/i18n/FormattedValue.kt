@@ -2,7 +2,7 @@
 
 package com.kamelia.sprinkler.i18n
 
-import com.zwendo.restrikt.annotation.PackagePrivate
+import com.zwendo.restrikt2.annotation.PackagePrivate
 
 /**
  * Represents a value and the parameters of the format to be applied to it. It is used to pass parameters to the

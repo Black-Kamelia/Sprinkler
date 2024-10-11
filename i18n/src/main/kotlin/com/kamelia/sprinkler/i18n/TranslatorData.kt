@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
-import com.zwendo.restrikt.annotation.PackagePrivate
+import com.zwendo.restrikt2.annotation.PackagePrivate
 import java.util.Locale
 
 @PackagePrivate
