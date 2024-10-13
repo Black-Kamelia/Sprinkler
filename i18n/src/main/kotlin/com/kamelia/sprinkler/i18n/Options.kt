@@ -60,7 +60,7 @@ object Options {
      *     val value = translator.t(
      *         "greetings",
      *         mapOf(
-     *             Options.OPTIONS to mapOf(
+     *             options(
      *                 Options.CONTEXT to (if (isMale) "male" else "female")
      *             )
      *         )
@@ -100,7 +100,7 @@ object Options {
      *    val value = translator.t(
      *        "item",
      *        mapOf(
-     *            Options.OPTIONS to mapOf(
+     *            options(
      *                Options.COUNT to count
      *            )
      *        )
@@ -142,7 +142,7 @@ object Options {
      *    val value = translator.t(
      *        "item",
      *        mapOf(
-     *            Options.OPTIONS to mapOf(
+     *            options(
      *                Options.COUNT to count,
      *                Options.ORDINAL to true
      *            )

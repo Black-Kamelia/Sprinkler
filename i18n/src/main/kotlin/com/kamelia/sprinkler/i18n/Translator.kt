@@ -265,8 +265,8 @@ interface Translator {
         t(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)
 
     /**
-     * Returns a new [Translator] with the given [key] as root key prefix. The [key] will be prepended to all keys used
-     * to translate values.
+     * Returns a [Translator] with the given [key] as root key prefix (it can return itself after a state mutation,
+     * depending on the implementation). The [key] will be prepended to all keys used to translate values.
      *
      * **NOTE**: This method does not check if the key actually exists in the translations.
      *
@@ -277,20 +277,19 @@ interface Translator {
     fun section(key: TranslationKey): Translator
 
     /**
-     * Returns a new [Translator] with the given [locale] as current locale. This operation is lightweight (it simply
-     * uses a translation map which is shared between all instances), meaning that it can be used frequently without any
-     * performance impact.
+     * Returns a [Translator] with the given [locale] as current locale (it can return itself after a state mutation,
+     * depending on the implementation).
      *
      * **NOTE**: This method does not check if the [locale] is actually supported by this [Translator].
      *
      * @param locale the new current locale
-     * @return a new [Translator] with the given [locale] as current locale
+     * @return a [Translator] with the given [locale] as current locale
      */
     fun withNewCurrentLocale(locale: Locale): Translator
 
     /**
-     * Returns the root [Translator] version of this [Translator] (the same translator with its prefix set to null). If
-     * this [Translator] is already a root [Translator], it will return itself.
+     * Returns the root [Translator] version of this [Translator] (it can return itself after a state mutation,
+     * depending on the implementation). The root translator is a translator with its prefix set to null.
      *
      * @return the root [Translator] version of this [Translator]
      */
@@ -305,19 +304,5 @@ interface Translator {
      * @return a map containing all translations for all locales
      */
     fun toMap(): Map<Locale, Map<TranslationKey, String>>
-
-    companion object {
-
-        /**
-         * Returns a new [TranslatorBuilder] with the given [defaultLocale]. The [defaultLocale] will be used as the
-         * default locale for all [Translator]s built by the returned [TranslatorBuilder].
-         *
-         * @param defaultLocale the default locale
-         * @return a new [TranslatorBuilder] with the given [defaultLocale]
-         */
-        @JvmStatic
-        fun builder(defaultLocale: Locale): TranslatorBuilder = TranslatorBuilder(defaultLocale)
-
-    }
 
 }

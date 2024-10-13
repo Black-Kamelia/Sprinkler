@@ -1,4 +1,6 @@
-import java.util.*
+import java.util.Base64
+import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     val kotlinVersion: String by System.getProperties()
@@ -9,11 +11,11 @@ plugins {
     signing
     id("org.jetbrains.kotlinx.kover") version koverVersion
     kotlin("jvm") version kotlinVersion
-    id("com.zwendo.restrikt") version restriktVersion
+    id("com.zwendo.restrikt2") version restriktVersion
 }
 
 val jvmVersion: String by project
-val rootProjectName = rootProject.name.toLowerCase()
+val rootProjectName = rootProject.name.lowercase()
 
 group = findProp<String>("projectGroup")
 
@@ -22,15 +24,15 @@ val props = Properties().apply { load(file("gradle.properties").reader()) }
 fun String.base64Decode() = String(Base64.getDecoder().decode(this))
 
 val restriktVersion: String by System.getProperties()
-subprojects {
+allprojects {
     apply(plugin = "java")
     apply(plugin = "kotlin")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
-    apply(plugin = "com.zwendo.restrikt")
+    apply(plugin = "com.zwendo.restrikt2")
     apply(plugin = "org.jetbrains.kotlinx.kover")
 
-    val projectName = project.name.toLowerCase()
+    val projectName = project.name.lowercase()
     val projectVersion = findProp("$projectName.version") ?: "0.1.0"
 
     repositories {
@@ -39,8 +41,9 @@ subprojects {
 
     dependencies {
         val junitVersion: String by project
+        val restriktAnnotationsVersion: String by project
 
-        implementation("com.zwendo:restrikt-annotation:$restriktVersion")
+        implementation("com.zwendo", "restrikt2-annotations", restriktAnnotationsVersion)
         testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
         testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
         testImplementation("org.junit.jupiter", "junit-jupiter-params", junitVersion)
@@ -64,8 +67,8 @@ subprojects {
     }
 
     kover {
-        excludeSourceSets {
-            names("jmh")
+        currentProject {
+            sources.excludedSourceSets = setOf("jmh")
         }
     }
 
@@ -90,11 +93,10 @@ subprojects {
         }
 
         setupKotlinCompilation {
-            kotlinOptions {
-                jvmTarget = jvmVersion
+            compilerOptions {
+                jvmTarget.set(JvmTarget.fromTarget(jvmVersion))
                 freeCompilerArgs = listOf(
                     "-Xjvm-default=all",
-                    "-Xlambdas=indy",
                     "-Xsam-conversions=indy",
                 )
             }

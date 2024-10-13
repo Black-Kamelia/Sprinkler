@@ -108,6 +108,4 @@ enum class Plural {
 
     }
 
-    internal val representation: String = name.lowercase()
-
 }
