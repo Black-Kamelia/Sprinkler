@@ -455,9 +455,9 @@ sealed interface TranslatorBuilder {
         @JvmOverloads
         fun create(
             configuration: TranslatorConfiguration = TranslatorConfiguration.builder().build(),
+            defaultLocale: Locale = Locale.ENGLISH,
             ignoreMissingKeysOnBuild: Boolean = false,
             duplicatedKeyResolution: DuplicatedKeyResolution = DuplicatedKeyResolution.FAIL,
-            defaultLocale: Locale = Locale.ENGLISH,
             defaultCharset: Charset = Charsets.UTF_8,
         ): TranslatorBuilder = TranslatorBuilderImpl.create(
             configuration,

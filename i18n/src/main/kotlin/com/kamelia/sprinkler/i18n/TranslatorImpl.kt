@@ -67,7 +67,7 @@ internal class TranslatorImpl private constructor(
                 map.toMap()
             }
         } else {
-            data.translations.mapValues { (_, map) -> // deep copy with filtering and key prefix removal
+            data.translations.mapValuesTo(LinkedHashMap(data.translations.size)) { (_, map) -> // deep copy with filtering and key prefix removal
                 map.entries
                     .stream() // the stream is ordered as the underlying set is a LinkedHashSet
                     // we must check that the char at root.length is a dot to avoid removing keys that start with the
@@ -101,10 +101,12 @@ internal class TranslatorImpl private constructor(
         options: Map<String, Any>,
         fallbacks: Array<out String>,
     ): String? {
-        TranslationProcessor.translate(data, key, options, locale)?.let { return it }
+        val tr = TranslationProcessor.translate(data, key, options, locale)
+        if (tr != null) return tr
 
         fallbacks.forEach { fallback ->
-            TranslationProcessor.translate(data, fallback, options, locale)?.let { return it }
+            val fb = TranslationProcessor.translate(data, fallback, options, locale)
+            if (fb != null) return fb
         }
 
         return null
