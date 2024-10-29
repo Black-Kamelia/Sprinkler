@@ -1,14 +1,10 @@
 package com.kamelia.sprinkler.i18n
 
-import java.util.Locale
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import java.util.*
 
 class TranslatorTest {
 
@@ -345,7 +341,7 @@ class TranslatorTest {
         val translator = TranslatorBuilder.create(defaultLocale = Locale.US)
             .addMap(Locale.US, mapOf("key" to "value {{currency, currency}}"))
             .build()
-        assertEquals("value $1.0", translator.t("key", mapOf("currency" to p(1, "maxFracDigits" to 1))))
+        assertEquals("value $1.0", translator.t("key", mapOf("currency" to formattedWith(1, "maxFracDigits" to 1))))
     }
 
     @Test
@@ -354,7 +350,7 @@ class TranslatorTest {
             .addMap(Locale.US, mapOf("key" to "value {{currency, currency(maxFracDigits:1)}}"))
             .build()
         assertEquals(
-            "value $1", translator.tn("key", mapOf("currency" to p(1, mapOf("maxFracDigits" to 0))))
+            "value $1", translator.tn("key", mapOf("currency" to formattedWith(1, mapOf("maxFracDigits" to 0))))
         )
     }
 

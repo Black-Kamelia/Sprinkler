@@ -1,41 +1,41 @@
 package com.kamelia.sprinkler.i18n
 
-import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.*
 
 class PluralTest {
 
     @Test
     fun `the defaultMapper mapPlural returns the values of the English language`() {
-        val mapper = Plural.defaultMapper()
-        assertEquals(Plural.ONE, mapper.mapPlural(Locale.ENGLISH, 1))
+        val mapper = Plural.englishMapper()
+        assertEquals(Plural.ONE, mapper.mapCardinal(Locale.ENGLISH, 1))
         repeat(10_000) { count ->
             if (count == 1) return@repeat
-            assertEquals(Plural.OTHER, mapper.mapPlural(Locale.ENGLISH, count))
+            assertEquals(Plural.OTHER, mapper.mapCardinal(Locale.ENGLISH, count))
         }
     }
 
     @Test
     fun `the defaultMapper mapPlural returns the values of the English language even if the locale is not English`() {
-        val mapper = Plural.defaultMapper()
-        assertEquals(Plural.ONE, mapper.mapPlural(Locale.JAPAN, 1))
+        val mapper = Plural.englishMapper()
+        assertEquals(Plural.ONE, mapper.mapCardinal(Locale.JAPAN, 1))
         repeat(10_000) { count ->
             if (count == 1) return@repeat
-            assertEquals(Plural.OTHER, mapper.mapPlural(Locale.GERMAN, count))
+            assertEquals(Plural.OTHER, mapper.mapCardinal(Locale.GERMAN, count))
         }
     }
 
     @Test
     fun `the defaultMapp mapPlural throws an IAE if the count is negative`() {
-        val mapper = Plural.defaultMapper()
-        assertThrows<IllegalArgumentException> { mapper.mapPlural(Locale.ENGLISH, -1) }
+        val mapper = Plural.englishMapper()
+        assertThrows<IllegalArgumentException> { mapper.mapCardinal(Locale.ENGLISH, -1) }
     }
 
     @Test
     fun `the defaultMapper mapOrdinal returns the values of the English language`() {
-        val mapper = Plural.defaultMapper()
+        val mapper = Plural.englishMapper()
         repeat(10_000) { count ->
             if (count == 0) return@repeat
             val plural = mapper.mapOrdinal(Locale.ENGLISH, count)
@@ -50,7 +50,7 @@ class PluralTest {
 
     @Test
     fun `the defaultMapper mapOrdinal returns the values of the English language even if the locale is not English`() {
-        val mapper = Plural.defaultMapper()
+        val mapper = Plural.englishMapper()
         repeat(10_000) { count ->
             if (count == 0) return@repeat
             val plural = mapper.mapOrdinal(Locale.JAPAN, count)
@@ -65,14 +65,14 @@ class PluralTest {
 
     @Test
     fun `the defaultMapper mapOrdinal throws an IAE if the count is negative or zero`() {
-        val mapper = Plural.defaultMapper()
+        val mapper = Plural.englishMapper()
         assertThrows<IllegalArgumentException> { mapper.mapOrdinal(Locale.ENGLISH, -1) }
         assertThrows<IllegalArgumentException> { mapper.mapOrdinal(Locale.ENGLISH, 0) }
     }
 
     @Test
     fun `the defaultMapper toString returns the name of the class`() {
-        val mapper = Plural.defaultMapper()
+        val mapper = Plural.englishMapper()
         assertEquals("Plural.defaultMapper()", mapper.toString())
     }
 

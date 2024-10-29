@@ -1,6 +1,6 @@
-import java.util.Base64
-import java.util.Properties
+
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.*
 
 plugins {
     val kotlinVersion: String by System.getProperties()
@@ -47,6 +47,10 @@ allprojects {
         testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
         testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
         testImplementation("org.junit.jupiter", "junit-jupiter-params", junitVersion)
+    }
+
+    restrikt2 {
+        enabled = false
     }
 
     java {

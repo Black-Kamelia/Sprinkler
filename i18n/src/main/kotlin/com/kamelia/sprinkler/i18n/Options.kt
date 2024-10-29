@@ -1,9 +1,12 @@
 @file:JvmName("OptionUtils")
+@file:HideFromJava
 
 package com.kamelia.sprinkler.i18n
 
 
-import com.kamelia.sprinkler.i18n.Options.OPTIONS
+import com.kamelia.sprinkler.i18n.Options.COUNT
+import com.zwendo.restrikt2.annotation.HideFromJava
+import com.zwendo.restrikt2.annotation.HideFromKotlin
 
 /**
  * Class defining the options that can be passed as extra arguments during translations.
@@ -33,14 +36,6 @@ import com.kamelia.sprinkler.i18n.Options.OPTIONS
 object Options {
 
     /**
-     * The root key for options in extra arguments.
-     *
-     * Valid values:
-     * - [Map] of [String] to [Any].
-     */
-    const val OPTIONS = "options"
-
-    /**
      * The context of the translation. It can be used to disambiguate translations.
      *
      * Valid values:
@@ -60,9 +55,7 @@ object Options {
      *     val value = translator.t(
      *         "greetings",
      *         mapOf(
-     *             options(
-     *                 Options.CONTEXT to (if (isMale) "male" else "female")
-     *             )
+     *             Options.CONTEXT to (if (isMale) "male" else "female")
      *         )
      *     )
      *     println(value)
@@ -77,7 +70,7 @@ object Options {
      * @see Plural
      * @see COUNT
      */
-    const val CONTEXT = "context"
+    const val CONTEXT = "_context"
 
     /**
      * The count value of the translation, used to disambiguate plural forms.
@@ -99,11 +92,7 @@ object Options {
      * fun items(count: Int) {
      *    val value = translator.t(
      *        "item",
-     *        mapOf(
-     *            options(
-     *                Options.COUNT to count
-     *            )
-     *        )
+     *        mapOf(Options.COUNT to count)
      *    )
      *    println(value)
      * }
@@ -117,7 +106,7 @@ object Options {
      * @see Plural
      * @see CONTEXT
      */
-    const val COUNT = "count"
+    const val COUNT = "_count"
 
     /**
      * Whether the count value should be treated as an ordinal number. It can be used to disambiguate ordinal forms.
@@ -142,10 +131,8 @@ object Options {
      *    val value = translator.t(
      *        "item",
      *        mapOf(
-     *            options(
-     *                Options.COUNT to count,
-     *                Options.ORDINAL to true
-     *            )
+     *            Options.COUNT to count,
+     *            Options.ORDINAL to true
      *        )
      *    )
      *    println(value)
@@ -157,24 +144,35 @@ object Options {
      * **NOTE**: The value is right before the [plural][Plural] value (e.g. a possible key with
      * `key_male_ordinal_one`).
      */
-    const val ORDINAL = "ordinal"
+    const val ORDINAL = "_ordinal"
+
+
+    @JvmStatic
+    @HideFromKotlin
+    fun count(count: Long): Map.Entry<String, Any> = java.util.Map.entry(COUNT, count)
+
+    @JvmStatic
+    @HideFromKotlin
+    fun count(count: Double): Map.Entry<String, Any> = java.util.Map.entry(COUNT, count)
+
+    @JvmStatic
+    @HideFromKotlin
+    fun context(context: String): Map.Entry<String, Any> = java.util.Map.entry(CONTEXT, context)
+
+    @JvmStatic
+    @HideFromKotlin
+    fun ordinal(value: Boolean): Map.Entry<String, Any> = java.util.Map.entry(ORDINAL, value)
+
+    @JvmStatic
+    @HideFromKotlin
+    fun ordinal(): Map.Entry<String, Any> = ordinal(true)
 
 }
 
-/**
- * Shorthand method to create a [Pair] of [Options.OPTIONS] and a [Map] of [String] to [Any].
- *
- * Here is an example:
- * ```
- * val translator: Translator = ...
- * translator.t(
- *    "my.translation.key",
- *    mapOf(options(Options.CONTEXT to "my-context"))
- * )
- * ```
- *
- * @param pairs the pairs to put in the map
- * @return the created pair
- */
-@Suppress("NOTHING_TO_INLINE")
-inline fun options(vararg pairs: Pair<String, Any>): Pair<String, Map<String, Any>> = OPTIONS to mapOf(*pairs)
+fun count(count: Long): Pair<String, Any> = COUNT to count
+
+fun count(count: Double): Pair<String, Any> = COUNT to count
+
+fun context(context: String): Pair<String, Any> = Options.CONTEXT to context
+
+fun ordinal(value: Boolean = true): Pair<String, Any> = Options.ORDINAL to value

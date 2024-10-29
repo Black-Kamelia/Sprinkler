@@ -1,73 +1,75 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.util.VariableResolver
-import com.kamelia.sprinkler.util.assertionFailed
-import com.kamelia.sprinkler.util.illegalArgument
-import com.kamelia.sprinkler.util.interpolate
-import com.kamelia.sprinkler.util.unsafeCast
+import com.kamelia.sprinkler.util.*
 import com.zwendo.restrikt2.annotation.PackagePrivate
-import java.util.Locale
 import org.intellij.lang.annotations.Language
+import java.util.*
 
 @PackagePrivate
 internal object TranslationProcessor {
 
     fun translate(data: TranslatorData, key: String, extraArgs: Map<String, Any>, locale: Locale): String? {
-        val optionArg = extraArgs[Options.OPTIONS] ?: emptyMap<String, Any>()
-        require(optionArg is Map<*, *>) {
-            "The '${Options.OPTIONS}' argument is reserved and must be a map, but was ${optionArg.javaClass}"
-        }
-
-        val optionMap = optionArg.unsafeCast<Map<String, Any>>()
-
         // first, get the translations for the given locale, or return null if they don't exist
         val translations = data.translations[locale] ?: return null
 
         // build the actual key with the options
-        val actualKey = buildKey(key, locale, optionMap, data.configuration.pluralMapper)
+        val actualKey = buildKey(key, extraArgs, data.pluralMapper(locale))
 
         // get the value for the actual key or return null if it doesn't exist
         val value = translations[actualKey] ?: return null
 
-        val context = ProcessingContext(data.configuration.formatters.unsafeCast(), locale, extraArgs, optionMap)
-        return value.interpolate(context, data.configuration.interpolationDelimiter, customResolver)
+        val context = ProcessingContext(data.formatters.unsafeCast(), locale, extraArgs)
+        return value.interpolate(context, data.interpolationDelimiter, customResolver)
     }
 
-    fun buildKey(key: String, locale: Locale, optionMap: Map<String, Any>, pluralMapper: Plural.Mapper): String {
+    fun buildKey(key: String, optionMap: Map<String, Any>, pluralMapper: Plural.Mapper): String {
         if (optionMap.isEmpty()) return key
-
-        val interpolationContext = optionMap.safeType<String>(Options.CONTEXT)
-        val ordinal = optionMap.safeType<Boolean>(Options.ORDINAL) ?: false
-        val pluralValue = optionMap.safeType<Int>(Options.COUNT)?.let { count ->
-            if (ordinal) {
-                pluralMapper.mapOrdinal(locale, count)
-            } else {
-                pluralMapper.mapPlural(locale, count)
-            }.name.lowercase()
-        }
 
         val builder = StringBuilder(key)
 
+        val interpolationContext = optionMap.context()
         if (interpolationContext != null) {
             builder.append("_")
                 .append(interpolationContext)
         }
 
+
+        val ordinal = optionMap.ordinal()
+        val pluralValue = optionMap.count(ordinal, pluralMapper)
         if (pluralValue != null) {
             if (ordinal) {
                 builder.append("_ordinal")
             }
             builder.append("_")
-                .append(pluralValue)
+                .append(pluralValue.representation)
         }
 
         return builder.toString()
     }
 
-    private inline fun <reified T> Map<String, Any>.safeType(key: String): T? {
-        val value = get(key) ?: return null
-        require(value is T) { "Cannot cast $value (${value.javaClass}) to ${T::class.java}" }
-        return value
+    private fun Map<String, Any>.context(): String? {
+        val context = get(Options.CONTEXT) ?: return null
+        val actualContext = if (context is FormattedValue) context.value else context
+        require(actualContext is String) { "Context must be a string but was ${actualContext::class.java}" }
+        return actualContext
+    }
+
+    private fun Map<String, Any>.ordinal(): Boolean {
+        val ordinal = get(Options.ORDINAL) ?: return false
+        val actualOrdinal = if (ordinal is FormattedValue) ordinal.value else ordinal
+        require(actualOrdinal is Boolean) { "Ordinal must be a boolean but was ${actualOrdinal::class.java}" }
+        return actualOrdinal
+    }
+
+    private fun Map<String, Any>.count(ordinal: Boolean, pluralMapper: Plural.Mapper): Plural? {
+        val count = get(Options.COUNT) ?: return null
+        val actualCount = if (count is FormattedValue) count.value else count
+        require(actualCount is Number) { "Count must be a number but was ${actualCount::class.java}" }
+        return if (ordinal) {
+            pluralMapper.mapOrdinal(actualCount)
+        } else {
+            pluralMapper.mapCardinal(actualCount)
+        }
     }
 
     /**
@@ -82,10 +84,9 @@ internal object TranslationProcessor {
 
     @PackagePrivate
     internal class ProcessingContext(
-        val formatters: Map<String, VariableFormatter<Any>>,
+        val formatters: (String) -> VariableFormatter<Any>,
         val locale: Locale,
-        val interpolationValues: Map<String, Any>,
-        val optionMap: Map<String, Any>,
+        val extraArgs: Map<String, Any>,
     )
 
     init {
@@ -109,8 +110,8 @@ internal object TranslationProcessor {
             // '!!' is ok, because values are validated on translator creation
             val (_, variableName, formatName, formatParams) = generalSplit.matchEntire(name)!!.groupValues
 
-            val variableValue = context.interpolationValues[variableName]
-                ?: context.optionMap[variableName]
+            val variableValue = context.extraArgs[variableName]
+                ?: context.extraArgs["_$variableName"]
                 ?: illegalArgument("variable '$variableName' not found")
 
             var formatPassedParams = emptyMap<String, Any>()
@@ -140,7 +141,7 @@ internal object TranslationProcessor {
                 }
             }
             // same as above, '!!' is ok due to pre-validation
-            context.formatters[formatName]!!.format(builder, actualValue, context.locale, paramMap)
+            context.formatters(formatName).format(builder, actualValue, context.locale, paramMap)
         }
 
         override fun resolve(name: String, context: ProcessingContext): String =

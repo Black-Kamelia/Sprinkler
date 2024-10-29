@@ -1,9 +1,9 @@
 package com.kamelia.sprinkler.i18n
 
-import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.*
 
 class TranslatorConfigurationTest {
 
@@ -31,7 +31,7 @@ class TranslatorConfigurationTest {
     @Test
     fun `interpolationDelimiter is used for interpolation`() {
         val config = TranslatorConfiguration.builder()
-            .setInterpolationDelimiter(TranslatorConfiguration.InterpolationDelimiter.create("[", "]"))
+            .withInterpolationDelimiter(TranslatorConfiguration.InterpolationDelimiter.create("[", "]"))
             .build()
         val translator = TranslatorBuilder.create(configuration = config, defaultLocale = Locale.ENGLISH)
             .addMap(Locale.ENGLISH, mapOf("interpolation" to "This is a [value]."))

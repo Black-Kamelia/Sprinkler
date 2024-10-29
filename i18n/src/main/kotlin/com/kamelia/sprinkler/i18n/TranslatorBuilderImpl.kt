@@ -1,31 +1,29 @@
 package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.i18n.Plural.Companion.builtinMappers
 import com.kamelia.sprinkler.i18n.TranslatorBuilder.Companion.keyRegex
-import com.kamelia.sprinkler.util.ExtendedCollectors
-import com.kamelia.sprinkler.util.assertionFailed
-import com.kamelia.sprinkler.util.illegalArgument
+import com.kamelia.sprinkler.util.*
 import com.zwendo.restrikt2.annotation.PackagePrivate
-import java.nio.charset.Charset
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.IllformedLocaleException
-import java.util.Locale
-import java.util.TreeMap
-import java.util.jar.JarFile
-import java.util.stream.Collectors
 import org.intellij.lang.annotations.Language
 import org.json.JSONException
 import org.json.JSONObject
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.error.YAMLException
+import java.nio.charset.Charset
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+import java.util.jar.JarFile
+import java.util.stream.Collector
+import java.util.stream.Collectors
+import kotlin.collections.ArrayDeque
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.component3
+import kotlin.collections.set
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
-import kotlin.io.path.exists
-import kotlin.io.path.extension
-import kotlin.io.path.isDirectory
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.readText
+import kotlin.io.path.*
 
 @PackagePrivate
 internal class TranslatorBuilderImpl private constructor(
@@ -63,9 +61,10 @@ internal class TranslatorBuilderImpl private constructor(
         }
     }
 
-    override fun addResource(resourcePath: String, resourceClass: Class<*>, charset: Charset): TranslatorBuilder = apply {
-        loadResources(resourcePath, resourceClass, charset)
-    }
+    override fun addResource(resourcePath: String, resourceClass: Class<*>, charset: Charset): TranslatorBuilder =
+        apply {
+            loadResources(resourcePath, resourceClass, charset)
+        }
 
     override fun addResource(resourcePath: String, charset: Charset): TranslatorBuilder = apply {
         loadResources(resourcePath, null, charset)
@@ -102,20 +101,39 @@ internal class TranslatorBuilderImpl private constructor(
 
     override fun build(): Translator {
         if (content.isEmpty()) {
-            return TranslatorImpl(defaultLocale, TranslatorData(defaultLocale, emptyMap(), configuration))
+            val data = TranslatorData(
+                defaultLocale,
+                emptyMap(),
+                configuration.interpolationDelimiter,
+                { builtinMappers(emptySet()).getValue(it) },
+                { configuration.formatters.getValue(it) },
+                configuration.missingKeyPolicy,
+            )
+            return TranslatorImpl(defaultLocale, data)
         }
+
         val finalMap = LinkedHashMap<Locale, MutableMap<String, String>>(content.size)
 
         val comparator = keyComparator()
         // possible because we checked that content is not empty
-        val expectedKeys: Set<String> = content.firstEntry().value.keys
+        val expectedKeys: Set<String> = content.firstEntry()
+            .value
+            .keys
+            .stream()
+            .map { it.substringBefore('_') }
+            .collect(Collectors.toSet())
         val expectedKeysLocale = content.firstEntry().key
 
         content.entries.forEach { entry ->
             val (locale, translations) = entry
             if (throwOnMissingKey) {
-                check(expectedKeys == translations.keys) {
-                    "Error for locales '$expectedKeysLocale' and '$locale': Keys are not the same for both locales. All maps must have the same keys. To disable this check, use the ignoreMissingKeysOnBuild parameter when creating the builder.\n${content.firstEntry().value}\n${translations.keys}"
+                val cleaned = translations.keys
+                    .stream()
+                    .map { it.substringBefore('_') }
+                    .collect(Collectors.toSet())
+                check(cleaned == expectedKeys) {
+                    val diff = (cleaned - expectedKeys) + (expectedKeys - cleaned)
+                    "Error for locales '$expectedKeysLocale' and '$locale': Keys are not the same for both locales (different keys $diff). All maps must have the same keys. To disable this check, use the ignoreMissingKeysOnBuild parameter when creating the builder."
                 }
             }
 
@@ -130,7 +148,30 @@ internal class TranslatorBuilderImpl private constructor(
                 )
         }
 
-        val data = TranslatorData(defaultLocale, finalMap, configuration)
+        var i = 0
+        val pluralMapperMap = finalMap.keys
+            .stream()
+            .map { entryOf(it, configuration.pluralMapperFactory(it)) }
+            .collect(
+                Collector.of(
+                    {
+                        arrayOfNulls<Map.Entry<Locale, Plural.Mapper>>(finalMap.keys.size)
+                            .unsafeCast<Array<Map.Entry<Locale, Plural.Mapper>>>()
+                    },
+                    { acc, e -> acc[i++] = e },
+                    { a, b -> a + b },
+                    { a -> unmodifiableMapOfEntriesArray(a) }
+                )
+            )
+
+        val data = TranslatorData(
+            defaultLocale,
+            finalMap,
+            configuration.interpolationDelimiter,
+            { pluralMapperMap[it]!! },
+            { configuration.formatters[it]!! },
+            configuration.missingKeyPolicy,
+        )
         return TranslatorImpl(defaultLocale, data)
     }
 
@@ -141,7 +182,7 @@ internal class TranslatorBuilderImpl private constructor(
             ignoreMissingKeysOnBuild: Boolean,
             duplicatedKeyResolution: TranslatorBuilder.DuplicatedKeyResolution,
             defaultLocale: Locale,
-            defaultCharset: Charset
+            defaultCharset: Charset,
         ): TranslatorBuilder {
             val delimiter = configuration.interpolationDelimiter
             val checkRegex = translationValueFormatCheckRegex(delimiter.startDelimiter, delimiter.endDelimiter)
@@ -172,6 +213,7 @@ internal class TranslatorBuilderImpl private constructor(
                             .toList()
                     }
                 }
+
                 else -> { // if the path is a file, load it and store it in a one element list
                     val map = parseFile(path.readText(charset), path.extension)
                     val locale = parseLocale(path.nameWithoutExtension)
@@ -186,11 +228,13 @@ internal class TranslatorBuilderImpl private constructor(
                 } catch (e: JSONException) {
                     throw IllegalArgumentException("Invalid JSON file.", e)
                 }
+
                 "yaml", "yml" -> try {
                     Yaml().load<Map<TranslationKey, TranslationSourceData>>(content)
                 } catch (e: YAMLException) {
                     throw IllegalArgumentException("Invalid YAML file.", e)
                 }
+
                 else -> assertionFailed("File extension '$extension' should have been checked before.")
             }
 
@@ -417,6 +461,7 @@ internal class TranslatorBuilderImpl private constructor(
                         checkValueIsValid(subValue, locale, map)
                         toFlatten.addLast("$currentKey.$subKey" to subValue)
                     }
+
                     is List<*> -> currentValue.forEachIndexed { index, subValue ->
                         checkValueIsValid(subValue, locale, map)
                         toFlatten.addLast("$currentKey.$index" to subValue)
@@ -445,10 +490,7 @@ internal class TranslatorBuilderImpl private constructor(
         }
         val existingFormats = configuration.formatters.keys
         variableExtractionRegex.findAll(stringValue).forEach {
-            val (_, variableName, formatName) = it.groupValues
-            require(Options.OPTIONS != variableName) {
-                "The '${Options.OPTIONS}' variable name is reserved for the options map, use another name."
-            }
+            val (_, _, formatName) = it.groupValues
             require(formatName.isEmpty() || formatName in existingFormats) {
                 "Invalid translation value '$stringValue' for locale '$locale', format '$formatName' is not defined for this translator. Existing formats are: $existingFormats. $SOURCE_DATA_DOCUMENTATION. Error occurred for key '$key' in map $value."
             }

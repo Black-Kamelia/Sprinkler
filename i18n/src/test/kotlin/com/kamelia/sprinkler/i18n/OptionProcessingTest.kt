@@ -1,10 +1,10 @@
 package com.kamelia.sprinkler.i18n
 
-import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.*
 
 class OptionProcessingTest {
 
@@ -14,7 +14,7 @@ class OptionProcessingTest {
             "base.key",
             Locale.FRANCE,
             mapOf(Options.CONTEXT to "context"),
-            Plural.defaultMapper()
+            Plural.englishMapper()
         )
         assertEquals("base.key_context", key)
     }
@@ -25,7 +25,7 @@ class OptionProcessingTest {
             "base.key",
             Locale.FRANCE,
             mapOf(Options.COUNT to 5),
-            Plural.defaultMapper()
+            Plural.englishMapper()
         )
         assertEquals("base.key_other", key)
     }
@@ -36,7 +36,7 @@ class OptionProcessingTest {
             "base.key",
             Locale.FRANCE,
             mapOf(Options.CONTEXT to "context", Options.COUNT to 1),
-            Plural.defaultMapper()
+            Plural.englishMapper()
         )
         assertEquals("base.key_context_one", key)
     }
@@ -47,7 +47,7 @@ class OptionProcessingTest {
             "base.key",
             Locale.FRANCE,
             mapOf(),
-            Plural.defaultMapper()
+            Plural.englishMapper()
         )
         assertEquals("base.key", key)
     }
@@ -58,7 +58,7 @@ class OptionProcessingTest {
             "base.key",
             Locale.FRANCE,
             mapOf(Options.COUNT to 2, Options.ORDINAL to true),
-            Plural.defaultMapper()
+            Plural.englishMapper()
         )
         assertEquals("base.key_ordinal_two", key)
     }
@@ -69,7 +69,7 @@ class OptionProcessingTest {
             "base.key",
             Locale.FRANCE,
             mapOf(Options.CONTEXT to "context", Options.COUNT to 2, Options.ORDINAL to true),
-            Plural.defaultMapper()
+            Plural.englishMapper()
         )
         assertEquals("base.key_context_ordinal_two", key)
     }
@@ -81,7 +81,7 @@ class OptionProcessingTest {
                 "base.key",
                 Locale.FRANCE,
                 mapOf(Options.CONTEXT to 1),
-                Plural.defaultMapper()
+                Plural.englishMapper()
             )
         }
     }
@@ -93,7 +93,7 @@ class OptionProcessingTest {
                 "base.key",
                 Locale.FRANCE,
                 mapOf(Options.COUNT to "one"),
-                Plural.defaultMapper()
+                Plural.englishMapper()
             )
         }
     }
@@ -105,7 +105,7 @@ class OptionProcessingTest {
                 "base.key",
                 Locale.FRANCE,
                 mapOf(Options.ORDINAL to 1),
-                Plural.defaultMapper()
+                Plural.englishMapper()
             )
         }
     }

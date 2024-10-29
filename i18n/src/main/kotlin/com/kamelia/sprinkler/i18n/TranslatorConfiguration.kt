@@ -3,7 +3,7 @@ package com.kamelia.sprinkler.i18n
 import com.kamelia.sprinkler.i18n.TranslatorConfiguration.Companion.builder
 import com.kamelia.sprinkler.util.VariableDelimiter
 import com.zwendo.restrikt2.annotation.PackagePrivate
-import java.util.Locale
+import java.util.*
 
 /**
  * Configuration of a [Translator]. This class defines rules applied to a [Translator] and all [Translator]s created
@@ -16,7 +16,7 @@ import java.util.Locale
  */
 class TranslatorConfiguration @PackagePrivate internal constructor(
     internal val interpolationDelimiter: VariableDelimiter,
-    internal val pluralMapper: Plural.Mapper,
+    internal val pluralMapperFactory: (Locale) -> Plural.Mapper,
     internal val formatters: Map<String, VariableFormatter<out Any>>,
     internal val missingKeyPolicy: MissingKeyPolicy,
 ) {
@@ -34,12 +34,11 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
         private var interpolationDelimiter: InterpolationDelimiter = InterpolationDelimiter(VariableDelimiter.default)
 
         /**
-         * The mapper function to use for the pluralization strategy.
-         * Said strategy can use a given [Locale] and count to return a [Plural] value.
+         * The function that will be used when building the [Translator] to create all the required [Plural.Mapper]s.
          *
-         * default: [Plural.defaultMapper]
+         * default: []
          */
-        private var pluralMapper: Plural.Mapper = Plural.defaultMapper()
+        private var pluralMapperFactory: (Locale) -> Plural.Mapper = BuiltinPluralMappers.factory()
 
         /**
          * Map used to find formatters using their name during variable interpolation.
@@ -67,18 +66,19 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          * @param value the delimiter to use
          * @return this [Builder]
          */
-        fun setInterpolationDelimiter(value: InterpolationDelimiter): Builder = apply { interpolationDelimiter = value }
+        fun withInterpolationDelimiter(value: InterpolationDelimiter): Builder = apply { interpolationDelimiter = value }
 
         /**
-         * Sets the mapper function to use for the pluralization strategy.
-         * Said strategy can use a given [Locale] and count to return a [Plural] value.
+         * Sets the plural mapper factory to use when building the [Translator] to create all the required
+         * [Plural.Mapper]s.
          *
-         * default: [Plural.defaultMapper]
+         * default: [defaultPluralMapperFactory]
          *
-         * @param pluralMapper the mapper function to use
+         * @param factory the mapper function to use
          * @return this [Builder]
+         *
          */
-        fun withPluralMapper(pluralMapper: Plural.Mapper): Builder = apply { this.pluralMapper = pluralMapper }
+        fun withPluralMapperFactory(factory: (Locale) -> Plural.Mapper): Builder = apply { this.pluralMapperFactory = factory }
 
         /**
          * Sets the map used to find formatters using their name during variable interpolation.
@@ -128,7 +128,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          */
         fun build(): TranslatorConfiguration = TranslatorConfiguration(
             interpolationDelimiter.inner,
-            pluralMapper,
+            pluralMapperFactory,
             formatters,
             missingKeyPolicy,
         )
@@ -205,9 +205,11 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
         @JvmStatic
         fun builder(): Builder = Builder()
 
+
+
     }
 
     override fun toString(): String =
-        "TranslatorConfiguration(interpolationDelimiter=$interpolationDelimiter, pluralMapper=$pluralMapper, formatters=$formatters, missingKeyPolicy=$missingKeyPolicy)"
+        "TranslatorConfiguration(interpolationDelimiter=$interpolationDelimiter, pluralMapperFactory=$pluralMapperFactory, formatters=$formatters, missingKeyPolicy=$missingKeyPolicy)"
 
 }

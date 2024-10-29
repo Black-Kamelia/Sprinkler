@@ -3,7 +3,7 @@ package com.kamelia.sprinkler.i18n
 import com.kamelia.sprinkler.util.ExtendedCollectors
 import com.kamelia.sprinkler.util.illegalArgument
 import com.zwendo.restrikt2.annotation.PackagePrivate
-import java.util.Locale
+import java.util.*
 
 @PackagePrivate
 internal class TranslatorImpl private constructor(
@@ -42,17 +42,22 @@ internal class TranslatorImpl private constructor(
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,
-    ): String = tn(key, extraArgs, locale, fallbackLocale, *fallbacks)
-        ?: when (data.configuration.missingKeyPolicy) {
+    ): String {
+        val result = tn(key, extraArgs, locale, fallbackLocale, *fallbacks)
+        if (result != null) return result
+        val actualKey = TranslationProcessor.buildKey(key, extraArgs, data.pluralMapper(locale))
+        return when (data.missingKeyPolicy) {
             TranslatorConfiguration.MissingKeyPolicy.THROW_EXCEPTION -> keyNotFound(
-                key,
+                actualKey,
                 extraArgs,
                 locale,
                 fallbackLocale,
                 fallbacks
             )
-            TranslatorConfiguration.MissingKeyPolicy.RETURN_KEY -> key
+
+            TranslatorConfiguration.MissingKeyPolicy.RETURN_KEY -> actualKey
         }
+    }
 
     override fun section(key: String): Translator {
         require(TranslatorBuilder.keyRegex().matches(key)) { "Invalid key '$key'. $KEY_DOCUMENTATION" }
@@ -80,11 +85,12 @@ internal class TranslatorImpl private constructor(
         }
     }
 
-    override fun withNewCurrentLocale(locale: Locale): Translator = if (currentLocale == locale) {
-        this
-    } else {
-        TranslatorImpl(prefix, locale, data)
-    }
+    override fun withNewCurrentLocale(locale: Locale): Translator =
+        if (currentLocale == locale) {
+            this
+        } else {
+            TranslatorImpl(prefix, locale, data)
+        }
 
     override fun asRoot(): Translator = if (isRoot) {
         this
@@ -93,7 +99,7 @@ internal class TranslatorImpl private constructor(
     }
 
     override fun toString(): String =
-        "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, configuration=${data.configuration}, translations=${toMap()})"
+        "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, missingKeyPolicy=${data.missingKeyPolicy}, formatters=${data.formatters}, translations=${toMap()})"
 
     private fun innerTranslate(
         key: String,
