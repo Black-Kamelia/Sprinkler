@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.i18n
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.*
@@ -57,20 +58,20 @@ class TranslatorConfigurationTest {
     @Test
     fun `withPluralMapper sets the pluralMapper`() {
         val pluralMapper = object : Plural.Mapper {
-            override fun mapPlural(locale: Locale, count: Int): Plural {
+            override fun mapCardinal(count: Double): Plural {
                 return Plural.TWO
             }
 
-            override fun mapOrdinal(locale: Locale, count: Int): Plural {
+            override fun mapOrdinal(count: Long): Plural {
                 return Plural.FEW
             }
         }
         val config = TranslatorConfiguration.builder()
-            .withPluralMapper(pluralMapper)
+            .withPluralMapperFactory { pluralMapper }
             .build()
         val translator = TranslatorBuilder.create(config).addMap(Locale.ENGLISH, mapOf("foo_two" to "hello", "bar_ordinal_few" to "world")).build()
-        assertEquals("hello", translator.t("foo", mapOf( options(Options.COUNT to 1))))
-        assertEquals("world", translator.t("bar", mapOf( options(Options.COUNT to 1, Options.ORDINAL to true))))
+        assertEquals("hello", translator.t("foo", mapOf(count(1))))
+        assertEquals("world", translator.t("bar", mapOf(count(1), ordinal())))
     }
 
     @Test
@@ -98,6 +99,16 @@ class TranslatorConfigurationTest {
             .withFormatters(formatters)
             .build()
         assertEquals(formatters, config.formatters)
+    }
+
+    @Test
+    fun `toString value is meaningful`() {
+        val config = TranslatorConfiguration.builder().build()
+        val toString = config.toString()
+        assertTrue("interpolationDelimiter" in toString)
+        assertTrue("pluralMapperFactory" in toString)
+        assertTrue("formatters" in toString)
+        assertTrue("missingKeyPolicy" in toString)
     }
 
 }

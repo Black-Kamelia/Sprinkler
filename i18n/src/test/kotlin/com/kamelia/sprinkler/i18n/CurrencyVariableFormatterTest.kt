@@ -1,13 +1,18 @@
 package com.kamelia.sprinkler.i18n
 
-import java.math.RoundingMode
-import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import java.math.RoundingMode
+import java.util.*
 
 class CurrencyVariableFormatterTest {
+
+    @Test
+    fun `currency formatter toString returns the correct value`() {
+        assertEquals("VariableFormatter.currency()", VariableFormatter.currency().toString())
+    }
 
     @Test
     fun `currency formatter ignores if an unknown extra args is provided`() {

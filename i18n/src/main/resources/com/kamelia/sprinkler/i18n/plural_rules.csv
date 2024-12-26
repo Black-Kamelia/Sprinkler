@@ -45,7 +45,7 @@ dz;*;
 en;one:i=1&&v=0;one:n%10=1&&n%100!=11//two:n%10=2&&n%100!=12//few:n%10=3&&n%100!=13
 eo;one:n=1;
 et;one:i=1&&v=0;*
-pt_PT;one:i=1&&v=0//many:e=0&&i!=0&&i%1000000=0&&v=0||e!=0..5;
+pt_PT; ;
 ee;one:n=1;
 fo;one:n=1;
 fil;one:v=0&&i=1,2,3||v=0&&i%10!=4,6,9||v!=0&&f%10!=4,6,9;one:n=1

@@ -1,6 +1,5 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.i18n.Plural.Companion.builtinMappers
 import com.kamelia.sprinkler.i18n.TranslatorBuilder.Companion.keyRegex
 import com.kamelia.sprinkler.util.*
 import com.zwendo.restrikt2.annotation.PackagePrivate
@@ -80,11 +79,16 @@ internal class TranslatorBuilderImpl private constructor(
 
     private fun loadResources(resourcePath: String, resourceClass: Class<*>?, charset: Charset) {
         val cl = resourceClass ?: Class.forName(Exception().stackTrace[2].className)
-        val strPath = cl
+        var strPath = cl
             .getProtectionDomain()
             .codeSource
             .location
             .path
+
+        // fix for windows paths where the path starts with '/C:/...'
+        if (strPath[2] == ':' && strPath[0] == '/') {
+            strPath = strPath.substring(1)
+        }
 
         val path = Path.of(strPath)
         if (!path.isRegularFile()) { // we are not in a jar
@@ -105,7 +109,7 @@ internal class TranslatorBuilderImpl private constructor(
                 defaultLocale,
                 emptyMap(),
                 configuration.interpolationDelimiter,
-                { builtinMappers(emptySet()).getValue(it) },
+                { Plural.nullMapper() },
                 { configuration.formatters.getValue(it) },
                 configuration.missingKeyPolicy,
             )
@@ -115,7 +119,8 @@ internal class TranslatorBuilderImpl private constructor(
         val finalMap = LinkedHashMap<Locale, MutableMap<String, String>>(content.size)
 
         val comparator = keyComparator()
-        // possible because we checked that content is not empty
+
+        // firstEntry is never null because we checked that content is not empty
         val expectedKeys: Set<String> = content.firstEntry()
             .value
             .keys
@@ -160,7 +165,7 @@ internal class TranslatorBuilderImpl private constructor(
                     },
                     { acc, e -> acc[i++] = e },
                     { a, b -> a + b },
-                    { a -> unmodifiableMapOfEntriesArray(a) }
+                    { a -> a.toUnmodifiableMap() }
                 )
             )
 

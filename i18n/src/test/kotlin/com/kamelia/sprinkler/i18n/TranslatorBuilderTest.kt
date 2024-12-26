@@ -1,9 +1,9 @@
 package com.kamelia.sprinkler.i18n
 
-import java.util.Locale
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.*
 
 class TranslatorBuilderTest {
 
@@ -81,14 +81,6 @@ class TranslatorBuilderTest {
                 .addMap(Locale.ENGLISH, mapOf("test" to "test2"))
         val translator = builder.build()
         Assertions.assertEquals("test2", translator.t("test"))
-    }
-
-    @Test
-    fun `addMap throws an IAE if a value contains a variable named 'options'`() {
-        assertThrows<IllegalArgumentException> {
-            TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
-                .addMap(Locale.ENGLISH, mapOf("test" to "test {{options}}"))
-        }
     }
 
     @Test

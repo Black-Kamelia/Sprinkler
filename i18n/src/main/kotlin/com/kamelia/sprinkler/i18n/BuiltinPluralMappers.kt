@@ -6,15 +6,23 @@ import java.util.*
 import java.util.stream.Collectors
 import kotlin.math.log10
 
+/**
+ * Default implementation of the [Plural.Mapper] that uses the builtin plural rules defined by
+ * [unicode.org](https://www.unicode.org/cldr/charts/45/supplemental/language_plural_rules.html). This implementation
+ * relies on a csv file located in the resources that contains the rules from Unicode in a simplified format. Each line
+ * represents a locale and is parsed and loaded into a [Plural.Mapper].
+ *
+ * This object contains the logic to parse the tiny grammar representing the rules in the csv file.
+ */
 @PackagePrivate
 internal object BuiltinPluralMappers {
 
     /**
      * The builtin [Plural.Mapper] factory.
      */
-    fun factory(): (Locale) -> Plural.Mapper = object : (Locale) -> Plural.Mapper {
-        val map: Map<String, String> by lazy { builtinMappers() }
-        override fun invoke(locale: Locale): Plural.Mapper = loadMapper(map, locale)
+    fun factory(): (Locale) -> Plural.Mapper {
+        val map = builtinMappers()
+        return { loadMapper(map, it) }
     }
 
     private fun builtinMappers(): Map<String, String> = Plural::class.java
@@ -31,9 +39,11 @@ internal object BuiltinPluralMappers {
         // we first look for the whole tag, then for the language
         val rules = content[locale.toLanguageTag()]
             ?: content[locale.language]
-            ?: throw IllegalArgumentException("No plural rules found for locale $locale")
+            ?: throw LocaleNotFoundException(locale)
         return loadedMapper(rules)
     }
+
+    class LocaleNotFoundException(val locale: Locale) : RuntimeException(null, null, false, false)
 
     private class BuiltinMapper(
         private val cardinal: IV2Plural,
@@ -79,7 +89,6 @@ internal object BuiltinPluralMappers {
             override fun toFloatingPartDigitsCount(): ILong = ILong(log10(double - double.toLong()).toLong())
             override fun rem(divisor: Long): ILong =
                 throw UnsupportedOperationException("Cannot apply modulo to a floating point number")
-
             override fun toString(): String = double.toString()
         }
 

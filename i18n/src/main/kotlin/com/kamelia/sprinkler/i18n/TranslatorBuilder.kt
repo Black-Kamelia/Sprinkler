@@ -24,20 +24,37 @@ import java.util.*
  * will be thrown when adding the value to the builder.
  *
  * The translators created with this builder will have the following properties:
+ *
  * - the created translators are immutable and therefore `thread-safe`.
+ *
+ *
  * - all methods returning a translator (e.g. [section][Translator.section],
- * [withNewCurrentLocale][Translator.withNewCurrentLocale]) returns a translator sharing common information with the
+[withNewCurrentLocale][Translator.withNewCurrentLocale]) returns a translator sharing common information with the
  * translator which created it. The methods do not copy the data, meaning that they do not have a significant
  * performance nor memory impact.
+ *
+ *
  * - the `extraArgs` argument passed to the [t][Translator.t] methods will be used to
  * [interpolate][com.kamelia.sprinkler.util.interpolate] the translation, all keys in the map will be replaced by their
- * corresponding values in the translation, except for the [Options.OPTIONS] key, which will contain a map of options as
- * defined in the [Options] class.
+ * corresponding values in the translation.
+ *
+ *
+ * - options (keys starting with an underscore `_`) passed in the `extraArgs` will also be used to format values with
+ * the same name after dropping the underscore (e.g. the option `_count` will be used to format the value of the
+ * `count` variable in the translation). However, an argument with the exact name of the key is present in the map, it
+ * will take precedence over the option (e.g. if the map contains a key `count` and the option `_count`, the value of
+ * the `count` arg will be used).
+ *
+ *
  * - the [Translator.t] method will behave according to the [TranslatorConfiguration.missingKeyPolicy] chosen when
  * creating the translator, in case the key is not found.
+ *
+ *
  * - the returned map of [Translator.toMap] will be sorted according to the lexical order of the
- * [key parts][Identifier] of the keys (the map is created every time the method is called).
- * - [toString] will use [toMap] under the hood to create the string representation of the translator.
+ * [key parts][Identifier] of the keys (a new map is created every time the method is called).
+ *
+ *
+ *
  * - To be interpolated on [t][Translator.t] method call, values stored in the translator must contain variable defined
  * inside [delimiters][TranslatorConfiguration.Builder.interpolationDelimiter] defined in the translator configuration. For more
  * details about interpolation, see [String.interpolate][com.kamelia.sprinkler.util.interpolate]. Variables' names must
@@ -45,7 +62,7 @@ import java.util.*
  *
  * @see Translator
  * @see TranslatorConfiguration
- * @see FormattedValue
+ * @see FormattedValueImpl
  */
 sealed interface TranslatorBuilder {
 
@@ -444,11 +461,14 @@ sealed interface TranslatorBuilder {
         /**
          * Creates a new [TranslatorBuilder].
          *
-         * @param configuration the configuration to use when creating the translator
-         * @param ignoreMissingKeysOnBuild whether to ignore missing keys when building the translator
-         * @param duplicatedKeyResolution the resolution to use when a duplicated key is found
-         * @param defaultLocale the default locale to use when no locale is specified
-         * @param defaultCharset the default charset to use when reading files
+         * @param configuration the configuration to use when creating the translator (defaults to the default
+         * configuration)
+         * @param defaultLocale the default locale to use when no locale is specified (defaults to [Locale.ENGLISH])
+         * @param ignoreMissingKeysOnBuild whether to ignore missing keys when building the translator (defaults to
+         * `false`)
+         * @param duplicatedKeyResolution the resolution to use when a duplicated key is found (defaults to
+         * [DuplicatedKeyResolution.FAIL])
+         * @param defaultCharset the default charset to use when reading files (defaults to [Charsets.UTF_8])
          * @return the created builder
          */
         @JvmStatic

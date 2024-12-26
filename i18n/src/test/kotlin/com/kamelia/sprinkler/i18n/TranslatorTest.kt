@@ -271,14 +271,6 @@ class TranslatorTest {
     }
 
     @Test
-    fun `toString contains the translations`() {
-        val translator = TranslatorBuilder.create(defaultLocale = Locale.ENGLISH)
-            .addMap(Locale.ENGLISH, mapOf("key" to "value"))
-            .build()
-        assertTrue(translator.toMap().toString() in translator.toString())
-    }
-
-    @Test
     fun `asRoot return this if the translator is a root`() {
         val translator = TranslatorBuilder.create(defaultLocale = Locale.ENGLISH).build()
         assertSame(translator, translator.asRoot())
@@ -341,7 +333,7 @@ class TranslatorTest {
         val translator = TranslatorBuilder.create(defaultLocale = Locale.US)
             .addMap(Locale.US, mapOf("key" to "value {{currency, currency}}"))
             .build()
-        assertEquals("value $1.0", translator.t("key", mapOf("currency" to formattedWith(1, "maxFracDigits" to 1))))
+        assertEquals("value $1.0", translator.t("key", mapOf("currency" to formatted(1, "maxFracDigits" to 1))))
     }
 
     @Test
@@ -350,7 +342,7 @@ class TranslatorTest {
             .addMap(Locale.US, mapOf("key" to "value {{currency, currency(maxFracDigits:1)}}"))
             .build()
         assertEquals(
-            "value $1", translator.tn("key", mapOf("currency" to formattedWith(1, mapOf("maxFracDigits" to 0))))
+            "value $1", translator.tn("key", mapOf("currency" to formatted(1, mapOf("maxFracDigits" to 0))))
         )
     }
 

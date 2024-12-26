@@ -1,6 +1,5 @@
-package com.kamelia.sprinkler.i18n
+package com.kamelia.sprinkler.i18n.internal
 
-import com.kamelia.sprinkler.util.unsafeCast
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
@@ -10,7 +9,7 @@ import java.nio.file.Path
 import java.util.stream.Collectors
 import kotlin.io.path.outputStream
 
-internal class UnicodeHtmlTableParser(
+class UnicodeHtmlTableParser(
     private val source: Path,
     private val dest: Path,
     private val printer: PrintWriter = PrintWriter(PrintWriter.nullWriter()),
@@ -30,7 +29,7 @@ internal class UnicodeHtmlTableParser(
 
     fun process() {
         val doc = Jsoup.parse(source)
-        val rows = doc.firstChild().childNodes()[1].firstChild().childNodes()[1].childNodes()
+        val rows = doc.firstChild()!!.childNodes()[1]!!.firstChild()!!.childNodes()[1].childNodes()
         val writer = dest.outputStream().writer().buffered()
 
         writer.use { stream ->
@@ -169,8 +168,8 @@ internal class UnicodeHtmlTableParser(
 
     private fun Node.getText(): String = when (val fc = firstChild()) {
         is TextNode -> fc.text()
-        is Element -> fc.firstChild().unsafeCast<TextNode>().text()
-        else -> throw AssertionError("Unexpected node type: ${fc.javaClass}")
+        is Element -> (fc.firstChild() as TextNode).text()
+        else -> throw AssertionError("Unexpected node type: ${fc!!.javaClass}")
     }
 
     private fun appendToRule(category: String, value: String) {
@@ -185,7 +184,6 @@ internal class UnicodeHtmlTableParser(
         "ordinal" -> ordinal
         else -> throw AssertionError("Unknown category: $category")
     }
-
 
     private fun <T> Iterator<T>.asPeekIterator(): PeekIterator<T> = PeekIterator(this)
 
@@ -219,7 +217,7 @@ internal class UnicodeHtmlTableParser(
 
     }
 
-    private enum class Mode {
+    enum class Mode {
         NAME, CODE, RULES
     }
 

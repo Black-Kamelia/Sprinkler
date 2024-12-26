@@ -47,23 +47,23 @@ internal object TranslationProcessor {
         return builder.toString()
     }
 
-    private fun Map<String, Any>.context(): String? {
+    fun Map<String, Any>.context(): String? {
         val context = get(Options.CONTEXT) ?: return null
-        val actualContext = if (context is FormattedValue) context.value else context
+        val actualContext = if (context is FormattedValueImpl) context.value else context
         require(actualContext is String) { "Context must be a string but was ${actualContext::class.java}" }
         return actualContext
     }
 
-    private fun Map<String, Any>.ordinal(): Boolean {
+    fun Map<String, Any>.ordinal(): Boolean {
         val ordinal = get(Options.ORDINAL) ?: return false
-        val actualOrdinal = if (ordinal is FormattedValue) ordinal.value else ordinal
+        val actualOrdinal = if (ordinal is FormattedValueImpl) ordinal.value else ordinal
         require(actualOrdinal is Boolean) { "Ordinal must be a boolean but was ${actualOrdinal::class.java}" }
         return actualOrdinal
     }
 
-    private fun Map<String, Any>.count(ordinal: Boolean, pluralMapper: Plural.Mapper): Plural? {
+    fun Map<String, Any>.count(ordinal: Boolean, pluralMapper: Plural.Mapper): Plural? {
         val count = get(Options.COUNT) ?: return null
-        val actualCount = if (count is FormattedValue) count.value else count
+        val actualCount = if (count is FormattedValueImpl) count.value else count
         require(actualCount is Number) { "Count must be a number but was ${actualCount::class.java}" }
         return if (ordinal) {
             pluralMapper.mapOrdinal(actualCount)
@@ -82,7 +82,6 @@ internal object TranslationProcessor {
 
     private val keyValueSplit = """(?<!\\):""".toRegex()
 
-    @PackagePrivate
     internal class ProcessingContext(
         val formatters: (String) -> VariableFormatter<Any>,
         val locale: Locale,
@@ -104,7 +103,8 @@ internal object TranslationProcessor {
         generalSplit = """\s*(${Regex.escape(NESTED_KEY_CHAR.toString())}?$IDENTIFIER)(?:$format)?\s*""".toRegex()
     }
 
-    private val customResolver = object : VariableResolver<ProcessingContext> {
+
+    internal val customResolver = object : VariableResolver<ProcessingContext> {
 
         override fun resolveTo(builder: Appendable, name: String, context: ProcessingContext) {
             // '!!' is ok, because values are validated on translator creation
@@ -116,7 +116,7 @@ internal object TranslationProcessor {
 
             var formatPassedParams = emptyMap<String, Any>()
             var actualValue: Any = variableValue
-            if (variableValue is FormattedValue) {
+            if (variableValue is FormattedValueImpl) {
                 actualValue = variableValue.value
                 formatPassedParams = variableValue.formatParams
             }

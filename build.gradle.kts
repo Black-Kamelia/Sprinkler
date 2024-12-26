@@ -1,4 +1,3 @@
-
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.*
 
@@ -49,25 +48,25 @@ allprojects {
         testImplementation("org.junit.jupiter", "junit-jupiter-params", junitVersion)
     }
 
-    restrikt2 {
-        enabled = false
-    }
-
     java {
-        withJavadocJar()
+//        withJavadocJar()
         withSourcesJar()
     }
 
     signing {
-        val signingKey = findProp<String?>("signingKey")
-        val signingPassword = findProp<String?>("signingPassword")
-        if (signingKey != null && signingPassword != null) {
-            logger.info("Using in memory keys for signing")
-            useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
-        } else {
-            logger.info("Using local GPG keys for signing")
+//        val signingKey = findProp<String?>("signingKey")
+//        val signingPassword = findProp<String?>("signingPassword")
+//        if (signingKey != null && signingPassword != null) {
+//            logger.info("Using in memory keys for signing")
+//            useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
+//        } else {
+//            logger.info("Using local GPG keys for signing")
+//        }
+//        sign(publishing.publications)
+        isRequired = false
+        tasks.withType<Sign>().configureEach {
+            onlyIf { false } // Ensure no signing tasks are executed
         }
-        sign(publishing.publications)
     }
 
     kover {
@@ -136,7 +135,7 @@ allprojects {
                     licenses {
                         license {
                             name.set("The Apache License, Version 2.0")
-                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                         }
                     }
 

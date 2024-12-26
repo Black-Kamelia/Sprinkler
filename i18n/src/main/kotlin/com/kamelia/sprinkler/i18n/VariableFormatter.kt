@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.illegalArgument
+import com.kamelia.sprinkler.util.toUnmodifiableMap
 import java.math.RoundingMode
 import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
@@ -38,7 +39,7 @@ fun interface VariableFormatter<T> {
 
         /**
          * Returns a [VariableFormatter] that formats the variable as a currency using the locale, following the
-         * rules of the [NumberFormat.getCurrencyInstance][javaFormatted.text.NumberFormat.getCurrencyInstance] method, including
+         * rules of the [NumberFormat.getCurrencyInstance][java.text.NumberFormat.getCurrencyInstance] method, including
          * the currency symbol, its position, and the thousands and floating point symbols.
          *
          * For example, if the locale is `en_US`, the value `1234.56` will be formatted as `$1,234.56`.
@@ -62,12 +63,12 @@ fun interface VariableFormatter<T> {
 
         /**
          * Returns a [VariableFormatter] that formats the variable as a readable date using the locale, following the
-         * rules of the [DateTimeFormatter.ofLocalizedDate][javaFormatted.time.format.DateTimeFormatter.ofLocalizedDate] method.
+         * rules of the [DateTimeFormatter.ofLocalizedDate][java.time.format.DateTimeFormatter.ofLocalizedDate] method.
          *
          * For example, if the locale is `en_US`, the value `2023-01-01` will be formatted as `Jan 1, 2023` by default.
          *
          * The only recognized extra argument is `dateStyle`, which specify the style to use to format the date. The
-         * value must be a string that can be parsed by the [FormatStyle.valueOf][javaFormatted.time.format.FormatStyle.valueOf]
+         * value must be a string that can be parsed by the [FormatStyle.valueOf][java.time.format.FormatStyle.valueOf]
          * method, and the default is `MEDIUM`.
          *
          * @return A [VariableFormatter] that formats the variable as a readable date using the locale.
@@ -91,12 +92,12 @@ fun interface VariableFormatter<T> {
 
         /**
          * Returns a [VariableFormatter] that formats the variable as a readable date using the locale, following the
-         * rules of the [DateTimeFormatter.ofLocalizedTime][javaFormatted.time.format.DateTimeFormatter.ofLocalizedTime] method.
+         * rules of the [DateTimeFormatter.ofLocalizedTime][java.time.format.DateTimeFormatter.ofLocalizedTime] method.
          *
          * For example, if the locale is `en_US`, the value `12:34:56` will be formatted as `12:34:56 PM` by default.
          *
          * The only recognized extra argument is `timeStyle`, which specify the style to use to format the time. The
-         * value must be a string that can be parsed by the [FormatStyle.valueOf][javaFormatted.time.format.FormatStyle.valueOf]
+         * value must be a string that can be parsed by the [FormatStyle.valueOf][java.time.format.FormatStyle.valueOf]
          * method, and the default is `MEDIUM`.
          *
          * @return A [VariableFormatter] that formats the variable as a readable date using the locale.
@@ -120,7 +121,7 @@ fun interface VariableFormatter<T> {
 
         /**
          * Returns a [VariableFormatter] that formats the variable as a readable date using the locale, following the
-         * rules of the [DateTimeFormatter.ofLocalizedDateTime][javaFormatted.time.format.DateTimeFormatter.ofLocalizedDateTime]
+         * rules of the [DateTimeFormatter.ofLocalizedDateTime][java.time.format.DateTimeFormatter.ofLocalizedDateTime]
          * method.
          *
          * For example, if the locale is `en_US`, the value `2023-01-01T12:34:56` will be formatted as
@@ -144,7 +145,7 @@ fun interface VariableFormatter<T> {
 
         /**
          * Returns a [VariableFormatter] that formats the variable as a readable number using the locale, following the
-         * rules of the [NumberFormat.getInstance][javaFormatted.text.NumberFormat.getInstance] method, including the thousands
+         * rules of the [NumberFormat.getInstance][java.text.NumberFormat.getInstance] method, including the thousands
          * and floating point symbols.
          *
          * For example, if the locale is `en_US`, the value `1234.56` will be formatted as `1,234.56`.
@@ -165,7 +166,7 @@ fun interface VariableFormatter<T> {
          * - `groupingUsed`: whether to use the grouping separator (e.g. `,` in `1,234.56`) or not. The value must be a
          *   boolean, and the default is `true`.
          * - `roundingMode`: the rounding mode to use when truncating the number. The value must be a string that can be
-         *   parsed by the [RoundingMode.valueOf][javaFormatted.math.RoundingMode.valueOf] method, and the default is
+         *   parsed by the [RoundingMode.valueOf][java.math.RoundingMode.valueOf] method, and the default is
          *   `HALF_EVEN`.
          *
          * @return A [VariableFormatter] that formats the variable as a readable number using the locale.
@@ -192,7 +193,7 @@ fun interface VariableFormatter<T> {
          * @return the map of all the built-in variable formatters
          */
         @JvmStatic
-        fun builtins(): Map<String, VariableFormatter<out Any>> = java.util.Map.copyOf(mutableBuiltins())
+        fun builtins(): Map<String, VariableFormatter<out Any>> = mutableBuiltins().toUnmodifiableMap()
 
         internal fun mutableBuiltins(): MutableMap<String, VariableFormatter<out Any>> = hashMapOf(
             ::currency.name to currency(),

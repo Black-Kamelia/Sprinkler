@@ -2,8 +2,8 @@
 
 package com.kamelia.sprinkler.util
 
-import java.util.Objects
 import org.intellij.lang.annotations.Language
+import java.util.*
 
 /**
  * Interpolates variables in this string using the given [resolver]. This function replaces all sequence of characters
@@ -20,6 +20,15 @@ import org.intellij.lang.annotations.Language
  * val resolver: VariableResolver<MyContext> = ...
  * val context: MyContext = ...
  * val result = "Hello {{name}}, you are {{age}} years old".interpolate(context, resolver = resolver)
+ * ```
+ *
+ * Or you can create a custom [VariableResolver] on the fly:
+ *
+ * ```kt
+ * val context: MyContext = ...
+ * val result = "Hello {{name}}, you are {{age}} years old".interpolate(context) { name, context ->
+ *    // custom logic to resolve the variable
+ * }
  * ```
  *
  * There are several overloads of this function that can be used to interpolate variables using different types of
@@ -44,7 +53,7 @@ fun <T> String.interpolate(
     resolver: VariableResolver<T>,
 ): String {
     val builder = StringBuilder()
-    interpolateTo(builder, context, resolver, delimiter)
+    interpolateTo(builder, context, delimiter, resolver)
     return builder.toString()
 }
 
@@ -56,16 +65,16 @@ fun <T> String.interpolate(
  * @receiver the string to interpolate
  * @param builder the builder to append the interpolated string to
  * @param context the context to use for resolving the variable
- * @param resolver the [VariableResolver] to use for resolving variable names
  * @param delimiter the delimitation of the variable (defaults to [VariableDelimiter.default])
+ * @param resolver the [VariableResolver] to use for resolving variable names
  * @see String.interpolate
  */
 @JvmOverloads
 fun <T> String.interpolateTo(
     builder: StringBuilder,
     context: T,
-    resolver: VariableResolver<T>,
     delimiter: VariableDelimiter = VariableDelimiter.default,
+    resolver: VariableResolver<T>,
 ) {
     // this function is a copy of the kotlin.text.Regex#replace(CharSequence,(MatchResult) -> CharSequence) function
     // the code is pasted here to avoid variable capture in a lambda which would be created for each call to this
@@ -258,7 +267,7 @@ fun String.interpolate(
     interpolate(args, delimiter, VariableResolver.fromList())
 
 /**
- * Interpolates variables in this string using the given iterator [args].
+ * Interpolates variables in this string using the given iterable [args].
  *
  * Variables are resolved in the order they appear in the string, using the [Iterator.next] method to get the next
  * value. If the iterator has no more elements, an [IllegalArgumentException] is thrown.
@@ -269,15 +278,18 @@ fun String.interpolate(
  * val result = "Hello {{}}, you are {{}} years old".interpolate(args)
  * ```
  *
- * @param args the iterator of values
+ * **NOTE**: To use this method with a list, you need to cast it to an iterable, otherwise the [String.interpolate]
+ * method expecting indices will be used (this is due to compiler method call resolution).
+ *
+ * @param args an iterable of values
  * @param delimiter the delimitation of the variable (defaults to [VariableDelimiter.default])
  * @return the interpolated string
  * @throws IllegalArgumentException if the iterator has no more elements and a variable is found
  * @see VariableResolver.fromIterator
  */
 @JvmOverloads
-fun String.interpolate(args: Iterator<Any>, delimiter: VariableDelimiter = VariableDelimiter.default): String =
-    interpolate(args, delimiter, VariableResolver.fromIterator())
+fun String.interpolate(args: Iterable<Any>, delimiter: VariableDelimiter = VariableDelimiter.default): String =
+    interpolate(args.iterator(), delimiter, VariableResolver.fromIterator())
 
 /**
  * Interface for resolving variables during string interpolation. This interface maps variable names to their values.

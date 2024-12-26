@@ -1,11 +1,17 @@
 package com.kamelia.sprinkler.i18n
 
-import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.*
 
 class NumberVariableFormatterTest {
+
+    @Test
+    fun `number formatter toString returns the correct value`() {
+        assertEquals("VariableFormatter.number()", VariableFormatter.number().toString())
+    }
+
     @Test
     fun `number formatter formats a number input`() {
         val result = VariableFormatter.number().format(1, Locale.US, emptyMap())

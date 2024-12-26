@@ -1,16 +1,21 @@
 package com.kamelia.sprinkler.i18n
 
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.Month
-import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.Month
+import java.util.*
 
 class TimeAccessorsVariableFormatterTest {
+
+    @Test
+    fun `time formatter toString returns the correct value`() {
+        assertEquals("VariableFormatter.time()", VariableFormatter.time().toString())
+    }
 
     @Test
     fun `time formatter ignores if an unknown extra args is provided`() {
@@ -36,6 +41,11 @@ class TimeAccessorsVariableFormatterTest {
         assertThrows<IllegalArgumentException> {
             VariableFormatter.time().format(LocalTime.of(1, 0), Locale.US, mapOf("timeStyle" to "foo"))
         }
+    }
+
+    @Test
+    fun `date formatter toString returns the correct value`() {
+        assertEquals("VariableFormatter.date()", VariableFormatter.date().toString())
     }
 
     @Test
@@ -65,6 +75,11 @@ class TimeAccessorsVariableFormatterTest {
             VariableFormatter.date()
                 .format(LocalDate.of(1969, Month.DECEMBER, 31), Locale.US, mapOf("dateStyle" to "foo"))
         }
+    }
+
+    @Test
+    fun `datetime formatter toString returns the correct value`() {
+        assertEquals("VariableFormatter.datetime()", VariableFormatter.datetime().toString())
     }
 
     @Test
@@ -109,6 +124,11 @@ class TimeAccessorsVariableFormatterTest {
         assertThrows<IllegalArgumentException> {
             VariableFormatter.datetime().format(LocalDate.now(), Locale.US, mapOf("timeStyle" to "foo"))
         }
+    }
+
+    @Test
+    fun `builtins coverage`() {
+        VariableFormatter.builtins()
     }
 
 }

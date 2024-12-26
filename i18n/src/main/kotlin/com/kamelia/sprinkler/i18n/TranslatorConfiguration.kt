@@ -36,7 +36,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
         /**
          * The function that will be used when building the [Translator] to create all the required [Plural.Mapper]s.
          *
-         * default: []
+         * default: [Plural.builtinMappers]
          */
         private var pluralMapperFactory: (Locale) -> Plural.Mapper = BuiltinPluralMappers.factory()
 
@@ -72,7 +72,7 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          * Sets the plural mapper factory to use when building the [Translator] to create all the required
          * [Plural.Mapper]s.
          *
-         * default: [defaultPluralMapperFactory]
+         * default: [Plural.builtinMappers]
          *
          * @param factory the mapper function to use
          * @return this [Builder]
@@ -204,8 +204,6 @@ class TranslatorConfiguration @PackagePrivate internal constructor(
          */
         @JvmStatic
         fun builder(): Builder = Builder()
-
-
 
     }
 

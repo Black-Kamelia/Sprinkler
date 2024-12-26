@@ -69,7 +69,7 @@ internal class TranslatorImpl private constructor(
         val root = prefix
         return if (root == null) {
             data.translations.mapValuesTo(LinkedHashMap(data.translations.size)) { (_, map) -> // simple deep copy
-                map.toMap()
+                LinkedHashMap(map)
             }
         } else {
             data.translations.mapValuesTo(LinkedHashMap(data.translations.size)) { (_, map) -> // deep copy with filtering and key prefix removal
@@ -99,7 +99,7 @@ internal class TranslatorImpl private constructor(
     }
 
     override fun toString(): String =
-        "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, missingKeyPolicy=${data.missingKeyPolicy}, formatters=${data.formatters}, translations=${toMap()})"
+        "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, missingKeyPolicy=${data.missingKeyPolicy}, formatters=${data.formatters}, translations=`use toMap()`)"
 
     private fun innerTranslate(
         key: String,

@@ -8,7 +8,7 @@ package com.kamelia.sprinkler.i18n
  * - It cannot be empty
  * - It must start and end with an alphanumeric character
  * - It can contain alphanumeric characters, dashes and underscores
- * - It cannot contain two consecutive dashes or underscores (or a dash followed by an underscore or vice-versa).
+ * - It cannot contain two consecutive dashes or underscores (or a dash followed by an underscore or vice versa).
  *
  * Here are some examples of valid [Identifier]s:
  * - `my-key`

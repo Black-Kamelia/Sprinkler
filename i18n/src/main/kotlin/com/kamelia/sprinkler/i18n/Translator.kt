@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
-import java.util.Locale
+import java.util.*
 
 /**
  * Interface representing an object that can be used to translate strings. Through the [t] method, a key can be
@@ -107,7 +107,7 @@ interface Translator {
      * @param locale the locale to use for the translation
      * @param fallbacks the fallback keys to use if the translation is not found for the given [locale]
      * @return the translation using the provided information, or null if the translation is not found
-     * @throws IllegalArgumentException if the key is not [valid][TranslationKey] or if the [options] are not valid
+     * @throws IllegalArgumentException if the key is not [valid][TranslationKey]
      */
     fun tn(key: TranslationKey, locale: Locale, vararg fallbacks: String): String? =
         tn(key, emptyMap(), locale, defaultLocale, *fallbacks)
@@ -143,6 +143,7 @@ interface Translator {
      * @param key the key to translate
      * @param fallbacks the fallback keys to use if the translation is not found for the given locale
      * @return the translation using the provided information, or null if the translation is not found
+     * @throws IllegalArgumentException if the key is not [valid][TranslationKey]
      */
     fun tn(key: TranslationKey, vararg fallbacks: String): String? =
         tn(key, emptyMap(), currentLocale, defaultLocale, *fallbacks)
@@ -218,8 +219,8 @@ interface Translator {
      * @param locale the locale to use for the translation
      * @param fallbacks the fallback keys to use if the translation is not found for the given [locale]
      * @return the translation using the provided information or a value depending on the implementation if not found
-     * @throws IllegalArgumentException if the key is not [valid][TranslationKey], if the [options] are not valid, or
-     * if the implementation throws an exception when a translation is not found
+     * @throws IllegalArgumentException if the key is not [valid][TranslationKey], or if the implementation throws an
+     * exception when a translation is not found
      */
     fun t(key: TranslationKey, locale: Locale, vararg fallbacks: String): String =
         t(key, emptyMap(), locale, defaultLocale, *fallbacks)
