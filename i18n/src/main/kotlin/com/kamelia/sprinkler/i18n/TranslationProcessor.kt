@@ -1,10 +1,24 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.util.*
+import com.kamelia.sprinkler.util.VariableResolver
+import com.kamelia.sprinkler.util.assertionFailed
+import com.kamelia.sprinkler.util.illegalArgument
+import com.kamelia.sprinkler.util.interpolate
+import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt2.annotation.PackagePrivate
+import java.util.Locale
 import org.intellij.lang.annotations.Language
-import java.util.*
 
+/**
+ * Class in charge of processing the translations.
+ *
+ * During the processing, this class:
+ * - create the actual key
+ * - look for the translation in the map
+ * - perform the interpolation of the values
+ * - apply the formatters to the values
+ * - return the final string
+ */
 @PackagePrivate
 internal object TranslationProcessor {
 
@@ -63,12 +77,23 @@ internal object TranslationProcessor {
 
     fun Map<String, Any>.count(ordinal: Boolean, pluralMapper: Plural.Mapper): Plural? {
         val count = get(Options.COUNT) ?: return null
-        val actualCount = if (count is FormattedValueImpl) count.value else count
-        require(actualCount is Number) { "Count must be a number but was ${actualCount::class.java}" }
-        return if (ordinal) {
-            pluralMapper.mapOrdinal(actualCount)
-        } else {
-            pluralMapper.mapCardinal(actualCount)
+        val unwrappedCount = if (count is FormattedValueImpl) count.value else count
+        return when (unwrappedCount) {
+            is Number -> {
+                if (ordinal) {
+                    pluralMapper.mapOrdinal(unwrappedCount)
+                } else {
+                    pluralMapper.mapCardinal(unwrappedCount)
+                }
+            }
+            is ScientificNotationNumber -> {
+                if (ordinal) {
+                    pluralMapper.mapOrdinal(unwrappedCount)
+                } else {
+                    pluralMapper.mapCardinal(unwrappedCount)
+                }
+            }
+            else -> illegalArgument("Count must be a number but was ${unwrappedCount::class.java}")
         }
     }
 
@@ -100,9 +125,8 @@ internal object TranslationProcessor {
         val format = """\s*,\s*($IDENTIFIER)\s*(?:$formatParams)?"""
 
         // capture the variable name
-        generalSplit = """\s*(${Regex.escape(NESTED_KEY_CHAR.toString())}?$IDENTIFIER)(?:$format)?\s*""".toRegex()
+        generalSplit = """\s*($IDENTIFIER)(?:$format)?\s*""".toRegex()
     }
-
 
     internal val customResolver = object : VariableResolver<ProcessingContext> {
 

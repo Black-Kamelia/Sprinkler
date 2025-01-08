@@ -1,9 +1,11 @@
 package com.kamelia.sprinkler.i18n
 
+import java.util.Locale
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import java.util.*
 
 class TranslatorBuilderTest {
 
@@ -134,4 +136,54 @@ class TranslatorBuilderTest {
         }
     }
 
+    @Test
+    fun `build does not throw an ISE if throwOnMissingKey is false and at least two locals does not have the same keys`() {
+        assertDoesNotThrow {
+            TranslatorBuilder.create(ignoreMissingKeysOnBuild = true)
+                .addMap(Locale.ENGLISH, mapOf("test" to "test"))
+                .addMap(Locale.FRANCE, mapOf())
+                .build()
+        }
+    }
+
+    @Test
+    fun `keyComparator correctly compares (a lt b)`() {
+        val keyComparator = TranslatorBuilderImpl.keyComparator()
+        val a = "a"
+        val b = "b"
+        assertTrue(keyComparator.compare(a, b) < 0)
+    }
+
+    @Test
+    fun `keyComparator correctly compares (a eq a)`() {
+        val keyComparator = TranslatorBuilderImpl.keyComparator()
+        val a = "a"
+        assertTrue(keyComparator.compare(a, a) == 0)
+    }
+
+    @Test
+    fun `keyComparator correctly compares (b gt a)`() {
+        val keyComparator = TranslatorBuilderImpl.keyComparator()
+        val a = "a"
+        val b = "b"
+        assertTrue(keyComparator.compare(b, a) > 0)
+    }
+
+    @Test
+    fun `keyComparator correctly handles dots`() {
+        val keyComparator = TranslatorBuilderImpl.keyComparator()
+        val a = "a.b"
+        val b = "a.c"
+        assertTrue(keyComparator.compare(a, b) < 0)
+    }
+
+    @Test
+    fun `keyComparator correctly handles dots when a key is the prefix`() {
+        val keyComparator = TranslatorBuilderImpl.keyComparator()
+        val a = "a"
+        val b = "a.b"
+        assertTrue(keyComparator.compare(a, b) < 0)
+    }
+
 }
+

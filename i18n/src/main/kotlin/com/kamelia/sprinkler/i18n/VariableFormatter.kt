@@ -7,7 +7,7 @@ import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.temporal.TemporalAccessor
-import java.util.*
+import java.util.Locale
 
 /**
  * Represents an object that can format specific values depending on the locale. Formatting is performed through the
@@ -21,6 +21,8 @@ import java.util.*
  * - [VariableFormatter.time]
  * - [VariableFormatter.datetime]
  * - [VariableFormatter.number]
+ *
+ * @param T the type of the value to format
  */
 fun interface VariableFormatter<T> {
 

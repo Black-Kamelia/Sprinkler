@@ -3,7 +3,7 @@ package com.kamelia.sprinkler.i18n
 import com.kamelia.sprinkler.i18n.TranslatorConfiguration.MissingKeyPolicy
 import com.kamelia.sprinkler.util.VariableDelimiter
 import com.zwendo.restrikt2.annotation.PackagePrivate
-import java.util.*
+import java.util.Locale
 
 @PackagePrivate
 internal class TranslatorData(

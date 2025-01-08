@@ -1,10 +1,11 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.util.unsafeCast
+import com.kamelia.sprinkler.util.unsupportedOperation
 import com.zwendo.restrikt2.annotation.PackagePrivate
-import java.util.*
+import java.util.Locale
 import java.util.stream.Collectors
-import kotlin.math.log10
+import kotlin.math.abs
 
 /**
  * Default implementation of the [Plural.Mapper] that uses the builtin plural rules defined by
@@ -25,22 +26,24 @@ internal object BuiltinPluralMappers {
         return { loadMapper(map, it) }
     }
 
-    private fun builtinMappers(): Map<String, String> = Plural::class.java
-        .getResourceAsStream("plural_rules.csv")!!
-        .bufferedReader()
-        .lines()
-        .map {
-            val (code, rest) = it.split(";", limit = 2)
-            code to rest
-        }
-        .collect(Collectors.toUnmodifiableMap({ it.first }, { it.second }))
+    private fun builtinMappers(): Map<String, String> =
+        Plural::class.java
+            .getResourceAsStream("plural_rules.csv")!!
+            .bufferedReader()
+            .lines()
+            .skip(1)
+            .map {
+                val (code, rest) = it.split(";", limit = 2)
+                code to rest
+            }
+            .collect(Collectors.toUnmodifiableMap({ it.first }, { it.second }))
 
     private fun loadMapper(content: Map<String, String>, locale: Locale): Plural.Mapper {
         // we first look for the whole tag, then for the language
         val rules = content[locale.toLanguageTag()]
             ?: content[locale.language]
             ?: throw LocaleNotFoundException(locale)
-        return loadedMapper(rules)
+        return loadedMapper(locale, rules)
     }
 
     class LocaleNotFoundException(val locale: Locale) : RuntimeException(null, null, false, false)
@@ -50,55 +53,124 @@ internal object BuiltinPluralMappers {
         private val ordinal: IV2Plural,
     ) : Plural.Mapper {
 
-        override fun mapCardinal(count: Double): Plural = cardinal(InputValue.IDouble(count))
+        override fun mapCardinal(count: Double): Plural = cardinal(InputValue.from(count))
 
-        override fun mapCardinal(count: Long): Plural = cardinal(InputValue.ILong(count))
+        override fun mapCardinal(count: Long): Plural = cardinal(InputValue.from(count))
 
-        override fun mapOrdinal(count: Long): Plural = ordinal(InputValue.ILong(count))
+        override fun mapCardinal(count: ScientificNotationNumber): Plural = cardinal(InputValue.from(count))
 
-        override fun mapOrdinal(count: Double): Plural = ordinal(InputValue.IDouble(count))
+        override fun mapOrdinal(count: Long): Plural = ordinal(InputValue.from(count))
 
-        override fun toString(): String = "BuiltinPluralMapper(cardinal='$cardinal',ordinal='$ordinal')"
+        override fun mapOrdinal(count: Double): Plural = ordinal(InputValue.from(count))
+
+        override fun mapOrdinal(count: ScientificNotationNumber): Plural = ordinal(InputValue.from(count))
+
+        override fun toString(): String = "(cardinal=[$cardinal], ordinal=[$ordinal])"
 
     }
 
     /**
      * Simple wrapper around a floating point or integer value. It is used to pass the value to the plural mapper.
      */
-    private sealed interface InputValue {
+    internal sealed interface InputValue {
+        /**
+         * Unicode `i`
+         */
+        fun toLong(): InputValue
 
-        fun toLong(): ILong
+        /**
+         * Unicode `f` (it should normally include the trailing zeros)
+         */
+        fun toFloatingPart(): InputValue
 
-        fun toFloatingPart(): ILong
+        /**
+         * Unicode `v`
+         */
+        fun toFloatingPartDigitsCount(): InputValue
 
-        fun toFloatingPartDigitsCount(): ILong
+        /**
+         * Unicode `e`
+         */
+        fun exponent(): InputValue
 
-        operator fun rem(divisor: Long): ILong
+        operator fun rem(divisor: Long): InputValue
 
-        class ILong(val long: Long) : InputValue {
+        fun isInRange(start: Long, end: Long): Boolean
+
+        fun isEqualsToValue(value: Long): Boolean
+
+        companion object {
+
+            fun from(value: Long): InputValue = ILong(value)
+
+            fun from(value: Double): InputValue = IDouble(value)
+
+            fun from(value: ScientificNotationNumber): InputValue = ISci(value)
+
+            private fun doubleFloatingPart(value: Double): Long {
+                val absoluteValue = abs(value)
+                val floatingValue = absoluteValue.toBigDecimal() - absoluteValue.toLong().toBigDecimal()
+                val exponent = floatingValue.toString().length - 2
+                return (floatingValue * (10.0.toBigDecimal().pow(exponent))).toLong()
+            }
+
+            private fun doubleFloatingPartDigits(value: Double): Long {
+                val absoluteValue = abs(value)
+                val floatingValue = absoluteValue.toBigDecimal() - absoluteValue.toLong().toBigDecimal()
+                return (floatingValue.toString().length - 2).toLong()
+            }
+
+        }
+
+        private class ILong(val long: Long) : InputValue {
             override fun toLong(): ILong = this
             override fun toFloatingPart(): ILong = ILong(0)
             override fun toFloatingPartDigitsCount(): ILong = ILong(0)
+            override fun exponent(): ILong = ILong(0)
             override fun rem(divisor: Long): ILong = ILong(long % divisor)
-            override fun toString(): String = long.toString()
+            override fun isInRange(start: Long, end: Long): Boolean = long in start..end
+            override fun isEqualsToValue(value: Long): Boolean = long == value
         }
 
-        class IDouble(val double: Double) : InputValue {
+        private class IDouble(val double: Double) : InputValue {
             override fun toLong(): ILong = ILong(double.toLong())
-            override fun toFloatingPart(): ILong = ILong((double - double.toLong()).toLong())
-            override fun toFloatingPartDigitsCount(): ILong = ILong(log10(double - double.toLong()).toLong())
-            override fun rem(divisor: Long): ILong =
-                throw UnsupportedOperationException("Cannot apply modulo to a floating point number")
-            override fun toString(): String = double.toString()
+            override fun toFloatingPart(): ILong = ILong(doubleFloatingPart(double))
+            override fun toFloatingPartDigitsCount(): ILong = ILong(doubleFloatingPartDigits(double))
+            override fun rem(divisor: Long): ILong = unsupportedOperation("Cannot apply modulo to a floating point number")
+            override fun isInRange(start: Long, end: Long): Boolean = double in start.toDouble()..end.toDouble()
+            override fun isEqualsToValue(value: Long): Boolean = double == value.toDouble()
+            override fun exponent(): ILong = ILong(0)
+        }
+
+        private class ISci(val sci: ScientificNotationNumber) : InputValue {
+            override fun toLong(): ILong = ILong(sci.toLong())
+            override fun toFloatingPart(): ILong = ILong(doubleFloatingPart(sci.toDouble()))
+            override fun toFloatingPartDigitsCount(): ILong = ILong(doubleFloatingPartDigits(sci.toDouble()))
+            override fun rem(divisor: Long): ILong {
+                if (!sci.isInteger) { unsupportedOperation("Cannot apply modulo to a floating point number") }
+                return ILong(sci.toLong() % divisor)
+            }
+            override fun isInRange(start: Long, end: Long): Boolean =
+                if (sci.isInteger) {
+                    sci.toLong() in start..end
+                } else {
+                    sci.toDouble() in start.toDouble()..end.toDouble()
+                }
+            override fun exponent(): ILong = ILong(sci.exponent.toLong())
+            override fun isEqualsToValue(value: Long): Boolean = sci.toDouble() == value.toDouble()
         }
 
     }
 
-    private fun loadedMapper(rules: String): Plural.Mapper {
-        val (cardinal, ordinal) = rules.split(';')
-        val cardinalMapper = parseRule(true, cardinal)
-        val ordinalMapper = parseRule(false, ordinal)
-        return BuiltinMapper(cardinalMapper, ordinalMapper)
+    fun loadedMapper(locale: Locale, rules: String): Plural.Mapper {
+        return try {
+            val (cardinal, ordinal) = rules.split(';')
+            val cardinalMapper = parseRule(true, cardinal)
+            val ordinalMapper = parseRule(false, ordinal)
+            BuiltinMapper(cardinalMapper, ordinalMapper)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Error parsing the rules '$rules' for locale '$locale'.", e)
+        }
     }
 
     private fun parseRule(isCardinal: Boolean, rule: String): IV2Plural =
@@ -123,7 +195,7 @@ internal object BuiltinPluralMappers {
             else -> parseRuleContent(rule)
         }
 
-    private fun parseRuleContent(rule: String): IV2Plural {
+    fun parseRuleContent(rule: String): IV2Plural {
         val parts = rule.split("//")
             .stream()
             .map {
@@ -140,7 +212,7 @@ internal object BuiltinPluralMappers {
                 return Plural.OTHER
             }
 
-            override fun toString(): String = parts.joinToString(" // ") { (part, plural) -> "$plural = $part" }
+            override fun toString(): String = parts.joinToString(", ") { (part, plural) -> "$plural: '$part'" }
         }
     }
 
@@ -174,7 +246,6 @@ internal object BuiltinPluralMappers {
             comparisonParts = part.split("=")
             isDifferent = false
         }
-        assert(comparisonParts.size == 2) { "Invalid comparison part: $part" }
         val leftPart = parseComparisonLeftPart(comparisonParts[0])
         val rightPart = parseComparisonRightPart(comparisonParts[1])
         return object : IV2Boolean {
@@ -189,10 +260,14 @@ internal object BuiltinPluralMappers {
         }
     }
 
+    /**
+     * Comparisons are always in the form `leftPart =/!= rightPart`, where leftPart != rightPart and leftPart is
+     * `conversion (% modulo)?`, `conversion` being the variable used (e.g. `i`, `n`, ...).
+     */
     private fun parseComparisonLeftPart(part: String): IV2IV {
         val parts = part.split("%")
-        if (parts.size == 1) return parseInputValueAdapter(parts[0])
         val adapter = parseInputValueAdapter(parts[0])
+        if (parts.size == 1) return adapter
         val modulo = parts[1].toLong()
         return object : IV2IV {
             override fun invoke(value: InputValue): InputValue {
@@ -205,21 +280,40 @@ internal object BuiltinPluralMappers {
     }
 
     private fun parseInputValueAdapter(part: String): IV2IV {
+        val conversion = try {
+            IVConversions.valueOf(part.uppercase())
+        } catch (e: IllegalArgumentException) {
+            throw AssertionError("Invalid conversion part: $part")
+        }
         return object : IV2IV {
             override fun invoke(value: InputValue): InputValue =
-                when (part) {
-                    "n" -> value
-                    "e" -> InputValue.ILong(0L)
-                    "i" -> value.toLong()
-                    "f" -> value.toFloatingPart()
-                    "v" -> value.toFloatingPartDigitsCount()
-                    else -> throw AssertionError("Unknown variable: $part")
+                when (conversion) {
+                    // the value directly
+                    IVConversions.N -> value // 63.8 -> 63.8
+
+                    // the value of the exponent of 10 in scientific notation
+                    IVConversions.E -> value.exponent() // 63e8 -> 8
+
+                    // the value of the integer part of the number
+                    IVConversions.I -> value.toLong() // 63.8 -> 63
+
+                    // the value of the decimal part of the number
+                    IVConversions.F -> value.toFloatingPart() // 63.8 -> 8
+
+                    // the number of digits in the decimal part of the number
+                    IVConversions.V -> value.toFloatingPartDigitsCount() // 63.8 -> 1
+
                 }
 
-            override fun toString(): String = part
+            override fun toString(): String = conversion.toString().lowercase()
         }
     }
 
+    /**
+     * Comparisons are always in the form `leftPart =/!= rightPart`, where leftPart != rightPart and rightPart is
+     * `range | enumeration`, `range` being `start..end` and `enumeration` being a list of ranges separated by commas.
+     * Note that a simple comparison is an enumeration with a single element.
+     */
     private fun parseComparisonRightPart(part: String): IV2Boolean {
         val enumeration = part.split(",")
         if (enumeration.size == 1) return parseRangePart(enumeration[0])
@@ -236,12 +330,7 @@ internal object BuiltinPluralMappers {
         val start = range[0].toLong()
         val end = range[1].toLong()
         return object : IV2Boolean {
-            override fun invoke(value: InputValue): Boolean =
-                when (value) {
-                    is InputValue.IDouble -> value.double in start.toDouble()..end.toDouble()
-                    is InputValue.ILong -> value.long in start..end
-                }
-
+            override fun invoke(value: InputValue): Boolean = value.isInRange(start, end)
             override fun toString(): String = "$start..$end"
         }
     }
@@ -252,26 +341,28 @@ internal object BuiltinPluralMappers {
     private fun parseValuePart(part: String): IV2Boolean =
         object : IV2Boolean {
             private val value = part.toLong()
-            override fun invoke(value: InputValue): Boolean =
-                when (value) {
-                    is InputValue.IDouble -> false
-                    is InputValue.ILong -> value.long == this.value
-                }
-
+            override fun invoke(value: InputValue): Boolean = value.isEqualsToValue(this.value)
             override fun toString(): String = value.toString()
         }
 
     private interface IV2Boolean {
+
         operator fun invoke(value: InputValue): Boolean
     }
 
 
-    private interface IV2Plural {
+    interface IV2Plural {
+
         operator fun invoke(value: InputValue): Plural
     }
 
     private interface IV2IV {
+
         operator fun invoke(value: InputValue): InputValue
     }
 
+}
+
+private enum class IVConversions {
+    N, E, I, F, V
 }

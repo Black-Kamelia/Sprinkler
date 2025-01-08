@@ -1,0 +1,12 @@
+[versions]
+kotlin = "2.1.0"
+
+[libraries]
+restrikt-annotations = { group = "com.zwendo", name = "restrikt2-annotations", version = "0.2.0" }
+
+
+[plugins]
+restrikt = { id = "com.zwendo.restrikt2", version = "0.2.0" }
+dokka = { id = "org.jetbrains.dokka", version = "2.0.0" }
+kover = { id = "org.jetbrains.kotlinx.kover", version = "0.9.0" }
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

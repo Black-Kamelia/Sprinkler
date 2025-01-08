@@ -119,6 +119,46 @@ object Options {
      * //   "item_other": "I have {{count, number}} items"
      * // }
      * class Main {
+     *     Translator translator = ...
+     *
+     *     void items(ScientificNotationNumber number) {
+     *        var value = translator.t(
+     *            "item",
+     *            Map.ofEntries(count(number))
+     *        )
+     *        System.out.println(value)
+     *     }
+     *
+     *     void run() {
+     *         items(ScientificNotation.from(2.5)) // prints "I have several items"
+     *     }
+     * }
+     * ```
+     *
+     * As shown in the example above, the plural value actually appends the value to the key, separated by an
+     * underscore.
+     *
+     * **NOTE**: The plural value is appended to the key after the [context] (e.g. `key_male_one`).
+     *
+     * @param count the count value to be used
+     * @return a [Map.Entry] representing the count value
+     */
+    @JvmStatic
+    fun count(count: ScientificNotationNumber): Map.Entry<String, Any> = entryOf(COUNT, count)
+
+    /**
+     * The count value of the translation, used to disambiguate plural forms.
+     *
+     * The most common use case is to disambiguate the plural form of a word, like in the following example:
+     *
+     * ```java
+     * // content:
+     * // {
+     * //   "item_zero": "I have no items",
+     * //   "item_one": "I have {{count, number}} item",
+     * //   "item_other": "I have {{count, number}} items"
+     * // }
+     * class Main {
      *    Translator translator = ...
      *
      *    void items(Number number) {
@@ -133,11 +173,22 @@ object Options {
      *        items(2) // prints "I have 2.00 items"
      *    }
      * }
+     * ```
+     *
+     * As shown in the example above, the plural value actually appends the value to the key, separated by an
+     * underscore.
+     *
+     * **NOTE**: The plural value is appended to the key after the [context] (e.g. `key_male_one`).
+     *
+     * @param count the count value to be used
+     * @return a [Map.Entry] representing the count value
      */
     @JvmStatic
     fun count(count: FormattedValue): Map.Entry<String, Any> {
         val actualValue = count.value
-        require(actualValue is Number) { "Count must be a number but was ${actualValue::class.java}" }
+        require(actualValue is Number || actualValue is ScientificNotationNumber) {
+            "Count must be a number or a scientific notation number but was ${actualValue::class.java}"
+        }
         return entryOf(COUNT, count)
     }
 
@@ -305,8 +356,7 @@ object Options {
  *
  * ```
  *
- * As shown in the example above, the plural value actually appends the value to the key, separated by an
- * underscore.
+ * As shown in the example above, the plural value actually appends the value to the key, separated by an underscore.
  *
  * **NOTE**: The plural value is appended to the key after the [context] (e.g. `key_male_one`).
  *
@@ -344,8 +394,7 @@ fun count(count: Long): Pair<String, Any> = Options.COUNT to count
  * }
  * ```
  *
- * As shown in the example above, the plural value actually appends the value to the key, separated by an
- * underscore.
+ * As shown in the example above, the plural value actually appends the value to the key, separated by an underscore.
  *
  * **NOTE**: The plural value is appended to the key after the [context] (e.g. `key_male_one`).
  *
@@ -355,6 +404,42 @@ fun count(count: Long): Pair<String, Any> = Options.COUNT to count
  * @see Plural
  */
 fun count(count: Double): Pair<String, Any> = Options.COUNT to count
+
+/**
+ * The count value of the translation, used to disambiguate plural forms.
+ *
+ * The most common use case is to disambiguate the plural form of a word, like in the following example:
+ *
+ * ```
+ * // content:
+ * // {
+ * //   "item_zero": "I have no items",
+ * //   "item_one": "I have {{count, number}} item",
+ * //   "item_other": "I have {{count, number}} items"
+ * // }
+ * val translator: Translator = ...
+ *
+ * fun items(number: ScientificNotationNumber) {
+ *    val value = translator.t(
+ *        "item",
+ *        mapOf(count(number))
+ *    )
+ *    println(value)
+ * }
+ *
+ * fun main() {
+ *    items(ScientificNotation.from(2.5)) // prints "I have several items"
+ * }
+ * ```
+ *
+ * As shown in the example above, the plural value actually appends the value to the key, separated by an underscore.
+ *
+ * **NOTE**: The plural value is appended to the key after the [context] (e.g. `key_male_one`).
+ *
+ * @param count the count value to be used
+ * @return a [Pair] representing the count value
+ */
+fun count(count: ScientificNotationNumber): Pair<String, Any> = Options.COUNT to count
 
 /**
  * The count value of the translation, used to disambiguate plural forms.
@@ -381,10 +466,20 @@ fun count(count: Double): Pair<String, Any> = Options.COUNT to count
  * fun main() {
  *    items(2) // prints "I have 2.00 items"
  * }
+ * ```
+ *
+ * As shown in the example above, the plural value actually appends the value to the key, separated by an underscore.
+ *
+ * **NOTE**: The plural value is appended to the key after the [context] (e.g. `key_male_one`).
+ *
+ * @param count the count value to be used
+ * @return a [Pair] representing the count value
  */
 fun count(count: FormattedValue): Pair<String, Any> {
     val actualValue = count.value
-    require(actualValue is Number) { "Count must be a number but was ${actualValue::class.java}" }
+    require(actualValue is Number || actualValue is ScientificNotationNumber) {
+        "Count must be a number or a scientific notation number but was ${actualValue::class.java}"
+    }
     return Options.COUNT to count
 }
 

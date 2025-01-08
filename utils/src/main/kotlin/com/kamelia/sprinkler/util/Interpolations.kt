@@ -3,7 +3,6 @@
 package com.kamelia.sprinkler.util
 
 import org.intellij.lang.annotations.Language
-import java.util.*
 
 /**
  * Interpolates variables in this string using the given [resolver]. This function replaces all sequence of characters
@@ -442,7 +441,8 @@ class VariableDelimiter private constructor(
          */
         @JvmStatic
         @get:JvmName("defaultDelimiter")
-        val default: VariableDelimiter = create("{{", "}}")
+        val default: VariableDelimiter
+            get() = create("{{", "}}")
 
         /**
          * Creates a [VariableDelimiter] using the given [start] and [end] delimiters.
@@ -487,22 +487,9 @@ class VariableDelimiter private constructor(
             return VariableDelimiter(start, end, regex)
         }
 
-        /**
-         * Backward compatibility method
-         */
-        @JvmName("default")
-        internal fun default(): VariableDelimiter = default
-
     }
-
-
 
     override fun toString(): String =
         "VariableDelimiter(startDelimiter='$startDelimiter', endDelimiter='$endDelimiter')"
-
-    override fun equals(other: Any?): Boolean =
-        other is VariableDelimiter && startDelimiter == other.startDelimiter && endDelimiter == other.endDelimiter
-
-    override fun hashCode(): Int = Objects.hash(startDelimiter, endDelimiter)
 
 }

@@ -10,8 +10,8 @@ import kotlin.contracts.contract
  * @receiver the object to cast or null
  * @return the object cast as [T]
  */
-@Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
-inline fun <T> Any?.unsafeCast(): T = this as T
+@Suppress("UNCHECKED_CAST")
+fun <T> Any?.unsafeCast(): T = this as T
 
 /**
  * Tries to cast this nullable object to the specified type [T].
@@ -20,7 +20,13 @@ inline fun <T> Any?.unsafeCast(): T = this as T
  * @receiver the object to cast or null
  * @return the object cast as [T], or null if the cast fails or if the object is null
  */
-inline fun <reified T> Any?.castOrNull(): T? = this as? T
+@OptIn(ExperimentalContracts::class)
+inline fun <reified T> Any?.castOrNull(): T? {
+    contract {
+        returns(null) implies (this@castOrNull == null || this@castOrNull !is T)
+    }
+    return this as? T
+}
 
 /**
  * Tries to cast this nullable object to the specified type [T]. This method returns null if the object is null, or
@@ -30,7 +36,13 @@ inline fun <reified T> Any?.castOrNull(): T? = this as? T
  * @return the object cast as [T], or null if the object is null
  * @throws ClassCastException if the cast fails
  */
-inline fun <reified T> Any?.castIfNotNull(): T? = this?.let { this as T }
+@OptIn(ExperimentalContracts::class)
+inline fun <reified T> Any?.castIfNotNull(): T? {
+    contract {
+        returns(null) implies (this@castIfNotNull == null)
+    }
+    return this?.let { this as T }
+}
 
 /**
  * Tries to cast this object to the specified type [T]. This method throws a [ClassCastException] if the cast

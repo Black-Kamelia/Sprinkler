@@ -1,9 +1,9 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.util.assertionFailed
+import com.kamelia.sprinkler.util.ExtendedCollectors
 import com.kamelia.sprinkler.util.entryOf
-import java.util.*
-import java.util.stream.Collectors
+import com.kamelia.sprinkler.util.illegalArgument
+import java.util.Locale
 
 /**
  * The plural value of the translation. It can be used to disambiguate translations depending on the number of
@@ -81,6 +81,7 @@ enum class Plural {
          * @param count the count to use
          * @return the [Plural] value
          * @throws IllegalArgumentException if the given [count] is negative
+         * @throws IllegalArgumentException if the given [count] is not a known number
          */
         fun mapCardinal(count: Number): Plural =
             when (count) {
@@ -92,8 +93,17 @@ enum class Plural {
                 is Long -> mapCardinal(count)
                 is Float -> mapCardinal(count.toDouble())
                 is Double -> mapCardinal(count)
-                else -> assertionFailed("Unsupported number type: ${count.javaClass}")
+                else -> illegalArgument("Unsupported number type: ${count.javaClass}")
             }
+
+        /**
+         * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of a count
+         * of items.
+         *
+         * @param count the count to use
+         * @return the [Plural] value
+         */
+        fun mapCardinal(count: ScientificNotationNumber): Plural = mapCardinal(count.value)
 
         /**
          * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of an
@@ -101,12 +111,8 @@ enum class Plural {
          *
          * @param count the count to use
          * @return the [Plural] value
-         * @throws IllegalArgumentException if the given [count] is negative or zero
-         * @throws UnsupportedOperationException if the implementation does not support floating point numbers for
-         * ordinal
          */
-        fun mapOrdinal(count: Double): Plural =
-            throw UnsupportedOperationException("Floating point numbers are not supported for ordinal numbers")
+        fun mapOrdinal(count: Double): Plural = OTHER
 
         /**
          * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of an
@@ -125,6 +131,7 @@ enum class Plural {
          * @param count the count to use
          * @return the [Plural] value
          * @throws IllegalArgumentException if the given [count] is negative or zero
+         * @throws IllegalArgumentException if the given [count] is not a known number
          */
         fun mapOrdinal(count: Number): Plural =
             when (count) {
@@ -136,8 +143,17 @@ enum class Plural {
                 is Long -> mapOrdinal(count)
                 is Float -> mapOrdinal(count.toDouble())
                 is Double -> mapOrdinal(count)
-                else -> assertionFailed("Unsupported number type: ${count.javaClass}")
+                else -> illegalArgument("Unsupported number type: ${count.javaClass}")
             }
+
+        /**
+         * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of an
+         * ordinal number.
+         *
+         * @param count the count to use
+         * @return the [Plural] value
+         */
+        fun mapOrdinal(count: ScientificNotationNumber): Plural = mapOrdinal(count.value)
 
     }
 
@@ -195,13 +211,7 @@ enum class Plural {
                 locales
                     .stream()
                     .map { entryOf(it, factory(it)) }
-                    .collect(
-                        Collectors.toUnmodifiableMap(
-                            { it.key },
-                            { it.value },
-                            { _, _ -> throw AssertionError("A set should not allow duplicates") },
-                        )
-                    )
+                    .collect(ExtendedCollectors.toMapUsingEntries())
             } catch (e: BuiltinPluralMappers.LocaleNotFoundException) {
                 throw IllegalArgumentException("Unsupported locale: ${e.locale}")
             }

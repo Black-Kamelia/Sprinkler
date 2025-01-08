@@ -4,11 +4,12 @@ import com.kamelia.sprinkler.i18n.TranslationProcessor.context
 import com.kamelia.sprinkler.i18n.TranslationProcessor.count
 import com.kamelia.sprinkler.i18n.TranslationProcessor.ordinal
 import com.kamelia.sprinkler.util.unsafeCast
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.util.*
+
 class TranslationProcessorTest {
 
     @Test
@@ -42,6 +43,16 @@ class TranslationProcessorTest {
     }
 
     @Test
+    fun `context and plural options correctly appended to the base key for ScientificNotationNumber`() {
+        val key = TranslationProcessor.buildKey(
+            "base.key",
+            mapOf(Options.CONTEXT to "context", Options.COUNT to ScientificNotationNumber.from(1)),
+            Plural.englishMapper()
+        )
+        assertEquals("base.key_context_one", key)
+    }
+
+    @Test
     fun `buildKey returns the base key when no option is provided`() {
         val key = TranslationProcessor.buildKey(
             "base.key",
@@ -56,6 +67,16 @@ class TranslationProcessorTest {
         val key = TranslationProcessor.buildKey(
             "base.key",
             mapOf(Options.COUNT to 2, Options.ORDINAL to true),
+            Plural.englishMapper()
+        )
+        assertEquals("base.key_ordinal_two", key)
+    }
+
+    @Test
+    fun `plural ordinal option is correctly appended to the base key for ScientificNotationNumber`() {
+        val key = TranslationProcessor.buildKey(
+            "base.key",
+            mapOf(Options.COUNT to ScientificNotationNumber.from(2), Options.ORDINAL to true),
             Plural.englishMapper()
         )
         assertEquals("base.key_ordinal_two", key)

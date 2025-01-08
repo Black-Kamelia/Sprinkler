@@ -1,10 +1,18 @@
 package com.kamelia.sprinkler.i18n
 
-import java.util.*
+import java.util.Locale
 
 /**
  * Interface representing an object that can be used to translate strings. Through the [t] method, a key can be
  * translated using a [Locale].
+ *
+ * It can be used as shown in the following example:
+ * ```
+ * val translator: Translator = ...
+ *
+ * val englishTranslation = translator.t("my.key", Locale.ENGLISH)
+ * val germanTranslation = translator.t("my.key", Locale.GERMAN)
+ * ```
  *
  * Keys must follow the rules defined by the [TranslationKey] typealias (see its documentation).
  * Any key that does not abide to these rules will result in an exception being thrown.
@@ -28,17 +36,19 @@ interface Translator {
      * Whether this [Translator] is a root [Translator], meaning that no prefix is prepended to the keys used to
      * translate values. In other words, it means that any given [TranslationKey] should represent the complete path
      * to get the translation value.
+     *
+     * @see prefix
      */
     val isRoot: Boolean
         get() = prefix == null
 
     /**
-     * The default locale that is used as a fallback when a translation is not found for the current locale.
+     * The default locale that is used as a fallback when a translation is not found for the chosen locale.
      */
     val defaultLocale: Locale
 
     /**
-     * The current locale used to translate keys.
+     * The current locale used to translate keys when no locale is provided.
      */
     val currentLocale: Locale
 
@@ -47,7 +57,8 @@ interface Translator {
      *
      * The order of resolution is the following:
      * - First, the translation is searched for the given [key] and [locale].
-     * - Then, it will try to find a valid translation for the keys provided in [fallbacks] in order.
+     * - Then, it will try to find a valid translation for the keys provided in [fallbacks] in order (still using the
+     * [locale]).
      * - The next step is, if the [locale] is different from the [fallbackLocale], to repeat the previous steps using
      * the [fallbackLocale] instead of the [locale].
      * - Finally, if no translation is found, null is returned.
@@ -154,10 +165,11 @@ interface Translator {
      *
      * The order of resolution is the following:
      * - First, the translation is searched for the given [key] and [locale].
-     * - Then, it will try to find a valid translation for the keys provided in [fallbacks] in order.
+     * - Then, it will try to find a valid translation for the keys provided in [fallbacks] in order (still using the
+     * [locale]).
      * - The next step is, if the [locale] is different from the [fallbackLocale], to repeat the previous steps using
      * the [fallbackLocale] instead of the [locale].
-     * - Finally, if no translation is found, null is returned.
+     * - Finally, if no translation is found, the behavior depends on the implementation.
      *
      * **NOTE**: During all the steps above, the [extraArgs] parameter remains the same for each translation attempt.
      *
@@ -269,17 +281,47 @@ interface Translator {
      * Returns a [Translator] with the given [key] as root key prefix (it can return itself after a state mutation,
      * depending on the implementation). The [key] will be prepended to all keys used to translate values.
      *
+     * In the example below:
+     * ```
+     * val translator: Translator = ...
+     *
+     * val sectionTranslator = translator.section("my")
+     * val myKey = sectionTranslator.t("key")
+     * ```
+     *
+     * is equivalent to:
+     * ```
+     * val translator: Translator = ...
+     *
+     * val myKey = translator.t("my.key")
+     * ```
+     *
      * **NOTE**: This method does not check if the key actually exists in the translations.
      *
      * @param key the root key
      * @return a new [Translator] with the given [key] as root key
-     * @throws IllegalArgumentException if the key is not [valid][Translator]
+     * @throws IllegalArgumentException if the key is not [valid][TranslationKey]
      */
     fun section(key: TranslationKey): Translator
 
     /**
      * Returns a [Translator] with the given [locale] as current locale (it can return itself after a state mutation,
      * depending on the implementation).
+     *
+     * In the example below:
+     * ```
+     * val translator: Translator = ...
+     *
+     * val germanTranslator = translator.withNewCurrentLocale(Locale.GERMAN)
+     * val germanTranslation = germanTranslator.t("my.key")
+     * ```
+     *
+     * is equivalent to:
+     * ```
+     * val translator: Translator = ...
+     *
+     * val germanTranslation = translator.t("my.key", Locale.GERMAN)
+     * ```
      *
      * **NOTE**: This method does not check if the [locale] is actually supported by this [Translator].
      *
@@ -305,5 +347,8 @@ interface Translator {
      * @return a map containing all translations for all locales
      */
     fun toMap(): Map<Locale, Map<TranslationKey, String>>
+
+    // Explicit companion object to allow extension functions.
+    companion object
 
 }

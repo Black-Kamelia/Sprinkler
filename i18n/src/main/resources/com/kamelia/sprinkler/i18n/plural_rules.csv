@@ -45,7 +45,7 @@ dz;*;
 en;one:i=1&&v=0;one:n%10=1&&n%100!=11//two:n%10=2&&n%100!=12//few:n%10=3&&n%100!=13
 eo;one:n=1;
 et;one:i=1&&v=0;*
-pt_PT; ;
+pt_PT;one:i=1&&v=0//many:e=0&&i!=0&&i%1000000=0&&v=0||e!=0..5;
 ee;one:n=1;
 fo;one:n=1;
 fil;one:v=0&&i=1,2,3||v=0&&i%10!=4,6,9||v!=0&&f%10!=4,6,9;one:n=1
@@ -62,7 +62,6 @@ gu;one:i=0||n=1;one:n=1//two:n=2,3//few:n=4//many:n=6
 ha;one:n=1;
 haw;one:n=1;
 he;one:i=1&&v=0||i=0&&v!=0//two:i=2&&v=0;*
-iw;one:i=1&&v=0||i=0&&v!=0//two:i=2&&v=0;*
 hi;one:i=0||n=1;one:n=1//two:n=2,3//few:n=4//many:n=6
 hnj;*;
 hu;one:n=1;one:n=1,5
@@ -71,7 +70,6 @@ io;one:i=1&&v=0;
 ig;*;
 smn;one:n=1//two:n=2;
 id;*;*
-in;*;*
 ia;one:i=1&&v=0;*
 iu;one:n=1//two:n=2;
 ga;one:n=1//two:n=2//few:n=3..6//many:n=7..10;one:n=1
@@ -210,7 +208,6 @@ fy;one:i=1&&v=0;*
 wo;*;
 xh;one:n=1;
 sah;*;
-ji;;
 yi;one:i=1&&v=0;
 yo;*;
 zu;one:i=0||n=1;*

@@ -98,5 +98,5 @@ internal class FormattedValueImpl(
 ) : FormattedValue
 
 @PackagePrivate
-val FormattedValue.value: Any
+internal val FormattedValue.value: Any
     get() = (this as FormattedValueImpl).value

@@ -1,8 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    val jmhPluginVersion: String by System.getProperties()
-    id("me.champeau.jmh") version jmhPluginVersion
+    alias(binaryTranscodersLibs.plugins.jmh)
 }
 
 dependencies {

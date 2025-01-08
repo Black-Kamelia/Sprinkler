@@ -36,4 +36,10 @@ class TranslatorBuilderResourceTest {
         }
     }
 
+    @Test
+    fun `addResource throws aaa`() {
+        val builder = TranslatorBuilder.create()
+        builder.addResource("builder_test/en.yml", TranslatorBuilderResourceTest::class.java)
+    }
+
 }

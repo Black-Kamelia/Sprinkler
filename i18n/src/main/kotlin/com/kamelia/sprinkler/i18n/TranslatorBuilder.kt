@@ -1,6 +1,9 @@
 package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.i18n.TranslatorBuilder.Companion.defaultContentLoaders
+import com.kamelia.sprinkler.i18n.TranslatorBuilder.ContentLoader
 import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
+import com.kamelia.sprinkler.util.unmodifiableMapOf
 import java.io.File
 import java.io.IOException
 import java.net.URI
@@ -9,7 +12,7 @@ import java.net.URL
 import java.nio.charset.Charset
 import java.nio.file.FileSystemNotFoundException
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 
 
 /**
@@ -22,6 +25,10 @@ import java.util.*
  * - Values passed to this builder are all validated on building, to ensure that the potential variables used in the
  * string respect the [TranslationInterpolationVariable] rules. If a value does not respect these rules, an exception
  * will be thrown when adding the value to the builder.
+ * - The content of the files is parsed using [ContentLoaders][ContentLoader]. Loaders are provided by a map associating
+ * file extensions to content loaders. This map is passed to the builder when creating it. If a file extension is not
+ * present in the map, an [IllegalArgumentException] will be thrown. Default content loaders exist but require
+ * additional dependencies to be added to the project. For more information, see the [defaultContentLoaders] method.
  *
  * The translators created with this builder will have the following properties:
  *
@@ -70,8 +77,6 @@ sealed interface TranslatorBuilder {
      * Adds a path to the builder If the path is a directory, all files in it will be loaded (one level of depth, inner
      * directories are ignored). If the path is a file, it will be loaded.
      *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
-     *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
      *
@@ -79,7 +84,7 @@ sealed interface TranslatorBuilder {
      * @param charset the charset to use when reading the file
      * @return this builder
      *
-     * @throws IllegalArgumentException if the file extension is not supported
+     * @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]* @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]
      * @throws IllegalArgumentException if the file name is not a valid locale identifier
      * @throws IOException if an I/O error occurs when trying to read the file
      * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
@@ -91,8 +96,6 @@ sealed interface TranslatorBuilder {
      * Adds a path to the builder. If the path is a directory, all files in it will be loaded (one level of depth, inner
      * directories are ignored). If the path is a file, it will be loaded.
      *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
-     *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
      *
@@ -101,7 +104,7 @@ sealed interface TranslatorBuilder {
      * @param path the path to load
      * @return this builder
      *
-     * @throws IllegalArgumentException if the file extension is not supported
+     * @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]* @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]
      * @throws IllegalArgumentException if the file name is not a valid locale identifier
      * @throws IOException if an I/O error occurs when trying to read the file
      * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
@@ -114,8 +117,6 @@ sealed interface TranslatorBuilder {
      * Adds a file to the builder. If the path is a directory, all files in it will be loaded (one level of depth, inner
      * directories are ignored). If the path is a file, it will be loaded.
      *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
-     *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
      *
@@ -125,7 +126,7 @@ sealed interface TranslatorBuilder {
      * @param charset the charset to use when reading the file
      * @return this builder
      *
-     * @throws IllegalArgumentException if the file extension is not supported
+     * @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]* @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]
      * @throws IllegalArgumentException if the file name is not a valid locale identifier
      * @throws IOException if an I/O error occurs when trying to read the file
      * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
@@ -138,8 +139,6 @@ sealed interface TranslatorBuilder {
      * Adds a file to the builder. If the path is a directory, all files in it will be loaded (one level of depth, inner
      * directories are ignored). If the path is a file, it will be loaded.
      *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
-     *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
      *
@@ -150,20 +149,18 @@ sealed interface TranslatorBuilder {
      * @param file the file to load
      * @return this builder
      *
-     * @throws IllegalArgumentException if the file extension is not supported
+     * @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]* @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]
      * @throws IllegalArgumentException if the file name is not a valid locale identifier
      * @throws IOException if an I/O error occurs when trying to read the file
      * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
      * [DuplicatedKeyResolution.FAIL]
      * @see addPath
      */
-    fun addFile(file: File): TranslatorBuilder = addPath(file.toPath())
+    fun addFile(file: File): TranslatorBuilder = addFile(file, defaultCharset)
 
     /**
      * Adds a URI to the builder. If the URI points to a directory, all files in it will be loaded (one level of depth,
      * inner directories are ignored). If the URI points to a file, it will be loaded.
-     *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
      *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
@@ -177,7 +174,7 @@ sealed interface TranslatorBuilder {
      * @throws URISyntaxException if the URI is not formatted strictly according to RFC2396 and cannot be converted to a
      * URI
      * @throws FileSystemNotFoundException if an exception occurs when trying to convert the URI to a [Path]
-     * @throws IllegalArgumentException if the file extension is not supported
+     * @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]
      * @throws IllegalArgumentException if the file name is not a valid locale identifier
      * @throws IOException if an I/O error occurs when trying to read the file
      * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
@@ -190,8 +187,6 @@ sealed interface TranslatorBuilder {
      * Adds a URI to the builder. If the URI points to a directory, all files in it will be loaded (one level of depth,
      * inner directories are ignored). If the URI points to a file, it will be loaded.
      *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
-     *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
      *
@@ -205,20 +200,18 @@ sealed interface TranslatorBuilder {
      * @throws URISyntaxException if the URI is not formatted strictly according to RFC2396 and cannot be converted to a
      * URI
      * @throws FileSystemNotFoundException if an exception occurs when trying to convert the URI to a [Path]
-     * @throws IllegalArgumentException if the file extension is not supported
+     * @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]
      * @throws IllegalArgumentException if the file name is not a valid locale identifier
      * @throws IOException if an I/O error occurs when trying to read the file
      * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
      * [DuplicatedKeyResolution.FAIL]
      * @see addPath
      */
-    fun addURI(uri: URI): TranslatorBuilder = addPath(Path.of(uri))
+    fun addURI(uri: URI): TranslatorBuilder = addURI(uri, defaultCharset)
 
     /**
      * Adds a URL to the builder. If the URL points to a directory, all files in it will be loaded (one level of depth,
      * inner directories are ignored). If the URL points to a file, it will be loaded.
-     *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
      *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
@@ -232,7 +225,7 @@ sealed interface TranslatorBuilder {
      * @throws URISyntaxException if the URL is not formatted strictly according to RFC2396 and cannot be converted to a
      * URI
      * @throws FileSystemNotFoundException if an exception occurs when trying to convert the URL to a [Path]
-     * @throws IllegalArgumentException if the file extension is not supported
+     * @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]
      * @throws IllegalArgumentException if the file name is not a valid locale identifier
      * @throws IOException if an I/O error occurs when trying to read the file
      * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
@@ -244,8 +237,6 @@ sealed interface TranslatorBuilder {
     /**
      * Adds a URL to the builder. If the URL points to a directory, all files in it will be loaded (one level of depth,
      * inner directories are ignored). If the URL points to a file, it will be loaded.
-     *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
      *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
@@ -260,14 +251,14 @@ sealed interface TranslatorBuilder {
      * @throws URISyntaxException if the URL is not formatted strictly according to RFC2396 and cannot be converted to a
      * URI
      * @throws FileSystemNotFoundException if an exception occurs when trying to convert the URL to a [Path]
-     * @throws IllegalArgumentException if the file extension is not supported
+     * @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]
      * @throws IllegalArgumentException if the file name is not a valid locale identifier
      * @throws IOException if an I/O error occurs when trying to read the file
      * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
      * [DuplicatedKeyResolution.FAIL]
      * @see addPath
      */
-    fun addURL(url: URL): TranslatorBuilder = addPath(Path.of(url.toURI()))
+    fun addURL(url: URL): TranslatorBuilder = addURL(url, defaultCharset)
 
     /**
      * Adds a resource to the builder. The resource is loaded using the class loader of the [resourceClass] parameter
@@ -275,10 +266,25 @@ sealed interface TranslatorBuilder {
      * The [resourcePath] can represent a file or a directory. If the resource is a directory, all files in it will be
      * loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
      *
-     * For this method to work with compiled jars, the [resourceClass] parameter must be a class in the same jar as the
-     * resource to load. The [resourcePath] parameter can be either an absolute path or a relative path.
+     * This method resolves the resource path in the same way as [getResourceAsStream][Class.getResourceAsStream]. If
+     * the provided [resourcePath] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute path
+     * without further modification. If the provided [resourcePath] is relative, it will be resolved relative to the
+     * package of the [resourceClass] parameter, with dots (`.`) replaced by slashes (`/`).
      *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
+     * Here is an example to illustrate the resolution:
+     * ```
+     * package com.example
+     *
+     * object Example {
+     *     fun test() {
+     *         // This will resolve to the resource `/com/example/example.yml`
+     *         TranslatorBuilder.create().addResource("example.yml", Example::class.java, Charsets.UTF_8)
+     *
+     *         // This will resolve to the resource `/example.yml` because it is an absolute path
+     *         TranslatorBuilder.create().addResource("/example.yml", Example::class.java, Charsets.UTF_8)
+     *     }
+     * }
+     * ```
      *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale identifier, an [IllegalStateException] will be thrown when building the translator.
@@ -288,7 +294,7 @@ sealed interface TranslatorBuilder {
      * @param charset the charset to use when reading the file
      * @return this builder
      *
-     * @throws IllegalArgumentException if the extension is not supported
+     * @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]
      * @throws IllegalArgumentException if the file name is not a valid locale identifier
      * @throws IOException if an I/O error occurs when trying to read the file
      * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
@@ -302,10 +308,25 @@ sealed interface TranslatorBuilder {
      * The [resourcePath] can represent a file or a directory. If the resource is a directory, all files in it will be
      * loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
      *
-     * For this method to work with compiled jars, the [resourceClass] parameter must be a class in the same jar as the
-     * resource to load. The [resourcePath] parameter can be either an absolute path or a relative path.
+     * This method resolves the resource path in the same way as [getResourceAsStream][Class.getResourceAsStream]. If
+     * the provided [resourcePath] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute path
+     * without further modification. If the provided [resourcePath] is relative, it will be resolved relative to the
+     * package of the [resourceClass] parameter, with dots (`.`) replaced by slashes (`/`).
      *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
+     * Here is an example to illustrate the resolution:
+     * ```
+     * package com.example
+     *
+     * object Example {
+     *     fun test() {
+     *         // This will resolve to the resource `/com/example/example.yml`
+     *         TranslatorBuilder.create().addResource("example.yml", Example::class.java)
+     *
+     *         // This will resolve to the resource `/example.yml` because it is an absolute path
+     *         TranslatorBuilder.create().addResource("/example.yml", Example::class.java)
+     *     }
+     * }
+     * ```
      *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale identifier, an [IllegalStateException] will be thrown when building the translator.
@@ -316,15 +337,14 @@ sealed interface TranslatorBuilder {
      * @param resourceClass the class to use to load the resource (defaults to [TranslatorBuilder] class)
      * @return this builder
      *
-     * @throws IllegalArgumentException if the extension is not supported
+     * @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]
      * @throws IllegalArgumentException if the file name is not a valid locale identifier
      * @throws IOException if an I/O error occurs when trying to read the file
      * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
      * [DuplicatedKeyResolution.FAIL]
      * @see addResource
      */
-    fun addResource(resourcePath: String, resourceClass: Class<*>): TranslatorBuilder =
-        addResource(resourcePath, resourceClass, defaultCharset)
+    fun addResource(resourcePath: String, resourceClass: Class<*>): TranslatorBuilder
 
     /**
      * Adds a resource to the builder. The resource is loaded using the class loader of the class calling this method
@@ -332,12 +352,25 @@ sealed interface TranslatorBuilder {
      * [resourcePath] can represent a file or a directory. If the resource is a directory, all files in it will be
      * loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
      *
-     * **NOTE**: As this method uses the class calling this method to load the resource, it may not work as expected in
-     * jars if the  class is not in the same jar as the resource to load. In this case, use the [addResource] method
-     * with an explicit `resourceClass` parameter. The [resourcePath] parameter can be either an absolute path or a
-     * relative path.
+     * This method resolves the resource path in the same way as [getResourceAsStream][Class.getResourceAsStream]. If
+     * the provided [resourcePath] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
+     * without further modification. If the provided [resourcePath] is relative, it will be resolved relative to the
+     * package of the class calling this method, with dots (`.`) replaced by slashes (`/`).
      *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
+     * Here is an example to illustrate the resolution:
+     * ```
+     * package com.example
+     *
+     * object Example {
+     *     fun test() {
+     *         // This will resolve to the resource `/com/example/example.yml`
+     *         TranslatorBuilder.create().addResource("example.yml", Charsets.UTF_8)
+     *
+     *         // This will resolve to the resource `/example.yml` because it is an absolute path
+     *         TranslatorBuilder.create().addResource("/example.yml", Charsets.UTF_8)
+     *     }
+     * }
+     * ```
      *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale identifier, an [IllegalStateException] will be thrown when building the translator.
@@ -346,7 +379,7 @@ sealed interface TranslatorBuilder {
      * @param charset the charset to use when reading the file
      * @return this builder
      *
-     * @throws IllegalArgumentException if the extension is not supported
+     * @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]
      * @throws IllegalArgumentException if the file name is not a valid locale identifier
      * @throws IOException if an I/O error occurs when trying to read the file
      * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
@@ -361,12 +394,25 @@ sealed interface TranslatorBuilder {
      * [resourcePath] can represent a file or a directory. If the resource is a directory, all files in it will be
      * loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
      *
-     * **NOTE**: As this method uses the class calling this method to load the resource, it may not work as expected in
-     * jars if the  class is not in the same jar as the resource to load. In this case, use the [addResource] method
-     * with an explicit `resourceClass` parameter. The [resourcePath] parameter can be either an absolute path or a
-     * relative path.
+     * This method resolves the resource path in the same way as [getResourceAsStream][Class.getResourceAsStream]. If
+     * the provided [resourcePath] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute path
+     * without further modification. If the provided [resourcePath] is relative, it will be resolved relative to the
+     * package of the class calling this method, with dots (`.`) replaced by slashes (`/`).
      *
-     * Supported formats are JSON and YAML, with the following extensions: `json`, `yaml`, and `yml`.
+     * Here is an example to illustrate the resolution:
+     * ```
+     * package com.example
+     *
+     * object Example {
+     *     fun test() {
+     *         // This will resolve to the resource `/com/example/example.yml`
+     *         TranslatorBuilder.create().addResource("example.yml")
+     *
+     *         // This will resolve to the resource `/example.yml` because it is an absolute path
+     *         TranslatorBuilder.create().addResource("/example.yml")
+     *     }
+     * }
+     * ```
      *
      * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the file's
      * name is not a valid locale identifier, an [IllegalStateException] will be thrown when building the translator.
@@ -376,7 +422,7 @@ sealed interface TranslatorBuilder {
      * @param resourcePath the path of the resource to load
      * @return this builder
      *
-     * @throws IllegalArgumentException if the extension is not supported
+     * @throws IllegalArgumentException if the extension is not supported by any [ContentLoader]
      * @throws IllegalArgumentException if the file name is not a valid locale identifier
      * @throws IOException if an I/O error occurs when trying to read the file
      * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set to
@@ -456,6 +502,22 @@ sealed interface TranslatorBuilder {
 
     }
 
+    /**
+     * Simple type representing a content loader. A content loader is a function that takes a string as input and
+     * parses it into a [TranslationSourceMap].
+     */
+    fun interface ContentLoader {
+
+        /**
+         * Loads the content of a file into a [TranslationSourceMap].
+         *
+         * @param content the content of the file
+         * @return the parsed content
+         */
+        fun load(content: String): TranslationSourceMap
+
+    }
+
     companion object {
 
         /**
@@ -466,6 +528,9 @@ sealed interface TranslatorBuilder {
          * @param defaultLocale the default locale to use when no locale is specified (defaults to [Locale.ENGLISH])
          * @param ignoreMissingKeysOnBuild whether to ignore missing keys when building the translator (defaults to
          * `false`)
+         * @param contentLoaderFactories a map mapping file extensions to content loader factories (defaults to the map
+         * created by [defaultContentLoaders]). Each loaded file will be parsed using the content loader corresponding
+         * to its extension.
          * @param duplicatedKeyResolution the resolution to use when a duplicated key is found (defaults to
          * [DuplicatedKeyResolution.FAIL])
          * @param defaultCharset the default charset to use when reading files (defaults to [Charsets.UTF_8])
@@ -477,15 +542,19 @@ sealed interface TranslatorBuilder {
             configuration: TranslatorConfiguration = TranslatorConfiguration.builder().build(),
             defaultLocale: Locale = Locale.ENGLISH,
             ignoreMissingKeysOnBuild: Boolean = false,
+            contentLoaderFactories: Map<String, () -> ContentLoader> = defaultContentLoaders(),
             duplicatedKeyResolution: DuplicatedKeyResolution = DuplicatedKeyResolution.FAIL,
             defaultCharset: Charset = Charsets.UTF_8,
-        ): TranslatorBuilder = TranslatorBuilderImpl.create(
-            configuration,
-            ignoreMissingKeysOnBuild,
-            duplicatedKeyResolution,
-            defaultLocale,
-            defaultCharset,
-        )
+        ): TranslatorBuilder =
+            TranslatorBuilderImpl.create(
+                configuration,
+                ignoreMissingKeysOnBuild,
+                contentLoaderFactories,
+                duplicatedKeyResolution,
+                defaultLocale,
+                defaultCharset,
+            )
+
 
         /**
          * The key regex used to validate keys.
@@ -495,15 +564,61 @@ sealed interface TranslatorBuilder {
         @JvmStatic
         fun keyRegex(): Regex = KEY_REGEX
 
+        /**
+         * The default content loaders used when creating a translator.
+         *
+         * By default, this map contains loaders for:
+         * - JSON (`.json` files)
+         * - YAML (`.yaml` and `.yml` files)
+         * - TOML (`.toml` files)
+         *
+         * All loaders in this map rely on optional external libraries which are not included by default. If you want to
+         * use these loaders, you must include the corresponding dependencies in your project.
+         *
+         * Here are the possible dependencies for each loader:
+         *
+         * - JSON:
+         *     - `com.fasterxml.jackson.core:jackson-databind:2.18.2`
+         *     - `com.google.code.gson:gson:2.11.0`
+         *     - `org.json:json:20241224`
+         * - YAML:
+         *     - `com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.2`
+         *     - `org.yaml:snakeyaml:2.3`
+         * - TOML:
+         *     - `com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.18.2`
+         *     - `io.hotmoka:toml4j:0.7.0`
+         *
+         * **NOTE**: Version numbers are indicative. They are the versions used in this library and may not be the
+         * latest versions available at the time you read this. Moreover, for some of the listed libraries, older
+         * version may also work.
+         *
+         * **NOTE**: You only need the dependencies for the loaders you want to use and only need to include one of
+         * them. In case you include more than one, the order in which they are listed above is the order of precedence.
+         *
+         *
+         *
+         * @return the default content loaders
+         */
+        @JvmStatic
+        fun defaultContentLoaders(): Map<String, () -> ContentLoader> {
+            val yamlLoader = BuiltinContentLoaders.yamlLoader()
+            return unmodifiableMapOf(
+                "json" to BuiltinContentLoaders.jsonLoader(),
+                "yaml" to yamlLoader,
+                "yml" to yamlLoader,
+                "toml" to BuiltinContentLoaders.tomlLoader(),
+            )
+        }
+
         private val KEY_REGEX = """$IDENTIFIER(?:\.$IDENTIFIER)*""".toRegex()
+
+        /**
+         * The default charset to use when reading files. It is defined when creating the builder.
+         * @see TranslatorBuilder.create
+         */
+        private val TranslatorBuilder.defaultCharset: Charset
+            get() = (this as TranslatorBuilderImpl).defaultCharset
 
     }
 
 }
-
-/**
- * The default charset to use when reading files. It is defined when creating the builder.
- * @see TranslatorBuilder.create
- */
-private val TranslatorBuilder.defaultCharset: Charset
-    get() = (this as TranslatorBuilderImpl).defaultCharset

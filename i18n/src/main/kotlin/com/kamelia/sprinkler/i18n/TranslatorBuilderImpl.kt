@@ -1,28 +1,35 @@
 package com.kamelia.sprinkler.i18n
 
 import com.kamelia.sprinkler.i18n.TranslatorBuilder.Companion.keyRegex
-import com.kamelia.sprinkler.util.*
+import com.kamelia.sprinkler.util.ExtendedCollectors
+import com.kamelia.sprinkler.util.assertionFailed
+import com.kamelia.sprinkler.util.entryOf
+import com.kamelia.sprinkler.util.illegalArgument
+import com.kamelia.sprinkler.util.toUnmodifiableMap
+import com.kamelia.sprinkler.util.unsafeCast
 import com.zwendo.restrikt2.annotation.PackagePrivate
-import org.intellij.lang.annotations.Language
-import org.json.JSONException
-import org.json.JSONObject
-import org.yaml.snakeyaml.Yaml
-import org.yaml.snakeyaml.error.YAMLException
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.IllformedLocaleException
+import java.util.Locale
+import java.util.TreeMap
 import java.util.jar.JarFile
 import java.util.stream.Collector
 import java.util.stream.Collectors
-import kotlin.collections.ArrayDeque
+import org.intellij.lang.annotations.Language
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.component3
 import kotlin.collections.set
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.readText
 
 @PackagePrivate
 internal class TranslatorBuilderImpl private constructor(
@@ -33,6 +40,7 @@ internal class TranslatorBuilderImpl private constructor(
     private val duplicatedKeyResolution: TranslatorBuilder.DuplicatedKeyResolution,
     private val valueFormattingCheckRegex: Regex,
     private val variableExtractionRegex: Regex,
+    private val contentLoaders: Map<String, () -> TranslatorBuilder.ContentLoader>,
 ) : TranslatorBuilder {
 
     /**
@@ -42,11 +50,11 @@ internal class TranslatorBuilderImpl private constructor(
         a.toLanguageTag().compareTo(b.toLanguageTag())
     }
 
+    private val walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
+
     override fun addPath(path: Path, charset: Charset): TranslatorBuilder = apply {
         val extension = path.extension
-        require("json" == extension || "yaml" == extension || "yml" == extension || path.isDirectory()) {
-            "Unsupported file extension '$extension' for path '$path'. Supported extensions are 'json', 'yaml' and 'yml'."
-        }
+        checkValidExtension(extension, path)
 
         try {
             // we need to load the file, or, if it is a directory, load all files in it and add them to the final map.
@@ -60,13 +68,27 @@ internal class TranslatorBuilderImpl private constructor(
         }
     }
 
+    private fun checkValidExtension(extension: String, path: Path) {
+        require(extension in contentLoaders || path.isDirectory()) {
+            buildString {
+                append("Unsupported file extension '")
+                append(extension)
+                append("' for path '")
+                append(path)
+                append("'. Supported extensions are ")
+                contentLoaders.keys.joinTo(this, "', '", "['", "']") { it }
+                append(".")
+            }
+        }
+    }
+
     override fun addResource(resourcePath: String, resourceClass: Class<*>, charset: Charset): TranslatorBuilder =
         apply {
             loadResources(resourcePath, resourceClass, charset)
         }
 
     override fun addResource(resourcePath: String, charset: Charset): TranslatorBuilder = apply {
-        loadResources(resourcePath, null, charset)
+        loadResources(resourcePath, walker.callerClass, charset)
     }
 
     override fun addResource(resourcePath: String, resourceClass: Class<*>): TranslatorBuilder = apply {
@@ -74,12 +96,11 @@ internal class TranslatorBuilderImpl private constructor(
     }
 
     override fun addResource(resourcePath: String): TranslatorBuilder = apply {
-        loadResources(resourcePath, null, defaultCharset)
+        loadResources(resourcePath, walker.callerClass, defaultCharset)
     }
 
-    private fun loadResources(resourcePath: String, resourceClass: Class<*>?, charset: Charset) {
-        val cl = resourceClass ?: Class.forName(Exception().stackTrace[2].className)
-        var strPath = cl
+    private fun loadResources(resourcePath: String, resourceClass: Class<*>, charset: Charset) {
+        var strPath = resourceClass
             .getProtectionDomain()
             .codeSource
             .location
@@ -92,11 +113,11 @@ internal class TranslatorBuilderImpl private constructor(
 
         val path = Path.of(strPath)
         if (!path.isRegularFile()) { // we are not in a jar
-            val url = cl.getResource(resourcePath) ?: illegalArgument("Resource $resourcePath not found")
+            val url = resourceClass.getResource(resourcePath) ?: illegalArgument("Resource $resourcePath not found")
             addURL(url, charset)
         } else { // we are in a jar
-            walkJarDirectory(strPath, resourcePath, cl).forEach {
-                loadResourceFile(it, cl)
+            walkJarDirectory(strPath, resourcePath, resourceClass).forEach {
+                loadResourceFile(it, resourceClass)
             }
         }
     }
@@ -146,11 +167,7 @@ internal class TranslatorBuilderImpl private constructor(
             finalMap[locale] = translations.entries
                 .stream()
                 .sorted { (a, _), (b, _) -> comparator.compare(a, b) }
-                .collect(
-                    ExtendedCollectors.toLinkedHashMapUsingEntries { _, _ ->
-                        assertionFailed("Collisions should have been resolved")
-                    }
-                )
+                .collect(ExtendedCollectors.toLinkedHashMapUsingEntries())
         }
 
         var i = 0
@@ -185,6 +202,7 @@ internal class TranslatorBuilderImpl private constructor(
         fun create(
             configuration: TranslatorConfiguration,
             ignoreMissingKeysOnBuild: Boolean,
+            contentLoaders: Map<String, () -> TranslatorBuilder.ContentLoader>,
             duplicatedKeyResolution: TranslatorBuilder.DuplicatedKeyResolution,
             defaultLocale: Locale,
             defaultCharset: Charset,
@@ -201,47 +219,9 @@ internal class TranslatorBuilderImpl private constructor(
                 duplicatedKeyResolution,
                 checkRegex,
                 extractionRegex,
+                contentLoaders.toUnmodifiableMap(),
             )
         }
-
-        private fun loadPath(path: Path, charset: Charset): List<Pair<Locale, TranslationSourceMap>> =
-            when {
-                !path.exists() -> illegalArgument("Path $path does not exist")
-                path.isDirectory() -> { // if the path is a directory, load all files in it and return the list
-                    Files.list(path).use { stream ->
-                        stream.filter { it.isRegularFile() }
-                            .map {
-                                val locale = parseLocale(it.nameWithoutExtension)
-                                val map = parseFile(it.readText(charset), it.extension)
-                                locale to map
-                            }
-                            .toList()
-                    }
-                }
-
-                else -> { // if the path is a file, load it and store it in a one element list
-                    val map = parseFile(path.readText(charset), path.extension)
-                    val locale = parseLocale(path.nameWithoutExtension)
-                    listOf(locale to map)
-                }
-            }
-
-        private fun parseFile(content: String, extension: String): TranslationSourceMap =
-            when (extension) {
-                "json" -> try {
-                    JSONObject(content).toMap()
-                } catch (e: JSONException) {
-                    throw IllegalArgumentException("Invalid JSON file.", e)
-                }
-
-                "yaml", "yml" -> try {
-                    Yaml().load<Map<TranslationKey, TranslationSourceData>>(content)
-                } catch (e: YAMLException) {
-                    throw IllegalArgumentException("Invalid YAML file.", e)
-                }
-
-                else -> assertionFailed("File extension '$extension' should have been checked before.")
-            }
 
         private fun checkKeyIsValid(key: Any?, locale: Locale, map: Map<*, *>) {
             check(key != null) {
@@ -373,13 +353,12 @@ internal class TranslatorBuilderImpl private constructor(
             }
         }
 
-        private fun keyComparator(): Comparator<String> {
+        fun keyComparator(): Comparator<String> {
             val charComparator = Comparator { o1: Char, o2: Char ->
                 when {
-                    o1 == o2 -> 0
                     '.' == o1 -> -1
                     '.' == o2 -> 1
-                    else -> o1.compareTo(o2)
+                    else -> o1 - o2
                 }
             }
             return Comparator { o1: String, o2: String ->
@@ -406,6 +385,13 @@ internal class TranslatorBuilderImpl private constructor(
         private const val SOURCE_DATA_DOCUMENTATION =
             "For more details about translation source data, see TranslationSourceData typealias documentation"
 
+        /**
+         * Gets the list of files in the given directory of a jar file.
+         *
+         * @param path the path to the jar file
+         * @param directory the directory to walk in the jar file
+         * @param resourceClass the class used to get the resource
+         */
         private fun walkJarDirectory(path: String, directory: String, resourceClass: Class<*>): List<String> {
             val isAbsolute = directory.startsWith('/')
 
@@ -419,31 +405,61 @@ internal class TranslatorBuilderImpl private constructor(
                     .toString()
             }
             val lastSlashIndex = root.lastIndexOf('/')
-            return JarFile(path).stream().use { file ->
-                file.filter { jarEntry ->
-                    val name = jarEntry.name
-                    if (jarEntry.isDirectory || !name.startsWith(root)) return@filter false
-                    val lastSlash = name.lastIndexOf('/')
-                    lastSlash == lastSlashIndex || lastSlash == root.length
+            return JarFile(path)
+                .stream()
+                .use { file ->
+                    file
+                        .filter { jarEntry ->
+                            val name = jarEntry.name
+                            if (jarEntry.isDirectory || !name.startsWith(root)) return@filter false
+                            val lastSlash = name.lastIndexOf('/')
+                            lastSlash == lastSlashIndex || lastSlash == root.length
+                        }
+                        .map { "/${it.name}" }
+                        .toList()
                 }
-                    .map { "/${it.name}" }
-                    .toList()
-            }
         }
 
     }
 
     private fun loadResourceFile(path: String, clazz: Class<*>) {
-        val extension = Path.of(path).extension
-        require("json" == extension || "yaml" == extension || "yml" == extension) {
-            "Unsupported file extension '$extension' for path '$path'. Supported extensions are 'json', 'yaml' and 'yml'."
-        }
+        val actualPath = Path.of(path)
+        val extension = actualPath.extension
+        checkValidExtension(extension, actualPath)
+
         val nameWithoutExtension = Path.of(path).nameWithoutExtension
         val locale = parseLocale(nameWithoutExtension)
         val content = clazz.getResourceAsStream(path)!!
             .bufferedReader()
             .use { it.lines().collect(Collectors.joining("\n")) }
         addToMap(locale, parseFile(content, extension))
+    }
+
+    private fun loadPath(path: Path, charset: Charset): List<Pair<Locale, TranslationSourceMap>> =
+        when {
+            !path.exists() -> illegalArgument("Path $path does not exist")
+            path.isDirectory() -> { // if the path is a directory, load all files in it and return the list
+                Files.list(path).use { stream ->
+                    stream.filter { it.isRegularFile() }
+                        .map {
+                            val locale = parseLocale(it.nameWithoutExtension)
+                            val map = parseFile(it.readText(charset), it.extension)
+                            locale to map
+                        }
+                        .toList()
+                }
+            }
+
+            else -> { // if the path is a file, load it and store it in a one element list
+                val map = parseFile(path.readText(charset), path.extension)
+                val locale = parseLocale(path.nameWithoutExtension)
+                listOf(locale to map)
+            }
+        }
+
+    private fun parseFile(content: String, extension: String): TranslationSourceMap {
+        val loader = contentLoaders[extension] ?: assertionFailed()
+        return loader().load(content)
     }
 
     private fun addToMap(locale: Locale, map: Map<*, *>) {

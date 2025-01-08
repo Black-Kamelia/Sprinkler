@@ -3,7 +3,7 @@ package com.kamelia.sprinkler.i18n
 import com.kamelia.sprinkler.i18n.TranslatorConfiguration.Companion.builder
 import com.kamelia.sprinkler.util.VariableDelimiter
 import com.zwendo.restrikt2.annotation.PackagePrivate
-import java.util.*
+import java.util.Locale
 
 /**
  * Configuration of a [Translator]. This class defines rules applied to a [Translator] and all [Translator]s created

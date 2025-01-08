@@ -1,16 +1,15 @@
+import java.util.Base64
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.util.*
 
 plugins {
-    val kotlinVersion: String by System.getProperties()
-    val restriktVersion: String by System.getProperties()
-    val koverVersion: String by System.getProperties()
     java
     `maven-publish`
     signing
-    id("org.jetbrains.kotlinx.kover") version koverVersion
-    kotlin("jvm") version kotlinVersion
-    id("com.zwendo.restrikt2") version restriktVersion
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.restrikt)
+    alias(libs.plugins.kover)
 }
 
 val jvmVersion: String by project
@@ -30,22 +29,23 @@ allprojects {
     apply(plugin = "signing")
     apply(plugin = "com.zwendo.restrikt2")
     apply(plugin = "org.jetbrains.kotlinx.kover")
+    apply(plugin = "org.jetbrains.dokka")
 
     val projectName = project.name.lowercase()
-    val projectVersion = findProp("$projectName.version") ?: "0.1.0"
+    val projectVersion = if (project != rootProject) {
+        findProp<String>("$projectName.version")
+    } else {
+        "0.1.0"
+    }
 
     repositories {
         mavenCentral()
     }
 
     dependencies {
-        val junitVersion: String by project
-        val restriktAnnotationsVersion: String by project
-
-        implementation("com.zwendo", "restrikt2-annotations", restriktAnnotationsVersion)
-        testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
-        testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
-        testImplementation("org.junit.jupiter", "junit-jupiter-params", junitVersion)
+        compileOnly(rootProject.libs.restrikt.annotations)
+        testImplementation(rootProject.testDependencies.bundles.implementation)
+        testRuntimeOnly(rootProject.testDependencies.bundles.runtime)
     }
 
     java {
@@ -173,10 +173,10 @@ fun TaskContainerScope.setupKotlinCompilation(block: org.jetbrains.kotlin.gradle
 }
 
 inline fun <reified T> Project.findProp(name: String): T {
-    val strProp = findProperty(name) as? String
+    val strProp = findProperty(name) as String? ?: throw IllegalArgumentException("Property $name not found")
     return when (T::class) {
-        Boolean::class -> strProp?.toBoolean() as T
-        Int::class -> strProp?.toInt() as T
+        Boolean::class -> strProp.toBoolean() as T
+        Int::class -> strProp.toInt() as T
         else -> strProp as T
     }
 }

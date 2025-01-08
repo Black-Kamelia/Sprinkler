@@ -7,8 +7,8 @@ package com.kamelia.sprinkler.i18n
  * It should respect the following rules:
  * - It cannot be empty
  * - It must start and end with an alphanumeric character
- * - It can contain alphanumeric characters, dashes and underscores
- * - It cannot contain two consecutive dashes or underscores (or a dash followed by an underscore or vice versa).
+ * - It can contain alphanumeric characters, `-` (dashes) and `_` (underscores)
+ * - It cannot contain two consecutive `-` or `_` (or a `-` followed by a `_` or vice versa).
  *
  * Here are some examples of valid [Identifier]s:
  * - `my-key`
@@ -32,24 +32,24 @@ typealias Identifier = String
  * characters within the delimiters.
  *
  * It should be structured as follows:
- * - Can start with an arbitrary number of ' ' (spaces) followed by a mandatory [Identifier] representing the name of
- * the variable which cannot be the string 'options' (this name is reserved for the option map, followed by an arbitrary
- * number of ' '
- * - It can optionally be followed by a ',' to indicate the presence of a format
- * - An arbitrary number of ' ' can be present after the ',' which will be followed by the format name
+ * - Can start with an arbitrary number of `' '` (spaces) followed by a mandatory [Identifier] representing the name of
+ * the variable, followed by an arbitrary number of `' '`.
+ * - It can optionally be followed by a `,` to indicate the presence of a format.
+ * - An arbitrary number of ` ` can be present after the `,` which will be followed by the format name.
  * - The format name must respect the [Identifier] rules, and must have been previously registered in the
- * [configuration][TranslatorConfiguration]
+ * [configuration][TranslatorConfiguration].
  * - Optionally, the format can be followed by an arbitrary number of parameters which are presented in the next bullets
- * - The format name can be directly followed by an arbitrary number of ' ' and a '(' to indicate the presence of format
- * parameters (always at least one)
- * - Parameters are represented as key-value pairs, separated by ':'. Keys cannot contain ':' or ',' (unless escaped),
- * and values cannot contain ',' or ')' (unless escaped). Note that spaces are not trimmed and are considered part of
+ * - The format name can be directly followed by an arbitrary number of `' '` and a `(` to indicate the presence of format
+ * parameters (always at least one).
+ * - Parameters are represented as key-value pairs, separated by `:`. Keys cannot contain `:` or `,` (unless escaped),
+ * and values cannot contain `,` or `)` (unless escaped). Note that spaces are not trimmed and are considered part of
  * the key or value.
- * - Each parameter is separated by a (non-escaped) ','
- * - The last parameter must be followed by a ')'
- * - The ')' can be followed by an arbitrary number of ' '
+ * - Each parameter is separated by a (non-escaped) `,`.
+ * - The last parameter must be followed by a `)`.
+ * - The ')' can be followed by an arbitrary number of `' '`.
  *
  * Here are some examples of valid [TranslationInterpolationVariables][TranslationInterpolationVariable]:
+ * - `'my-variable'`
  * - `'my-variable '`
  * - `' my-variable  ,my-format'`
  * - `'my-variable,    format'`
@@ -66,8 +66,7 @@ typealias TranslationInterpolationVariable = String
  * [Identifier]s separated by a dot.
  *
  * Here are some examples of valid [TranslationKey]s:
- * - `my-root.my-node.my-key`
- * - `my_root.my_node.my_key`
+ * - `my-root.my_node.my-key`
  * - `myRoot.myNode.myKey`
  * - `my-root.my-node.my-table.1`
  *
