@@ -20,7 +20,6 @@ import java.util.Locale
  * This interface also provides a set of utility functions (such as [section] or [withNewCurrentLocale]) to reduce
  * boilerplate code when translating strings.
  *
- * @see TranslatorBuilder
  * @see TranslationKey
  */
 interface Translator {
@@ -348,7 +347,18 @@ interface Translator {
      */
     fun toMap(): Map<Locale, Map<TranslationKey, String>>
 
-    // Explicit companion object to allow extension functions.
-    companion object
+    companion object {
+
+        /**
+         * The key regex used to validate keys.
+         *
+         * @return the key regex
+         */
+        @JvmStatic
+        fun keyRegex(): Regex = KEY_REGEX
+
+        private val KEY_REGEX = """${Utils.IDENTIFIER}(?:\.${Utils.IDENTIFIER})*""".toRegex()
+
+    }
 
 }

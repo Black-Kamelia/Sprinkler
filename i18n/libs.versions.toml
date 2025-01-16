@@ -14,3 +14,7 @@ toml4j = { group = "io.hotmoka", name = "toml4j", version = "0.7.3" }
 
 [bundles]
 loading = ["jackson-databind", "orgJson", "gson", "jackson-yaml", "snakeYaml", "jackson-toml", "toml4j"]
+
+[plugins]
+
+shadowJar = { id = "com.gradleup.shadow", version = "8.3.0" }

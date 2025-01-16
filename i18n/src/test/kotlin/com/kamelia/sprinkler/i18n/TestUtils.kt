@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.i18n.formatting.VariableFormatter
 import com.kamelia.sprinkler.util.assertionFailed
 import java.nio.file.Path
 import java.util.Locale
