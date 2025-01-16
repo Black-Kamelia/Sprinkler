@@ -38,8 +38,8 @@ internal object BuiltinPluralMappers {
             .getResourceAsStream("plural_rules.csv")!!
             .reader()
             .run(::BufferedReader)
-            .use {
-                it
+            .use { reader ->
+                reader
                     .lines()
                     .skip(1)
                     .map {

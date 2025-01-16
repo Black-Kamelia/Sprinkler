@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.i18n.formatting
 
+import com.kamelia.sprinkler.i18n.impl.FormattedValue
 import com.kamelia.sprinkler.util.illegalArgument
 import com.kamelia.sprinkler.util.unmodifiableMapOf
 import java.math.RoundingMode

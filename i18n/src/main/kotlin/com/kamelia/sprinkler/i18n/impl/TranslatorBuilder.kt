@@ -94,7 +94,8 @@ import java.util.function.Consumer
  *
  *
  * - the returned map of [Translator.toMap] will be sorted according to the lexical order of the
- * [key parts][Identifier] of the keys (a new map is created every time the method is called).
+ * [key parts][com.kamelia.sprinkler.i18n.Identifier] of the keys (a new map is created every time the method is
+ * called).
  *
  *
  *

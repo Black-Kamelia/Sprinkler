@@ -2,6 +2,7 @@
 
 package com.kamelia.sprinkler.i18n.impl
 
+import com.kamelia.sprinkler.i18n.formatting.VariableFormatter
 import com.kamelia.sprinkler.util.toUnmodifiableMap
 import com.zwendo.restrikt2.annotation.PackagePrivate
 
