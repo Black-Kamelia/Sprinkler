@@ -10,13 +10,13 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 /**
- * Creates a new [Translator] using a [TranslatorBuilder] configured with the provided [block].
+ * Creates a new [Translator] using a [TranslatorBuilder] configured with the provided [block]
  *
  * @param block the configuration block
  * @return the created translator
  *
- * @throws IllegalStateException if `ignoreMissingKeyOnBuild` is `false` and at least two locales have different
- * does not have the same translation keys
+ * @throws IllegalStateException if [ignoreMissingKeyOnBuild][TranslatorBuilder.checkMissingKeysOnBuild] is `false`
+ * and at least two locales have different translation keys
  * @throws Exception if any method called in the [block] throws an exception
  */
 @HideFromJava
@@ -35,8 +35,8 @@ fun Translator(block: TranslatorBuilder.() -> Unit): Translator {
  * @param block the configuration block
  * @return the created translator
  *
- * @throws IllegalStateException if `ignoreMissingKeyOnBuild` is `false` and at least two locales have different
- * does not have the same translation keys
+ * @throws IllegalStateException if [ignoreMissingKeyOnBuild][TranslatorBuilder.checkMissingKeysOnBuild] is `false`
+ * and at least two locales have different translation keys
  * @throws Exception if any method called in the [block] throws an exception
  */
 @HideFromKotlin

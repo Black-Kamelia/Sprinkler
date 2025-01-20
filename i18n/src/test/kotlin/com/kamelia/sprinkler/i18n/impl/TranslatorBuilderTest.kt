@@ -1,9 +1,15 @@
 package com.kamelia.sprinkler.i18n.impl
 
+import com.kamelia.sprinkler.i18n.absoluteResource
 import com.kamelia.sprinkler.i18n.formatting.VariableFormatter
+import com.kamelia.sprinkler.i18n.pluralization.Plural
+import com.kamelia.sprinkler.i18n.pluralization.PluralMapper
 import java.util.Locale
 import java.util.function.Consumer
+import java.util.function.Function
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -161,6 +167,8 @@ class TranslatorBuilderTest {
     fun `build throws an ISE if at least two locals does not have the same keys`() {
         assertThrows<IllegalStateException> {
             Translator {
+                checkMissingKeysOnBuild = true
+
                 translations {
                     map(Locale.ENGLISH, mapOf("test" to "test"))
                     map(Locale.FRANCE, mapOf("toto" to "toto"))
@@ -173,7 +181,7 @@ class TranslatorBuilderTest {
     fun `build does not throw an ISE if throwOnMissingKey is false and at least two locals does not have the same keys`() {
         assertDoesNotThrow {
             Translator {
-                ignoreMissingKeysOnBuild = true
+                checkMissingKeysOnBuild = false
 
                 translations {
                     map(Locale.ENGLISH, mapOf("test" to "test"))
@@ -243,11 +251,86 @@ class TranslatorBuilderTest {
     }
 
     @Test
-    fun `java overloads coverage`() {
-        Translator(Consumer { })
+    fun `trying to call a block on an already built translator builder throws an ISE`() {
+        lateinit var translator: TranslatorBuilder
         Translator {
-            configuration(Consumer { })
-            translations(Consumer { })
+            translator = this
+        }
+        assertThrows<IllegalStateException> {
+            translator.translations {}
+        }
+        assertThrows<IllegalStateException> {
+            translator.configuration {}
+        }
+    }
+
+    @Test
+    fun `localeSpecializationReduction correctly defaults in the described order`() {
+        val reduction = TranslatorBuilder.defaultLocaleSpecializationReduction()
+        assertEquals(Locale.ENGLISH, reduction(Locale.US))
+        val full = Locale.forLanguageTag("en-test-US-POSIX-x-foo-bar")
+        assertEquals(full.stripExtensions(), reduction(full))
+        assertEquals(Locale.forLanguageTag("en-test"), reduction(Locale.forLanguageTag("en-test-US")))
+        assertEquals(Locale.forLanguageTag("en-US"), reduction(Locale.forLanguageTag("en-US-POSIX")))
+        assertEquals(Locale.ENGLISH, reduction(Locale.forLanguageTag("en-test")))
+        assertNull(reduction(Locale.ENGLISH))
+    }
+
+    @Test
+    fun `custom localeSpecializationReduction is correctly applied`() {
+        val translator = Translator {
+            configuration {
+                localeSpecializationReduction = { if (it == Locale.JAPAN) null else Locale.JAPAN }
+            }
+            translations {
+                map(Locale.JAPAN, mapOf("test" to "tesuto"))
+                map(Locale.ENGLISH, mapOf("test" to "test", "test2" to "test2"))
+                map(Locale.FRENCH, mapOf("test3" to "test3"))
+            }
+        }
+
+        assertEquals("test3", translator.t("test3", Locale.FRENCH))
+        assertEquals("test2", translator.t("test2", Locale.FRENCH))
+        assertEquals("tesuto", translator.t("test", Locale.FRENCH))
+    }
+
+    @Test
+    fun `custom localeParser is correctly applied`() {
+        val translator = Translator {
+            translations {
+                localeParser = { Locale.CHINESE }
+                file(absoluteResource("builder_test/fr.json"))
+            }
+        }
+
+        assertEquals(setOf(Locale.CHINESE), translator.toMap().keys)
+    }
+
+    @Test
+    fun `java api coverage`() {
+        Translator(Consumer { })
+        TranslatorBuilder.defaultLocaleSpecializationReductionJava()
+        val t = Translator {
+            configuration(Consumer {
+                it.localeSpecializationReductionJava = Function { null }
+                it.localeSpecializationReductionJava
+                it.pluralMapperFactoryJava = Function {
+                    object : PluralMapper {
+                        override fun mapCardinal(count: Double): Plural = Plural.OTHER
+                        override fun mapOrdinal(count: Long): Plural = Plural.OTHER
+                    }
+                }
+                it.pluralMapperFactoryJava
+            })
+            translations(Consumer {
+                it.localeParserJava
+                it.localeParserJava = Function { Locale.ENGLISH }
+                it.map(Locale.FRANCE, mapOf("test" to "test"))
+                it.file(absoluteResource("builder_test/fr.json"))
+            })
+        }
+        assertThrows<IllegalArgumentException> {
+            t.t("test", mapOf(count(5)), Locale.FRANCE)
         }
     }
 

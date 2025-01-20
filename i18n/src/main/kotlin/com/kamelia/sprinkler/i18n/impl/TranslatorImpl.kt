@@ -17,7 +17,7 @@ internal class TranslatorImpl private constructor(
 
     constructor(currentLocale: Locale, data: TranslatorData) : this(null, currentLocale, data)
 
-    override val defaultLocale: Locale
+    override val defaultLocale: Locale?
         get() = data.defaultLocale
 
     override fun tn(
@@ -108,8 +108,7 @@ internal class TranslatorImpl private constructor(
         TranslatorImpl(null, currentLocale, data)
     }
 
-    override fun toString(): String =
-        "Translator(prefix=$prefix, defaultLocale=$defaultLocale, currentLocale=$currentLocale, missingKeyPolicy=${data.missingKeyPolicy}, variableDelimiter=('${data.interpolationDelimiter.startDelimiter}', '${data.interpolationDelimiter.endDelimiter}') formatters=${data.formatters}, pluralMappers=${data.pluralMapper}, translations=`use toMap()`)"
+    override fun toString(): String = "Translator(prefix=$prefix, currentLocale=$currentLocale, $data)"
 
     private fun innerTranslate(
         key: String,

@@ -36,7 +36,7 @@ class TranslatorConfigurationTest {
     fun `interpolationDelimiter is used for interpolation`() {
         val translator = Translator {
             configuration {
-                interpolationDelimiter = TranslatorBuilder.InterpolationDelimiter.create("[", "]")
+                interpolationDelimiter = TranslatorBuilder.interpolationDelimiter("[", "]")
             }
             translations {
                 map(Locale.ENGLISH, mapOf("interpolation" to "This is a [value]."))
@@ -49,27 +49,22 @@ class TranslatorConfigurationTest {
     @Test
     fun `throws an ISE if the interpolationDelimiter startDelimiter contains forbidden  characters`() {
         assertThrows<IllegalStateException> {
-            TranslatorBuilder.InterpolationDelimiter.create("a(ee", "}}")
+            TranslatorBuilder.interpolationDelimiter("a(ee", "}}")
         }
     }
 
     @Test
     fun `throws an ISE if the interpolationDelimiter endDelimiter contains forbidden characters`() {
         assertThrows<IllegalStateException> {
-            TranslatorBuilder.InterpolationDelimiter.create("{{", "a)ee")
+            TranslatorBuilder.interpolationDelimiter("{{", "a)ee")
         }
     }
 
     @Test
     fun `withPluralMapper sets the pluralMapper`() {
         val pluralMapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
-                return Plural.TWO
-            }
-
-            override fun mapOrdinal(count: Long): Plural {
-                return Plural.FEW
-            }
+            override fun mapCardinal(count: Double): Plural = Plural.TWO
+            override fun mapOrdinal(count: Long): Plural = Plural.FEW
         }
         val translator = Translator {
             configuration {
@@ -81,6 +76,38 @@ class TranslatorConfigurationTest {
         }
         assertEquals("hello", translator.t("foo", mapOf(count(1))))
         assertEquals("world", translator.t("bar", mapOf(count(1), ordinal())))
+    }
+
+    @Test
+    fun `current locale is correctly set to the passed value`() {
+        val translator = Translator {
+            configuration {
+                currentLocale = Locale.FRANCE
+            }
+        }
+        assertEquals(Locale.FRANCE, translator.currentLocale)
+    }
+
+    @Test
+    fun `current locale defaults to the defaultLocale if possible`() {
+        val translator = Translator {
+            configuration {
+                defaultLocale = Locale.FRANCE
+                currentLocale = null
+            }
+        }
+        assertEquals(Locale.FRANCE, translator.currentLocale)
+    }
+
+    @Test
+    fun `current locale ultimately defaults to Locale#ENGLISH`() {
+        val translator = Translator {
+            configuration {
+                defaultLocale = null
+                currentLocale = null
+            }
+        }
+        assertEquals(Locale.ENGLISH, translator.currentLocale)
     }
 
 }

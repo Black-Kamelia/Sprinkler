@@ -10,7 +10,7 @@ import org.junit.jupiter.api.assertThrows
 class TranslatorBuilderMapTest {
 
     @Test
-    fun `addMap throws an ISE on build if the map contains invalid key`() {
+    fun `map throws an ISE on build if the map contains invalid key`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -21,7 +21,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMaps throws an ISE on build if one of the maps contains invalid key`() {
+    fun `maps throws an ISE on build if one of the maps contains invalid key`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -32,7 +32,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMap throws an ISE on build if a key is null`() {
+    fun `map throws an ISE on build if a key is null`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -43,7 +43,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMaps throws an ISE on build if a key is null`() {
+    fun `maps throws an ISE on build if a key is null`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -54,7 +54,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMap throws an ISE on build if a value is null`() {
+    fun `map throws an ISE on build if a value is null`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -65,7 +65,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMaps throws an ISE on build if a value is null`() {
+    fun `maps throws an ISE on build if a value is null`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -76,7 +76,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMap throws an ISE on build if the map contains a map containing an invalid key`() {
+    fun `map throws an ISE on build if the map contains a map containing an invalid key`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -87,7 +87,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMaps throws an ISE on build if the map contains a map containing an invalid key`() {
+    fun `maps throws an ISE on build if the map contains a map containing an invalid key`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -98,7 +98,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMap throws an ISE on build if the map contains a map containing a null key`() {
+    fun `map throws an ISE on build if the map contains a map containing a null key`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -109,7 +109,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMaps throws an ISE on build if the map contains a map containing a null key`() {
+    fun `maps throws an ISE on build if the map contains a map containing a null key`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -120,7 +120,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMap throws an ISE on build if the map contains a map containing a null value`() {
+    fun `map throws an ISE on build if the map contains a map containing a null value`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -131,7 +131,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMaps throws an ISE on build if the map contains a map containing a null value`() {
+    fun `maps throws an ISE on build if the map contains a map containing a null value`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -142,7 +142,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMap throws an ISE on build if the map contains a list containing an invalid value`() {
+    fun `map throws an ISE on build if the map contains a list containing an invalid value`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -153,7 +153,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMaps throws an ISE on build if the map contains a list containing an invalid value`() {
+    fun `maps throws an ISE on build if the map contains a list containing an invalid value`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -164,7 +164,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMap throws an ISE on build if the map contains a map containing a key that is not a string`() {
+    fun `map throws an ISE on build if the map contains a map containing a key that is not a string`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -175,7 +175,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMaps throws an ISE on build if the map contains a map containing a key that is not a string`() {
+    fun `maps throws an ISE on build if the map contains a map containing a key that is not a string`() {
         assertThrows<IllegalStateException> {
             Translator {
                 translations {
@@ -186,7 +186,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMap works with list`() {
+    fun `map works with list`() {
         val translator = Translator {
             translations {
                 map(Locale.ENGLISH, mapOf("test" to listOf("test")))
@@ -196,7 +196,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMaps works with list`() {
+    fun `maps works with list`() {
         val translator = Translator {
             translations {
                 maps(mapOf(Locale.ENGLISH to mapOf("test" to listOf("test"))))
@@ -206,7 +206,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMap works with map`() {
+    fun `map works with map`() {
         val translator = Translator {
             translations {
                 map(Locale.ENGLISH, mapOf("test" to mapOf("test" to "test")))
@@ -216,7 +216,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMaps works with map`() {
+    fun `maps works with map`() {
         val translator = Translator {
             translations {
                 maps(mapOf(Locale.ENGLISH to mapOf("test" to mapOf("test" to "test"))))
@@ -226,7 +226,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMap does not throw for valid types`() {
+    fun `map does not throw for valid types`() {
         assertDoesNotThrow {
             Translator {
                 translations {
@@ -250,7 +250,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMaps does not throw for valid types`() {
+    fun `maps does not throw for valid types`() {
         assertDoesNotThrow {
             Translator {
                 translations {
@@ -276,7 +276,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMap with dotted key correctly nest the value in the translator`() {
+    fun `map with dotted key correctly nest the value in the translator`() {
         val translator = Translator {
             translations {
                 map(Locale.FRANCE, mapOf("test.test" to "test"))
@@ -286,7 +286,7 @@ class TranslatorBuilderMapTest {
     }
 
     @Test
-    fun `addMaps with dotted key correctly nest the value in the translator`() {
+    fun `maps with dotted key correctly nest the value in the translator`() {
         val translator = Translator {
             translations {
                 maps(mapOf(Locale.FRANCE to mapOf("test.test" to "test")))

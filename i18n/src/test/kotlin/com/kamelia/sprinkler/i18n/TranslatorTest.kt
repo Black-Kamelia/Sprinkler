@@ -4,6 +4,7 @@ import com.kamelia.sprinkler.i18n.impl.Translator
 import com.kamelia.sprinkler.i18n.impl.context
 import com.kamelia.sprinkler.i18n.impl.count
 import com.kamelia.sprinkler.i18n.impl.formatted
+import com.kamelia.sprinkler.util.assertionFailed
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -445,7 +446,36 @@ class TranslatorTest {
             t.tn("key", mapOf())
             t.tn("key", mapOf(), Locale.ENGLISH)
             t.tn("key", mapOf(), Locale.ENGLISH, Locale.ENGLISH)
+            t.tn("key", Locale.ENGLISH, Locale.ENGLISH)
             t.tn("key", mapOf(), Locale.ENGLISH, Locale.ENGLISH, "foo")
+        }
+    }
+
+    @Test
+    fun `t methods throws an NPE by default when a key is not found`() {
+        val translator = object : Translator {
+            override val prefix: String
+                get() = assertionFailed()
+            override val defaultLocale: Locale
+                get() = assertionFailed()
+            override val currentLocale: Locale
+                get() = assertionFailed()
+
+            override fun tn(
+                key: TranslationKey,
+                extraArgs: Map<String, Any>,
+                locale: Locale,
+                fallbackLocale: Locale?,
+                vararg fallbacks: String,
+            ): String? = null
+
+            override fun section(key: TranslationKey): Translator = assertionFailed()
+            override fun withNewCurrentLocale(locale: Locale): Translator = assertionFailed()
+            override fun asRoot(): Translator = assertionFailed()
+            override fun toMap(): Map<Locale, Map<TranslationKey, String>> = assertionFailed()
+        }
+        assertThrows<NullPointerException> {
+            translator.t("key", Locale.ENGLISH, null)
         }
     }
 
@@ -462,8 +492,16 @@ class TranslatorTest {
             t.t("key", mapOf())
             t.t("key", mapOf(), Locale.ENGLISH)
             t.t("key", mapOf(), Locale.ENGLISH, Locale.ENGLISH)
+            t.t("key", Locale.ENGLISH, Locale.ENGLISH)
             t.t("key", mapOf(), Locale.ENGLISH, Locale.ENGLISH, "foo")
         }
+    }
+
+    @Test
+    fun `function adapter coverage`() {
+        val f = FunctionAdapter<String, String> { it }
+        assertEquals("foo", f("foo"))
+        assertEquals("foo", f.apply("foo"))
     }
 
 }

@@ -167,6 +167,8 @@ fun interface VariableFormatter<T> {
          * - `maxIntDigits` ([`Int`][Int] or [`String`][String]): the maximum number of digits to use for the integer
          *   part of the number (will be truncated from the left if needed). For example, if the value is `1234.56` and
          *   the parameter is `2`, the result will be `34.56`.
+         *
+         *
          * - `minFracDigits` ([`Int`][Int] or [`String`][String]): the minimum number of digits to use for the
          *   fractional part of the number (will be padded with non-significant zeros if needed). For example, if the
          *   value is `1234.56` and the parameter is `4`, the result will be `1,234.5600`. The default is `0`.
@@ -213,11 +215,11 @@ fun interface VariableFormatter<T> {
          */
         @JvmStatic
         fun builtins(): Map<String, VariableFormatter<out Any>> = unmodifiableMapOf(
-            Companion::currency.name to currency(),
-            Companion::date.name to date(),
-            Companion::time.name to time(),
-            Companion::datetime.name to datetime(),
-            Companion::number.name to number(),
+            Companion::currency.name, currency(),
+            Companion::date.name, date(),
+            Companion::time.name, time(),
+            Companion::datetime.name, datetime(),
+            Companion::number.name, number(),
         )
 
         private fun parseNumberFormatParams(formatter: NumberFormat, params: Map<String, Any>) {
@@ -280,8 +282,8 @@ fun interface VariableFormatter<T> {
             else -> illegalArgument("Invalid boolean value: $this, must be a boolean or a parsable string")
         }
 
-        private fun <T : Enum<T>> Any.toEnum(cl: Class<T>): T {
-            return when {
+        private fun <T : Enum<T>> Any.toEnum(cl: Class<T>): T =
+            when {
                 cl.isInstance(this) -> @Suppress("UNCHECKED_CAST") (this as T)
                 this is String -> try {
                     java.lang.Enum.valueOf(cl, this.uppercase(Locale.ENGLISH))
@@ -290,7 +292,6 @@ fun interface VariableFormatter<T> {
                 }
                 else -> illegalArgument("Invalid enum value: $this, must be a ${cl.simpleName} label or a parsable string")
             }
-        }
 
         private val DEFAULT_FORMAT_STYLE = FormatStyle.MEDIUM
 

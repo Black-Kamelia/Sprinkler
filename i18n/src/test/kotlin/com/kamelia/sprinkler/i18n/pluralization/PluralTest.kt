@@ -362,6 +362,11 @@ class PluralTest {
         }
     }
 
+    @Test
+    fun `java api coverage`() {
+        PluralMapper.builtinsJava()
+    }
+
     private object PluralTestException : RuntimeException(null, null, false, false)
 
 }

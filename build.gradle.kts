@@ -43,7 +43,7 @@ allprojects {
     }
 
     dependencies {
-        compileOnly(rootProject.libs.restrikt.annotations)
+        implementation(rootProject.libs.restrikt.annotations)
         testImplementation(rootProject.testDependencies.bundles.implementation)
         testRuntimeOnly(rootProject.testDependencies.bundles.runtime)
     }

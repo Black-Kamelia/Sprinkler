@@ -1,8 +1,9 @@
 package com.kamelia.sprinkler.i18n.impl
 
+import com.kamelia.sprinkler.i18n.FunctionAdapter
 import com.kamelia.sprinkler.i18n.Translator
 import com.kamelia.sprinkler.i18n.formatting.VariableFormatter
-import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.Companion.defaultContentLoaders
+import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.Companion.defaultContentParsers
 import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.Configuration
 import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.ContentParser
 import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.DuplicatedKeyResolution
@@ -15,27 +16,30 @@ import com.zwendo.restrikt2.annotation.PackagePrivate
 import java.io.File
 import java.io.IOException
 import java.net.URI
-import java.net.URISyntaxException
 import java.net.URL
 import java.nio.charset.Charset
-import java.nio.file.FileSystemNotFoundException
 import java.nio.file.Path
 import java.util.Locale
 import java.util.function.Consumer
+import java.util.function.Function
 
 
 /**
  * Builder class used to create a [Translator]. This class provides several methods to add data to the translator from
  * different sources.
  *
- * It can be used in a dsl through the [Translator][com.kamelia.sprinkler.i18n.impl.Translator] method, to create a new
- * [Translator] configure with the provided dsl content. The dsl is divided in three parts:
+ * It can be used in a DSL through the [Translator][com.kamelia.sprinkler.i18n.impl.Translator] method, to create a new
+ * [Translator] configure with the provided DSL content. The DSL is divided in three parts:
  *
  * - The configuration available directly through the [TranslatorBuilder] interface, which allows to configure general
  * aspects of the translator.
+ *
+ *
  * - The [configuration] block, which allows to configure the behavior of the built [Translator], like for example the
  * [interpolationDelimiter][Configuration.interpolationDelimiter] defining the delimiters used for interpolation
  * variables in strings (e.g. `{` and `}` in the string `"Hello mister {name}!"`).
+ *
+ *
  * - The [translations] block, which allows to load the content of the built [Translator]. Content can be loaded from
  * [maps][Map], any class representing a file ([File], [Path], [URL], [URI]) or a resource (including jar resources).
  *
@@ -57,13 +61,17 @@ import java.util.function.Consumer
  * There are several points of attention to take into account when using this class:
  * - The order in which data is added is significant, as it will be used during key duplication resolution, depending on
  * the [DuplicatedKeyResolution] used.
+ *
+ *
  * - Values passed to this builder are all validated on building, to ensure that the potential variables used in the
  * string respect the [TranslationInterpolationVariable] rules. If a value does not respect these rules, an exception
  * will be thrown when adding the value to the builder.
+ *
+ *
  * - The content of the files is parsed using [ContentLoaders][ContentParser]. Loaders are provided by a map associating
  * file extensions to content parsers. This map is passed to the builder when creating it. If a file extension is not
  * present in the map, an [IllegalArgumentException] will be thrown. Default content parsers exist but require
- * additional dependencies to be added to the project. For more information, see the [defaultContentLoaders] method.
+ * additional dependencies to be added to the project. For more information, see the [defaultContentParsers] method.
  *
  * The translators created with this builder will have the following properties:
  *
@@ -98,7 +106,6 @@ import java.util.function.Consumer
  * called).
  *
  *
- *
  * - To be interpolated on [t][Translator.t] method call, values stored in the translator must contain variable defined
  * inside [delimiters][TranslatorBuilder.Configuration.interpolationDelimiter] defined in the translator configuration.
  * For more details about interpolation, see [String.interpolate][com.kamelia.sprinkler.util.interpolate]. Variables'
@@ -109,16 +116,16 @@ import java.util.function.Consumer
  * @see [com.kamelia.sprinkler.i18n.impl.Translator]
  */
 @TranslatorBuilder.TranslatorBuilderDsl
+@Suppress("INAPPLICABLE_JVM_NAME")
 sealed interface TranslatorBuilder {
 
     /**
-     * Whether to ignore missing keys when building the translator.
+     * Whether to check that all locales have the same keys when building the translator. If set to `true`, and at least
+     * two locales have different keys, an [IllegalStateException] will be thrown when building the translator.
      *
      * default: `false`
-     *
-     * @return whether to ignore missing keys
      */
-    var ignoreMissingKeysOnBuild: Boolean
+    var checkMissingKeysOnBuild: Boolean
 
     /**
      * Starts the configuration block of the builder. This block is used to configure the behavior of the built
@@ -141,9 +148,7 @@ sealed interface TranslatorBuilder {
      * @see Configuration
      */
     @HideFromKotlin
-    fun configuration(block: Consumer<Configuration>): TranslatorBuilder = apply {
-        configuration { block.accept(this) }
-    }
+    fun configuration(block: Consumer<Configuration>): Unit = configuration { block.accept(this) }
 
     /**
      * Starts the content block of the builder. This block is used to load the content of the built [Translator].
@@ -164,9 +169,7 @@ sealed interface TranslatorBuilder {
      * @see Content
      */
     @HideFromKotlin
-    fun translations(block: Consumer<Content>): TranslatorBuilder = apply {
-        translations { block.accept(this) }
-    }
+    fun translations(block: Consumer<Content>): Unit = translations { block.accept(this) }
 
     /**
      * Type defining the configuration of the built [Translator]. Parameters of this type only affect the behavior of
@@ -183,11 +186,24 @@ sealed interface TranslatorBuilder {
         var interpolationDelimiter: InterpolationDelimiter
 
         /**
-         * The function providing the [PluralMapper]s used by the created [Translator].
+         * The function associating a locale to a [PluralMapper] used by the created [Translator].
          *
          * default: [PluralMapper.builtins]
          */
+        @HideFromJava
+        @get:JvmName("getPluralMapperFactoryKt")
+        @set:JvmName("setPluralMapperFactoryKt")
         var pluralMapperFactory: (Locale) -> PluralMapper
+
+        /**
+         * The function associating a locale to a [PluralMapper] used by the created [Translator].
+         *
+         * default: [PluralMapper.builtins][PluralMapper.builtinsJava]
+         */
+        @HideFromKotlin
+        @get:JvmName("getPluralMapperFactory")
+        @set:JvmName("setPluralMapperFactory")
+        var pluralMapperFactoryJava: Function<Locale, PluralMapper>
 
         /**
          * Map used to find formatters using their name during variable interpolation.
@@ -208,13 +224,54 @@ sealed interface TranslatorBuilder {
         var missingKeyPolicy: MissingKeyPolicy
 
         /**
-         * The default locale to use when no locale is specified when calling the [Translator.t] method.
+         * The default locale to use when no locale is specified when calling the [Translator.t] method. It can be set
+         * to `null` to prevent the use of a default locale.
          *
          * default: [Locale.ENGLISH]
-         *
-         * @return the default locale
          */
-        var defaultLocale: Locale
+        var defaultLocale: Locale?
+
+        /**
+         * The [currentLocale][Translator.currentLocale] of the built [Translator]. If set to `null`, the
+         * [defaultLocale] will be used, and if it is also `null`, the [Locale.ENGLISH] will be used.
+         *
+         * default: `null`
+         */
+        var currentLocale: Locale?
+
+        /**
+         * The function to use to reduce the specialization of a locale. This function is used to reduce the specificity
+         * of a locale to a more general one. For example, if the locale is `en_US`, the function could return `en` to
+         * use the general English translation. If a locale is already the most general one, the function should return
+         * `null`.
+         *
+         * This function is used when a translation is not found for a specific locale, to try to find a translation for
+         * a more general locale. If this function returns `null` before finding a translation, the translator will then
+         * try to use the [defaultLocale].
+         *
+         * default: [defaultLocaleSpecializationReduction]
+         */
+        @HideFromJava
+        @get:JvmName("getLocaleSpecializationReductionKt")
+        @set:JvmName("setLocaleSpecializationReductionKt")
+        var localeSpecializationReduction: (Locale) -> Locale?
+
+        /**
+         * The function to use to reduce the specialization of a locale. This function is used to reduce the specificity
+         * of a locale to a more general one. For example, if the locale is `en_US`, the function could return `en` to
+         * use the general English translation. If a locale is already the most general one, the function should return
+         * `null`.
+         *
+         * This function is used when a translation is not found for a specific locale, to try to find a translation for
+         * a more general locale. If this function returns `null` before finding a translation, the translator will then
+         * try to use the [defaultLocale].
+         *
+         * default: [defaultLocaleSpecializationReductionJava]
+         */
+        @HideFromKotlin
+        @get:JvmName("getLocaleSpecializationReduction")
+        @set:JvmName("setLocaleSpecializationReduction")
+        var localeSpecializationReductionJava: Function<Locale, Locale?>
 
     }
 
@@ -222,15 +279,15 @@ sealed interface TranslatorBuilder {
      * Type defining the content to load into the built [Translator]. This type provides several methods to load file
      * contents into the built [Translator].
      *
-     * The files are loaded using the two properties [contentParserFactory] and [localeParser]:
-     * - When a file is provided, the [Locale] it represents is determined by the [localeParser] function, which is called
-     * with the filename without extension.
+     * The files are loaded using the two properties [contentParsers] and [localeParser]:
+     * - When a file is provided, the [Locale] it represents is determined by the [localeParser] function, which is
+     * called with the filename without extension.
      *
      * - The content of the file is then parsed using the [ContentParser] associated with the file extension. The parser
-     * is determined by the [contentParserFactory] function, which is called with the file extension (for more details
-     * about how an unrecognized extension is handled, see [contentParserFactory] documentation).
+     * is determined by the [contentParsers] function, which is called with the file extension (for more details
+     * about how an unrecognized extension is handled, see [contentParsers] documentation).
      *
-     * It is important to note that in the context of the [translations] method, the content of the dsl is executed
+     * It is important to note that in the context of the [translations] method, the content of the DSL is executed
      * in the order it is written, meaning that altering properties after calling a method that loads content will not
      * affect the content loading. You can find an illustration of this behavior below:
      *
@@ -247,10 +304,10 @@ sealed interface TranslatorBuilder {
     sealed interface Content {
 
         /**
-         * The function providing the [ContentParser] corresponding to the file extension (e.g. `json` should return a
-         * json content parser).
+         * The map a type of file (using its extension) to a [ContentParser] used to parse the content of the file
+         * (e.g. the `json` key is associated with a [ContentParser] that parses JSON files).
          *
-         * If the extension is not supported by any [ContentParser] of this factory, here are the possible cases:
+         * If an extension is not present in this map, here are the possible cases:
          *
          * - If the missing extension has been required due to a file being present in a loaded folder (e.g.
          * `path(Path.of("myFolder/"))` has been called in the ds, and it contains an `en_US.unknown` file), if the
@@ -259,21 +316,17 @@ sealed interface TranslatorBuilder {
          *
          *
          * - If the missing extension has been required due to a specific file being explicitly loaded (e.g.
-         * `path(Path.of("en_US.unknown"))` has been called in the dsl), an [IllegalArgumentException] will always be
+         * `path(Path.of("en_US.unknown"))` has been called in the DSL), an [IllegalArgumentException] will always be
          * thrown.
          *
-         * default: [defaultContentLoaders]
-         *
-         * @return the content parser factory
+         * default: [defaultContentParsers]
          */
-        var contentParserFactory: (String) -> ContentParser?
+        var contentParsers: Map<String, ContentParser>
 
         /**
          * The resolution to use when a duplicated key is found.
          *
          * default: [DuplicatedKeyResolution.FAIL]
-         *
-         * @return the resolution to use when a duplicated key is found
          */
         var duplicatedKeyResolution: DuplicatedKeyResolution
 
@@ -281,39 +334,51 @@ sealed interface TranslatorBuilder {
          * The default charset to use when reading files.
          *
          * default: [Charset.defaultCharset]
-         *
-         * @return the default charset
          */
         var defaultCharset: Charset
 
         /**
          * The function to use to parse a locale from a string.
          *
-         * Each file loaded by [Content] will have its filename parsed by this function to determine the locale of the file.
-         * Only the **filename without extension** is passed to this function (e.g. `path/to/en_US.yml` will pass `en_US`).
+         * Each file loaded by [Content] will have its filename parsed by this function to determine the locale of the
+         * file. cOnly the **filename without extension** is passed to this function (e.g. `path/to/en_US.yml` will pass
+         * `en_US`).
          *
          * default: [Locale.Builder.setLanguageTag]
-         *
-         * @return the locale parser
          */
+        @HideFromJava
+        @get:JvmName("getLocaleParserKt")
+        @set:JvmName("setLocaleParserKt")
         var localeParser: (String) -> Locale
 
         /**
+         * The function to use to parse a locale from a string.
+         *
+         * Each file loaded by [Content] will have its filename parsed by this function to determine the locale of the
+         * file. Only the **filename without extension** is passed to this function (e.g. `path/to/en_US.yml` will pass
+         * `en_US`).
+         *
+         * default: [Locale.Builder.setLanguageTag]
+         */
+        @HideFromKotlin
+        @get:JvmName("getLocaleParser")
+        @set:JvmName("setLocaleParser")
+        var localeParserJava: Function<String, Locale>
+
+        /**
          * Whether to ignore unrecognized extensions in a directory. If a file extension is not present in the
-         * [contentParserFactory], if this property is set to `true`, the file will be ignored. If it is set to `false`, an
+         * [contentParsers], if this property is set to `true`, the file will be ignored. If it is set to `false`, an
          * [IllegalArgumentException] will be thrown.
          *
          * **NOTE:** This property only affects directories, not files, trying to directly load an unsupported file will
          * always throw an [IllegalArgumentException] (e.g. `path("file.unknown")`).
          *
          * default: `true`
-         *
-         * @return whether to ignore unrecognized extensions in a directory
          */
         var ignoreUnrecognizedExtensionsInDirectory: Boolean
 
         /**
-         * Adds a path to the builder If the path is a directory, all files in it will be loaded (one level of depth,
+         * Adds a file to the builder If the path is a directory, all files in it will be loaded (one level of depth,
          * inner directories are ignored). If the path is a file, it will be loaded.
          *
          * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the
@@ -330,10 +395,10 @@ sealed interface TranslatorBuilder {
          * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set
          * to [DuplicatedKeyResolution.FAIL]
          */
-        fun path(path: Path, charset: Charset): Content
+        fun file(path: Path, charset: Charset)
 
         /**
-         * Adds a path to the builder. If the path is a directory, all files in it will be loaded (one level of depth,
+         * Adds a file to the builder. If the path is a directory, all files in it will be loaded (one level of depth,
          * inner directories are ignored). If the path is a file, it will be loaded.
          *
          * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the
@@ -352,173 +417,20 @@ sealed interface TranslatorBuilder {
          * to [DuplicatedKeyResolution.FAIL]
          * @see path
          */
-        fun path(path: Path): Content = path(path, defaultCharset)
-
-        /**
-         * Adds a file to the builder. If the path is a directory, all files in it will be loaded (one level of depth,
-         * inner directories are ignored). If the path is a file, it will be loaded.
-         *
-         * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the
-         * file's name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
-         *
-         * This method converts the [file] to a [Path] and calls [path].
-         *
-         * @param file the file to load
-         * @param charset the charset to use when reading the file
-         * @return this builder
-         *
-         * @throws IllegalArgumentException if the [file] does not exist
-         * @throws IllegalArgumentException if the extension is not supported by any [ContentParser]
-         * @throws IllegalArgumentException if the file name is not a valid locale identifier
-         * @throws IOException if an I/O error occurs when trying to read the file
-         * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set
-         * to [DuplicatedKeyResolution.FAIL]
-         * @see path
-         */
-        fun file(file: File, charset: Charset): Content = path(file.toPath(), charset)
-
-        /**
-         * Adds a file to the builder. If the path is a directory, all files in it will be loaded (one level of depth,
-         * inner directories are ignored). If the path is a file, it will be loaded.
-         *
-         * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the
-         * file's name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
-         *
-         * This method uses the [defaultCharset] to read the file.
-         *
-         * This method converts the [file] to a [Path] and calls [path].
-         *
-         * @param file the file to load
-         * @return this builder
-         *
-         * @throws IllegalArgumentException if the [file] does not exist
-         * @throws IllegalArgumentException if the extension is not supported by any [ContentParser]
-         * @throws IllegalArgumentException if the file name is not a valid locale identifier
-         * @throws IOException if an I/O error occurs when trying to read the file
-         * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set
-         * to [DuplicatedKeyResolution.FAIL]
-         * @see path
-         */
-        fun file(file: File): Content = file(file, defaultCharset)
-
-        /**
-         * Adds a URI to the builder. If the URI points to a directory, all files in it will be loaded (one level of
-         * depth, inner directories are ignored). If the URI points to a file, it will be loaded.
-         *
-         * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the
-         * file's name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
-         *
-         * This method converts the [uri] to a [Path] and calls [path].
-         *
-         * @param uri the URI to load
-         * @param charset the charset to use when reading the file
-         * @return this builder
-         *
-         * @throws URISyntaxException if the URI is not formatted strictly according to RFC2396 and cannot be converted
-         * to a URI
-         * @throws FileSystemNotFoundException if an exception occurs when trying to convert the URI to a [Path]
-         * @throws IllegalArgumentException if the [uri] does not exist
-         * @throws IllegalArgumentException if the extension is not supported by any [ContentParser]
-         * @throws IllegalArgumentException if the file name is not a valid locale identifier
-         * @throws IOException if an I/O error occurs when trying to read the file
-         * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set
-         * to [DuplicatedKeyResolution.FAIL]
-         * @see path
-         */
-        fun uri(uri: URI, charset: Charset): Content = path(Path.of(uri), charset)
-
-        /**
-         * Adds a URI to the builder. If the URI points to a directory, all files in it will be loaded (one level of
-         * depth, inner directories are ignored). If the URI points to a file, it will be loaded.
-         *
-         * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the
-         * file's name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
-         *
-         * This method uses the [defaultCharset] to read the file.
-         *
-         * This method converts the [uri] to a [Path] and calls [path].
-         *
-         * @param uri the URI to load
-         * @return this builder
-         *
-         * @throws URISyntaxException if the URI is not formatted strictly according to RFC2396 and cannot be converted
-         * to a URI
-         * @throws FileSystemNotFoundException if an exception occurs when trying to convert the URI to a [Path]
-         * @throws IllegalArgumentException if the [uri] does not exist
-         * @throws IllegalArgumentException if the extension is not supported by any [ContentParser]
-         * @throws IllegalArgumentException if the file name is not a valid locale identifier
-         * @throws IOException if an I/O error occurs when trying to read the file
-         * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set
-         * to [DuplicatedKeyResolution.FAIL]
-         * @see path
-         */
-        fun uri(uri: URI): Content = uri(uri, defaultCharset)
-
-        /**
-         * Adds a URL to the builder. If the URL points to a directory, all files in it will be loaded (one level of
-         * depth, inner directories are ignored). If the URL points to a file, it will be loaded.
-         *
-         * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the
-         * file's name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
-         *
-         * This method converts the [url] to a [URI] and then to a [Path] and calls [path].
-         *
-         * @param url the URL to load
-         * @param charset the charset to use when reading the file
-         * @return this builder
-         *
-         * @throws URISyntaxException if the URL is not formatted strictly according to RFC2396 and cannot be converted
-         * to a URI
-         * @throws FileSystemNotFoundException if an exception occurs when trying to convert the URL to a [Path]
-         * @throws IllegalArgumentException if the [url] does not exist
-         * @throws IllegalArgumentException if the extension is not supported by any [ContentParser]
-         * @throws IllegalArgumentException if the file name is not a valid locale identifier
-         * @throws IOException if an I/O error occurs when trying to read the file
-         * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set
-         * to [DuplicatedKeyResolution.FAIL]
-         * @see path
-         */
-        fun url(url: URL, charset: Charset): Content = path(Path.of(url.toURI()), charset)
-
-        /**
-         * Adds a URL to the builder. If the URL points to a directory, all files in it will be loaded (one level of
-         * depth, inner directories are ignored). If the URL points to a file, it will be loaded.
-         *
-         * The locale of the file will be parsed from the file name, using the [Locale.forLanguageTag] method. If the
-         * file's name is not a valid locale identifier, an [IllegalArgumentException] will be thrown.
-         *
-         * This method uses the [defaultCharset] to read the file.
-         *
-         * This method converts the [url] to a [URI] and then to a [Path] and calls [path].
-         *
-         * @param url the URL to load
-         * @return this builder
-         *
-         * @throws URISyntaxException if the URL is not formatted strictly according to RFC2396 and cannot be converted
-         * to a URI
-         * @throws FileSystemNotFoundException if an exception occurs when trying to convert the URL to a [Path]
-         * @throws IllegalArgumentException if the [url] does not exist
-         * @throws IllegalArgumentException if the extension is not supported by any [ContentParser]
-         * @throws IllegalArgumentException if the file name is not a valid locale identifier
-         * @throws IOException if an I/O error occurs when trying to read the file
-         * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set
-         * to [DuplicatedKeyResolution.FAIL]
-         * @see path
-         */
-        fun url(url: URL): Content = url(url, defaultCharset)
+        fun file(path: Path): Unit = file(path, defaultCharset)
 
         /**
          * Adds a resource to the builder. The resource is loaded using the class loader of the [resourceClass]
-         * parameter and the [resourcePath] parameter. If the resource is not found, an [IllegalArgumentException] will
+         * parameter and the [path] parameter. If the resource is not found, an [IllegalArgumentException] will
          * be thrown. It cannot contain a reference to a parent directory (`..`) or an [IllegalArgumentException] will
          * be thrown.
          *
-         * The [resourcePath] can represent a file or a directory. If the resource is a directory, all files in it will
+         * The [path] can represent a file or a directory. If the resource is a directory, all files in it will
          * be loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
          *
          * This method resolves the resource path in the same way as [getResourceAsStream][Class.getResourceAsStream].
-         * If the provided [resourcePath] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
-         * path without further modification. If the provided [resourcePath] is relative, it will be resolved relative
+         * If the provided [path] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
+         * path without further modification. If the provided [path] is relative, it will be resolved relative
          * to the package of the [resourceClass] parameter, with dots (`.`) replaced by slashes (`/`).
          *
          * Here is an example to illustrate the resolution:
@@ -527,16 +439,12 @@ sealed interface TranslatorBuilder {
          *
          * object Example {
          *     fun test() {
-         *         // This will resolve to the resource `/com/example/example.yml`
          *         Translator {
          *             translations {
+         *                 // This will resolve to the resource `/com/example/example.yml`
          *                 resource("example.yml", Example::class.java, Charsets.UTF_8)
-         *             }
-         *         }
          *
-         *         // This will resolve to the resource `/example.yml` because it is an absolute path
-         *         Translator {
-         *             translations {
+         *                 // This will resolve to the resource `/example.yml` because it is an absolute path
          *                 resource("/example.yml", Example::class.java, Charsets.UTF_8)
          *             }
          *         }
@@ -548,33 +456,33 @@ sealed interface TranslatorBuilder {
          * file's name is not a valid locale identifier, an [IllegalStateException] will be thrown when building the
          * translator.
          *
-         * @param resourcePath the path of the resource to load
+         * @param path the path of the resource to load
          * @param resourceClass the class to use to load the resource (defaults to [TranslatorBuilder] class)
          * @param charset the charset to use when reading the file
          * @return this builder
          *
-         * @throws IllegalArgumentException if the [resourcePath] does not exist
-         * @throws IllegalArgumentException if the [resourcePath] contains a parent directory reference (`..`)
+         * @throws IllegalArgumentException if the [path] does not exist
+         * @throws IllegalArgumentException if the [path] contains a parent directory reference (`..`)
          * @throws IllegalArgumentException if the extension is not supported by any [ContentParser]
          * @throws IllegalArgumentException if the file name is not a valid locale identifier
          * @throws IOException if an I/O error occurs when trying to read the file
          * @throws IllegalStateException if the file contains a duplicated key and the [DuplicatedKeyResolution] is set
          * to [DuplicatedKeyResolution.FAIL]
          */
-        fun resource(resourcePath: String, resourceClass: Class<*>, charset: Charset): Content
+        fun resource(path: String, resourceClass: Class<*>, charset: Charset)
 
         /**
          * Adds a resource to the builder. The resource is loaded using the class loader of the [resourceClass]
-         * parameter and the [resourcePath] parameter. If the resource is not found, an [IllegalArgumentException] will
+         * parameter and the [path] parameter. If the resource is not found, an [IllegalArgumentException] will
          * be thrown. It cannot contain a reference to a parent directory (`..`) or an [IllegalArgumentException] will
          * be thrown.
          *
-         * The [resourcePath] can represent a file or a directory. If the resource is a directory, all files in it will
+         * The [path] can represent a file or a directory. If the resource is a directory, all files in it will
          * be loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
          *
          * This method resolves the resource path in the same way as [getResourceAsStream][Class.getResourceAsStream].
-         * If the provided [resourcePath] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
-         * path without further modification. If the provided [resourcePath] is relative, it will be resolved relative
+         * If the provided [path] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
+         * path without further modification. If the provided [path] is relative, it will be resolved relative
          * to the package of the [resourceClass] parameter, with dots (`.`) replaced by slashes (`/`).
          *
          * Here is an example to illustrate the resolution:
@@ -583,11 +491,15 @@ sealed interface TranslatorBuilder {
          *
          * object Example {
          *     fun test() {
-         *         // This will resolve to the resource `/com/example/example.yml`
-         *         TranslatorBuilder.create().addResource("example.yml", Example::class.java)
+         *         Translator {
+         *             translations {
+         *                 // This will resolve to the resource `/com/example/example.yml`
+         *                 resource("example.yml", Example::class.java)
          *
-         *         // This will resolve to the resource `/example.yml` because it is an absolute path
-         *         TranslatorBuilder.create().addResource("/example.yml", Example::class.java)
+         *                 // This will resolve to the resource `/example.yml` because it is an absolute path
+         *                 resource("/example.yml", Example::class.java)
+         *             }
+         *         }
          *     }
          * }
          * ```
@@ -598,12 +510,12 @@ sealed interface TranslatorBuilder {
          *
          * This method uses the [defaultCharset] to read the file.
          *
-         * @param resourcePath the path of the resource to load
+         * @param path the path of the resource to load
          * @param resourceClass the class to use to load the resource (defaults to [TranslatorBuilder] class)
          * @return this builder
          *
-         * @throws IllegalArgumentException if the [resourcePath] does not exist
-         * @throws IllegalArgumentException if the [resourcePath] contains a parent directory reference (`..`)
+         * @throws IllegalArgumentException if the [path] does not exist
+         * @throws IllegalArgumentException if the [path] contains a parent directory reference (`..`)
          * @throws IllegalArgumentException if the extension is not supported by any [ContentParser]
          * @throws IllegalArgumentException if the file name is not a valid locale identifier
          * @throws IOException if an I/O error occurs when trying to read the file
@@ -611,21 +523,21 @@ sealed interface TranslatorBuilder {
          * to [DuplicatedKeyResolution.FAIL]
          * @see resource
          */
-        fun resource(resourcePath: String, resourceClass: Class<*>): Content =
-            resource(resourcePath, resourceClass, defaultCharset)
+        fun resource(path: String, resourceClass: Class<*>): Unit =
+            resource(path, resourceClass, defaultCharset)
 
         /**
          * Adds a resource to the builder. The resource is loaded using the class loader of the class calling this
-         * method and the [resourcePath] parameter. If the resource is not found, an [IllegalArgumentException] will be
+         * method and the [path] parameter. If the resource is not found, an [IllegalArgumentException] will be
          * thrown. It cannot contain a reference to a parent directory (`..`) or an [IllegalArgumentException] will be
          * thrown.
          *
-         * The [resourcePath] can represent a file or a directory. If the resource is a directory, all files in it will
+         * The [path] can represent a file or a directory. If the resource is a directory, all files in it will
          * be loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
          *
          * This method resolves the resource path in the same way as [getResourceAsStream][Class.getResourceAsStream].
-         * If the provided [resourcePath] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
-         * without further modification. If the provided [resourcePath] is relative, it will be resolved relative to the
+         * If the provided [path] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
+         * without further modification. If the provided [path] is relative, it will be resolved relative to the
          * package of the **class calling this method**, with dots (`.`) replaced by slashes (`/`).
          *
          * Here is an example to illustrate the resolution:
@@ -634,11 +546,15 @@ sealed interface TranslatorBuilder {
          *
          * object Example {
          *     fun test() {
-         *         // This will resolve to the resource `/com/example/example.yml`
-         *         TranslatorBuilder.create().addResource("example.yml", Charsets.UTF_8)
+         *         Translator {
+         *             translations {
+         *                 // This will resolve to the resource `/com/example/example.yml`
+         *                 resource("example.yml", Charsets.UTF_8)
          *
-         *         // This will resolve to the resource `/example.yml` because it is an absolute path
-         *         TranslatorBuilder.create().addResource("/example.yml", Charsets.UTF_8)
+         *                 // This will resolve to the resource `/example.yml` because it is an absolute path
+         *                 resource("/example.yml", Charsets.UTF_8)
+         *             }
+         *         }
          *     }
          * }
          * ```
@@ -647,11 +563,11 @@ sealed interface TranslatorBuilder {
          * file's name is not a valid locale identifier, an [IllegalStateException] will be thrown when building the
          * translator.
          *
-         * @param resourcePath the path of the resource to load
+         * @param path the path of the resource to load
          * @param charset the charset to use when reading the file
          * @return this builder
          *
-         * @throws IllegalArgumentException if the [resourcePath] does not exist
+         * @throws IllegalArgumentException if the [path] does not exist
          * @throws IllegalArgumentException if the extension is not supported by any [ContentParser]
          * @throws IllegalArgumentException if the file name is not a valid locale identifier
          * @throws IOException if an I/O error occurs when trying to read the file
@@ -659,20 +575,20 @@ sealed interface TranslatorBuilder {
          * to [DuplicatedKeyResolution.FAIL]
          * @see resource
          */
-        fun resource(resourcePath: String, charset: Charset): Content = resource(resourcePath, caller, charset)
+        fun resource(path: String, charset: Charset): Unit = resource(path, caller, charset)
 
         /**
          * Adds a resource to the builder. The resource is loaded using the class loader of the class calling this
-         * method and the [resourcePath] parameter. If the resource is not found, an [IllegalArgumentException] will be
+         * method and the [path] parameter. If the resource is not found, an [IllegalArgumentException] will be
          * thrown. It cannot contain a reference to a parent directory (`..`) or an [IllegalArgumentException] will be
          * thrown.
          *
-         * The [resourcePath] can represent a file or a directory. If the resource is a directory, all files in it will
+         * The [path] can represent a file or a directory. If the resource is a directory, all files in it will
          * be loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
          *
          * This method resolves the resource path in the same way as [getResourceAsStream][Class.getResourceAsStream].
-         * If the provided [resourcePath] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
-         * path without further modification. If the provided [resourcePath] is relative, it will be resolved relative
+         * If the provided [path] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
+         * path without further modification. If the provided [path] is relative, it will be resolved relative
          * to the package of the **class calling this method**, with dots (`.`) replaced by slashes (`/`).
          *
          * Here is an example to illustrate the resolution:
@@ -681,11 +597,15 @@ sealed interface TranslatorBuilder {
          *
          * object Example {
          *     fun test() {
-         *         // This will resolve to the resource `/com/example/example.yml`
-         *         TranslatorBuilder.create().addResource("example.yml")
+         *         Translator {
+         *             translations {
+         *                 // This will resolve to the resource `/com/example/example.yml`
+         *                 resource("example.yml")
          *
-         *         // This will resolve to the resource `/example.yml` because it is an absolute path
-         *         TranslatorBuilder.create().addResource("/example.yml")
+         *                 // This will resolve to the resource `/example.yml` because it is an absolute path
+         *                 resource("/example.yml")
+         *             }
+         *         }
          *     }
          * }
          * ```
@@ -696,10 +616,10 @@ sealed interface TranslatorBuilder {
          *
          * This method uses the [defaultCharset] to read the file.
          *
-         * @param resourcePath the path of the resource to load
+         * @param path the path of the resource to load
          * @return this builder
          *
-         * @throws IllegalArgumentException if the [resourcePath] does not exist
+         * @throws IllegalArgumentException if the [path] does not exist
          * @throws IllegalArgumentException if the extension is not supported by any [ContentParser]
          * @throws IllegalArgumentException if the file name is not a valid locale identifier
          * @throws IOException if an I/O error occurs when trying to read the file
@@ -707,7 +627,7 @@ sealed interface TranslatorBuilder {
          * to [DuplicatedKeyResolution.FAIL]
          * @see resource
          */
-        fun resource(resourcePath: String): Content = resource(resourcePath, caller, defaultCharset)
+        fun resource(path: String): Unit = resource(path, caller, defaultCharset)
 
         /**
          * Adds a map for a locale to the builder. The content of the map will be added to the final translator. The
@@ -724,7 +644,7 @@ sealed interface TranslatorBuilder {
          * @throws IllegalStateException if the map contains a duplicated key and the [DuplicatedKeyResolution] is set
          * to [DuplicatedKeyResolution.FAIL]
          */
-        fun map(locale: Locale, map: TranslationSourceMap): Content
+        fun map(locale: Locale, map: TranslationSourceMap)
 
         /**
          * Adds a map of locales to the builder. The content of the maps will be added to the final translator. The keys
@@ -742,9 +662,7 @@ sealed interface TranslatorBuilder {
          * to [DuplicatedKeyResolution.FAIL]
          * @see map
          */
-        fun maps(maps: Map<Locale, TranslationSourceMap>): Content = apply {
-            maps.forEach { (locale, map) -> map(locale, map) }
-        }
+        fun maps(maps: Map<Locale, TranslationSourceMap>): Unit = maps.forEach { (locale, map) -> map(locale, map) }
 
     }
 
@@ -781,12 +699,12 @@ sealed interface TranslatorBuilder {
     fun interface ContentParser {
 
         /**
-         * Loads the content of a file into a [TranslationSourceMap].
+         * Parses the content of a file into a [TranslationSourceMap].
          *
          * @param content the content of the file
          * @return the parsed content
          */
-        fun load(content: String): TranslationSourceMap
+        fun parse(content: String): TranslationSourceMap
 
     }
 
@@ -811,58 +729,26 @@ sealed interface TranslatorBuilder {
 
     /**
      * Delimiter to use for interpolation in translations.
+     *
+     * @see interpolationDelimiter
+     * @see Configuration.interpolationDelimiter
      */
-    class InterpolationDelimiter @PackagePrivate internal constructor(
-        internal val inner: VariableDelimiter,
-    ) {
-
-        companion object {
-
-            /**
-             * Creates an [InterpolationDelimiter] using the given [start] and [end] delimiters.
-             *
-             * The delimiters cannot contain the following characters: `\`, `(`, `)`, `:`. Trying to create a delimiter
-             * containing one of these characters will throw an [IllegalStateException].
-             *
-             * @param start the start delimiter
-             * @param end the end delimiter
-             * @return the created [InterpolationDelimiter]
-             * @throws IllegalStateException if the delimiters contain forbidden characters
-             */
-            @JvmStatic
-            fun create(start: String, end: String): InterpolationDelimiter {
-                val inner = VariableDelimiter.create(start, end)
-                val ch = forbiddenChars()
-                val forbiddenChars = ch.joinToString("", "[^", "]*") { it.toString() }
-                    .toRegex()
-                check(forbiddenChars.matches(inner.startDelimiter)) {
-                    "Start delimiter cannot contain the following characters: ${ch.contentToString()}, but was '${inner.startDelimiter}'"
-                }
-                check(forbiddenChars.matches(inner.endDelimiter)) {
-                    "End delimiter cannot contain the following characters: ${ch.contentToString()}, but was '${inner.endDelimiter}'"
-                }
-                return InterpolationDelimiter(inner)
-            }
-
-            private fun forbiddenChars(): CharArray = charArrayOf('\\', '(', ')', ':')
-
-        }
-    }
+    sealed interface InterpolationDelimiter
 
     companion object {
 
         /**
          * The default content parsers used when creating a translator.
          *
-         * By default, this factory contains loaders for:
+         * By default, this map contains loaders for:
          * - JSON (`.json` files)
          * - YAML (`.yaml` and `.yml` files)
          * - TOML (`.toml` files)
          *
-         * All loaders in this factory rely on optional external libraries which are not included by default. If you
+         * All loaders in this map rely on optional external libraries which are not included by default. If you
          * want to use these loaders, you must include the corresponding dependencies in your project.
          *
-         * Here are the possible dependencies for each loader:
+         * Here are the possible dependencies for each parser:
          *
          * - JSON:
          *     - `com.fasterxml.jackson.core:jackson-databind:2.18.2`
@@ -879,30 +765,124 @@ sealed interface TranslatorBuilder {
          * latest versions available at the time you read this. Moreover, for some of the listed libraries, older
          * version may also work.
          *
-         * **NOTE**: You only need the dependencies for the loaders you want to use and only need to include one of
+         * **NOTE**: You only need the dependencies for the parsers you want to use and only need to include one of
          * them. In case you include more than one, the order in which they are listed above is the order of precedence.
          *
-         * @return the default content parsers factory
+         * **NOTE**: If you add some dependencies only to be able to use these parsers, you can set these dependencies
+         * to `runtimeOnly` to avoid using them by mistake in your code and reduce the size of your compile classpath.
+         *
+         * @return the default [ContentParser]s map
          */
         @JvmStatic
-        fun defaultContentLoaders(): (String) -> ContentParser? {
+        fun defaultContentParsers(): Map<String, ContentParser> {
             val yamlLoader = BuiltinContentParsers.yamlParser()
-            val map = unmodifiableMapOf(
-                "json" to BuiltinContentParsers.jsonParser(),
-                "yaml" to yamlLoader,
-                "yml" to yamlLoader,
-                "toml" to BuiltinContentParsers.tomlParser(),
+            return unmodifiableMapOf(
+                "json", BuiltinContentParsers.jsonParser(),
+                "yaml", yamlLoader,
+                "yml", yamlLoader,
+                "toml", BuiltinContentParsers.tomlParser(),
             )
-            return { map[it]?.invoke() }
         }
+
+        /**
+         * Creates an [InterpolationDelimiter] using the given [start] and [end] delimiters.
+         *
+         * The delimiters cannot contain the following characters: `\`, `(`, `)`, `:`. Trying to create a delimiter
+         * containing one of these characters will throw an [IllegalStateException].
+         *
+         * @param start the start delimiter
+         * @param end the end delimiter
+         * @return the created [InterpolationDelimiter]
+         * @throws IllegalStateException if the delimiters contain forbidden characters
+         */
+        @JvmStatic
+        fun interpolationDelimiter(start: String, end: String): InterpolationDelimiter {
+            val inner = VariableDelimiter.create(start, end)
+            val ch = forbiddenChars()
+            val forbiddenChars = ch.joinToString("", "[^", "]*") { it.toString() }
+                .toRegex()
+            check(forbiddenChars.matches(inner.startDelimiter)) {
+                "Start delimiter cannot contain the following characters: ${ch.contentToString()}, but was '${inner.startDelimiter}'"
+            }
+            check(forbiddenChars.matches(inner.endDelimiter)) {
+                "End delimiter cannot contain the following characters: ${ch.contentToString()}, but was '${inner.endDelimiter}'"
+            }
+            return InterpolationDelimiterImpl(inner)
+        }
+
+        /**
+         * The default locale specialization reduction function. This function is used to reduce the specificity of a
+         * locale to a more general one.
+         *
+         * The implementation of this function reduces the locale by removing parts of it in the following order:
+         *
+         * - Extensions
+         * - Variant
+         * - Country/Region
+         * - Script
+         *
+         * Once all parts have been removed the locale should only contain the language. A call with a locale solely
+         * containing the language will return `null`.
+         *
+         * @return the default locale specialization reduction function
+         * @see [Configuration.localeSpecializationReduction]
+         */
+        @HideFromJava
+        @JvmName("defaultPluralMapperFactoryKt")
+        fun defaultLocaleSpecializationReduction(): (Locale) -> Locale? = internalLocaleSpecializationReduction()
+
+        /**
+         * The default locale specialization reduction function. This function is used to reduce the specificity of a
+         * locale to a more general one.
+         *
+         * The implementation of this function reduces the locale by removing parts of it in the following order:
+         *
+         * - Extensions
+         * - Variant
+         * - Country/Region
+         * - Script
+         *
+         * Once all parts have been removed the locale should only contain the language. A call with a locale solely
+         * containing the language will return `null`.
+         *
+         * @return the default locale specialization reduction function
+         * @see [Configuration.localeSpecializationReductionJava]
+         */
+        @HideFromKotlin
+        @JvmName("defaultPluralMapperFactory")
+        fun defaultLocaleSpecializationReductionJava(): Function<Locale, Locale?> =
+            internalLocaleSpecializationReduction()
+
+        @PackagePrivate
+        internal fun internalLocaleSpecializationReduction(): FunctionAdapter<Locale, Locale?> =
+            FunctionAdapter { locale ->
+                when {
+                    locale.hasExtensions() -> locale.stripExtensions()
+                    locale.variant.isNotEmpty() -> Locale.Builder().setLocale(locale).setVariant("").build()
+                    locale.country.isNotEmpty() -> Locale.Builder().setLocale(locale).setRegion("").build()
+                    locale.script.isNotEmpty() -> Locale.Builder().setLocale(locale).setScript("").build()
+                    else -> null
+                }
+            }
 
         private val Content.caller: Class<*>
             get() = (this as ContentImpl).caller
 
+        private fun forbiddenChars(): CharArray = charArrayOf('\\', '(', ')', ':')
+
+        @PackagePrivate
+        internal class InterpolationDelimiterImpl(internal val inner: VariableDelimiter) : InterpolationDelimiter
+
+        @PackagePrivate
+        internal val InterpolationDelimiter.inner: VariableDelimiter
+            get() = (this as InterpolationDelimiterImpl).inner
+
     }
 
     /**
-     * Marker annotation for the DSL of the [TranslatorBuilder].
+     * Marker annotation for the DSL of the [TranslatorBuilder]. Any type annotated with this annotation is involved in
+     * the DSL of the [TranslatorBuilder] and should only be used in this context. Any usage outside the
+     * [TranslatorBuilder] DSL is not supported and may lead to unexpected behavior.
      *
      * @see TranslatorBuilder
      */

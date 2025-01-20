@@ -16,9 +16,11 @@ import kotlin.collections.component2
 import kotlin.collections.set
 
 @PackagePrivate
-internal class TranslatorBuilderImpl(private val caller: Class<*>) : TranslatorBuilder {
+internal class TranslatorBuilderImpl(
+    private val caller: Class<*>,
+) : TranslatorBuilder {
 
-    override var ignoreMissingKeysOnBuild: Boolean = false
+    override var checkMissingKeysOnBuild: Boolean = false
 
     private var configRedefined = false
     private var configBlock: TranslatorBuilder.Configuration.() -> Unit = { }
@@ -48,7 +50,9 @@ internal class TranslatorBuilderImpl(private val caller: Class<*>) : TranslatorB
         val content = ContentImpl(caller, configBuilder).apply(contentBlock).run()
 
         val formatters = configBuilder.formatters
-        val variableDelimiter = configBuilder.interpolationDelimiter.inner
+        val variableDelimiter =
+            (configBuilder.interpolationDelimiter as TranslatorBuilder.Companion.InterpolationDelimiterImpl).inner
+        val currentLocale: Locale = configBuilder.currentLocale ?: configBuilder.defaultLocale ?: Locale.ENGLISH
 
         if (content.isEmpty()) {
             val data = TranslatorData(
@@ -58,9 +62,10 @@ internal class TranslatorBuilderImpl(private val caller: Class<*>) : TranslatorB
                 MapAccessWrapper(emptyMap()),
                 MapAccessWrapper(formatters),
                 configBuilder.missingKeyPolicy,
+                configBuilder.localeSpecializationReduction
             )
 
-            return TranslatorImpl(configBuilder.defaultLocale, data)
+            return TranslatorImpl(currentLocale, data)
         }
 
         val finalMap = LinkedHashMap<Locale, MutableMap<String, String>>(content.size)
@@ -79,7 +84,7 @@ internal class TranslatorBuilderImpl(private val caller: Class<*>) : TranslatorB
 
         content.entries.forEach { entry ->
             val (locale, translations) = entry
-            if (!ignoreMissingKeysOnBuild) {
+            if (checkMissingKeysOnBuild) {
                 val cleaned = translations.keys
                     .stream()
                     .map { it.substringBefore('_') }
@@ -120,9 +125,10 @@ internal class TranslatorBuilderImpl(private val caller: Class<*>) : TranslatorB
             MapAccessWrapper(pluralMapperMap),
             MapAccessWrapper(formatters),
             configBuilder.missingKeyPolicy,
+            configBuilder.localeSpecializationReduction
         )
 
-        return TranslatorImpl(configBuilder.defaultLocale, data)
+        return TranslatorImpl(currentLocale, data)
     }
 
     /**
@@ -139,4 +145,3 @@ internal class TranslatorBuilderImpl(private val caller: Class<*>) : TranslatorB
     }
 
 }
-

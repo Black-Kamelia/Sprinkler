@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.i18n.pluralization
 
+import com.kamelia.sprinkler.i18n.FunctionAdapter
 import com.kamelia.sprinkler.util.unsafeCast
 import com.kamelia.sprinkler.util.unsupportedOperation
 import com.zwendo.restrikt2.annotation.PackagePrivate
@@ -22,9 +23,9 @@ internal object BuiltinPluralMappers {
     /**
      * The builtin [PluralMapper] factory.
      */
-    fun factory(): (Locale) -> PluralMapper {
+    fun factory(): FunctionAdapter<Locale, PluralMapper> {
         val map = builtinMappers()
-        return {
+        return FunctionAdapter {
             try {
                 loadMapper(map, it)
             } catch (e: LocaleNotFoundException) {

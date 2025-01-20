@@ -8,7 +8,7 @@ import org.junit.jupiter.api.assertThrows
 class TranslatorBuilderResourceTest {
 
     @Test
-    fun `addResource adds the resource to the translator`() {
+    fun `resource adds the resource to the translator`() {
         val t = Translator {
             translations {
                 resource("/builder_test/en.yml", Charsets.UTF_8)
@@ -18,7 +18,7 @@ class TranslatorBuilderResourceTest {
     }
 
     @Test
-    fun `addResource throws an IAE if the resource file does not exist`() {
+    fun `resource throws an IAE if the resource file does not exist`() {
         assertThrows<IllegalArgumentException> {
             Translator {
                 translations {
@@ -29,7 +29,7 @@ class TranslatorBuilderResourceTest {
     }
 
     @Test
-    fun `addResource throws an IAE if the resource directory does not exist`() {
+    fun `resource throws an IAE if the resource directory does not exist`() {
         assertThrows<IllegalArgumentException> {
             Translator {
                 translations {
@@ -40,7 +40,7 @@ class TranslatorBuilderResourceTest {
     }
 
     @Test
-    fun `addResource throws an IAE if the resource directory is a file and the content does not exist as a resource`() {
+    fun `resource throws an IAE if the resource directory is a file and the content does not exist as a resource`() {
         assertThrows<IllegalArgumentException> {
             Translator {
                 translations {
@@ -51,7 +51,7 @@ class TranslatorBuilderResourceTest {
     }
 
     @Test
-    fun `addResource throws an IAE if the resourcePath contains a reference to a parent directory`() {
+    fun `resource throws an IAE if the resourcePath contains a reference to a parent directory`() {
         assertThrows<IllegalArgumentException> {
             Translator {
                 translations {

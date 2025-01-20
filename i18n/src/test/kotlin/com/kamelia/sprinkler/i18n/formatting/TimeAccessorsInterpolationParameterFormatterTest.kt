@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 
-class TimeAccessorsVariableFormatterTest {
+class TimeAccessorsInterpolationParameterFormatterTest {
 
     @Test
     fun `time formatter ignores if an unknown extra args is provided`() {

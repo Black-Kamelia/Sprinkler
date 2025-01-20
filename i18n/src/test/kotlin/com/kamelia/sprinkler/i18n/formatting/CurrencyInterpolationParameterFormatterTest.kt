@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 
-class CurrencyVariableFormatterTest {
+class CurrencyInterpolationParameterFormatterTest {
 
     @Test
     fun `currency formatter ignores if an unknown extra args is provided`() {

@@ -3,6 +3,7 @@ package com.kamelia.sprinkler.i18n.impl
 import com.kamelia.sprinkler.i18n.impl.TranslationProcessor.context
 import com.kamelia.sprinkler.i18n.impl.TranslationProcessor.count
 import com.kamelia.sprinkler.i18n.impl.TranslationProcessor.ordinal
+import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.Companion.inner
 import com.kamelia.sprinkler.i18n.pluralization.Plural
 import com.kamelia.sprinkler.i18n.pluralization.PluralMapper
 import com.kamelia.sprinkler.i18n.pluralization.ScientificNotationNumber
@@ -138,7 +139,8 @@ class TranslationProcessorTest {
                 conf.interpolationDelimiter.inner,
                 conf.pluralMapperFactory,
                 { conf.formatters[it]!! },
-                conf.missingKeyPolicy
+                conf.missingKeyPolicy,
+                conf.localeSpecializationReduction
             ),
             "hello",
             mapOf("name" to "John"),
@@ -157,7 +159,8 @@ class TranslationProcessorTest {
                 conf.interpolationDelimiter.inner,
                 conf.pluralMapperFactory,
                 { conf.formatters[it]!! },
-                conf.missingKeyPolicy
+                conf.missingKeyPolicy,
+                conf.localeSpecializationReduction
             ),
             "foo",
             mapOf(),
@@ -176,7 +179,8 @@ class TranslationProcessorTest {
                 conf.interpolationDelimiter.inner,
                 conf.pluralMapperFactory,
                 { conf.formatters[it]!! },
-                conf.missingKeyPolicy
+                conf.missingKeyPolicy,
+                conf.localeSpecializationReduction,
             ),
             "foo",
             mapOf(),
@@ -195,7 +199,8 @@ class TranslationProcessorTest {
                 conf.interpolationDelimiter.inner,
                 conf.pluralMapperFactory,
                 { conf.formatters[it]!! },
-                conf.missingKeyPolicy
+                conf.missingKeyPolicy,
+                conf.localeSpecializationReduction,
             ),
             "foo",
             mapOf(),
@@ -214,7 +219,8 @@ class TranslationProcessorTest {
                 conf.interpolationDelimiter.inner,
                 conf.pluralMapperFactory,
                 { conf.formatters[it]!! },
-                conf.missingKeyPolicy
+                conf.missingKeyPolicy,
+                conf.localeSpecializationReduction,
             ),
             "foo",
             mapOf(context("context")),
@@ -233,7 +239,8 @@ class TranslationProcessorTest {
                 conf.interpolationDelimiter.inner,
                 conf.pluralMapperFactory,
                 { conf.formatters[it]!! },
-                conf.missingKeyPolicy
+                conf.missingKeyPolicy,
+                conf.localeSpecializationReduction,
             ),
             "foo",
             mapOf(count(5)),
@@ -253,7 +260,8 @@ class TranslationProcessorTest {
                     conf.interpolationDelimiter.inner,
                     conf.pluralMapperFactory,
                     { conf.formatters[it]!! },
-                    conf.missingKeyPolicy
+                    conf.missingKeyPolicy,
+                    conf.localeSpecializationReduction,
                 ),
                 "foo",
                 mapOf(),

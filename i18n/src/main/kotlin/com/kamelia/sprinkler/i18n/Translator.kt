@@ -1,5 +1,6 @@
 package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.i18n.impl.Translator
 import java.util.Locale
 
 /**
@@ -44,7 +45,7 @@ interface Translator {
     /**
      * The default locale that is used as a fallback when a translation is not found for the chosen locale.
      */
-    val defaultLocale: Locale
+    val defaultLocale: Locale?
 
     /**
      * The current locale used to translate keys when no locale is provided.
@@ -126,6 +127,24 @@ interface Translator {
      * Returns the translation using the provided information. If the translation is not found, it will return null.
      *
      * Method default values:
+     * - The extraArgs parameter is an empty map
+     *
+     * This method is an overload, see the documentation of the base method [tn] for more details.
+     *
+     * @param key the key to translate
+     * @param locale the locale to use for the translation
+     * @param fallbackLocale the fallback locale to use if the translation is not found for the given [locale]
+     * @param fallbacks the fallback keys to use if the translation is not found for the given [locale]
+     * @return the translation using the provided information, or null if the translation is not found
+     * @throws IllegalArgumentException if the key is not [valid][TranslationKey]
+     */
+    fun tn(key: TranslationKey, locale: Locale, fallbackLocale: Locale?, vararg fallbacks: String): String? =
+        tn(key, emptyMap(), locale, fallbackLocale, *fallbacks)
+
+    /**
+     * Returns the translation using the provided information. If the translation is not found, it will return null.
+     *
+     * Method default values:
      * - The fallback locale is the [defaultLocale]
      * - The locale parameter is the [currentLocale]
      *
@@ -160,7 +179,7 @@ interface Translator {
 
     /**
      * Returns the translation using the provided information. If the translation is not found, the behavior depends on
-     * the implementation.
+     * the implementation, the default behavior being to throw [NullPointerException].
      *
      * The order of resolution is the following:
      * - First, the translation is searched for the given [key] and [locale].
@@ -190,7 +209,7 @@ interface Translator {
         locale: Locale,
         fallbackLocale: Locale?,
         vararg fallbacks: String,
-    ): String
+    ): String = tn(key, extraArgs, locale, fallbackLocale, *fallbacks)!!
 
     /**
      * Returns the translation using the provided information. If the translation is not found, the behavior depends on
@@ -235,6 +254,26 @@ interface Translator {
      */
     fun t(key: TranslationKey, locale: Locale, vararg fallbacks: String): String =
         t(key, emptyMap(), locale, defaultLocale, *fallbacks)
+
+    /**
+     * Returns the translation using the provided information. If the translation is not found, the behavior depends on
+     * the implementation.
+     *
+     * Method default values:
+     * - The extraArgs parameter is an empty map
+     *
+     * This method is an overload, see the documentation of the base method [t] for more details.
+     *
+     * @param key the key to translate
+     * @param locale the locale to use for the translation
+     * @param fallbackLocale the fallback locale to use if the translation is not found for the given [locale]
+     * @param fallbacks the fallback keys to use if the translation is not found for the given [locale]
+     * @return the translation using the provided information or a value depending on the implementation if not found
+     * @throws IllegalArgumentException if the key is not [valid][TranslationKey], or if the implementation throws an
+     * exception when a translation is not found
+     */
+    fun t(key: TranslationKey, locale: Locale, fallbackLocale: Locale?, vararg fallbacks: String): String =
+        t(key, emptyMap(), locale, fallbackLocale, *fallbacks)
 
     /**
      * Returns the translation using the provided information. If the translation is not found, the behavior depends on

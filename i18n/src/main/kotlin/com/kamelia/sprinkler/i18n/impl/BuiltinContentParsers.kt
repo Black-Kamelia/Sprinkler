@@ -28,34 +28,50 @@ import org.yaml.snakeyaml.error.YAMLException
 @Suppress("ObjectLiteralToLambda")
 internal object BuiltinContentParsers {
 
-    fun jsonParser(): () -> TranslatorBuilder.ContentParser =
-        compositeParser(listOf(BuiltinContentParsers::jacksonDatabind, BuiltinContentParsers::gson, BuiltinContentParsers::json), "JSON")
+    fun jsonParser(): TranslatorBuilder.ContentParser =
+        compositeParser(
+            listOf(
+                BuiltinContentParsers::jacksonDatabind,
+                BuiltinContentParsers::gson,
+                BuiltinContentParsers::json
+            ), "JSON"
+        )
 
-    fun yamlParser(): () -> TranslatorBuilder.ContentParser =
+    fun yamlParser(): TranslatorBuilder.ContentParser =
         compositeParser(listOf(BuiltinContentParsers::jacksonYaml, BuiltinContentParsers::snakeYaml), "YAML")
 
-    fun tomlParser(): () -> TranslatorBuilder.ContentParser = compositeParser(listOf(BuiltinContentParsers::jacksonToml, BuiltinContentParsers::toml4j), "TOML")
+    fun tomlParser(): TranslatorBuilder.ContentParser =
+        compositeParser(listOf(BuiltinContentParsers::jacksonToml, BuiltinContentParsers::toml4j), "TOML")
 
     fun compositeParser(
         candidates: List<() -> TranslatorBuilder.ContentParser>,
         format: String,
-    ): () -> TranslatorBuilder.ContentParser {
-        val lazyValue = lazy(LazyThreadSafetyMode.NONE) {
+    ): TranslatorBuilder.ContentParser = object : TranslatorBuilder.ContentParser {
+
+        private lateinit var inner: TranslatorBuilder.ContentParser
+
+        override fun parse(content: String): TranslationSourceMap {
+            if (!::inner.isInitialized) findInner()
+            return inner.parse(content)
+        }
+
+        private fun findInner() {
             for (candidate in candidates) {
                 try {
-                    return@lazy candidate.invoke()
+                    inner = candidate.invoke()
+                    return
                 } catch (e: NoClassDefFoundError) {
                     // Ignore
                 }
             }
-            illegalState("No available content parser found for '$format' format. You might need to add a dependency to your project to allow loading. You can check the possible dependencies in the TranslatorBuilder.defaultContentLoaders method documentation.")
+            illegalState("No available content parser found for '$format' format. You might need to add a dependency to your project to allow loading. You can check the possible dependencies in the TranslatorBuilder.defaultContentParsers method documentation.")
         }
-        return { lazyValue.value }
+
     }
 
     //region json
     fun jacksonDatabind(): TranslatorBuilder.ContentParser = object : TranslatorBuilder.ContentParser {
-        override fun load(content: String): TranslationSourceMap {
+        override fun parse(content: String): TranslationSourceMap {
             return try {
                 ObjectMapper().readValue(content, Map::class.java).unsafeCast()
             } catch (e: JsonParseException) {
@@ -65,7 +81,7 @@ internal object BuiltinContentParsers {
     }
 
     private fun gson(): TranslatorBuilder.ContentParser = object : TranslatorBuilder.ContentParser {
-        override fun load(content: String): TranslationSourceMap = try {
+        override fun parse(content: String): TranslationSourceMap = try {
             Gson().fromJson(content, object : TypeToken<TranslationSourceMap>() {})
         } catch (e: JsonSyntaxException) {
             throw IllegalArgumentException("Invalid JSON file.", e)
@@ -73,7 +89,7 @@ internal object BuiltinContentParsers {
     }
 
     private fun json(): TranslatorBuilder.ContentParser = object : TranslatorBuilder.ContentParser {
-        override fun load(content: String): TranslationSourceMap = try {
+        override fun parse(content: String): TranslationSourceMap = try {
             JSONObject(content).toMap()
         } catch (e: JSONException) {
             throw IllegalArgumentException("Invalid JSON file.", e)
@@ -84,7 +100,7 @@ internal object BuiltinContentParsers {
 
     //region yaml
     private fun snakeYaml(): TranslatorBuilder.ContentParser = object : TranslatorBuilder.ContentParser {
-        override fun load(content: String): TranslationSourceMap = try {
+        override fun parse(content: String): TranslationSourceMap = try {
             Yaml().load(content)
         } catch (e: YAMLException) {
             throw IllegalArgumentException("Invalid YAML file.", e)
@@ -92,7 +108,7 @@ internal object BuiltinContentParsers {
     }
 
     private fun jacksonYaml(): TranslatorBuilder.ContentParser = object : TranslatorBuilder.ContentParser {
-        override fun load(content: String): TranslationSourceMap = try {
+        override fun parse(content: String): TranslationSourceMap = try {
             ObjectMapper(YAMLFactory()).readValue(content, Map::class.java).unsafeCast()
         } catch (e: MismatchedInputException) {
             throw IllegalArgumentException("Invalid YAML file.", e)
@@ -102,7 +118,7 @@ internal object BuiltinContentParsers {
 
     //region toml
     private fun toml4j(): TranslatorBuilder.ContentParser = object : TranslatorBuilder.ContentParser {
-        override fun load(content: String): TranslationSourceMap = try {
+        override fun parse(content: String): TranslationSourceMap = try {
             Toml().read(content).toMap()
         } catch (e: IllegalStateException) {
             throw IllegalArgumentException("Invalid TOML file.", e)
@@ -110,7 +126,7 @@ internal object BuiltinContentParsers {
     }
 
     private fun jacksonToml(): TranslatorBuilder.ContentParser = object : TranslatorBuilder.ContentParser {
-        override fun load(content: String): TranslationSourceMap = try {
+        override fun parse(content: String): TranslationSourceMap = try {
             ObjectMapper(TomlFactory()).readValue(content, Map::class.java).unsafeCast()
         } catch (e: TomlStreamReadException) {
             throw IllegalArgumentException("Invalid TOML file.", e)

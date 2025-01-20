@@ -28,17 +28,31 @@ import org.intellij.lang.annotations.Language
 internal object TranslationProcessor {
 
     fun translate(data: TranslatorData, key: String, extraArgs: Map<String, Any>, locale: Locale): String? {
-        // first, get the translations for the given locale, or return null if they don't exist
-        val translations = data.translations[locale] ?: return null
+        // the current behavior is to use the reduced locale ONLY for the lookup and the pluralization
+        var lookupLocale: Locale? = null
+        while (true) {
+            var translations: Map<String, String>? = null
+            // first we try to find a map of translations for the current locale
+            while (translations == null) {
+                // we need this awkward if assignment to ensure that each time we enter this loop, we generalize the
+                // locale, except for the first time, where we use the provided locale.
+                lookupLocale = if (lookupLocale != null) {
+                    data.specializationReduction(lookupLocale) ?: return null
+                } else {
+                    locale
+                }
+                translations = data.translations[lookupLocale]
+            }
 
-        // build the actual key with the options
-        val actualKey = buildKey(key, extraArgs, data.pluralMapper(locale))
+            // build the actual key with the options
+            val actualKey = buildKey(key, extraArgs, data.pluralMapper(lookupLocale!!))
 
-        // get the value for the actual key or return null if it doesn't exist
-        val value = translations[actualKey] ?: return null
+            // get the value for the actual key or loop to the next locale
+            val value = translations[actualKey] ?: continue
 
-        val context = ProcessingContext(data.formatters.unsafeCast(), locale, extraArgs)
-        return value.interpolate(context, data.interpolationDelimiter, customResolver)
+            val context = ProcessingContext(data.formatters.unsafeCast(), locale, extraArgs)
+            return value.interpolate(context, data.interpolationDelimiter, customResolver)
+        }
     }
 
     fun buildKey(key: String, optionMap: Map<String, Any>, pluralMapper: PluralMapper): String {
@@ -51,7 +65,6 @@ internal object TranslationProcessor {
             builder.append("_")
                 .append(interpolationContext)
         }
-
 
         val ordinal = optionMap.ordinal()
         val pluralValue = optionMap.count(ordinal, pluralMapper)

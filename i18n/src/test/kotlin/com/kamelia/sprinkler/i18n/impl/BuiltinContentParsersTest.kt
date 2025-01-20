@@ -13,7 +13,7 @@ class BuiltinContentParsersTest {
         val content = """{"key1": "value1", "key2": "value2"}"""
         val expected = mapOf("key1" to "value1", "key2" to "value2")
         loaders.forEach { loader ->
-            val actual = loader.load(content)
+            val actual = loader.parse(content)
             assertEquals(expected, actual)
         }
     }
@@ -27,7 +27,7 @@ class BuiltinContentParsersTest {
         """.trimIndent()
         val expected = mapOf("key1" to "value1", "key2" to "value2")
         loaders.forEach { loader ->
-            val actual = loader.load(content)
+            val actual = loader.parse(content)
             assertEquals(expected, actual)
         }
     }
@@ -41,7 +41,7 @@ class BuiltinContentParsersTest {
         """.trimIndent()
         val expected = mapOf("key1" to "value1", "key2" to "value2")
         loaders.forEach { loader ->
-            val actual = loader.load(content)
+            val actual = loader.parse(content)
             assertEquals(expected, actual)
         }
     }
@@ -57,7 +57,7 @@ class BuiltinContentParsersTest {
         assertDoesNotThrow {
             val content = """{"key1": "value1", "key2": "value2"}"""
             val expected = mapOf("key1" to "value1", "key2" to "value2")
-            val actual = loader().load(content)
+            val actual = loader.parse(content)
             assertEquals(expected, actual)
         }
     }
@@ -69,7 +69,7 @@ class BuiltinContentParsersTest {
         val loader = BuiltinContentParsers.compositeParser(listOf(notPresent), "json")
         assertThrows<IllegalStateException> {
             val content = """{"key1": "value1", "key2": "value2"}"""
-            loader().load(content)
+            loader.parse(content)
         }
     }
 

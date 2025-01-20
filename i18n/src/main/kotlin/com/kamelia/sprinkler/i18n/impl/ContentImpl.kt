@@ -1,11 +1,12 @@
 package com.kamelia.sprinkler.i18n.impl
 
+import com.kamelia.sprinkler.i18n.FunctionAdapter
 import com.kamelia.sprinkler.i18n.TranslationKey
 import com.kamelia.sprinkler.i18n.Translator
 import com.kamelia.sprinkler.i18n.Utils
 import com.kamelia.sprinkler.i18n.Utils.KEY_DOCUMENTATION
 import com.kamelia.sprinkler.i18n.formatting.VariableFormatter
-import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.Companion.defaultContentLoaders
+import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.Companion.defaultContentParsers
 import com.kamelia.sprinkler.util.illegalArgument
 import com.zwendo.restrikt2.annotation.PackagePrivate
 import java.io.BufferedReader
@@ -15,6 +16,7 @@ import java.nio.file.Path
 import java.util.IllformedLocaleException
 import java.util.Locale
 import java.util.TreeMap
+import java.util.function.Function
 import java.util.jar.JarFile
 import java.util.stream.Collectors
 import org.intellij.lang.annotations.Language
@@ -26,22 +28,39 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
+import kotlin.io.path.toPath
 
 @PackagePrivate
+@Suppress("INAPPLICABLE_JVM_NAME")
 internal class ContentImpl(
     val caller: Class<*>,
     configuration: TranslatorBuilder.Configuration,
 ) : TranslatorBuilder.Content {
 
-    override var contentParserFactory = defaultContentLoaders()
+    override var contentParsers = defaultContentParsers()
     override var duplicatedKeyResolution: TranslatorBuilder.DuplicatedKeyResolution =
         TranslatorBuilder.DuplicatedKeyResolution.FAIL
     override var defaultCharset: Charset = Charset.defaultCharset()
-    override var localeParser: (String) -> Locale = {
+
+    @get:JvmName("getLocaleParserKt")
+    @set:JvmName("setLocaleParserKt")
+    override var localeParser: (String) -> Locale
+        get() = _localeParser
+        set(value) {
+            _localeParser = FunctionAdapter(value::invoke)
+        }
+
+    @get:JvmName("getLocaleParser")
+    @set:JvmName("setLocaleParser")
+    override var localeParserJava: Function<String, Locale>
+        get() = _localeParser
+        set(value) {
+            _localeParser = FunctionAdapter(value::apply)
+        }
+
+    private var _localeParser: FunctionAdapter<String, Locale> = FunctionAdapter {
         try {
-            Locale.Builder()
-                .setLanguageTag(it.replace('_', '-'))
-                .build()
+            Locale.Builder().setLanguageTag(it.replace('_', '-')).build()
         } catch (e: IllformedLocaleException) {
             throw IllegalStateException(
                 "Invalid locale '$it'. For more details about locale syntax, see java.util.Locale documentation.",
@@ -49,6 +68,7 @@ internal class ContentImpl(
             )
         }
     }
+
     override var ignoreUnrecognizedExtensionsInDirectory: Boolean = true
 
     private val valueFormattingCheckRegex: Regex
@@ -58,7 +78,8 @@ internal class ContentImpl(
     private var hasRun = false
 
     init {
-        val delimiter = configuration.interpolationDelimiter.inner
+        val delimiter =
+            (configuration.interpolationDelimiter as TranslatorBuilder.Companion.InterpolationDelimiterImpl).inner
         valueFormattingCheckRegex = translationValueFormatCheckRegex(delimiter.startDelimiter, delimiter.endDelimiter)
         variableExtractionRegex =
             formatAndVariableNamesExtractionRegex(delimiter.startDelimiter, delimiter.endDelimiter)
@@ -71,10 +92,10 @@ internal class ContentImpl(
         a.toLanguageTag().compareTo(b.toLanguageTag())
     }
 
-    override fun path(path: Path, charset: Charset): TranslatorBuilder.Content {
+    override fun file(path: Path, charset: Charset) {
         check(!hasRun) { "Cannot add content after the Translator has been built." }
         val extension = path.extension
-        val loader = contentParserFactory(extension)
+        val loader = contentParsers[extension]
 
         try {
             // we need to load the file, or, if it is a directory, load all files in it and add them to the final map.
@@ -84,14 +105,12 @@ internal class ContentImpl(
         } catch (e: Exception) { // catch and rethrow to add the path to the error message
             throw IllegalArgumentException("Error while loading file $path", e)
         }
-
-        return this
     }
 
-    override fun resource(resourcePath: String, resourceClass: Class<*>, charset: Charset): TranslatorBuilder.Content {
+    override fun resource(path: String, resourceClass: Class<*>, charset: Charset) {
         check(!hasRun) { "Cannot add content after the Translator has been built." }
-        require(".." !in resourcePath) {
-            "Resource path '$resourcePath' is invalid. It cannot contain references to parent directories ('..')."
+        require(".." !in path) {
+            "Resource path '$path' is invalid. It cannot contain references to parent directories ('..')."
         }
 
         var strPath = resourceClass
@@ -106,22 +125,18 @@ internal class ContentImpl(
         }
 
         if (!Path.of(strPath).isRegularFile()) { // we are not in a jar
-            val url = resourceClass.getResource(resourcePath) ?: illegalArgument("Resource $resourcePath not found")
-            url(url, charset)
+            val url = resourceClass.getResource(path) ?: illegalArgument("Resource $path not found")
+            file(url.toURI().toPath(), charset)
         } else { // we are in a jar
-            val (isDirectory, resources) = walkJar(strPath, resourcePath, resourceClass)
+            val (isDirectory, resources) = walkJar(strPath, path, resourceClass)
             resources.forEach { loadResourceFile(it, resourceClass, isDirectory) }
         }
-
-        return this
     }
 
 
-    override fun map(locale: Locale, map: TranslationSourceMap): TranslatorBuilder.Content {
+    override fun map(locale: Locale, map: TranslationSourceMap) {
         check(!hasRun) { "Cannot add content after the Translator has been built." }
         addToMap(locale, map)
-
-        return this
     }
 
     fun run(): Map<Locale, Map<String, String>> {
@@ -348,7 +363,7 @@ internal class ContentImpl(
     private fun loadResourceFile(path: String, clazz: Class<*>, isDirectory: Boolean) {
         val actualPath = Path.of(path)
         val extension = actualPath.extension
-        val loader = contentParserFactory(extension)
+        val loader = contentParsers[extension]
             ?: if (isDirectory && ignoreUnrecognizedExtensionsInDirectory) {
                 return
             } else illegalArgument(
@@ -361,7 +376,7 @@ internal class ContentImpl(
             .reader()
             .run(::BufferedReader)
             .use { it.lines().collect(Collectors.joining("\n")) }
-        addToMap(locale, loader.load(content))
+        addToMap(locale, loader.parse(content))
     }
 
     private fun loadPath(
@@ -376,13 +391,13 @@ internal class ContentImpl(
                     stream.filter { it.isRegularFile() }
                         .forEach {
                             val locale = parseLocale(it.nameWithoutExtension)
-                            val fileLoader = contentParserFactory(it.extension)
+                            val fileLoader = contentParsers[it.extension]
                                 ?: if (ignoreUnrecognizedExtensionsInDirectory) {
                                     return@forEach
                                 } else {
                                     illegalArgument("Unsupported file extension '${it.extension}' for path '$it'.")
                                 }
-                            val map = fileLoader.load(it.readText(charset))
+                            val map = fileLoader.parse(it.readText(charset))
                             addToMap(locale, map)
                         }
                 }
@@ -391,7 +406,7 @@ internal class ContentImpl(
                 require(loader != null) {
                     "Unsupported file extension '${path.nameWithoutExtension}' for path '$path'."
                 }
-                val map = loader.load(path.readText(charset))
+                val map = loader.parse(path.readText(charset))
                 val locale = parseLocale(path.nameWithoutExtension)
                 addToMap(locale, map)
             }

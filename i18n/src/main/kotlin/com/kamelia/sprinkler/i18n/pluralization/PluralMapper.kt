@@ -1,7 +1,11 @@
 package com.kamelia.sprinkler.i18n.pluralization
 
+import com.kamelia.sprinkler.i18n.FunctionAdapter
 import com.kamelia.sprinkler.util.illegalArgument
+import com.zwendo.restrikt2.annotation.HideFromJava
+import com.zwendo.restrikt2.annotation.HideFromKotlin
 import java.util.Locale
+import java.util.function.Function
 
 /**
  * A mapper that associates a [Locale] and a [count][Int] to a [Plural] value.
@@ -130,8 +134,27 @@ interface PluralMapper {
          *
          * @return a factory that creates [PluralMapper] instances based on the locale
          */
-        @JvmStatic
-        fun builtins(): (Locale) -> PluralMapper = BuiltinPluralMappers.factory()
+        @HideFromJava
+        @JvmName("builtinsKt")
+        fun builtins(): (Locale) -> PluralMapper = internalBuiltins()
+
+        /**
+         * A [PluralMapper] factory. This factory uses the plural rules defined by the
+         * [Unicode CLDR](https://www.unicode.org/cldr/charts/45/supplemental/language_plural_rules.html) to create
+         * the corresponding [PluralMapper] implementation.
+         *
+         * If the locale is not supported by the Unicode CLDR, the factory will throw an [IllegalArgumentException].
+         *
+         * Moreover, if the locale of the built mapper does not define some plural rules (e.g. no rules are defined for
+         * the cardinal), an attempt to call the corresponding method will throw an [UnsupportedOperationException].
+         *
+         * @return a factory that creates [PluralMapper] instances based on the locale
+         */
+        @HideFromKotlin
+        @JvmName("builtins")
+        fun builtinsJava(): Function<Locale, PluralMapper> = internalBuiltins()
+
+        internal fun internalBuiltins(): FunctionAdapter<Locale, PluralMapper> = BuiltinPluralMappers.factory()
 
     }
 
