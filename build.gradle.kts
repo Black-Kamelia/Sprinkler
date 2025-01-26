@@ -15,7 +15,7 @@ plugins {
 val jvmVersion: String by project
 val rootProjectName = rootProject.name.lowercase()
 
-group = findProp<String>("projectGroup")
+group = findProp<String>("projectGroup")!!
 
 val props = Properties().apply { load(file("gradle.properties").reader()) }
 
@@ -49,24 +49,20 @@ allprojects {
     }
 
     java {
-//        withJavadocJar()
+        withJavadocJar()
         withSourcesJar()
     }
 
     signing {
-//        val signingKey = findProp<String?>("signingKey")
-//        val signingPassword = findProp<String?>("signingPassword")
-//        if (signingKey != null && signingPassword != null) {
-//            logger.info("Using in memory keys for signing")
-//            useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
-//        } else {
-//            logger.info("Using local GPG keys for signing")
-//        }
-//        sign(publishing.publications)
-        isRequired = false
-        tasks.withType<Sign>().configureEach {
-            onlyIf { false } // Ensure no signing tasks are executed
+        val signingKey = findProp<String?>("signingKey")
+        val signingPassword = findProp<String?>("signingPassword")
+        if (signingKey != null && signingPassword != null) {
+            logger.info("Using in memory keys for signing")
+            useInMemoryPgpKeys(signingKey.base64Decode(), signingPassword)
+        } else {
+            logger.info("Using local GPG keys for signing")
         }
+        sign(publishing.publications)
     }
 
     kover {
@@ -125,7 +121,7 @@ allprojects {
                     url.set("https://github.com/Black-Kamelia/Sprinkler")
 
                     developers {
-                        findProp<String>("projectMembers").split(",").forEach {
+                        findProp<String>("projectMembers")!!.split(",").forEach {
                             developer {
                                 id.set(it)
                             }
@@ -152,7 +148,7 @@ allprojects {
             maven {
                 name = "mavenCentral"
                 credentials(PasswordCredentials::class)
-                url = if (projectVersion.endsWith("SNAPSHOT")) {
+                url = if (projectVersion!!.endsWith("SNAPSHOT")) {
                     uri("https://s01.oss.sonatype.org/content/repositories/snapshots")
                 } else {
                     uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
@@ -172,8 +168,8 @@ fun TaskContainerScope.setupKotlinCompilation(block: org.jetbrains.kotlin.gradle
     compileTestKotlin(block)
 }
 
-inline fun <reified T> Project.findProp(name: String): T {
-    val strProp = findProperty(name) as String? ?: throw IllegalArgumentException("Property $name not found")
+inline fun <reified T> Project.findProp(name: String): T? {
+    val strProp = findProperty(name) as String? ?: return null
     return when (T::class) {
         Boolean::class -> strProp.toBoolean() as T
         Int::class -> strProp.toInt() as T

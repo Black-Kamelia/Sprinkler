@@ -1,5 +1,7 @@
 package com.kamelia.sprinkler.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,7 +23,7 @@ final class VarargCopyWorkaround {
      * @return an unmodifiable list containing the given elements
      * @param <T> the type of the elements
      */
-    public static <T> List<T> unmodifiableListOf(T[] elements) {
+    public static <T> @NotNull List<T> unmodifiableListOf(@NotNull T[] elements) {
         Objects.requireNonNull(elements);
         return List.of(elements);
     }
@@ -33,7 +35,7 @@ final class VarargCopyWorkaround {
      * @return an unmodifiable set containing the given elements
      * @param <T> the type of the elements
      */
-    public static <T> Set<T> unmodifiableSetOf(T[] elements) {
+    public static <T> @NotNull Set<T> unmodifiableSetOf(@NotNull T[] elements) {
         Objects.requireNonNull(elements);
         return Set.of(elements);
     }
@@ -46,7 +48,7 @@ final class VarargCopyWorkaround {
      * @param <K> the type of the keys
      * @param <V> the type of the values
      */
-    public static <K, V> Map<K, V> unmodifiableMapOf(Map.Entry<K, V>[] entries) {
+    public static <K, V> @NotNull Map<K, V> unmodifiableMapOf(@NotNull Map.Entry<K, V>[] entries) {
         Objects.requireNonNull(entries);
         return Map.ofEntries(entries);
     }

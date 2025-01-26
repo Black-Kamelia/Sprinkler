@@ -10,3 +10,8 @@ kover {
         }
     }
 }
+tasks {
+    javadoc {
+        exclude("**/com/kamelia/sprinkler/util/VarargCopyWorkaround.java")
+    }
+}
