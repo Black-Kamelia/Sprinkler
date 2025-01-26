@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.util
 
-import com.zwendo.restrikt.annotation.HideFromJava
+import com.zwendo.restrikt2.annotation.HideFromJava
 
 /**
  * Represents a box containing a value. This interface aims at providing a way to declare a property with a value that
@@ -86,21 +86,19 @@ interface Box<out T> {
          * @return a box that can be filled only once
          */
         @JvmStatic
-        @Suppress("UNCHECKED_CAST")
         fun <T> singleWrite(): Mutable<T> = object : Mutable<T> {
 
-            private var _value: T? = null
+            private var _value: Any? = SENTINEL
 
             override val value: T
-                get() = if (isFilled) _value as T else throw IllegalStateException("Box not filled")
+                get() = if (isFilled) _value.unsafeCast() else throw IllegalStateException("Box not filled")
 
-            override var isFilled: Boolean = false
-                private set
+            override val isFilled: Boolean
+                get() = _value !== SENTINEL
 
             override fun fill(value: T): Boolean {
                 if (isFilled) return false
                 _value = value
-                isFilled = true
                 return true
             }
 
@@ -113,20 +111,18 @@ interface Box<out T> {
          * @return a box that can be filled multiple times
          */
         @JvmStatic
-        @Suppress("UNCHECKED_CAST")
         fun <T> rewritable(): Mutable<T> = object : Mutable<T> {
 
-            private var _value: T? = null
+            private var _value: Any? = SENTINEL
 
             override val value: T
-                get() = if (isFilled) _value as T else throw IllegalStateException("Box not filled")
+                get() = if (isFilled) _value.unsafeCast() else throw IllegalStateException("Box not filled")
 
-            override var isFilled: Boolean = false
-                private set
+            override val isFilled: Boolean
+                get() = _value !== SENTINEL
 
             override fun fill(value: T): Boolean {
                 _value = value
-                isFilled = true
                 return true
             }
 
@@ -165,18 +161,18 @@ interface Box<out T> {
          * @return a new [EmptyBox]
          */
         @JvmStatic
-        fun <T> empty(): Box<T> = EmptyBox
+        fun <T> empty(): Box<T> = object : Box<Nothing> {
+
+            override val value: Nothing
+                get() = throw IllegalStateException("Box is not filled.")
+
+            override val isFilled: Boolean
+                get() = false
+
+        }
+
+        private val SENTINEL = Any()
 
     }
-
-}
-
-private object EmptyBox : Box<Nothing> {
-
-    override val value: Nothing
-        get() = throw IllegalStateException("Box is not filled.")
-
-    override val isFilled: Boolean
-        get() = false
 
 }

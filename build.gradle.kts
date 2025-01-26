@@ -1,49 +1,51 @@
-import java.util.*
+import java.util.Base64
+import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    val kotlinVersion: String by System.getProperties()
-    val restriktVersion: String by System.getProperties()
-    val koverVersion: String by System.getProperties()
     java
     `maven-publish`
     signing
-    id("org.jetbrains.kotlinx.kover") version koverVersion
-    kotlin("jvm") version kotlinVersion
-    id("com.zwendo.restrikt") version restriktVersion
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.restrikt)
+    alias(libs.plugins.kover)
 }
 
 val jvmVersion: String by project
-val rootProjectName = rootProject.name.toLowerCase()
+val rootProjectName = rootProject.name.lowercase()
 
-group = findProp<String>("projectGroup")
+group = findProp<String>("projectGroup")!!
 
 val props = Properties().apply { load(file("gradle.properties").reader()) }
 
 fun String.base64Decode() = String(Base64.getDecoder().decode(this))
 
 val restriktVersion: String by System.getProperties()
-subprojects {
+allprojects {
     apply(plugin = "java")
     apply(plugin = "kotlin")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
-    apply(plugin = "com.zwendo.restrikt")
+    apply(plugin = "com.zwendo.restrikt2")
     apply(plugin = "org.jetbrains.kotlinx.kover")
+    apply(plugin = "org.jetbrains.dokka")
 
-    val projectName = project.name.toLowerCase()
-    val projectVersion = findProp("$projectName.version") ?: "0.1.0"
+    val projectName = project.name.lowercase()
+    val projectVersion = if (project != rootProject) {
+        findProp<String>("$projectName.version")
+    } else {
+        "0.1.0"
+    }
 
     repositories {
         mavenCentral()
     }
 
     dependencies {
-        val junitVersion: String by project
-
-        implementation("com.zwendo:restrikt-annotation:$restriktVersion")
-        testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
-        testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
-        testImplementation("org.junit.jupiter", "junit-jupiter-params", junitVersion)
+        implementation(rootProject.libs.restrikt.annotations)
+        testImplementation(rootProject.testDependencies.bundles.implementation)
+        testRuntimeOnly(rootProject.testDependencies.bundles.runtime)
     }
 
     java {
@@ -64,8 +66,8 @@ subprojects {
     }
 
     kover {
-        excludeSourceSets {
-            names("jmh")
+        currentProject {
+            sources.excludedSourceSets = setOf("jmh")
         }
     }
 
@@ -90,11 +92,10 @@ subprojects {
         }
 
         setupKotlinCompilation {
-            kotlinOptions {
-                jvmTarget = jvmVersion
+            compilerOptions {
+                jvmTarget.set(JvmTarget.fromTarget(jvmVersion))
                 freeCompilerArgs = listOf(
                     "-Xjvm-default=all",
-                    "-Xlambdas=indy",
                     "-Xsam-conversions=indy",
                 )
             }
@@ -120,7 +121,7 @@ subprojects {
                     url.set("https://github.com/Black-Kamelia/Sprinkler")
 
                     developers {
-                        findProp<String>("projectMembers").split(",").forEach {
+                        findProp<String>("projectMembers")!!.split(",").forEach {
                             developer {
                                 id.set(it)
                             }
@@ -130,7 +131,7 @@ subprojects {
                     licenses {
                         license {
                             name.set("The Apache License, Version 2.0")
-                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                         }
                     }
 
@@ -147,7 +148,7 @@ subprojects {
             maven {
                 name = "mavenCentral"
                 credentials(PasswordCredentials::class)
-                url = if (projectVersion.endsWith("SNAPSHOT")) {
+                url = if (projectVersion!!.endsWith("SNAPSHOT")) {
                     uri("https://s01.oss.sonatype.org/content/repositories/snapshots")
                 } else {
                     uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
@@ -167,11 +168,11 @@ fun TaskContainerScope.setupKotlinCompilation(block: org.jetbrains.kotlin.gradle
     compileTestKotlin(block)
 }
 
-inline fun <reified T> Project.findProp(name: String): T {
-    val strProp = findProperty(name) as? String
+inline fun <reified T> Project.findProp(name: String): T? {
+    val strProp = findProperty(name) as String? ?: return null
     return when (T::class) {
-        Boolean::class -> strProp?.toBoolean() as T
-        Int::class -> strProp?.toInt() as T
+        Boolean::class -> strProp.toBoolean() as T
+        Int::class -> strProp.toInt() as T
         else -> strProp as T
     }
 }

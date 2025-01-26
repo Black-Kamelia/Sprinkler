@@ -1,0 +1,20 @@
+[versions]
+jackson-databind = "2.18.2"
+
+[libraries]
+jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson-databind" }
+orgJson = { group = "org.json", name = "json", version = "20241224" }
+gson = { group = "com.google.code.gson", name = "gson", version = "2.11.0" }
+
+jackson-yaml = { group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-yaml", version.ref = "jackson-databind" }
+snakeYaml = { group = "org.yaml", name = "snakeyaml", version = "2.3" }
+
+jackson-toml = { group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-toml", version.ref = "jackson-databind" }
+toml4j = { group = "io.hotmoka", name = "toml4j", version = "0.7.3" }
+
+[bundles]
+loading = ["jackson-databind", "orgJson", "gson", "jackson-yaml", "snakeYaml", "jackson-toml", "toml4j"]
+
+[plugins]
+
+shadowJar = { id = "com.gradleup.shadow", version = "8.3.0" }

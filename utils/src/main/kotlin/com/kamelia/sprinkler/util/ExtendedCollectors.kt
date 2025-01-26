@@ -19,7 +19,7 @@ object ExtendedCollectors {
      * @return a [collector][Collector] that creates a [map][Map] from [pairs][Pair] of keys and values
      */
     @JvmStatic
-    fun <K, V> toMap(): Collector<Pair<K, V>, *, Map<K, V>> = Collectors.toMap(Pair<K, V>::first, Pair<K, V>::second)
+    fun <K, V : Any> toMap(): Collector<Pair<K, V>, *, MutableMap<K, V>> = Collectors.toMap(Pair<K, V>::first, Pair<K, V>::second)
 
     /**
      * Returns a [collector][Collector] that collects elements to a [LinkedHashMap] from [pairs][Pair] of keys and
@@ -32,7 +32,9 @@ object ExtendedCollectors {
      */
     @JvmStatic
     @JvmOverloads
-    fun <K, V> toLinkedHashMap(mergeFunction: (V, V) -> V = { _, b -> b }): Collector<Pair<K, V>, *, Map<K, V>> =
+    fun <K, V> toLinkedHashMap(
+        mergeFunction: (V, V) -> V = { _, b -> b }
+    ): Collector<Pair<K, V>, *, LinkedHashMap<K, V>> =
         Collectors.toMap(Pair<K, V>::first, Pair<K, V>::second, mergeFunction, ::LinkedHashMap)
 
     /**
@@ -45,7 +47,7 @@ object ExtendedCollectors {
      */
     @JvmStatic
     @JvmOverloads
-    fun <K, V> toMapUsingEntries(mergeFunction: (V, V) -> V = { _, b -> b }): Collector<Map.Entry<K, V>, *, Map<K, V>> =
+    fun <K, V : Any> toMapUsingEntries(mergeFunction: (V, V) -> V = { _, b -> b }): Collector<Map.Entry<K, V>, *, MutableMap<K, V>> =
         Collectors.toMap(Map.Entry<K, V>::key, Map.Entry<K, V>::value, mergeFunction)
 
     /**
@@ -59,8 +61,8 @@ object ExtendedCollectors {
     @JvmStatic
     @JvmOverloads
     fun <K, V> toLinkedHashMapUsingEntries(
-        mergeFunction: (V, V) -> V = { _, b -> b }
-    ): Collector<Map.Entry<K, V>, *, Map<K, V>> =
+        mergeFunction: (V, V) -> V = { _, b -> b },
+    ): Collector<Map.Entry<K, V>, *, LinkedHashMap<K, V>> =
         Collectors.toMap(Map.Entry<K, V>::key, Map.Entry<K, V>::value, mergeFunction, ::LinkedHashMap)
 
     /**
