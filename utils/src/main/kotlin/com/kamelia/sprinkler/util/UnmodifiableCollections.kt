@@ -1,4 +1,5 @@
-@file:HideFromJava @file:JvmName("UnmodifiableCollections")
+@file:HideFromJava
+@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
 package com.kamelia.sprinkler.util
 
