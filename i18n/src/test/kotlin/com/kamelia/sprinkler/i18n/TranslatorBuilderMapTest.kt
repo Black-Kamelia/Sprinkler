@@ -1,5 +1,6 @@
-package com.kamelia.sprinkler.i18n.impl
+package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.selectedLocale
 import com.kamelia.sprinkler.util.unsafeCast
 import java.util.Locale
 import org.junit.jupiter.api.Assertions
@@ -282,7 +283,7 @@ class TranslatorBuilderMapTest {
                 map(Locale.FRANCE, mapOf("test.test" to "test"))
             }
         }
-        Assertions.assertEquals("test", translator.t("test.test", Locale.FRANCE))
+        Assertions.assertEquals("test", translator.t("test.test", selectedLocale(Locale.FRANCE)))
     }
 
     @Test
@@ -292,7 +293,7 @@ class TranslatorBuilderMapTest {
                 maps(mapOf(Locale.FRANCE to mapOf("test.test" to "test")))
             }
         }
-        Assertions.assertEquals("test", translator.t("test.test", Locale.FRANCE))
+        Assertions.assertEquals("test", translator.t("test.test", selectedLocale(Locale.FRANCE)))
     }
 
     @Test

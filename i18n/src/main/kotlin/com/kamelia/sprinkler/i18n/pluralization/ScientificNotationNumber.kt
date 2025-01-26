@@ -17,21 +17,21 @@ import kotlin.math.pow
 interface ScientificNotationNumber {
 
     /**
-     * The actual value of the number after the exponentiation (e.g. `1e2` = `1 * 10^2` = `100`).
+     * The actual value of the number after the exponentiation (e.g., `1e2` = `1 * 10^2` = `100`).
      *
      * @return the value of the number
      */
     val value: Number
 
     /**
-     * The significand of the number (e.g. the significand of `1e2` is `1`).
+     * The significand of the number (e.g., the significand of `1e2` is `1`).
      *
      * @return the significand of the number
      */
     val significand: Double
 
     /**
-     * The exponent of the number (e.g. the exponent of `1e2` is `2`).
+     * The exponent of the number (e.g., the exponent of `1e2` is `2`).
      *
      * @return the exponent of the number
      */
@@ -74,8 +74,8 @@ interface ScientificNotationNumber {
         fun from(value: Long): ScientificNotationNumber {
             if (value == 0L) return IntegerSci(0.0, 0)
             val exponent = log10(value.toDouble()).toInt()
-            // scale is set to 20 because a long cane be represented by at most 19 digits. We ensure like this that we
-            // will always store the exact value of the long.
+            // The scale is set to 20 because a long cane be represented by at most 19 digits. We ensure like this that
+            // we will always store the exact value of the long.
             val significand = value.toBigDecimal()
                 .divide(10.0.pow(exponent).toBigDecimal(), 20, RoundingMode.HALF_UP)
                 .toDouble()

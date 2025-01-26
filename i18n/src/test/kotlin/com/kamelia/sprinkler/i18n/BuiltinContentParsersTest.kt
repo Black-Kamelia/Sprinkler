@@ -1,4 +1,4 @@
-package com.kamelia.sprinkler.i18n.impl
+package com.kamelia.sprinkler.i18n
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

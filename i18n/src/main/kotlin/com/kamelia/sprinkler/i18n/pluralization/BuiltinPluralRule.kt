@@ -1,6 +1,7 @@
 package com.kamelia.sprinkler.i18n.pluralization
 
 import com.kamelia.sprinkler.i18n.FunctionAdapter
+import com.kamelia.sprinkler.util.illegalArgument
 import com.kamelia.sprinkler.util.unsafeCast
 import com.kamelia.sprinkler.util.unsupportedOperation
 import com.zwendo.restrikt2.annotation.PackagePrivate
@@ -10,31 +11,31 @@ import java.util.stream.Collectors
 import kotlin.math.abs
 
 /**
- * Default implementation of the [PluralMapper] that uses the builtin plural rules defined by
+ * Default implementation of the [PluralRuleProvider] that uses the builtin plural rules defined by
  * [unicode.org](https://www.unicode.org/cldr/charts/45/supplemental/language_plural_rules.html). This implementation
  * relies on a csv file located in the resources that contains the rules from Unicode in a simplified format. Each line
- * represents a locale and is parsed and loaded into a [PluralMapper].
+ * represents a locale and is parsed and loaded into a [PluralRuleProvider].
  *
  * This object contains the logic to parse the tiny grammar representing the rules in the csv file.
  */
 @PackagePrivate
-internal object BuiltinPluralMappers {
+internal object BuiltinPluralRule {
 
     /**
-     * The builtin [PluralMapper] factory.
+     * The builtin [PluralRuleProvider] factory.
      */
-    fun factory(): FunctionAdapter<Locale, PluralMapper> {
-        val map = builtinMappers()
+    fun factory(): FunctionAdapter<Locale, PluralRuleProvider> {
+        val map = providersAsStrings()
         return FunctionAdapter {
             try {
-                loadMapper(map, it)
+                loadRule(map, it)
             } catch (e: LocaleNotFoundException) {
-                throw IllegalArgumentException("Locale not supported: ${e.locale}")
+                illegalArgument("Locale not supported: ${e.locale}")
             }
         }
     }
 
-    private fun builtinMappers(): Map<String, String> =
+    private fun providersAsStrings(): Map<String, String> =
         Plural::class.java
             .getResourceAsStream("plural_rules.csv")!!
             .reader()
@@ -50,39 +51,39 @@ internal object BuiltinPluralMappers {
                     .collect(Collectors.toUnmodifiableMap({ it.first }, { it.second }))
             }
 
-    private fun loadMapper(content: Map<String, String>, locale: Locale): PluralMapper {
+    private fun loadRule(content: Map<String, String>, locale: Locale): PluralRuleProvider {
         // we first look for the whole tag, then for the language
         val rules = content[locale.toLanguageTag()]
             ?: content[locale.language]
             ?: throw LocaleNotFoundException(locale)
-        return loadedMapper(locale, rules)
+        return loadedProvider(locale, rules)
     }
 
     class LocaleNotFoundException(val locale: Locale) : RuntimeException(null, null, false, false)
 
-    private class BuiltinPluralMapper(
+    private class BuiltinPluralRuleProvider(
         private val cardinal: IV2Plural,
         private val ordinal: IV2Plural,
-    ) : PluralMapper {
+    ) : PluralRuleProvider {
 
-        override fun mapCardinal(count: Double): Plural = cardinal(InputValue.from(count))
+        override fun cardinal(count: Double): Plural = cardinal(InputValue.from(count))
 
-        override fun mapCardinal(count: Long): Plural = cardinal(InputValue.from(count))
+        override fun cardinal(count: Long): Plural = cardinal(InputValue.from(count))
 
-        override fun mapCardinal(count: ScientificNotationNumber): Plural = cardinal(InputValue.from(count))
+        override fun cardinal(count: ScientificNotationNumber): Plural = cardinal(InputValue.from(count))
 
-        override fun mapOrdinal(count: Long): Plural = ordinal(InputValue.from(count))
+        override fun ordinal(count: Long): Plural = ordinal(InputValue.from(count))
 
-        override fun mapOrdinal(count: Double): Plural = ordinal(InputValue.from(count))
+        override fun ordinal(count: Double): Plural = ordinal(InputValue.from(count))
 
-        override fun mapOrdinal(count: ScientificNotationNumber): Plural = ordinal(InputValue.from(count))
+        override fun ordinal(count: ScientificNotationNumber): Plural = ordinal(InputValue.from(count))
 
         override fun toString(): String = "(cardinal=[$cardinal], ordinal=[$ordinal])"
 
     }
 
     /**
-     * Simple wrapper around a floating point or integer value. It is used to pass the value to the plural mapper.
+     * Simple wrapper around a floating point or integer value. It is used to pass the value to the provider.
      */
     internal sealed interface InputValue {
 
@@ -184,12 +185,12 @@ internal object BuiltinPluralMappers {
 
     }
 
-    fun loadedMapper(locale: Locale, rules: String): PluralMapper {
+    fun loadedProvider(locale: Locale, rules: String): PluralRuleProvider {
         return try {
             val (cardinal, ordinal) = rules.split(';')
-            val cardinalMapper = parseRule(true, cardinal)
-            val ordinalMapper = parseRule(false, ordinal)
-            BuiltinPluralMapper(cardinalMapper, ordinalMapper)
+            val cardinalRule = parseRule(true, cardinal)
+            val ordinalRule = parseRule(false, ordinal)
+            BuiltinPluralRuleProvider(cardinalRule, ordinalRule)
         } catch (e: Exception) {
             throw IllegalArgumentException("Error parsing the rules '$rules' for locale '$locale'.", e)
         }
@@ -200,7 +201,7 @@ internal object BuiltinPluralMappers {
             "" -> object : IV2Plural {
                 override fun invoke(value: InputValue): Plural {
                     val kind = if (isCardinal) "Cardinal" else "Ordinal"
-                    throw UnsupportedOperationException("$kind not supported by this mapper")
+                    throw UnsupportedOperationException("$kind not supported by this provider")
                 }
 
                 override fun toString(): String {

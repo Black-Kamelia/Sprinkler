@@ -1,6 +1,5 @@
-package com.kamelia.sprinkler.i18n.impl
+package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.i18n.absoluteResource
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -56,8 +55,8 @@ class TranslatorBuilderFileTest {
     }
 
     @Test
-    fun `file throws an ISE on build call if the file name is not a valid locale`() {
-        assertThrows<IllegalStateException> {
+    fun `file throws an IAE on build call if the file name is not a valid locale`() {
+        assertThrows<IllegalArgumentException> {
             Translator {
                 translations {
                     file(absoluteResource(ROOT, "invalid-locale&.json"))
@@ -67,8 +66,8 @@ class TranslatorBuilderFileTest {
     }
 
     @Test
-    fun `file throws an ISE on build if the parser returns a map containing invalid key`() {
-        assertThrows<IllegalStateException> {
+    fun `file throws an IAE on build if the parser returns a map containing invalid key`() {
+        assertThrows<IllegalArgumentException> {
             Translator {
                 translations {
                     file(absoluteResource(ROOT, INVALID_CONTENT))
@@ -78,8 +77,8 @@ class TranslatorBuilderFileTest {
     }
 
     @Test
-    fun `file throws an ISE on build if a value is null`() {
-        assertThrows<IllegalStateException> {
+    fun `file throws an IAE on build if a value is null`() {
+        assertThrows<IllegalArgumentException> {
             Translator {
                 translations {
                     file(absoluteResource(ROOT, NULL_VALUE))
@@ -89,8 +88,8 @@ class TranslatorBuilderFileTest {
     }
 
     @Test
-    fun `file throws an ISE on build if the map contains a map containing an invalid key`() {
-        assertThrows<IllegalStateException> {
+    fun `file throws an IAE on build if the map contains a map containing an invalid key`() {
+        assertThrows<IllegalArgumentException> {
             Translator {
                 translations {
                     file(absoluteResource(ROOT, INVALID_NESTED_KEY))
@@ -100,8 +99,8 @@ class TranslatorBuilderFileTest {
     }
 
     @Test
-    fun `file throws an ISE on build if the map contains a map containing a null value`() {
-        assertThrows<IllegalStateException> {
+    fun `file throws an IAE on build if the map contains a map containing a null value`() {
+        assertThrows<IllegalArgumentException> {
             Translator {
                 translations {
                     file(absoluteResource(ROOT, NESTED_NULL_VALUE))
@@ -117,7 +116,7 @@ class TranslatorBuilderFileTest {
                 file(absoluteResource(ROOT, LIST))
             }
         }
-        assertEquals("tesuto", translator.t("test.0", Locale.JAPANESE))
+        assertEquals("tesuto", translator.t("test.0", TranslationArgument.selectedLocale(Locale.JAPANESE)))
     }
 
     @Test
@@ -174,8 +173,8 @@ class TranslatorBuilderFileTest {
     }
 
     @Test
-    fun `file with the same file more than once throws an ISE`() {
-        assertThrows<IllegalStateException> {
+    fun `file with the same file more than once throws an IAE`() {
+        assertThrows<IllegalArgumentException> {
             Translator {
                 translations {
                     file(absoluteResource(ROOT, LIST))

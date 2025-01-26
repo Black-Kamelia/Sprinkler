@@ -1,16 +1,15 @@
-package com.kamelia.sprinkler.i18n.impl
+package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.i18n.absoluteResource
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.count
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.selectedLocale
 import com.kamelia.sprinkler.i18n.formatting.VariableFormatter
 import com.kamelia.sprinkler.i18n.pluralization.Plural
-import com.kamelia.sprinkler.i18n.pluralization.PluralMapper
+import com.kamelia.sprinkler.i18n.pluralization.PluralRuleProvider
 import java.util.Locale
 import java.util.function.Consumer
 import java.util.function.Function
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -25,7 +24,7 @@ class TranslatorBuilderTest {
                 defaultLocale = locale
             }
         }
-        Assertions.assertEquals(locale, translator.defaultLocale)
+        assertEquals(locale, translator.defaultLocale)
     }
 
     @Test
@@ -36,7 +35,7 @@ class TranslatorBuilderTest {
                 defaultLocale = locale
             }
         }
-        Assertions.assertEquals(locale, translator.currentLocale)
+        assertEquals(locale, translator.currentLocale)
     }
 
     @Test
@@ -50,7 +49,7 @@ class TranslatorBuilderTest {
                 map(locale, mapOf(key to value))
             }
         }
-        Assertions.assertEquals(value, translator.t(key, locale))
+        assertEquals(value, translator.t(key, selectedLocale(locale)))
     }
 
     @Test
@@ -64,7 +63,7 @@ class TranslatorBuilderTest {
                 maps(mapOf(locale to mapOf(key to value)))
             }
         }
-        Assertions.assertEquals(value, translator.t(key, locale))
+        assertEquals(value, translator.t(key, selectedLocale(locale)))
     }
 
     @Test
@@ -89,7 +88,7 @@ class TranslatorBuilderTest {
                 map(Locale.ENGLISH, mapOf("test" to "test2"))
             }
         }
-        Assertions.assertEquals("test", translator.t("test"))
+        assertEquals("test", translator.t("test"))
     }
 
     @Test
@@ -101,7 +100,7 @@ class TranslatorBuilderTest {
                 map(Locale.ENGLISH, mapOf("test" to "test2"))
             }
         }
-        Assertions.assertEquals("test2", translator.t("test"))
+        assertEquals("test2", translator.t("test"))
     }
 
     @Test
@@ -164,73 +163,6 @@ class TranslatorBuilderTest {
     }
 
     @Test
-    fun `build throws an ISE if at least two locals does not have the same keys`() {
-        assertThrows<IllegalStateException> {
-            Translator {
-                checkMissingKeysOnBuild = true
-
-                translations {
-                    map(Locale.ENGLISH, mapOf("test" to "test"))
-                    map(Locale.FRANCE, mapOf("toto" to "toto"))
-                }
-            }
-        }
-    }
-
-    @Test
-    fun `build does not throw an ISE if throwOnMissingKey is false and at least two locals does not have the same keys`() {
-        assertDoesNotThrow {
-            Translator {
-                checkMissingKeysOnBuild = false
-
-                translations {
-                    map(Locale.ENGLISH, mapOf("test" to "test"))
-                    map(Locale.FRANCE, mapOf())
-                }
-            }
-        }
-    }
-
-    @Test
-    fun `keyComparator correctly compares (a lt b)`() {
-        val keyComparator = ContentImpl.keyComparator()
-        val a = "a"
-        val b = "b"
-        assertTrue(keyComparator.compare(a, b) < 0)
-    }
-
-    @Test
-    fun `keyComparator correctly compares (a eq a)`() {
-        val keyComparator = ContentImpl.keyComparator()
-        val a = "a"
-        assertTrue(keyComparator.compare(a, a) == 0)
-    }
-
-    @Test
-    fun `keyComparator correctly compares (b gt a)`() {
-        val keyComparator = ContentImpl.keyComparator()
-        val a = "a"
-        val b = "b"
-        assertTrue(keyComparator.compare(b, a) > 0)
-    }
-
-    @Test
-    fun `keyComparator correctly handles dots`() {
-        val keyComparator = ContentImpl.keyComparator()
-        val a = "a.b"
-        val b = "a.c"
-        assertTrue(keyComparator.compare(a, b) < 0)
-    }
-
-    @Test
-    fun `keyComparator correctly handles dots when a key is the prefix`() {
-        val keyComparator = ContentImpl.keyComparator()
-        val a = "a"
-        val b = "a.b"
-        assertTrue(keyComparator.compare(a, b) < 0)
-    }
-
-    @Test
     fun `calling configuration more than once throws an ISE`() {
         assertThrows<IllegalStateException> {
             Translator {
@@ -266,7 +198,7 @@ class TranslatorBuilderTest {
 
     @Test
     fun `localeSpecializationReduction correctly defaults in the described order`() {
-        val reduction = TranslatorBuilder.defaultLocaleSpecializationReduction()
+        val reduction = { locale: Locale -> TranslatorBuilder.defaultLocaleSpecializationReduction(locale) }
         assertEquals(Locale.ENGLISH, reduction(Locale.US))
         val full = Locale.forLanguageTag("en-test-US-POSIX-x-foo-bar")
         assertEquals(full.stripExtensions(), reduction(full))
@@ -274,6 +206,13 @@ class TranslatorBuilderTest {
         assertEquals(Locale.forLanguageTag("en-US"), reduction(Locale.forLanguageTag("en-US-POSIX")))
         assertEquals(Locale.ENGLISH, reduction(Locale.forLanguageTag("en-test")))
         assertNull(reduction(Locale.ENGLISH))
+    }
+
+    @Test
+    fun `localeParser correctly defaults to Locale#forLanguageTag`() {
+        val parser = { locale: String -> TranslatorBuilder.defaultLocaleParser(locale) }
+        assertEquals(Locale.US, parser("en-US"))
+        assertEquals(Locale.forLanguageTag("en-US-POSIX"), parser("en-US-POSIX"))
     }
 
     @Test
@@ -289,9 +228,9 @@ class TranslatorBuilderTest {
             }
         }
 
-        assertEquals("test3", translator.t("test3", Locale.FRENCH))
-        assertEquals("test2", translator.t("test2", Locale.FRENCH))
-        assertEquals("tesuto", translator.t("test", Locale.FRENCH))
+        assertEquals("test3", translator.t("test3", selectedLocale(Locale.FRENCH)))
+        assertEquals("test2", translator.t("test2", selectedLocale(Locale.FRENCH)))
+        assertEquals("tesuto", translator.t("test", selectedLocale(Locale.FRENCH)))
     }
 
     @Test
@@ -307,20 +246,69 @@ class TranslatorBuilderTest {
     }
 
     @Test
+    fun `contentParsers map is a defensive immutable copy`() {
+        val map = hashMapOf("foo" to TranslatorBuilder.ContentParser { emptyMap() })
+        Translator {
+            translations {
+                assertEquals(TranslatorBuilder.defaultContentParsers().size, contentParsers.size)
+                contentParsers = map
+                assertThrows<UnsupportedOperationException> {
+                    (contentParsers as MutableMap).clear()
+                }
+                map.clear()
+                assertEquals(1, contentParsers.size)
+            }
+        }
+    }
+
+    @Test
+    fun `formatters map is a defensive immutable copy`() {
+        val map = hashMapOf("foo" to VariableFormatter.date())
+        Translator {
+            configuration {
+                assertEquals(VariableFormatter.builtins().size, formatters.size)
+                formatters = map
+                assertThrows<UnsupportedOperationException> {
+                    (formatters as MutableMap).clear()
+                }
+                map.clear()
+                assertEquals(1, formatters.size)
+            }
+        }
+    }
+
+    @Test
+    fun `factory method caller is always correct`() {
+        Translator {
+            val b = this as TranslatorBuilderImpl
+            assertEquals(TranslatorBuilderTest::class.java, b.caller)
+        }
+        Translator.create {
+            val b = it as TranslatorBuilderImpl
+            assertEquals(TranslatorBuilderTest::class.java, b.caller)
+        }
+
+        val jvmStaticMethod = Translator::class.java.getDeclaredMethod("create", Consumer::class.java)
+        jvmStaticMethod.invoke(null, Consumer<TranslatorBuilder> {
+            val b = it as TranslatorBuilderImpl
+            assertEquals(TranslatorBuilderTest::class.java, b.caller)
+        })
+    }
+
+    @Test
     fun `java api coverage`() {
-        Translator(Consumer { })
-        TranslatorBuilder.defaultLocaleSpecializationReductionJava()
+        Translator.create { }
         val t = Translator {
             configuration(Consumer {
                 it.localeSpecializationReductionJava = Function { null }
                 it.localeSpecializationReductionJava
-                it.pluralMapperFactoryJava = Function {
-                    object : PluralMapper {
-                        override fun mapCardinal(count: Double): Plural = Plural.OTHER
-                        override fun mapOrdinal(count: Long): Plural = Plural.OTHER
+                it.pluralRuleProviderFactoryJava = Function {
+                    object : PluralRuleProvider {
+                        override fun cardinal(count: Double): Plural = Plural.OTHER
+                        override fun ordinal(count: Long): Plural = Plural.OTHER
                     }
                 }
-                it.pluralMapperFactoryJava
+                it.pluralRuleProviderFactoryJava
             })
             translations(Consumer {
                 it.localeParserJava
@@ -330,7 +318,7 @@ class TranslatorBuilderTest {
             })
         }
         assertThrows<IllegalArgumentException> {
-            t.t("test", mapOf(count(5)), Locale.FRANCE)
+            t.t("test", selectedLocale(Locale.FRENCH), count(5))
         }
     }
 

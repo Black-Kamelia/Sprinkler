@@ -1,10 +1,13 @@
 package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.i18n.impl.Translator
-import com.kamelia.sprinkler.i18n.impl.context
-import com.kamelia.sprinkler.i18n.impl.count
-import com.kamelia.sprinkler.i18n.impl.formatted
-import com.kamelia.sprinkler.util.assertionFailed
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.context
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.count
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.fallbackLocale
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.fallbacks
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.ordinal
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.selectedLocale
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.variable
+import com.kamelia.sprinkler.i18n.formatting.VariableFormatter.Companion.formatArgument
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -76,9 +79,9 @@ class TranslatorTest {
 
     @Test
     fun `translateOrNull throws if the key is invalid`() {
-        val translator = Translator {  }
+        val translator = Translator { }
         assertThrows<IllegalArgumentException> {
-            translator.tn("(", Locale.ENGLISH)
+            translator.tn("(", selectedLocale(Locale.ENGLISH))
         }
     }
 
@@ -90,7 +93,7 @@ class TranslatorTest {
                 map(Locale.FRANCE, mapOf("key" to "valeur"))
             }
         }
-        assertEquals("valeur", translator.tn("key", Locale.FRANCE))
+        assertEquals("valeur", translator.tn("key", selectedLocale(Locale.FRANCE)))
     }
 
     @Test
@@ -100,25 +103,25 @@ class TranslatorTest {
                 map(Locale.ENGLISH, mapOf("key" to "value"))
             }
         }
-        assertEquals("value", translator.tn("key", Locale.FRANCE))
+        assertEquals("value", translator.tn("key", selectedLocale(Locale.FRANCE)))
     }
 
     @Test
     fun `translateOrNull returns null if the translation doesnt exist`() {
         val translator = Translator {}
-        assertNull(translator.tn("key", Locale.FRANCE))
+        assertNull(translator.tn("key", selectedLocale(Locale.FRANCE)))
     }
 
     @Test
     fun `translateOrNull returns null if the translation doesnt exist and locale is default locale`() {
-        val translator = Translator {  }
-        assertNull(translator.tn("key", Locale.ENGLISH))
+        val translator = Translator { }
+        assertNull(translator.tn("key", selectedLocale(Locale.ENGLISH)))
     }
 
     @Test
     fun `translateOrNull returns null if the translation doesnt exist and default locale is null`() {
-        val translator = Translator {  }
-        assertNull(translator.tn("key", mapOf(), Locale.ENGLISH, null))
+        val translator = Translator { }
+        assertNull(translator.tn("key", fallbackLocale(null)))
     }
 
     @Test
@@ -131,7 +134,7 @@ class TranslatorTest {
                 map(Locale.ENGLISH, mapOf("foo" to mapOf("key" to "value")))
             }
         }
-        assertEquals("value", translator.section("foo").tn("key", Locale.ENGLISH))
+        assertEquals("value", translator.section("foo").tn("key", selectedLocale(Locale.ENGLISH)))
     }
 
     @Test
@@ -142,7 +145,7 @@ class TranslatorTest {
             }
         }
         assertThrows<IllegalArgumentException> {
-            translator.t("(", Locale.FRANCE)
+            translator.t("(", selectedLocale(Locale.FRANCE))
         }
     }
 
@@ -154,7 +157,7 @@ class TranslatorTest {
                 map(Locale.FRANCE, mapOf("key" to "valeur"))
             }
         }
-        assertEquals("valeur", translator.t("key", Locale.FRANCE))
+        assertEquals("valeur", translator.t("key", selectedLocale(Locale.FRANCE)))
     }
 
     @Test
@@ -164,22 +167,22 @@ class TranslatorTest {
                 map(Locale.ENGLISH, mapOf("key" to "value"))
             }
         }
-        assertEquals("value", translator.t("key", Locale.FRANCE))
+        assertEquals("value", translator.t("key", selectedLocale(Locale.FRANCE)))
     }
 
     @Test
     fun `translate(String, Locale) throws if the translation for the default locale does not exist`() {
-        val translator = Translator {  }
+        val translator = Translator { }
         assertThrows<IllegalArgumentException> {
-            translator.t("key", Locale.FRANCE)
+            translator.t("key", selectedLocale(Locale.FRANCE))
         }
     }
 
     @Test
     fun `translate(String, Locale) throws if the translation for the default locale does not exist and locale is default locale`() {
-        val translator = Translator {  }
+        val translator = Translator { }
         assertThrows<IllegalArgumentException> {
-            translator.t("key", Locale.ENGLISH)
+            translator.t("key", selectedLocale(Locale.ENGLISH))
         }
     }
 
@@ -190,12 +193,12 @@ class TranslatorTest {
                 map(Locale.ENGLISH, mapOf("foo" to mapOf("key" to "value")))
             }
         }
-        assertEquals("value", translator.section("foo").t("key", Locale.ENGLISH))
+        assertEquals("value", translator.section("foo").t("key", selectedLocale(Locale.ENGLISH)))
     }
 
     @Test
     fun `translate(String) throws if the key is invalid`() {
-        val translator = Translator {  }
+        val translator = Translator { }
         assertThrows<IllegalArgumentException> {
             translator.t("(")
         }
@@ -219,7 +222,7 @@ class TranslatorTest {
 
     @Test
     fun `translate(String) throws if the translation for the currentLocale does not exist`() {
-        val translator = Translator {  }
+        val translator = Translator { }
         assertThrows<IllegalArgumentException> {
             translator.t("key")
         }
@@ -227,7 +230,7 @@ class TranslatorTest {
 
     @Test
     fun `translate(String) throws if the translation for the currentLocale does not exist and locale is defaultLocale`() {
-        val translator = Translator {  }
+        val translator = Translator { }
         assertThrows<IllegalArgumentException> {
             translator.t("key")
         }
@@ -241,7 +244,7 @@ class TranslatorTest {
             }
         }
         val exception = assertThrows<IllegalArgumentException> {
-            translator.t("key", mapOf(count(5), context("male")))
+            translator.t("key", count(5), context("male"))
         }
         assertTrue("male" in exception.message!!)
         assertTrue("other" in exception.message!!)
@@ -313,7 +316,7 @@ class TranslatorTest {
 
     @Test
     fun `toString contains the prefix`() {
-        val translator = Translator {  }.section("foo")
+        val translator = Translator { }.section("foo")
         assertTrue(translator.prefix!! in translator.toString())
     }
 
@@ -329,32 +332,32 @@ class TranslatorTest {
 
     @Test
     fun `toString contains the default locale`() {
-        val translator = Translator {  }
+        val translator = Translator { }
         assertTrue(Locale.ENGLISH.toString() in translator.toString())
     }
 
     @Test
     fun `asRoot return this if the translator is a root`() {
-        val translator = Translator {  }
+        val translator = Translator { }
         assertSame(translator, translator.asRoot())
     }
 
     @Test
     fun `asRoot return a new translator with no prefix if the translator is not a root`() {
-        val translator = Translator {  }.section("foo")
+        val translator = Translator { }.section("foo")
         val root = translator.asRoot()
         assertNull(root.prefix)
     }
 
     @Test
     fun `withCurrentLocale returns this if the current locale is the same`() {
-        val translator = Translator {  }
+        val translator = Translator { }
         assertSame(translator, translator.withNewCurrentLocale(Locale.ENGLISH))
     }
 
     @Test
     fun `withCurrentLocale returns a new translator with the new current locale`() {
-        val translator = Translator {  }
+        val translator = Translator { }
         val newTranslator = translator.withNewCurrentLocale(Locale.FRANCE)
         assertEquals(Locale.FRANCE, newTranslator.currentLocale)
     }
@@ -366,7 +369,7 @@ class TranslatorTest {
                 map(Locale.ENGLISH, mapOf("key" to "value"))
             }
         }
-        assertEquals("value", translator.tn("foo", "key"))
+        assertEquals("value", translator.tn("foo", fallbacks("key")))
     }
 
     @Test
@@ -376,7 +379,7 @@ class TranslatorTest {
                 map(Locale.ENGLISH, mapOf("key" to "value"))
             }
         }
-        assertNull(translator.tn("foo", "bar"))
+        assertNull(translator.tn("foo", fallbacks("bar")))
     }
 
     @Test
@@ -389,7 +392,7 @@ class TranslatorTest {
                 map(Locale.US, mapOf("key" to "value {{currency, currency}}"))
             }
         }
-        assertEquals("value $1.00", translator.t("key", mapOf("currency" to 1)))
+        assertEquals("value $1.00", translator.t("key", variable("currency", 1)))
     }
 
     @Test
@@ -402,7 +405,7 @@ class TranslatorTest {
                 map(Locale.US, mapOf("key" to "value {{currency, currency(maxFracDigits:1)}}"))
             }
         }
-        assertEquals("value $1.0", translator.t("key", mapOf("currency" to 1)))
+        assertEquals("value $1.0", translator.t("key", variable("currency", 1)))
     }
 
     @Test
@@ -415,7 +418,7 @@ class TranslatorTest {
                 map(Locale.US, mapOf("key" to "value {{currency, currency}}"))
             }
         }
-        assertEquals("value $1.0", translator.t("key", mapOf("currency" to formatted(1, "maxFracDigits" to 1))))
+        assertEquals("value $1.0", translator.t("key", variable("currency", 1, formatArgument("maxFracDigits", 1))))
     }
 
     @Test
@@ -429,72 +432,77 @@ class TranslatorTest {
             }
         }
         assertEquals(
-            "value $1", translator.tn("key", mapOf("currency" to formatted(1, mapOf("maxFracDigits" to 0))))
+            "value $1", translator.tn("key", variable("currency", 1, formatArgument("maxFracDigits", 0)))
         )
     }
 
     @Test
-    fun `tn overloads coverage`() {
-        val t = Translator {
-            translations {
-                map(Locale.ENGLISH, mapOf("key" to "value"))
-            }
-        }
-        assertDoesNotThrow {
-            t.tn("key")
-            t.tn("key", Locale.ENGLISH)
-            t.tn("key", mapOf())
-            t.tn("key", mapOf(), Locale.ENGLISH)
-            t.tn("key", mapOf(), Locale.ENGLISH, Locale.ENGLISH)
-            t.tn("key", Locale.ENGLISH, Locale.ENGLISH)
-            t.tn("key", mapOf(), Locale.ENGLISH, Locale.ENGLISH, "foo")
-        }
+    fun `asParent returns this if the translator is a root`() {
+        val translator = Translator { }
+        assertSame(translator, translator.asParent())
     }
 
     @Test
-    fun `t methods throws an NPE by default when a key is not found`() {
-        val translator = object : Translator {
-            override val prefix: String
-                get() = assertionFailed()
-            override val defaultLocale: Locale
-                get() = assertionFailed()
-            override val currentLocale: Locale
-                get() = assertionFailed()
-
-            override fun tn(
-                key: TranslationKey,
-                extraArgs: Map<String, Any>,
-                locale: Locale,
-                fallbackLocale: Locale?,
-                vararg fallbacks: String,
-            ): String? = null
-
-            override fun section(key: TranslationKey): Translator = assertionFailed()
-            override fun withNewCurrentLocale(locale: Locale): Translator = assertionFailed()
-            override fun asRoot(): Translator = assertionFailed()
-            override fun toMap(): Map<Locale, Map<TranslationKey, String>> = assertionFailed()
-        }
-        assertThrows<NullPointerException> {
-            translator.t("key", Locale.ENGLISH, null)
-        }
+    fun `asParent returns a new translator with the parent prefix if the translator is not a root`() {
+        val translator = Translator { }.section("foo").section("bar")
+        val parent = translator.asParent()
+        assertEquals("foo", parent.prefix)
     }
 
     @Test
-    fun `t overloads coverage`() {
-        val t = Translator {
+    fun `selectedLocale toString is redefined`() {
+        val variable = selectedLocale(Locale.US)
+        assertEquals("selectedLocale=en_US", variable.toString())
+    }
+
+    @Test
+    fun `fallbackLocale toString is redefined`() {
+        val variable = fallbackLocale(Locale.US)
+        assertEquals("fallbackLocale=en_US", variable.toString())
+    }
+
+    @Test
+    fun `fallbacks toString is redefined`() {
+        val variable = fallbacks("key")
+        assertEquals("fallbacks=['key']", variable.toString())
+    }
+
+    @Test
+    fun `context toString is redefined`() {
+        val variable = context("foo")
+        assertEquals("context='foo'", variable.toString())
+    }
+
+    @Test
+    fun `count toString is redefined`() {
+        val variable = count(5)
+        assertEquals("count=5", variable.toString())
+    }
+
+    @Test
+    fun `ordinal toString is redefined`() {
+        val variable = ordinal(true)
+        assertEquals("ordinal=true", variable.toString())
+    }
+
+    @Test
+    fun `variable toString is redefined`() {
+        val variable = variable("foo", "bar", formatArgument("maxFracDigits", 1))
+        assertEquals("variable='foo' -> 'bar' (args=['maxFracDigits: 1'])", variable.toString())
+    }
+
+    @Test
+    fun `fallbackLocale is used instead of default locale when provided`() {
+        val translator = Translator {
+            configuration {
+                defaultLocale = Locale.US
+            }
             translations {
                 map(Locale.ENGLISH, mapOf("key" to "value"))
+                map(Locale.ITALIAN, mapOf("key" to "valore"))
             }
         }
-        assertDoesNotThrow {
-            t.t("key")
-            t.t("key", Locale.ENGLISH)
-            t.t("key", mapOf())
-            t.t("key", mapOf(), Locale.ENGLISH)
-            t.t("key", mapOf(), Locale.ENGLISH, Locale.ENGLISH)
-            t.t("key", Locale.ENGLISH, Locale.ENGLISH)
-            t.t("key", mapOf(), Locale.ENGLISH, Locale.ENGLISH, "foo")
-        }
+        assertEquals("valore", translator.t("key", selectedLocale(Locale.FRANCE), fallbackLocale(Locale.ITALIAN)))
     }
 
     @Test

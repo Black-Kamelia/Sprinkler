@@ -1,15 +1,12 @@
-package com.kamelia.sprinkler.i18n.impl
+package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.i18n.FunctionAdapter
-import com.kamelia.sprinkler.i18n.Translator
+import com.kamelia.sprinkler.i18n.TranslatorBuilder.Companion.defaultContentParsers
+import com.kamelia.sprinkler.i18n.TranslatorBuilder.Configuration
+import com.kamelia.sprinkler.i18n.TranslatorBuilder.ContentParser
+import com.kamelia.sprinkler.i18n.TranslatorBuilder.DuplicatedKeyResolution
 import com.kamelia.sprinkler.i18n.formatting.VariableFormatter
-import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.Companion.defaultContentParsers
-import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.Configuration
-import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.ContentParser
-import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.DuplicatedKeyResolution
-import com.kamelia.sprinkler.i18n.pluralization.PluralMapper
+import com.kamelia.sprinkler.i18n.pluralization.PluralRuleProvider
 import com.kamelia.sprinkler.util.VariableDelimiter
-import com.kamelia.sprinkler.util.unmodifiableMapOf
 import com.zwendo.restrikt2.annotation.HideFromJava
 import com.zwendo.restrikt2.annotation.HideFromKotlin
 import com.zwendo.restrikt2.annotation.PackagePrivate
@@ -19,6 +16,7 @@ import java.net.URI
 import java.net.URL
 import java.nio.charset.Charset
 import java.nio.file.Path
+import java.util.IllformedLocaleException
 import java.util.Locale
 import java.util.function.Consumer
 import java.util.function.Function
@@ -28,19 +26,19 @@ import java.util.function.Function
  * Builder class used to create a [Translator]. This class provides several methods to add data to the translator from
  * different sources.
  *
- * It can be used in a DSL through the [Translator][com.kamelia.sprinkler.i18n.impl.Translator] method, to create a new
+ * It can be used in a DSL through the [Translator][com.kamelia.sprinkler.i18n.Translator] method, to create a new
  * [Translator] configure with the provided DSL content. The DSL is divided in three parts:
  *
- * - The configuration available directly through the [TranslatorBuilder] interface, which allows to configure general
+ * - The configuration available directly through the [TranslatorBuilder] interface, which allows configuring general
  * aspects of the translator.
  *
  *
- * - The [configuration] block, which allows to configure the behavior of the built [Translator], like for example the
+ * - The [configuration] block, which allows configuring the behavior of the built [Translator], like, for example, the
  * [interpolationDelimiter][Configuration.interpolationDelimiter] defining the delimiters used for interpolation
  * variables in strings (e.g. `{` and `}` in the string `"Hello mister {name}!"`).
  *
  *
- * - The [translations] block, which allows to load the content of the built [Translator]. Content can be loaded from
+ * - The [translations] block, which allows loading the content of the built [Translator]. Content can be loaded from
  * [maps][Map], any class representing a file ([File], [Path], [URL], [URI]) or a resource (including jar resources).
  *
  * Here is a simple example of how to use the builder:
@@ -48,7 +46,7 @@ import java.util.function.Function
  * ```
  * val translator = Translator {
  *     configuration {
- *         interpolationDelimiter = TranslatorBuilder.InterpolationDelimiter.create("{", "}")
+ *         interpolationDelimiter = TranslatorBuilder.interpolationDelimiter("{", "}")
  *     }
  *
  *     translations {
@@ -75,57 +73,32 @@ import java.util.function.Function
  *
  * The translators created with this builder will have the following properties:
  *
- * - the created translators are immutable and therefore `thread-safe`.
+ * - The created translators are immutable and therefore `thread-safe`.
  *
  *
- * - all methods returning a translator (e.g. [section][Translator.section],
-[withNewCurrentLocale][Translator.withNewCurrentLocale]) returns a translator sharing common information with the
+ * - All methods returning a translator (e.g. [section][Translator.section],
+ * [withNewCurrentLocale][Translator.withNewCurrentLocale]) returns a translator sharing common information with the
  * translator which created it. The methods do not copy the data, meaning that they do not have a significant
  * performance nor memory impact.
  *
  *
- * - the `extraArgs` argument passed to the [t][Translator.t] methods will be used to
- * [interpolate][com.kamelia.sprinkler.util.interpolate] the translation, all keys in the map will be replaced by their
- * corresponding values in the translation.
- *
- *
- * - options (keys starting with an underscore `_`) passed in the `extraArgs` will also be used to format values with
- * the same name after dropping the underscore (e.g. the option `_count` will be used to format the value of the
- * `count` variable in the translation). However, an argument with the exact name of the key is present in the map, it
- * will take precedence over the option (e.g. if the map contains a key `count` and the option `_count`, the value of
- * the `count` arg will be used).
- *
- *
- * - the [Translator.t] method will behave according to the
+ * - The [Translator.t] method will behave according to the
  * [missingKeyPolicy][TranslatorBuilder.Configuration.missingKeyPolicy] chosen when creating the translator, in case
  * the key is not found.
  *
  *
- * - the returned map of [Translator.toMap] will be sorted according to the lexical order of the
- * [key parts][com.kamelia.sprinkler.i18n.Identifier] of the keys (a new map is created every time the method is
- * called).
- *
- *
  * - To be interpolated on [t][Translator.t] method call, values stored in the translator must contain variable defined
- * inside [delimiters][TranslatorBuilder.Configuration.interpolationDelimiter] defined in the translator configuration.
- * For more details about interpolation, see [String.interpolate][com.kamelia.sprinkler.util.interpolate]. Variables'
- * names must follow a specific format, which is defined in the [TranslationInterpolationVariable] typealias
- * documentation.
+ * inside [delimiters][TranslatorBuilder.Configuration.interpolationDelimiter], declared in the translator
+ * configuration. For more details about interpolation, see
+ * [String.interpolate][com.kamelia.sprinkler.util.interpolate]. Variables' names must follow a specific format, which
+ * is defined in the [TranslationInterpolationVariable] typealias documentation.
  *
  * @see Translator
- * @see [com.kamelia.sprinkler.i18n.impl.Translator]
+ * @see [com.kamelia.sprinkler.i18n.Translator]
  */
 @TranslatorBuilder.TranslatorBuilderDsl
 @Suppress("INAPPLICABLE_JVM_NAME")
 sealed interface TranslatorBuilder {
-
-    /**
-     * Whether to check that all locales have the same keys when building the translator. If set to `true`, and at least
-     * two locales have different keys, an [IllegalStateException] will be thrown when building the translator.
-     *
-     * default: `false`
-     */
-    var checkMissingKeysOnBuild: Boolean
 
     /**
      * Starts the configuration block of the builder. This block is used to configure the behavior of the built
@@ -137,6 +110,18 @@ sealed interface TranslatorBuilder {
      */
     @HideFromJava
     fun configuration(block: Configuration.() -> Unit)
+
+    /**
+     * Starts the content block of the builder. This block is used to load the content of the built [Translator].
+     *
+     * @param block the code to apply to the content
+     * @throws IllegalStateException if the block is called more than once
+     * @see Content
+     */
+    @HideFromJava
+    fun translations(block: Content.() -> Unit)
+
+    //region Java mirror API
 
     /**
      * Starts the configuration block of the builder. This block is used to configure the behavior of the built
@@ -154,16 +139,6 @@ sealed interface TranslatorBuilder {
      * Starts the content block of the builder. This block is used to load the content of the built [Translator].
      *
      * @param block the code to apply to the content
-     * @throws IllegalStateException if the block is called more than once
-     * @see Content
-     */
-    @HideFromJava
-    fun translations(block: Content.() -> Unit)
-
-    /**
-     * Starts the content block of the builder. This block is used to load the content of the built [Translator].
-     *
-     * @param block the code to apply to the content
      * @return this builder
      * @throws IllegalStateException if the block is called more than once
      * @see Content
@@ -171,9 +146,11 @@ sealed interface TranslatorBuilder {
     @HideFromKotlin
     fun translations(block: Consumer<Content>): Unit = translations { block.accept(this) }
 
+    //endregion
+
     /**
      * Type defining the configuration of the built [Translator]. Parameters of this type only affect the behavior of
-     * the built [Translator] and aren't involved in the loading of the content.
+     * the built [Translator].
      */
     @TranslatorBuilderDsl
     sealed interface Configuration {
@@ -181,43 +158,50 @@ sealed interface TranslatorBuilder {
         /**
          * The delimiter to use for interpolation in translations.
          *
-         * default: '{{' and '}}'
+         * Default: '{{' and '}}'
          */
         var interpolationDelimiter: InterpolationDelimiter
 
         /**
-         * The function associating a locale to a [PluralMapper] used by the created [Translator].
+         * The function associating a locale to a [PluralRuleProvider] used by the created [Translator].
          *
-         * default: [PluralMapper.builtins]
+         * Default: [PluralRuleProvider.builtins]
          */
         @HideFromJava
-        @get:JvmName("getPluralMapperFactoryKt")
-        @set:JvmName("setPluralMapperFactoryKt")
-        var pluralMapperFactory: (Locale) -> PluralMapper
+        @get:JvmName("getPluralRuleProviderFactoryKt")
+        @set:JvmName("setPluralRuleProviderFactoryKt")
+        var pluralRuleProviderFactory: (Locale) -> PluralRuleProvider
 
         /**
-         * The function associating a locale to a [PluralMapper] used by the created [Translator].
+         * The function to use to reduce the specialization of a locale. This function is used to reduce the specificity
+         * of a locale to a more general one. For example, if the locale is `en_US`, the function could return `en` to
+         * use the general English translation. If a locale is already the most general one, the function should return
+         * `null`.
          *
-         * default: [PluralMapper.builtins][PluralMapper.builtinsJava]
+         * This function is used when a translation is not found for a specific locale, to try to find a translation for
+         * a more general locale. If this function returns `null` before finding a translation, the translator will then
+         * try to use the [defaultLocale].
+         *
+         * Default: [defaultLocaleSpecializationReduction]
          */
-        @HideFromKotlin
-        @get:JvmName("getPluralMapperFactory")
-        @set:JvmName("setPluralMapperFactory")
-        var pluralMapperFactoryJava: Function<Locale, PluralMapper>
+        @HideFromJava
+        @get:JvmName("getLocaleSpecializationReductionKt")
+        @set:JvmName("setLocaleSpecializationReductionKt")
+        var localeSpecializationReduction: (Locale) -> Locale?
 
         /**
          * Map used to find formatters using their name during variable interpolation.
          *
-         * default: [VariableFormatter.builtins]
+         * Default: [VariableFormatter.builtins]
          *
          * @see VariableFormatter
          */
-        var formatters: Map<String, VariableFormatter<out Any>>
+        var formatters: Map<String, VariableFormatter< out Any>>
 
         /**
          * The policy to use when a key is not found.
          *
-         * default: [MissingKeyPolicy.THROW_EXCEPTION]
+         * Default: [MissingKeyPolicy.THROW_EXCEPTION]
          *
          * @see MissingKeyPolicy
          */
@@ -227,34 +211,19 @@ sealed interface TranslatorBuilder {
          * The default locale to use when no locale is specified when calling the [Translator.t] method. It can be set
          * to `null` to prevent the use of a default locale.
          *
-         * default: [Locale.ENGLISH]
+         * Default: [Locale.ENGLISH]
          */
         var defaultLocale: Locale?
 
         /**
-         * The [currentLocale][Translator.currentLocale] of the built [Translator]. If set to `null`, the
-         * [defaultLocale] will be used, and if it is also `null`, the [Locale.ENGLISH] will be used.
+         * The current locale of the built [Translator]. If set to `null`, the [defaultLocale] will be used, and if it
+         * is also `null`, the [Locale.ENGLISH] will be used.
          *
-         * default: `null`
+         * Default: `null`
          */
         var currentLocale: Locale?
 
-        /**
-         * The function to use to reduce the specialization of a locale. This function is used to reduce the specificity
-         * of a locale to a more general one. For example, if the locale is `en_US`, the function could return `en` to
-         * use the general English translation. If a locale is already the most general one, the function should return
-         * `null`.
-         *
-         * This function is used when a translation is not found for a specific locale, to try to find a translation for
-         * a more general locale. If this function returns `null` before finding a translation, the translator will then
-         * try to use the [defaultLocale].
-         *
-         * default: [defaultLocaleSpecializationReduction]
-         */
-        @HideFromJava
-        @get:JvmName("getLocaleSpecializationReductionKt")
-        @set:JvmName("setLocaleSpecializationReductionKt")
-        var localeSpecializationReduction: (Locale) -> Locale?
+        //region Java mirror API
 
         /**
          * The function to use to reduce the specialization of a locale. This function is used to reduce the specificity
@@ -266,12 +235,24 @@ sealed interface TranslatorBuilder {
          * a more general locale. If this function returns `null` before finding a translation, the translator will then
          * try to use the [defaultLocale].
          *
-         * default: [defaultLocaleSpecializationReductionJava]
+         * Default: [defaultLocaleSpecializationReduction]
          */
         @HideFromKotlin
         @get:JvmName("getLocaleSpecializationReduction")
         @set:JvmName("setLocaleSpecializationReduction")
         var localeSpecializationReductionJava: Function<Locale, Locale?>
+
+        /**
+         * The function associating a locale to a [PluralRuleProvider] used by the created [Translator].
+         *
+         * Default: [PluralRule.builtins][PluralRuleProvider.builtinsJava]
+         */
+        @HideFromKotlin
+        @get:JvmName("getPluralRuleProviderFactory")
+        @set:JvmName("setPluralRuleProviderFactory")
+        var pluralRuleProviderFactoryJava: Function<Locale, PluralRuleProvider>
+
+        //endregion
 
     }
 
@@ -283,9 +264,10 @@ sealed interface TranslatorBuilder {
      * - When a file is provided, the [Locale] it represents is determined by the [localeParser] function, which is
      * called with the filename without extension.
      *
-     * - The content of the file is then parsed using the [ContentParser] associated with the file extension. The parser
-     * is determined by the [contentParsers] function, which is called with the file extension (for more details
-     * about how an unrecognized extension is handled, see [contentParsers] documentation).
+     * - The [ContentParsers][ContentParser] stored in the [contentParsers] map are used to parse the content of the
+     * file. The correct parser is determined using the file extension as a key to retrieve the parser from the map (for
+     * more information, see [contentParsers] documentation).
+     *
      *
      * It is important to note that in the context of the [translations] method, the content of the DSL is executed
      * in the order it is written, meaning that altering properties after calling a method that loads content will not
@@ -305,7 +287,7 @@ sealed interface TranslatorBuilder {
 
         /**
          * The map a type of file (using its extension) to a [ContentParser] used to parse the content of the file
-         * (e.g. the `json` key is associated with a [ContentParser] that parses JSON files).
+         * (e.g., the `json` key is associated with a [ContentParser] that parse JSON files).
          *
          * If an extension is not present in this map, here are the possible cases:
          *
@@ -319,21 +301,21 @@ sealed interface TranslatorBuilder {
          * `path(Path.of("en_US.unknown"))` has been called in the DSL), an [IllegalArgumentException] will always be
          * thrown.
          *
-         * default: [defaultContentParsers]
+         * Default: [defaultContentParsers]
          */
         var contentParsers: Map<String, ContentParser>
 
         /**
          * The resolution to use when a duplicated key is found.
          *
-         * default: [DuplicatedKeyResolution.FAIL]
+         * Default: [DuplicatedKeyResolution.FAIL]
          */
         var duplicatedKeyResolution: DuplicatedKeyResolution
 
         /**
          * The default charset to use when reading files.
          *
-         * default: [Charset.defaultCharset]
+         * Default: [Charset.defaultCharset]
          */
         var defaultCharset: Charset
 
@@ -344,7 +326,7 @@ sealed interface TranslatorBuilder {
          * file. cOnly the **filename without extension** is passed to this function (e.g. `path/to/en_US.yml` will pass
          * `en_US`).
          *
-         * default: [Locale.Builder.setLanguageTag]
+         * Default: [defaultLocaleParser]
          */
         @HideFromJava
         @get:JvmName("getLocaleParserKt")
@@ -352,28 +334,14 @@ sealed interface TranslatorBuilder {
         var localeParser: (String) -> Locale
 
         /**
-         * The function to use to parse a locale from a string.
-         *
-         * Each file loaded by [Content] will have its filename parsed by this function to determine the locale of the
-         * file. Only the **filename without extension** is passed to this function (e.g. `path/to/en_US.yml` will pass
-         * `en_US`).
-         *
-         * default: [Locale.Builder.setLanguageTag]
-         */
-        @HideFromKotlin
-        @get:JvmName("getLocaleParser")
-        @set:JvmName("setLocaleParser")
-        var localeParserJava: Function<String, Locale>
-
-        /**
          * Whether to ignore unrecognized extensions in a directory. If a file extension is not present in the
          * [contentParsers], if this property is set to `true`, the file will be ignored. If it is set to `false`, an
          * [IllegalArgumentException] will be thrown.
          *
-         * **NOTE:** This property only affects directories, not files, trying to directly load an unsupported file will
+         * **NOTE**: This property only affects directories, not files, trying to directly load an unsupported file will
          * always throw an [IllegalArgumentException] (e.g. `path("file.unknown")`).
          *
-         * default: `true`
+         * Default: `true`
          */
         var ignoreUnrecognizedExtensionsInDirectory: Boolean
 
@@ -429,7 +397,7 @@ sealed interface TranslatorBuilder {
          * be loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
          *
          * This method resolves the resource path in the same way as [getResourceAsStream][Class.getResourceAsStream].
-         * If the provided [path] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
+         * If the provided [path] is absolute (i.e., it starts with a `/`), it will be resolved as an absolute
          * path without further modification. If the provided [path] is relative, it will be resolved relative
          * to the package of the [resourceClass] parameter, with dots (`.`) replaced by slashes (`/`).
          *
@@ -481,7 +449,7 @@ sealed interface TranslatorBuilder {
          * be loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
          *
          * This method resolves the resource path in the same way as [getResourceAsStream][Class.getResourceAsStream].
-         * If the provided [path] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
+         * If the provided [path] is absolute (i.e., it starts with a `/`), it will be resolved as an absolute
          * path without further modification. If the provided [path] is relative, it will be resolved relative
          * to the package of the [resourceClass] parameter, with dots (`.`) replaced by slashes (`/`).
          *
@@ -536,7 +504,7 @@ sealed interface TranslatorBuilder {
          * be loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
          *
          * This method resolves the resource path in the same way as [getResourceAsStream][Class.getResourceAsStream].
-         * If the provided [path] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
+         * If the provided [path] is absolute (i.e., it starts with a `/`), it will be resolved as an absolute
          * without further modification. If the provided [path] is relative, it will be resolved relative to the
          * package of the **class calling this method**, with dots (`.`) replaced by slashes (`/`).
          *
@@ -587,7 +555,7 @@ sealed interface TranslatorBuilder {
          * be loaded (one level of depth, inner directories are ignored). If the resource is a file, it will be loaded.
          *
          * This method resolves the resource path in the same way as [getResourceAsStream][Class.getResourceAsStream].
-         * If the provided [path] is absolute (i.e. it starts with a `/`), it will be resolved as an absolute
+         * If the provided [path] is absolute (i.e., it starts with a `/`), it will be resolved as an absolute
          * path without further modification. If the provided [path] is relative, it will be resolved relative
          * to the package of the **class calling this method**, with dots (`.`) replaced by slashes (`/`).
          *
@@ -663,6 +631,24 @@ sealed interface TranslatorBuilder {
          * @see map
          */
         fun maps(maps: Map<Locale, TranslationSourceMap>): Unit = maps.forEach { (locale, map) -> map(locale, map) }
+
+        //region Java mirror API
+
+        /**
+         * The function to use to parse a locale from a string.
+         *
+         * Each file loaded by [Content] will have its filename parsed by this function to determine the locale of the
+         * file. Only the **filename without extension** is passed to this function (e.g. `path/to/en_US.yml` will pass
+         * `en_US`).
+         *
+         * Default: [Locale.Builder.setLanguageTag]
+         */
+        @HideFromKotlin
+        @get:JvmName("getLocaleParser")
+        @set:JvmName("setLocaleParser")
+        var localeParserJava: Function<String, Locale>
+
+        //endregion
 
     }
 
@@ -762,7 +748,7 @@ sealed interface TranslatorBuilder {
          *     - `io.hotmoka:toml4j:0.7.0`
          *
          * **NOTE**: Version numbers are indicative. They are the versions used in this library and may not be the
-         * latest versions available at the time you read this. Moreover, for some of the listed libraries, older
+         * latest versions available at the time you read this. Moreover, for some of the listed libraries, an older
          * version may also work.
          *
          * **NOTE**: You only need the dependencies for the parsers you want to use and only need to include one of
@@ -774,14 +760,63 @@ sealed interface TranslatorBuilder {
          * @return the default [ContentParser]s map
          */
         @JvmStatic
-        fun defaultContentParsers(): Map<String, ContentParser> {
+        fun defaultContentParsers(): MutableMap<String, ContentParser> {
             val yamlLoader = BuiltinContentParsers.yamlParser()
-            return unmodifiableMapOf(
-                "json", BuiltinContentParsers.jsonParser(),
-                "yaml", yamlLoader,
-                "yml", yamlLoader,
-                "toml", BuiltinContentParsers.tomlParser(),
+            return hashMapOf(
+                "json" to BuiltinContentParsers.jsonParser(),
+                "yaml" to yamlLoader,
+                "yml" to yamlLoader,
+                "toml" to BuiltinContentParsers.tomlParser(),
             )
+        }
+
+        /**
+         * The default locale specialization reduction function. This function is used to reduce the specificity of a
+         * locale to a more general one.
+         *
+         * The implementation of this function reduces the locale by removing parts of it in the following order:
+         *
+         * - Extensions
+         * - Variant
+         * - Country/Region
+         * - Script
+         *
+         * Once all parts have been removed, the locale should only contain the language. A call with a locale solely
+         * containing the language will return `null`.
+         *
+         * @param current the current locale to reduce
+         * @return a more general locale or `null` if the locale is already the most general one
+         * @see [Configuration.localeSpecializationReduction]
+         */
+        @JvmStatic
+        fun defaultLocaleSpecializationReduction(current: Locale): Locale? {
+            return when {
+                current.hasExtensions() -> current.stripExtensions()
+                current.variant.isNotEmpty() -> Locale.Builder().setLocale(current).setVariant("").build()
+                current.country.isNotEmpty() -> Locale.Builder().setLocale(current).setRegion("").build()
+                current.script.isNotEmpty() -> Locale.Builder().setLocale(current).setScript("").build()
+                else -> null
+            }
+        }
+
+        /**
+         * The default locale parser. This function is used to parse a locale from a string. The default implementation
+         * uses the [Locale.Builder.setLanguageTag] while replacing underscores (`_`) with hyphens (`-`).
+         *
+         * @param value the value to parse
+         * @return the parsed locale
+         * @throws IllegalArgumentException if the string is not a valid locale
+         */
+        @JvmStatic
+        fun defaultLocaleParser(value: String): Locale {
+            return try {
+                Locale.Builder().setLanguageTag(value.replace('_', '-')).build()
+            } catch (e: IllformedLocaleException) {
+                throw IllegalArgumentException(
+                    "Invalid locale '$value'. For more details about locale syntax, see java.util.Locale documentation.",
+                    e
+                )
+            }
         }
 
         /**
@@ -810,65 +845,10 @@ sealed interface TranslatorBuilder {
             return InterpolationDelimiterImpl(inner)
         }
 
-        /**
-         * The default locale specialization reduction function. This function is used to reduce the specificity of a
-         * locale to a more general one.
-         *
-         * The implementation of this function reduces the locale by removing parts of it in the following order:
-         *
-         * - Extensions
-         * - Variant
-         * - Country/Region
-         * - Script
-         *
-         * Once all parts have been removed the locale should only contain the language. A call with a locale solely
-         * containing the language will return `null`.
-         *
-         * @return the default locale specialization reduction function
-         * @see [Configuration.localeSpecializationReduction]
-         */
-        @HideFromJava
-        @JvmName("defaultPluralMapperFactoryKt")
-        fun defaultLocaleSpecializationReduction(): (Locale) -> Locale? = internalLocaleSpecializationReduction()
-
-        /**
-         * The default locale specialization reduction function. This function is used to reduce the specificity of a
-         * locale to a more general one.
-         *
-         * The implementation of this function reduces the locale by removing parts of it in the following order:
-         *
-         * - Extensions
-         * - Variant
-         * - Country/Region
-         * - Script
-         *
-         * Once all parts have been removed the locale should only contain the language. A call with a locale solely
-         * containing the language will return `null`.
-         *
-         * @return the default locale specialization reduction function
-         * @see [Configuration.localeSpecializationReductionJava]
-         */
-        @HideFromKotlin
-        @JvmName("defaultPluralMapperFactory")
-        fun defaultLocaleSpecializationReductionJava(): Function<Locale, Locale?> =
-            internalLocaleSpecializationReduction()
-
-        @PackagePrivate
-        internal fun internalLocaleSpecializationReduction(): FunctionAdapter<Locale, Locale?> =
-            FunctionAdapter { locale ->
-                when {
-                    locale.hasExtensions() -> locale.stripExtensions()
-                    locale.variant.isNotEmpty() -> Locale.Builder().setLocale(locale).setVariant("").build()
-                    locale.country.isNotEmpty() -> Locale.Builder().setLocale(locale).setRegion("").build()
-                    locale.script.isNotEmpty() -> Locale.Builder().setLocale(locale).setScript("").build()
-                    else -> null
-                }
-            }
+        //region Internal
 
         private val Content.caller: Class<*>
-            get() = (this as ContentImpl).caller
-
-        private fun forbiddenChars(): CharArray = charArrayOf('\\', '(', ')', ':')
+            get() = (this as ContentBuilderImpl).caller
 
         @PackagePrivate
         internal class InterpolationDelimiterImpl(internal val inner: VariableDelimiter) : InterpolationDelimiter
@@ -876,6 +856,10 @@ sealed interface TranslatorBuilder {
         @PackagePrivate
         internal val InterpolationDelimiter.inner: VariableDelimiter
             get() = (this as InterpolationDelimiterImpl).inner
+
+        private fun forbiddenChars(): CharArray = charArrayOf('\\', '(', ')', ':')
+
+        //endregion
 
     }
 

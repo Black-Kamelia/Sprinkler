@@ -1,19 +1,14 @@
-package com.kamelia.sprinkler.i18n.impl
+package com.kamelia.sprinkler.i18n
 
-import com.kamelia.sprinkler.i18n.FunctionAdapter
-import com.kamelia.sprinkler.i18n.TranslationKey
-import com.kamelia.sprinkler.i18n.Translator
-import com.kamelia.sprinkler.i18n.Utils
-import com.kamelia.sprinkler.i18n.Utils.KEY_DOCUMENTATION
+import com.kamelia.sprinkler.i18n.TranslatorBuilder.Companion.defaultContentParsers
 import com.kamelia.sprinkler.i18n.formatting.VariableFormatter
-import com.kamelia.sprinkler.i18n.impl.TranslatorBuilder.Companion.defaultContentParsers
 import com.kamelia.sprinkler.util.illegalArgument
+import com.kamelia.sprinkler.util.toUnmodifiableMap
 import com.zwendo.restrikt2.annotation.PackagePrivate
 import java.io.BufferedReader
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.IllformedLocaleException
 import java.util.Locale
 import java.util.TreeMap
 import java.util.function.Function
@@ -32,12 +27,17 @@ import kotlin.io.path.toPath
 
 @PackagePrivate
 @Suppress("INAPPLICABLE_JVM_NAME")
-internal class ContentImpl(
+internal class ContentBuilderImpl(
     val caller: Class<*>,
     configuration: TranslatorBuilder.Configuration,
 ) : TranslatorBuilder.Content {
 
-    override var contentParsers = defaultContentParsers()
+    override var contentParsers: Map<String, TranslatorBuilder.ContentParser> = defaultContentParsers()
+        set(value) {
+            field = value.toUnmodifiableMap()
+        }
+
+
     override var duplicatedKeyResolution: TranslatorBuilder.DuplicatedKeyResolution =
         TranslatorBuilder.DuplicatedKeyResolution.FAIL
     override var defaultCharset: Charset = Charset.defaultCharset()
@@ -47,7 +47,7 @@ internal class ContentImpl(
     override var localeParser: (String) -> Locale
         get() = _localeParser
         set(value) {
-            _localeParser = FunctionAdapter(value::invoke)
+            _localeParser = FunctionAdapter { value(it) }
         }
 
     @get:JvmName("getLocaleParser")
@@ -55,19 +55,10 @@ internal class ContentImpl(
     override var localeParserJava: Function<String, Locale>
         get() = _localeParser
         set(value) {
-            _localeParser = FunctionAdapter(value::apply)
+            _localeParser = FunctionAdapter { value.apply(it) }
         }
 
-    private var _localeParser: FunctionAdapter<String, Locale> = FunctionAdapter {
-        try {
-            Locale.Builder().setLanguageTag(it.replace('_', '-')).build()
-        } catch (e: IllformedLocaleException) {
-            throw IllegalStateException(
-                "Invalid locale '$it'. For more details about locale syntax, see java.util.Locale documentation.",
-                e
-            )
-        }
-    }
+    private var _localeParser: FunctionAdapter<String, Locale> = FunctionAdapter { TranslatorBuilder.defaultLocaleParser(it) }
 
     override var ignoreUnrecognizedExtensionsInDirectory: Boolean = true
 
@@ -100,8 +91,6 @@ internal class ContentImpl(
         try {
             // we need to load the file, or, if it is a directory, load all files in it and add them to the final map.
             loadPath(path, charset, loader)
-        } catch (e: IllegalStateException) {
-            throw IllegalStateException("Error while loading path $path", e)
         } catch (e: Exception) { // catch and rethrow to add the path to the error message
             throw IllegalArgumentException("Error while loading file $path", e)
         }
@@ -197,7 +186,7 @@ internal class ContentImpl(
         }
 
         private fun translationValueFormatCheckRegex(start: String, end: String): Regex {
-            // first we define the param key regex
+            // First, we define the param key regex,
             @Language("RegExp")
             val notCommaOrColon = """[^:,]"""
 
@@ -207,7 +196,7 @@ internal class ContentImpl(
             @Language("RegExp")
             val formatParamKey = """(?:$notCommaOrColon|$escapedCommaOrColon)*"""
 
-            // then we define the param value regex
+            // Then we define the param value regex,
             @Language("RegExp")
             val notCommaOrParenthesis = """[^,)]"""
 
@@ -217,25 +206,25 @@ internal class ContentImpl(
             @Language("RegExp")
             val formatParamValue = """(?:$notCommaOrParenthesis|$escapedCommaOrParenthesis)*"""
 
-            // then we define the not escaped colon regex which will be used to separate the key and value
+            // Then we define the not escaped colon regex, which will be used to separate the key and value,
             @Language("RegExp")
             val notEscapedColon = """(?<!\\):"""
 
-            // now we combine the key and value regexes to build the param regex
+            // Now we combine the key and value regexes to build the param regex.
             @Language("RegExp")
             val formatParam = """$formatParamKey$notEscapedColon$formatParamValue"""
 
-            // once we have the param regex, we can build the params regex
+            // Once we have the param regex, we can build the params regex,
             @Language("RegExp") // negative lookbehind to avoid escaping the closing parenthesis
             val formatParams = """\(($formatParam,)*$formatParam(?<!\\)\)\s*"""
 
-            // which allows us to build the format regex
+            // Which allows us to build the format regex,
             @Language("RegExp")
-            val format = """\s*,\s*${Utils.IDENTIFIER}\s*(?:$formatParams)?"""
+            val format = """\s*,\s*${IDENTIFIER}\s*(?:$formatParams)?"""
 
-            // and finally we can build the variable content regex
+            // And finally, we can build the variable content regex.
             @Language("RegExp")
-            val variableContent = """\s*${Utils.IDENTIFIER}\s*(?:$format)?"""
+            val variableContent = """\s*${IDENTIFIER}\s*(?:$format)?"""
 
             val s = Regex.escape(start)
             val e = Regex.escape(end)
@@ -261,35 +250,6 @@ internal class ContentImpl(
             val escapedStartSequence = """\\$s""""
 
             return """(?:$notStartSequence|$escapedStartSequence|$validVariable)*""".toRegex()
-        }
-
-        fun keyComparator(): Comparator<String> {
-            val charComparator = Comparator { o1: Char, o2: Char ->
-                when {
-                    '.' == o1 -> -1
-                    '.' == o2 -> 1
-                    else -> o1 - o2
-                }
-            }
-            return Comparator { o1: String, o2: String ->
-                val firstIt = o1.iterator()
-                val secondIt = o2.iterator()
-
-                while (firstIt.hasNext() && secondIt.hasNext()) {
-                    val first = firstIt.nextChar()
-                    val second = secondIt.nextChar()
-                    val result = charComparator.compare(first, second)
-                    if (result != 0) return@Comparator result
-                }
-
-                if (firstIt.hasNext()) {
-                    1
-                } else if (secondIt.hasNext()) {
-                    -1
-                } else {
-                    0
-                }
-            }
         }
 
         private const val SOURCE_DATA_DOCUMENTATION =
@@ -332,13 +292,13 @@ internal class ContentImpl(
 
         val resource = jarFile.getJarEntry(root) ?: illegalArgument("Resource '$root' does not exist.")
 
-        // if the resource is not a directory it means that it is a file, we return it
+        // If the resource is not a directory, it means that it is a file, we return it
         if (!resource.isDirectory) return false to listOf("/$root")
 
-        // we use the jar entry to have a final '/'
+        // We use the jar entry to have a final '/'
         val finalRoot = resource.name
         val lastSlashIndex = finalRoot.lastIndexOf('/')
-        // otherwise, it might be a folder, we need to walk the jar file to find all files in the folder
+        // Otherwise, it might be a folder, meaning that we need to walk the jar file to find all files in the folder.
 
         return true to JarFile(jarPath)
             .stream()
@@ -347,11 +307,11 @@ internal class ContentImpl(
                     .filter { jarEntry ->
                         val name = jarEntry.name
 
-                        // skip classes, directories and entries that are not inside the root directory
+                        // Skip classes, directories and entries that are not inside the root directory
                         if (jarEntry.isDirectory || name.endsWith(".class") || !name.startsWith(finalRoot)) return@filter false
 
-                        // ensure that the depth level is 1 by checking that the last slash is the same index as the
-                        // index of the last slash in the root
+                        // Ensure that the depth level is 1 by checking that the last slash is the same index as the
+                        // index of the last slash in the root.
                         val lastSlash = name.lastIndexOf('/')
                         lastSlash == lastSlashIndex
                     }
@@ -402,7 +362,7 @@ internal class ContentImpl(
                         }
                 }
             }
-            else -> { // if the path is a file, load it and store it in a one element list
+            else -> { // if the path is a file, load it and store it in a single element list
                 require(loader != null) {
                     "Unsupported file extension '${path.nameWithoutExtension}' for path '$path'."
                 }

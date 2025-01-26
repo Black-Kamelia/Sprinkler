@@ -8,102 +8,102 @@ class PluralTest {
 
     @Test
     fun `mapCardinal with float defaults to double overload`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw PluralTestException
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw AssertionError()
             }
         }
         assertThrows<PluralTestException> {
-            mapper.mapCardinal(0f)
+            mapper.cardinal(0f)
         }
     }
 
     @Test
     fun `mapCardinal with byte defaults to long overload`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapCardinal(count: Long): Plural {
+            override fun cardinal(count: Long): Plural {
                 throw PluralTestException
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw AssertionError()
             }
         }
         assertThrows<PluralTestException> {
-            mapper.mapCardinal(1.toByte())
+            mapper.cardinal(1.toByte())
         }
     }
 
     @Test
     fun `mapCardinal with short defaults to long overload`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapCardinal(count: Long): Plural {
+            override fun cardinal(count: Long): Plural {
                 throw PluralTestException
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw AssertionError()
             }
         }
         assertThrows<PluralTestException> {
-            mapper.mapCardinal(1.toShort())
+            mapper.cardinal(1.toShort())
         }
     }
 
     @Test
     fun `mapCardinal with int defaults to long overload`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapCardinal(count: Long): Plural {
+            override fun cardinal(count: Long): Plural {
                 throw PluralTestException
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw AssertionError()
             }
         }
         assertThrows<PluralTestException> {
             val n: Number = 1
-            mapper.mapCardinal(n)
+            mapper.cardinal(n)
         }
     }
 
     @Test
     fun `mapCardinal with double as number defaults to double overload`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw PluralTestException
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw AssertionError()
             }
         }
         assertThrows<PluralTestException> {
             val n: Number = 1.0
-            mapper.mapCardinal(n)
+            mapper.cardinal(n)
         }
     }
 
     @Test
     fun `mapCardinal with ScientificNotationNumber defaults to the number actual value`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 return when (count) {
                     5.0 -> Plural.MANY
                     2.0 -> Plural.ZERO
@@ -111,12 +111,12 @@ class PluralTest {
                 }
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw AssertionError()
             }
         }
-        assertEquals(Plural.MANY, mapper.mapCardinal(ScientificNotationNumber.from(5.0)))
-        assertEquals(Plural.ZERO, mapper.mapCardinal(ScientificNotationNumber.from(2.0)))
+        assertEquals(Plural.MANY, mapper.cardinal(ScientificNotationNumber.from(5.0)))
+        assertEquals(Plural.ZERO, mapper.cardinal(ScientificNotationNumber.from(2.0)))
     }
 
     @Test
@@ -147,130 +147,130 @@ class PluralTest {
             }
 
         }
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw AssertionError()
             }
         }
         assertThrows<IllegalArgumentException> {
-            mapper.mapCardinal(customNumber)
+            mapper.cardinal(customNumber)
         }
     }
 
     @Test
     fun `mapOrdinal with float defaults to double overload`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Double): Plural {
+            override fun ordinal(count: Double): Plural {
                 throw PluralTestException
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw AssertionError()
             }
         }
         assertThrows<PluralTestException> {
-            mapper.mapOrdinal(0f)
+            mapper.ordinal(0f)
         }
     }
 
     @Test
     fun `mapOrdinal with byte defaults to long overload`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Double): Plural {
+            override fun ordinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw PluralTestException
             }
         }
         assertThrows<PluralTestException> {
-            mapper.mapOrdinal(1.toByte())
+            mapper.ordinal(1.toByte())
         }
     }
 
     @Test
     fun `mapOrdinal with short defaults to long overload`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Double): Plural {
+            override fun ordinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw PluralTestException
             }
         }
         assertThrows<PluralTestException> {
-            mapper.mapOrdinal(1.toShort())
+            mapper.ordinal(1.toShort())
         }
     }
 
     @Test
     fun `mapOrdinal with int defaults to long overload`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Double): Plural {
+            override fun ordinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw PluralTestException
             }
         }
         assertThrows<PluralTestException> {
             val n: Number = 1
-            mapper.mapOrdinal(n)
+            mapper.ordinal(n)
         }
     }
 
     @Test
     fun `mapOrdinal with double as number defaults to double overload`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Double): Plural {
+            override fun ordinal(count: Double): Plural {
                 throw PluralTestException
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw AssertionError()
             }
         }
         assertThrows<PluralTestException> {
             val n: Number = 1.0
-            mapper.mapOrdinal(n)
+            mapper.ordinal(n)
         }
     }
 
     @Test
     fun `mapOrdinal with ScientificNotationNumber defaults to the number actual value`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 return when (count) {
                     5L -> Plural.MANY
                     2L -> Plural.ZERO
@@ -278,41 +278,41 @@ class PluralTest {
                 }
             }
         }
-        assertEquals(Plural.MANY, mapper.mapOrdinal(ScientificNotationNumber.from(5)))
-        assertEquals(Plural.ZERO, mapper.mapOrdinal(ScientificNotationNumber.from(2)))
+        assertEquals(Plural.MANY, mapper.ordinal(ScientificNotationNumber.from(5)))
+        assertEquals(Plural.ZERO, mapper.ordinal(ScientificNotationNumber.from(2)))
     }
 
     @Test
     fun `mapOrdinal(double) defaults to other`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw AssertionError()
             }
         }
-        assertEquals(Plural.OTHER, mapper.mapOrdinal(1.0))
-        assertEquals(Plural.OTHER, mapper.mapOrdinal(8.0))
+        assertEquals(Plural.OTHER, mapper.ordinal(1.0))
+        assertEquals(Plural.OTHER, mapper.ordinal(8.0))
     }
 
     @Test
     fun `mapOrdinal(double) throws when called with a non-positive number`() {
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw AssertionError()
             }
         }
         assertThrows<IllegalArgumentException> {
-            mapper.mapOrdinal(0.0)
+            mapper.ordinal(0.0)
         }
         assertThrows<IllegalArgumentException> {
-            mapper.mapOrdinal(-1.0)
+            mapper.ordinal(-1.0)
         }
     }
 
@@ -344,27 +344,27 @@ class PluralTest {
             }
 
         }
-        val mapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural {
+        val mapper = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Double): Plural {
+            override fun ordinal(count: Double): Plural {
                 throw AssertionError()
             }
 
-            override fun mapOrdinal(count: Long): Plural {
+            override fun ordinal(count: Long): Plural {
                 throw AssertionError()
             }
         }
         assertThrows<IllegalArgumentException> {
-            mapper.mapOrdinal(customNumber)
+            mapper.ordinal(customNumber)
         }
     }
 
     @Test
     fun `java api coverage`() {
-        PluralMapper.builtinsJava()
+        PluralRuleProvider.builtinsJava()
     }
 
     private object PluralTestException : RuntimeException(null, null, false, false)

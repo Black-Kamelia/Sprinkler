@@ -8,63 +8,63 @@ import java.util.Locale
 import java.util.function.Function
 
 /**
- * A mapper that associates a [Locale] and a [count][Int] to a [Plural] value.
+ * Type associating a [count][Int] to a [Plural] value in the context of an ordinal or cardinal number.
  *
- * Because several languages treat differently integers and floating point numbers, for these languages, calls like
- * `mapCardinal(1)` and `mapCardinal(1.0)` should return different values.
+ * Because several languages treat in a different way integers and floating point numbers, for these languages, calls
+ * like `cardinal(1)` and `cardinal(1.0)` should return different values.
  */
-interface PluralMapper {
+interface PluralRuleProvider {
 
     /**
-     * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of a count
-     * of items.
+     * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of an item
+     * count.
      *
      * @param count the count to use
      * @return the [Plural] value
      * @throws IllegalArgumentException if the given [count] is negative
      */
-    fun mapCardinal(count: Double): Plural
+    fun cardinal(count: Double): Plural
 
     /**
-     * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of a count
-     * of items.
+     * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of an item
+     * count.
      *
      * @param count the count to use
      * @return the [Plural] value
      * @throws IllegalArgumentException if the given [count] is negative
      */
-    fun mapCardinal(count: Long): Plural = mapCardinal(count.toDouble())
+    fun cardinal(count: Long): Plural = cardinal(count.toDouble())
 
     /**
-     * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of a count
-     * of items.
+     * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of an item
+     * count.
      *
      * @param count the count to use
      * @return the [Plural] value
      * @throws IllegalArgumentException if the given [count] is negative
      * @throws IllegalArgumentException if the given [count] is not a known number
      */
-    fun mapCardinal(count: Number): Plural =
+    fun cardinal(count: Number): Plural =
         when (count) {
             is Byte,
             is Short,
             is Int,
-                -> mapCardinal(count.toLong())
+                -> cardinal(count.toLong())
 
-            is Long -> mapCardinal(count)
-            is Float -> mapCardinal(count.toDouble())
-            is Double -> mapCardinal(count)
+            is Long -> cardinal(count)
+            is Float -> cardinal(count.toDouble())
+            is Double -> cardinal(count)
             else -> illegalArgument("Unsupported number type: ${count.javaClass}")
         }
 
     /**
-     * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of a count
-     * of items.
+     * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of an item
+     * count.
      *
      * @param count the count to use
      * @return the [Plural] value
      */
-    fun mapCardinal(count: ScientificNotationNumber): Plural = mapCardinal(count.value)
+    fun cardinal(count: ScientificNotationNumber): Plural = cardinal(count.value)
 
     /**
      * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of an
@@ -74,7 +74,7 @@ interface PluralMapper {
      * @return the [Plural] value
      * @throws IllegalArgumentException if the given [count] is negative or zero
      */
-    fun mapOrdinal(count: Double): Plural {
+    fun ordinal(count: Double): Plural {
         require(count > 0) { "The count must be positive: $count" }
         return Plural.OTHER
     }
@@ -87,7 +87,7 @@ interface PluralMapper {
      * @return the [Plural] value
      * @throws IllegalArgumentException if the given [count] is negative or zero
      */
-    fun mapOrdinal(count: Long): Plural
+    fun ordinal(count: Long): Plural
 
     /**
      * Maps the given [count] to a [Plural] value. This method associates the parameters in the context of an
@@ -98,16 +98,16 @@ interface PluralMapper {
      * @throws IllegalArgumentException if the given [count] is negative or zero
      * @throws IllegalArgumentException if the given [count] is not a known number
      */
-    fun mapOrdinal(count: Number): Plural =
+    fun ordinal(count: Number): Plural =
         when (count) {
             is Byte,
             is Short,
             is Int,
-                -> mapOrdinal(count.toLong())
+                -> ordinal(count.toLong())
 
-            is Long -> mapOrdinal(count)
-            is Float -> mapOrdinal(count.toDouble())
-            is Double -> mapOrdinal(count)
+            is Long -> ordinal(count)
+            is Float -> ordinal(count.toDouble())
+            is Double -> ordinal(count)
             else -> illegalArgument("Unsupported number type: ${count.javaClass}")
         }
 
@@ -118,43 +118,47 @@ interface PluralMapper {
      * @param count the count to use
      * @return the [Plural] value
      */
-    fun mapOrdinal(count: ScientificNotationNumber): Plural = mapOrdinal(count.value)
+    fun ordinal(count: ScientificNotationNumber): Plural = ordinal(count.value)
 
     companion object {
 
         /**
-         * A [PluralMapper] factory. This factory uses the plural rules defined by the
+         * A [PluralRuleProvider] factory. This factory uses the plural rules defined by the
          * [Unicode CLDR](https://www.unicode.org/cldr/charts/45/supplemental/language_plural_rules.html) to create
-         * the corresponding [PluralMapper] implementation.
+         * the corresponding [PluralRuleProvider] implementation.
          *
          * If the locale is not supported by the Unicode CLDR, the factory will throw an [IllegalArgumentException].
          *
-         * Moreover, if the locale of the built mapper does not define some plural rules (e.g. no rules are defined for
-         * the cardinal), an attempt to call the corresponding method will throw an [UnsupportedOperationException].
+         * Moreover, if the locale of the built provider does not define some plural rules (e.g., no rules are defined
+         * for the cardinal), an attempt to call the corresponding method will throw an [UnsupportedOperationException].
          *
-         * @return a factory that creates [PluralMapper] instances based on the locale
+         * @return a factory that creates [PluralRuleProvider] instances based on the locale
          */
         @HideFromJava
         @JvmName("builtinsKt")
-        fun builtins(): (Locale) -> PluralMapper = internalBuiltins()
+        fun builtins(): (Locale) -> PluralRuleProvider = internalBuiltins()
+
+        //region Java mirror API
 
         /**
-         * A [PluralMapper] factory. This factory uses the plural rules defined by the
+         * A [PluralRuleProvider] factory. This factory uses the plural rules defined by the
          * [Unicode CLDR](https://www.unicode.org/cldr/charts/45/supplemental/language_plural_rules.html) to create
-         * the corresponding [PluralMapper] implementation.
+         * the corresponding [PluralRuleProvider] implementation.
          *
          * If the locale is not supported by the Unicode CLDR, the factory will throw an [IllegalArgumentException].
          *
-         * Moreover, if the locale of the built mapper does not define some plural rules (e.g. no rules are defined for
-         * the cardinal), an attempt to call the corresponding method will throw an [UnsupportedOperationException].
+         * Moreover, if the locale of the built provider does not define some plural rules (e.g., no rules are defined
+         * for the cardinal), an attempt to call the corresponding method will throw an [UnsupportedOperationException].
          *
-         * @return a factory that creates [PluralMapper] instances based on the locale
+         * @return a factory that creates [PluralRuleProvider] instances based on the locale
          */
         @HideFromKotlin
         @JvmName("builtins")
-        fun builtinsJava(): Function<Locale, PluralMapper> = internalBuiltins()
+        fun builtinsJava(): Function<Locale, PluralRuleProvider> = internalBuiltins()
 
-        internal fun internalBuiltins(): FunctionAdapter<Locale, PluralMapper> = BuiltinPluralMappers.factory()
+        //endregion
+
+        internal fun internalBuiltins(): FunctionAdapter<Locale, PluralRuleProvider> = BuiltinPluralRule.factory()
 
     }
 

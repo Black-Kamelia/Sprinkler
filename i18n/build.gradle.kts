@@ -12,6 +12,16 @@ dependencies {
     testRuntimeOnly(testDependencies.junit.platform.console)
 }
 
+kover {
+    reports {
+        filters {
+            excludes {
+                classes("com.kamelia.sprinkler.i18n.Locales")
+            }
+        }
+    }
+}
+
 tasks {
     register<ShadowJar>("testJar") {
         group = "verification"

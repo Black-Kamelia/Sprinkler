@@ -1,7 +1,10 @@
-package com.kamelia.sprinkler.i18n.impl
+package com.kamelia.sprinkler.i18n
 
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.count
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.ordinal
+import com.kamelia.sprinkler.i18n.TranslationArgument.Companion.variable
 import com.kamelia.sprinkler.i18n.pluralization.Plural
-import com.kamelia.sprinkler.i18n.pluralization.PluralMapper
+import com.kamelia.sprinkler.i18n.pluralization.PluralRuleProvider
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -43,7 +46,7 @@ class TranslatorConfigurationTest {
             }
         }
         val value = "dog"
-        assertEquals("This is a $value.", translator.t("interpolation", mapOf("value" to value)))
+        assertEquals("This is a $value.", translator.t("interpolation", variable("value", value)))
     }
 
     @Test
@@ -62,20 +65,20 @@ class TranslatorConfigurationTest {
 
     @Test
     fun `withPluralMapper sets the pluralMapper`() {
-        val pluralMapper = object : PluralMapper {
-            override fun mapCardinal(count: Double): Plural = Plural.TWO
-            override fun mapOrdinal(count: Long): Plural = Plural.FEW
+        val pluralRuleProvider = object : PluralRuleProvider {
+            override fun cardinal(count: Double): Plural = Plural.TWO
+            override fun ordinal(count: Long): Plural = Plural.FEW
         }
         val translator = Translator {
             configuration {
-                pluralMapperFactory = { pluralMapper }
+                pluralRuleProviderFactory = { pluralRuleProvider }
             }
             translations {
                 map(Locale.ENGLISH, mapOf("foo_two" to "hello", "bar_ordinal_few" to "world"))
             }
         }
-        assertEquals("hello", translator.t("foo", mapOf(count(1))))
-        assertEquals("world", translator.t("bar", mapOf(count(1), ordinal())))
+        assertEquals("hello", translator.t("foo", count(1)))
+        assertEquals("world", translator.t("bar", count(1), ordinal()))
     }
 
     @Test

@@ -1,6 +1,6 @@
 package com.kamelia.sprinkler.i18n.jar
 
-import com.kamelia.sprinkler.i18n.impl.Translator
+import com.kamelia.sprinkler.i18n.Translator
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Tag
