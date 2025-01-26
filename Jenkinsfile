@@ -6,9 +6,6 @@ pipeline {
         timeout(time: 15, unit: 'MINUTES')
         disableConcurrentBuilds()
     }
-    tools {
-        gradle 'gradle-7.5.0'
-    }
 
     stages {
         stage('Precondition') {
@@ -25,34 +22,34 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh 'gradle --parallel assemble'
+                sh './gradlew --parallel assemble'
             }
         }
         stage('Test') {
             parallel {
                 stage('Utils') {
                     steps {
-                        sh 'gradle utils:test'
+                        sh './gradlew utils:test'
                     }
                 }
                 stage('Readonly Collections') {
                     steps {
-                        sh 'gradle readonly-collections:test'
+                        sh './gradlew readonly-collections:test'
                     }
                 }
                 stage('Binary Transcoders') {
                     steps {
-                        sh 'gradle binary-transcoders:test'
+                        sh './gradlew binary-transcoders:test'
                     }
                 }
                 stage('JVM Bridge') {
                     steps {
-                        sh 'gradle jvm-bridge:test'
+                        sh './gradlew jvm-bridge:test'
                     }
                 }
                 stage('I18N') {
                     steps {
-                        sh 'gradle i18n:test'
+                        sh './gradlew i18n:test'
                     }
                 }
             }

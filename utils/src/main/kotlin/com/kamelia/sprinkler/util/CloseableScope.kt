@@ -1,8 +1,8 @@
-@file:HideFromJava("This is a Kotlin only API")
+@file:HideFromJava
 
 package com.kamelia.sprinkler.util
 
-import com.zwendo.restrikt.annotation.HideFromJava
+import com.zwendo.restrikt2.annotation.HideFromJava
 
 /**
  * A scope for managing the lifecycle of [AutoCloseable]s.
@@ -32,8 +32,8 @@ value class CloseableScope private constructor(private val closeables: ArrayList
     fun <T : AutoCloseable> T.usingSelf(): T = using(this)
 
     @PublishedApi
-    internal fun closeAll() {
-        var exception: Throwable? = null
+    internal fun closeAll(initialException: Throwable?) {
+        var exception: Throwable? = initialException
         for (i in closeables.lastIndex downTo 0) {
             try {
                 closeables[i].close()
@@ -76,10 +76,14 @@ value class CloseableScope private constructor(private val closeables: ArrayList
  */
 inline fun <R> closeableScope(vararg closeables: AutoCloseable, block: CloseableScope.() -> R): R {
     val scope = CloseableScope()
-    closeables.forEach(scope::using)
+    var exception: Throwable? = null
     try {
+        closeables.forEach(scope::using)
         return scope.block()
+    } catch (e: Throwable) {
+        exception = e
     } finally {
-        scope.closeAll()
+        scope.closeAll(exception)
     }
+    throw AssertionError("Unreachable code")
 }

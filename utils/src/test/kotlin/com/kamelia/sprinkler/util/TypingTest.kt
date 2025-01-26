@@ -1,7 +1,9 @@
 package com.kamelia.sprinkler.util
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -72,6 +74,18 @@ class TypingTest {
         assertThrows<NullPointerException> {
             value.cast<Int>()
         }
+    }
+
+    @Test
+    fun `isInstance returns true when the receiver has the correct type`() {
+        val value: Any = 42
+        assertTrue(value.isInstance<Int>())
+    }
+
+    @Test
+    fun `isInstance returns false when the receiver has the wrong type`() {
+        val value: Any = 42
+        assertFalse(value.isInstance<String>())
     }
 
 }
