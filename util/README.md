@@ -194,12 +194,12 @@ and use a custom `VariableResolver`:
 ```kt
 val myResolver: VariableResolver<Int> = VariableResolver<Int> { name: String, i: Int -> name + i }
 val string: String = "Hello I'm {{name}}, and I'm {{age}} years old.".interpolate(0, resolver = myResolver)
-println(string) // prints "Hello I'm name0, and I'm age0 years old."
+println(string) // prints "Hello I'm name0, and I'm age1 years old."
 ```
 
 ## CloseableScope
 
-Similarly to Java's `try-with-resouces` statement, in Kotlin we can use the `Closeable::use` and `AutoCloseable::use`
+Similarly to Java's `try-with-resources` statement, in Kotlin we can use the `Closeable::use` and `AutoCloseable::use`
 methods to automatically handle the closing of a resource, even in case of exceptions during usage.
 
 But one might see that they are not entirely symmetrical in their usage as soon as we want to use multiple resources:
@@ -340,7 +340,7 @@ Here is a simple example:
 
 ```kt
 class Foo(intBox: Box<Int>) {
-    var i by intBox
+    val i by intBox
 }
 
 fun main() {
@@ -349,8 +349,9 @@ fun main() {
     runCatching {
         println(foo.i) // Throws an exception
     }
-    foo.i = 1
+    box.fill(1) // returns true
     println(foo.i) // Prints 1
+    box.fill(2) // Does nothing, returns false
 }
 ```
 
@@ -359,16 +360,16 @@ fun main() {
 Java's standard library is missing a few very common `Collector` factories. To that effect, those are provided by
 the `ExtendedCollectors` class.
 
-- `ExtendedCollectors.toMap` returns a collector that collects elements to a map from pairs of keys and values.
-- `ExtendedCollectors.toMapWithEntries` returns a collector that collects elements to a map from java.util.Map.Entry
+- `ExtendedCollectors::toMap` returns a collector that collects elements to a map from pairs of keys and values.
+- `ExtendedCollectors::toMapWithEntries` returns a collector that collects elements to a map from java.util.Map.Entry
   instances.
-- `ExtendedCollectors.toLinkedHashMap` returns a collector that collects elements to a linked hash map from pairs of
+- `ExtendedCollectors::toLinkedHashMap` returns a collector that collects elements to a linked hash map from pairs of
   keys and values.
-- `ExtendedCollectors.toLinkedHashMapWithEntries` returns a collector that collects elements to a linked hash map from
+- `ExtendedCollectors::toLinkedHashMapWithEntries` returns a collector that collects elements to a linked hash map from
   java.util.Map.Entry instances.
-- `ExtendedCollectors.toArray` returns a collector that collects elements to an array.
-- `to[Primitive]Array` returns a collector that collects elements to a primitive array, where `[Primitive]` is the
-  wanted primitive (e.g. `toIntArray`, `toDoubleArray`).
+- `ExtendedCollectors::toArray` returns a collector that collects elements to an array.
+- `ExtendedCollectors::to[Primitive]Array` returns a collector that collects elements to a primitive array, where 
+  `[Primitive]` is the wanted primitive (e.g. `toIntArray`, `toDoubleArray`).
 
 ## ByteArrayDecoding
 
@@ -390,7 +391,7 @@ The extensions are:
 ## ByteAccess
 
 Sometimes, we want to interpret a `Number` not as a number, but as a sequence of bytes. This is what the `ByteAccess`
-file allows. It provides a few extension functions to read bytes and bits from a `Number`.
+helpers allow. They are a few extension functions to read bytes and bits from a `Number`.
 
 Except for `Byte`, every `Number` type has two new extension functions:
 
@@ -422,8 +423,7 @@ inline fun <T> Any?.unsafeCast(): T = this as T
 
 It is useful when you know that a value is of a certain type, but the compiler doesn't, and you would need to add
 a `Suppress` annotation to avoid a warning. It's also useful when chaining operations. It is mostly a convenience
-function
-that should only be used in exceptional cases in library code.
+function that should only be used in exceptional cases in library code.
 
 It also offers a cleaner syntax to chain operations on a value of an unknown type:
 
@@ -442,6 +442,7 @@ instead of:
 ```kt
 class Foo(val value: Any)
 
+@Suppress("UNCHECKED_CAST")
 fun countA(value: Any): Int =
     ((value as Foo)
         .value as String)
