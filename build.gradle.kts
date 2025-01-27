@@ -8,6 +8,7 @@ plugins {
     signing
     alias(libs.plugins.kotlin)
     alias(libs.plugins.dokka)
+    alias(libs.plugins.dokka.javadoc)
     alias(libs.plugins.restrikt)
     alias(libs.plugins.kover)
 }
@@ -22,6 +23,7 @@ val props = Properties().apply { load(file("gradle.properties").reader()) }
 fun String.base64Decode() = String(Base64.getDecoder().decode(this))
 
 val restriktVersion: String by System.getProperties()
+
 allprojects {
     apply(plugin = "java")
     apply(plugin = "kotlin")
@@ -30,6 +32,7 @@ allprojects {
     apply(plugin = "com.zwendo.restrikt2")
     apply(plugin = "org.jetbrains.kotlinx.kover")
     apply(plugin = "org.jetbrains.dokka")
+    apply(plugin = "org.jetbrains.dokka-javadoc")
 
     val projectName = project.name.lowercase()
     val projectVersion = if (project != rootProject) {
@@ -44,13 +47,14 @@ allprojects {
 
     dependencies {
         implementation(rootProject.libs.restrikt.annotations)
+        compileOnly(rootProject.libs.jetbrains.annotations)
         testImplementation(rootProject.testDependencies.bundles.implementation)
         testRuntimeOnly(rootProject.testDependencies.bundles.runtime)
     }
 
     java {
-        withJavadocJar()
         withSourcesJar()
+        modularity.inferModulePath.set(true)
     }
 
     signing {
@@ -68,6 +72,21 @@ allprojects {
     kover {
         currentProject {
             sources.excludedSourceSets = setOf("jmh")
+        }
+    }
+
+    dokka {
+        dokkaSourceSets {
+            configureEach {
+                val packageFiles = fileTree("src/main/kotlin") {
+                    include("**/package.md") // Matches files recursively
+                }.files
+                includes.from(packageFiles)
+                val moduleFile = project.projectDir.resolve("src/main/kotlin/module.md")
+                if (moduleFile.exists()) {
+                    includes.from(moduleFile)
+                }
+            }
         }
     }
 
@@ -91,6 +110,17 @@ allprojects {
             targetCompatibility = jvmVersion
         }
 
+        compileJava {
+            doFirst {
+                options.compilerArgs.addAll(
+                    listOf(
+                        "--patch-module",
+                        "com.black_kamelia.sprinkler.$projectName=${project.layout.buildDirectory.get().asFile}/classes/kotlin/main",
+                    )
+                )
+            }
+        }
+
         setupKotlinCompilation {
             compilerOptions {
                 jvmTarget.set(JvmTarget.fromTarget(jvmVersion))
@@ -105,15 +135,33 @@ allprojects {
             archiveBaseName.set("$rootProjectName-$projectName-$projectVersion")
         }
 
+        register<Jar>("dokkaJavadocJar") {
+            dependsOn(dokkaGeneratePublicationJavadoc)
+            from(dokkaGenerateModuleJavadoc.get().outputDirectory)
+            archiveClassifier.set("javadoc")
+        }
+
+        register<Jar>("htmlDocJar") {
+            dependsOn(dokkaGeneratePublicationHtml)
+            from(dokkaGeneratePublicationHtml.get().outputDirectory)
+            archiveClassifier.set("html-doc")
+        }
+
     }
 
     publishing {
         publications {
             create<MavenPublication>("maven-$projectName") {
                 groupId = findProp<String>("projectGroup")
-                artifactId = projectName
+                // fix this: This is a workaround for the util project
+                artifactId = if (projectName == "util") "utils" else projectName
                 version = projectVersion
                 from(components["java"])
+                artifact(tasks.named("dokkaJavadocJar"))
+                artifact(tasks.named("htmlDocJar")) {
+                    classifier = "html-doc"
+                }
+
 
                 pom {
                     name.set(projectName)

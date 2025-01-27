@@ -5,7 +5,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":utils"))
+    implementation(project(":util"))
 
     compileOnly(i18nLibs.bundles.loading)
     testRuntimeOnly(i18nLibs.bundles.loading)
