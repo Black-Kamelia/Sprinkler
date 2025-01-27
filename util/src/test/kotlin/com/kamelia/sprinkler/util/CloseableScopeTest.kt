@@ -1,8 +1,10 @@
 package com.kamelia.sprinkler.util
 
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
 import java.io.Closeable
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class CloseableScopeTest {
 

@@ -4,23 +4,34 @@
 
 ## Summary
 
-- [Intentions](#intentions)
-- [String interpolation](#string-interpolation)
-  - [String syntax](#string-syntax)
-  - [VariableDelimiter](#variabledelimiter)
-  - [Interpolation](#interpolation)
-    - [Map based overloads](#map-based-overloads)
-    - [Indexed overloads](#indexed-overloads)
-    - [Iterative overloads](#iterative-overloads)
-  - [VariableResolvers](#variableresolvers)
-- [CloseableScope](#closeablescope)
-- [Box Delegate](#box-delegate)
-- [Collector Factories](#collector-factories)
-- [ByteArrayDecoding](#bytearraydecoding)
-- [ByteAccess](#byteaccess)
-- [Casts](#casts)
-- [Exceptions](#exceptions)
-- [Changelog](#changelog)
+<!-- TOC -->
+* [Sprinkler: Utils](#sprinkler-utils)
+  * [Summary](#summary)
+  * [Intentions](#intentions)
+  * [String interpolation](#string-interpolation)
+    * [String syntax](#string-syntax)
+    * [VariableDelimiter](#variabledelimiter)
+    * [Interpolation](#interpolation)
+      * [Map based overloads](#map-based-overloads)
+      * [Indexed overloads](#indexed-overloads)
+      * [Iterative overloads](#iterative-overloads)
+    * [VariableResolvers](#variableresolvers)
+  * [CloseableScope](#closeablescope)
+  * [Box Delegate](#box-delegate)
+  * [Collector Factories](#collector-factories)
+  * [ByteArrayDecoding](#bytearraydecoding)
+  * [ByteAccess](#byteaccess)
+  * [Typing extensions](#typing-extensions)
+  * [Casts](#casts)
+    * [unsafeCast](#unsafecast)
+    * [castOrNull](#castornull)
+    * [castIfNotNull](#castifnotnull)
+    * [cast](#cast)
+    * [isInstance](#isinstance)
+  * [Unmodifiable Collections](#unmodifiable-collections)
+  * [Exceptions](#exceptions)
+  * [Changelog](#changelog)
+<!-- TOC -->
 
 ## Intentions
 
@@ -467,14 +478,29 @@ fails. It is defined as follows:
 inline fun <reified T> Any?.cast(): T = this as T
 ```
 
+### isInstance
+
+A simple extension function on `Any?`, that allows to check if it is an instance of a given type. It is defined as
+follows:
+
+```kt
+inline fun <reified T> Any?.isInstance(): Boolean = this is T
+```
+
+## Unmodifiable Collections
+
+The library provides a few functions to create unmodifiable collections. These functions are mirrors of the ones in the
+Java standard library. You can find them in the `UnmodifiableCollections` file.
+
+In addition to the standard functions (`unmodifiableListOf`, `unmodifiableSetOf`, `unmodifiableMapOf`), the library
+also provides extensions on the standard collections to create unmodifiable copies of them 
+(`Collection.toUnmodifiableList`, `Collection.toUnmodifiableSet`, `Map.toUnmodifiableMap`).
+
 ## Exceptions
 
 The library provides a few methods to throw exceptions with a message. The reason for this is that the standard library
-provides the `error` function to throw an IllegalStateException, but nothing else. To complement this, the following
-functions are provided:
-
-- `illegalArgument(message: String): Nothing` throws an `IllegalArgumentException` with the given message.
-- `assertionError(message: String): Nothing` throws an `AssertionError` with the given message.
+provides the `error` function to throw an IllegalStateException, but nothing else. To complement this, the library
+offers functions to throw other common exceptions (e.g. IllegalArgumentException, UnsupportedOperationException, etc.).
 
 ## Changelog
 

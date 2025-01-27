@@ -21,7 +21,7 @@ dependencyResolutionManagement {
 }
 
 include(
-    "utils",
+    "util",
     "jvm-bridge",
     "readonly-collections",
     "binary-transcoders",
