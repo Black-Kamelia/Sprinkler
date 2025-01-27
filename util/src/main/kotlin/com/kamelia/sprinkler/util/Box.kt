@@ -155,10 +155,10 @@ interface Box<out T> {
         }
 
         /**
-         * Creates a new [EmptyBox].
+         * Creates a new empty [Box]. Any access to the [value] property will throw an exception.
          *
          * @param T the type of the value
-         * @return a new [EmptyBox]
+         * @return an empty [Box]
          */
         @JvmStatic
         fun <T> empty(): Box<T> = object : Box<Nothing> {

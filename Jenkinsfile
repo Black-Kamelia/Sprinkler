@@ -29,7 +29,7 @@ pipeline {
             parallel {
                 stage('Utils') {
                     steps {
-                        sh './gradlew utils:test'
+                        sh './gradlew util:test'
                     }
                 }
                 stage('Readonly Collections') {
@@ -59,8 +59,8 @@ pipeline {
                     recordCoverage sourceDirectories: [
                         [path: 'readonly-collections/src/main/kotlin'],
                         [path: 'readonly-collections/src/main/java'],
-                        [path: 'utils/src/main/kotlin'],
-                        [path: 'utils/src/main/java'],
+                        [path: 'util/src/main/kotlin'],
+                        [path: 'util/src/main/java'],
                         [path: 'binary-transcoders/src/main/kotlin'],
                         [path: 'binary-transcoders/src/main/java'],
                         [path: 'jvm-bridge/src/main/kotlin'],

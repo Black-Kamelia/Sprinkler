@@ -53,4 +53,8 @@ final class VarargCopyWorkaround {
         return Map.ofEntries(entries);
     }
 
+    public static void main(String[] args) {
+
+    }
+
 }

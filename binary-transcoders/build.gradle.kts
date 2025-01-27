@@ -5,7 +5,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":utils"))
+    implementation(project(":util"))
     api(project(":jvm-bridge"))
 }
 
