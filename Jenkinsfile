@@ -8,18 +8,6 @@ pipeline {
     }
 
     stages {
-        stage('Precondition') {
-            steps {
-                script {
-                    def branch = env.CHANGE_BRANCH
-                    def target = env.CHANGE_TARGET
-                    if (target == 'master' && branch != 'develop') {
-                        currentBuild.result = 'ABORTED'
-                        error 'Only develop branch can be merged into master'
-                    }
-                }
-            }
-        }
         stage('Build') {
             steps {
                 sh './gradlew --parallel assemble'
