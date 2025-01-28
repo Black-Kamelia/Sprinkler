@@ -1,5 +1,5 @@
 @file:HideFromJava
-@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.kamelia.sprinkler.util
 

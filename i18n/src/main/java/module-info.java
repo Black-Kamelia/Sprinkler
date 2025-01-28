@@ -1,7 +1,7 @@
 module com.black_kamelia.sprinkler.i18n {
-    requires transitive kotlin.stdlib;
-    requires transitive com.zwendo.restrikt.annotations;
-    requires transitive com.black_kamelia.sprinkler.util;
+    requires kotlin.stdlib;
+    requires com.zwendo.restrikt.annotations;
+    requires com.black_kamelia.sprinkler.util;
 
     requires static org.jetbrains.annotations;
     requires static com.fasterxml.jackson.databind;

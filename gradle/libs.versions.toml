@@ -2,7 +2,7 @@
 kotlin = "2.1.0"
 
 [libraries]
-restrikt-annotations = { group = "com.zwendo", name = "restrikt2-annotations", version = "0.3.0" }
+restrikt-annotations = { group = "com.zwendo", name = "restrikt2-annotations", version = "0.3.1" }
 jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version = "26.0.2" }
 
 [plugins]
